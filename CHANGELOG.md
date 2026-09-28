@@ -5,7 +5,9 @@ are tracked separately from this product history.
 
 ## Unreleased
 
-- The motion skill's runtime now installs `ws` 8.22.0 instead of 8.18.3, which fixes a memory-exhaustion denial of service and an uninitialized-memory disclosure in that package.
+## 1.0.11 - 2026-09-29
+
+- The motion skill's runtime now installs `ws` 8.22.0 instead of 8.18.3, which fixes a memory-exhaustion denial of service and an uninitialized-memory disclosure in that package. After upgrading, run `litopencode motion-runtime install` again so the cache picks up the new version.
 - Two Wikify captures running at the same moment no longer fail with a blocked store error when one of them releases its lock while the other is checking it. The waiting capture now retries.
 - A Lit slash command now shows the `🔥 LIT IGNITED` toast once. Before, the same toast appeared twice, with the second one replacing the first.
 - The Jev debug trace (`LITOPENCODE_JEV_TRACE=1`) now also refuses a symlinked `.litopencode` or `.litopencode/logs` folder. It writes nothing and the turn continues normally.
