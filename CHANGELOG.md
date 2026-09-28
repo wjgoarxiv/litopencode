@@ -5,10 +5,13 @@ are tracked separately from this product history.
 
 ## Unreleased
 
-- Add an optional Jev skill hint: with `LITOPENCODE_JEV=1` and your own `TYPESAFE_API_KEY`, an eligible chat turn gets one advisory line naming a LitOpenCode skill. It is off by default and sends the redacted prompt to TypeSafe only when enabled.
-- Show a short toast, such as `Jev → lit-humanizer (0.27s)`, on turns that get a Jev skill hint.
-- Show a `✦ Jev skill hint is ON` toast once per session while the Jev skill hint is enabled; the per-hint toast now uses the quieter info style.
-- Harden the Jev skill hint: slash-command turns are now recognised in a running OpenCode, redirects are refused, the prompt is redacted before it is cut, `password=`-style assignments are masked, the hint is no longer shown as user text, and the debug trace never writes through a symlink.
+## 1.0.10 - 2026-09-28
+
+- Add an optional Jev skill hint. It is off by default. With `LITOPENCODE_JEV=1` and your own `TYPESAFE_API_KEY` set, an eligible chat turn gets one advisory line naming a LitOpenCode skill. The model still decides whether to load it.
+- When the hint is on, each eligible prompt is sent to TypeSafe. Home paths, e-mail addresses, `password=`-style assignments and other token-shaped strings are replaced first, and the prompt is then cut to 2,000 characters. Files, tool output and earlier turns are not sent. Slash commands and child sessions are skipped.
+- While the hint is on, a `✦ Jev skill hint is ON` toast shows once per session, and a turn that gets a hint shows a short toast such as `Jev → lit-humanizer (0.27s)`. `litopencode doctor` reports whether the hint is off, on, or missing its key.
+- The hint reaches the model but is not shown or copied as your own words. A redirected Jev request is refused, and the debug trace never writes through a symlink.
+- A skill started with a slash command now stays active in a running OpenCode. Before, it was cleared when the command's message arrived.
 
 ## 1.0.9 - 2026-09-28
 

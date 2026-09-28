@@ -1,6 +1,6 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/ascii-readme.svg" width="480" alt="LIT ASCII B 마크" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ascii-readme.svg" width="480" alt="LIT ASCII B 마크" /></p>
 
 <details>
 <summary>ASCII 로고 복사</summary>
@@ -32,21 +32,21 @@
 
 # LitOpenCode
 
-[English](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/README.md) · [한국어](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/README-Ko-KR.md)
+[English](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/README.md) · [한국어](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/README-Ko-KR.md)
 
 > **불씨를 건네받았다.**<br>
 > **이제, 당신의 작업에 옮길 차례다.**
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/litopencode-wordmark.svg" width="480" alt="LITOPENCODE 디스플레이 타입" /></p>
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/litopencode-clay-icon.png" width="160" alt="LitOpenCode 클레이 마크" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/litopencode-wordmark.svg" width="480" alt="LITOPENCODE 디스플레이 타입" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/litopencode-clay-icon.png" width="160" alt="LitOpenCode 클레이 마크" /></p>
 
 <p align="center">
-<a href="#설치"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/badge-version.svg" alt="1.0.9" /></a>
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/badge-license.svg" alt="MIT 라이선스" /></a>
+<a href="#설치"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/badge-version.svg" alt="1.0.10" /></a>
+<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/badge-license.svg" alt="MIT 라이선스" /></a>
 </p>
 
 <p align="center">
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference-Ko-KR.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/lucide-book-open.svg" width="16" alt="" /> 문서</a> &nbsp; <a href="#설치">설치</a> &nbsp; <a href="#스킬-한눈에-보기">스킬</a> &nbsp; <a href="#ignition-motion"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
+<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference-Ko-KR.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/lucide-book-open.svg" width="16" alt="" /> 문서</a> &nbsp; <a href="#설치">설치</a> &nbsp; <a href="#스킬-한눈에-보기">스킬</a> &nbsp; <a href="#ignition-motion"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
 </p>
 
 ## LitOpenCode란
@@ -78,9 +78,9 @@ npm exec --package @litfamily/litopencode@latest -- litopencode install --yes   
 설치 도구는 OpenCode 설정 루트에 플러그인과 native 명령·스킬 파일을 등록합니다.
 route 파일은 `~/.config/opencode/litopencode.json`이며 `XDG_CONFIG_HOME`을 지정하면
 설정 루트가 달라집니다. 기존 custom route는 사용자 소유로 유지됩니다.
-custom root, 모델 선택, 터미널 정책, 무인 설치는 [상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference-Ko-KR.md#설치)를 참고하세요.
+custom root, 모델 선택, 터미널 정책, 무인 설치는 [상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference-Ko-KR.md#설치)를 참고하세요.
 
-이 checkout의 패키지는 `@litfamily/litopencode@1.0.9`입니다. registry의 `@latest`는 다를 수 있으므로
+이 checkout의 패키지는 `@litfamily/litopencode@1.0.10`입니다. registry의 `@latest`는 다를 수 있으므로
 정확한 버전이 필요하면 `npm view @litfamily/litopencode version`으로 확인하세요.
 
 ## 처음 사용하기
@@ -135,9 +135,9 @@ primitive가 없으므로 이 프로젝트별 로컬 기록으로 작업을 재�
 
 Lit 경로가 활성화되면 답변이 굵은 점화 문구로 시작합니다. 플러그인은 글리프를 지원하는 환경에서 다섯 줄의 micro 로고와 마지막 `🔥 LIT IGNITED · <discipline> 🔥` 문구를 6초 동안 경고 토스트로 표시하도록 요청합니다. 글리프를 지원하지 않으면 문구만 표시합니다.
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/litopencode-ignition-1600.webp" width="48%" alt="LitOpenCode 점화 장치" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/litopencode-continuity-1600.webp" width="48%" alt="LitOpenCode 연속 장치" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/litopencode-ignition-1600.webp" width="48%" alt="LitOpenCode 점화 장치" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/litopencode-continuity-1600.webp" width="48%" alt="LitOpenCode 연속 장치" /></p>
 
-<p align="center"><a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/poster.png" width="720" alt="Ignition 모션 포스터" /></a></p>
+<p align="center"><a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/poster.png" width="720" alt="Ignition 모션 포스터" /></a></p>
 
 포스터를 선택하면 선택형 영상을 엽니다. README에서 자동 재생하지 않습니다.
 
@@ -194,192 +194,192 @@ OpenCode 네이티브 스킬 `frontend-ui-ux`는 충분한 구현 요청을 받�
 <table>
 <tr><th>이렇게 됩니다</th><th>스킬</th><th>얻는 것</th></tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/litwork.webp" width="240" alt="요청에 lit만 붙이세요. 작업이 틀 잡기, 근거 찾기, 계획, 실행, 검증, 리뷰, 정리 순서로 진행됩니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/litwork.webp" width="240" alt="요청에 lit만 붙이세요. 작업이 틀 잡기, 근거 찾기, 계획, 실행, 검증, 리뷰, 정리 순서로 진행됩니다." /></td>
 <td><code>litwork</code> · <code>workflow-loop</code><br /><sub><code>lit</code> · <code>/litwork</code></sub></td>
 <td>요청에 <code>lit</code>만 붙이세요. 작업이 틀 잡기, 근거 찾기, 계획, 실행, 검증, 리뷰, 정리 순서로 진행됩니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/durable-litgoal.webp" width="240" alt="OpenCode에 목표 기능이 없을 때, 확인 가능한 기준이 붙은 목표 하나를 디스크에 남깁니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/durable-litgoal.webp" width="240" alt="OpenCode에 목표 기능이 없을 때, 확인 가능한 기준이 붙은 목표 하나를 디스크에 남깁니다." /></td>
 <td><code>durable-litgoal</code><br /><sub><code>/litgoal</code> · <code>/lit-goal</code></sub></td>
 <td>OpenCode에 목표 기능이 없을 때, 확인 가능한 기준이 붙은 목표 하나를 디스크에 남깁니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-plan.webp" width="240" alt="승인 관문에서 멈추는 체크리스트를 만듭니다. lit-plan 에이전트는 파일 수정도, 셸 명령도 할 수 없습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-plan.webp" width="240" alt="승인 관문에서 멈추는 체크리스트를 만듭니다. lit-plan 에이전트는 파일 수정도, 셸 명령도 할 수 없습니다." /></td>
 <td><code>lit-plan</code><br /><sub><code>/lit-plan</code></sub></td>
 <td>승인 관문에서 멈추는 체크리스트를 만듭니다. lit-plan 에이전트는 파일 수정도, 셸 명령도 할 수 없습니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/start-work.webp" width="240" alt="승인된 계획을 조각마다 실행합니다. 권한이나 버전이 어긋나면 멈춥니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/start-work.webp" width="240" alt="승인된 계획을 조각마다 실행합니다. 권한이나 버전이 어긋나면 멈춥니다." /></td>
 <td><code>start-work</code><br /><sub><code>/start-work</code></sub></td>
 <td>승인된 계획을 조각마다 실행합니다. 권한이나 버전이 어긋나면 멈춥니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/review-work.webp" width="240" alt="리뷰 다섯 갈래가 심각한 문제부터 보여주고, 갈래마다 통과·실패·미실행을 적습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/review-work.webp" width="240" alt="리뷰 다섯 갈래가 심각한 문제부터 보여주고, 갈래마다 통과·실패·미실행을 적습니다." /></td>
 <td><code>review-work</code><br /><sub><code>/review-work</code></sub></td>
 <td>리뷰 다섯 갈래가 심각한 문제부터 보여주고, 갈래마다 통과·실패·미실행을 적습니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/litresearch.webp" width="240" alt="여러 차례로 나눠 조사하고, 주장마다 근거 기록과 불확실성을 남깁니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/litresearch.webp" width="240" alt="여러 차례로 나눠 조사하고, 주장마다 근거 기록과 불확실성을 남깁니다." /></td>
 <td><code>litresearch</code><br /><sub><code>lit research &lt;question&gt;</code> · <code>/litresearch</code></sub></td>
 <td>여러 차례로 나눠 조사하고, 주장마다 근거 기록과 불확실성을 남깁니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/doctor-installer.webp" width="240" alt="LitOpenCode를 OpenCode에 설치합니다. --dry-run은 바뀔 내용만 보여주고 아무것도 쓰지 않습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/doctor-installer.webp" width="240" alt="LitOpenCode를 OpenCode에 설치합니다. --dry-run은 바뀔 내용만 보여주고 아무것도 쓰지 않습니다." /></td>
 <td><code>doctor-installer</code><br /><sub><code>litopencode install</code> · <code>litopencode doctor</code></sub></td>
 <td>LitOpenCode를 OpenCode에 설치합니다. <code>--dry-run</code>은 바뀔 내용만 보여주고 아무것도 쓰지 않습니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-fetch.webp" width="240" alt="보안 검사를 거쳐 공개 페이지를 가져오고, 결과를 이름 붙은 판정으로 돌려줍니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-fetch.webp" width="240" alt="보안 검사를 거쳐 공개 페이지를 가져오고, 결과를 이름 붙은 판정으로 돌려줍니다." /></td>
 <td><code>lit-fetch</code><br /><sub><code>/lit-fetch</code> · <code>litopencode fetch-public &lt;url&gt; --json</code></sub></td>
 <td>보안 검사를 거쳐 공개 페이지를 가져오고, 결과를 이름 붙은 판정으로 돌려줍니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-init.webp" width="240" alt="필요한 폴더에만 짧은 AGENTS.md 안내서를 만듭니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-init.webp" width="240" alt="필요한 폴더에만 짧은 AGENTS.md 안내서를 만듭니다." /></td>
 <td><code>lit-init</code><br /><sub><code>/lit-init</code></sub></td>
 <td>필요한 폴더에만 짧은 AGENTS.md 안내서를 만듭니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-crucible.webp" width="240" alt="계획 전에 요구사항을 반박해 봅니다. 반박을 견딘 위험만 계획으로 넘어갑니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-crucible.webp" width="240" alt="계획 전에 요구사항을 반박해 봅니다. 반박을 견딘 위험만 계획으로 넘어갑니다." /></td>
 <td><code>lit-crucible</code><br /><sub><code>/lit-crucible</code></sub></td>
 <td>계획 전에 요구사항을 반박해 봅니다. 반박을 견딘 위험만 계획으로 넘어갑니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/refactor.webp" width="240" alt="동작을 테스트로 고정한 채 코드 구조를 바꿉니다. 단계마다 확인합니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/refactor.webp" width="240" alt="동작을 테스트로 고정한 채 코드 구조를 바꿉니다. 단계마다 확인합니다." /></td>
 <td><code>refactor</code><br /><sub><code>/refactor</code></sub></td>
 <td>동작을 테스트로 고정한 채 코드 구조를 바꿉니다. 단계마다 확인합니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-burnoff.webp" width="240" alt="테스트로 동작을 먼저 묶어 두고, 변경분에 붙은 AI식 군더더기를 걷어냅니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-burnoff.webp" width="240" alt="테스트로 동작을 먼저 묶어 두고, 변경분에 붙은 AI식 군더더기를 걷어냅니다." /></td>
 <td><code>lit-burnoff</code><br /><sub><code>/lit-burnoff</code></sub></td>
 <td>테스트로 동작을 먼저 묶어 두고, 변경분에 붙은 AI식 군더더기를 걷어냅니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-burnoff-file.webp" width="240" alt="방금 수정한 파일 하나를 그 변경분 기준으로 정리합니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-burnoff-file.webp" width="240" alt="방금 수정한 파일 하나를 그 변경분 기준으로 정리합니다." /></td>
 <td><code>lit-burnoff-file</code><br /><sub><code>/lit-burnoff-file</code></sub></td>
 <td>방금 수정한 파일 하나를 그 변경분 기준으로 정리합니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-code.webp" width="240" alt="최소한의 코드부터 씁니다. Given/When/Then 테스트와 정리 기록을 남깁니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-code.webp" width="240" alt="최소한의 코드부터 씁니다. Given/When/Then 테스트와 정리 기록을 남깁니다." /></td>
 <td><code>lit-code</code><br /><sub><code>/lit-code</code></sub></td>
 <td>최소한의 코드부터 씁니다. Given/When/Then 테스트와 정리 기록을 남깁니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/debugging.webp" width="240" alt="버그를 재현하고, 가설을 세 개 이상 세워 확인한 뒤, 확인된 원인만 고칩니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/debugging.webp" width="240" alt="버그를 재현하고, 가설을 세 개 이상 세워 확인한 뒤, 확인된 원인만 고칩니다." /></td>
 <td><code>debugging</code><br /><sub><code>/debugging</code></sub></td>
 <td>버그를 재현하고, 가설을 세 개 이상 세워 확인한 뒤, 확인된 원인만 고칩니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-commit.webp" width="240" alt="변경을 저장소 스타일에 맞는 작은 커밋으로 나눕니다. 관계없는 작업은 건드리지 않습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-commit.webp" width="240" alt="변경을 저장소 스타일에 맞는 작은 커밋으로 나눕니다. 관계없는 작업은 건드리지 않습니다." /></td>
 <td><code>lit-commit</code><br /><sub><code>/lit-commit</code></sub></td>
 <td>변경을 저장소 스타일에 맞는 작은 커밋으로 나눕니다. 관계없는 작업은 건드리지 않습니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lsp.webp" width="240" alt="OpenCode가 이미 가진 언어 서버에서 진단을 읽습니다. LitOpenCode는 서버를 따로 넣지 않습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lsp.webp" width="240" alt="OpenCode가 이미 가진 언어 서버에서 진단을 읽습니다. LitOpenCode는 서버를 따로 넣지 않습니다." /></td>
 <td><code>lsp</code><br /><sub><code>/lsp</code></sub></td>
 <td>OpenCode가 이미 가진 언어 서버에서 진단을 읽습니다. LitOpenCode는 서버를 따로 넣지 않습니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lsp-setup.webp" width="240" alt="어떤 파일 형식에 언어 서버가 없으면 설치 명령 하나를 제안하고, 승인을 기다립니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lsp-setup.webp" width="240" alt="어떤 파일 형식에 언어 서버가 없으면 설치 명령 하나를 제안하고, 승인을 기다립니다." /></td>
 <td><code>lsp-setup</code><br /><sub><code>/lsp-setup</code></sub></td>
 <td>어떤 파일 형식에 언어 서버가 없으면 설치 명령 하나를 제안하고, 승인을 기다립니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/rules.webp" width="240" alt="저장소 규칙을 두 갈래로 읽습니다. 세션 시작 때 한 번, 파일을 수정할 때 다시 한 번." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/rules.webp" width="240" alt="저장소 규칙을 두 갈래로 읽습니다. 세션 시작 때 한 번, 파일을 수정할 때 다시 한 번." /></td>
 <td><code>rules</code><br /><sub><code>/rules</code></sub></td>
 <td>저장소 규칙을 두 갈래로 읽습니다. 세션 시작 때 한 번, 파일을 수정할 때 다시 한 번.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/deep-interview.webp" width="240" alt="하지 않을 일과 결정 범위가 분명해질 때까지 한 번에 한 질문씩 묻습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/deep-interview.webp" width="240" alt="하지 않을 일과 결정 범위가 분명해질 때까지 한 번에 한 질문씩 묻습니다." /></td>
 <td><code>deep-interview</code><br /><sub><code>/deep-interview</code></sub></td>
 <td>하지 않을 일과 결정 범위가 분명해질 때까지 한 번에 한 질문씩 묻습니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/structural-search.webp" width="240" alt="확인된 엔진으로 문법 구조를 찾습니다. 그렇지 않은 결과에는 TEXTUAL 표시를 붙입니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/structural-search.webp" width="240" alt="확인된 엔진으로 문법 구조를 찾습니다. 그렇지 않은 결과에는 TEXTUAL 표시를 붙입니다." /></td>
 <td><code>structural-search</code><br /><sub><code>/structural-search</code></sub></td>
 <td>확인된 엔진으로 문법 구조를 찾습니다. 그렇지 않은 결과에는 TEXTUAL 표시를 붙입니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/browser-drive.webp" width="240" alt="브라우저 드라이버를 먼저 확인한 뒤 실제 페이지를 조작합니다. 드라이버가 없으면 그렇다고 말합니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/browser-drive.webp" width="240" alt="브라우저 드라이버를 먼저 확인한 뒤 실제 페이지를 조작합니다. 드라이버가 없으면 그렇다고 말합니다." /></td>
 <td><code>browser-drive</code><br /><sub><code>/browser-drive</code></sub></td>
 <td>브라우저 드라이버를 먼저 확인한 뒤 실제 페이지를 조작합니다. 드라이버가 없으면 그렇다고 말합니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-humanizer.webp" width="240" alt="딱딱한 AI 문장을 한국어나 영어로 다시 씁니다. 사실과 단서는 남기고 군더더기는 뺍니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-humanizer.webp" width="240" alt="딱딱한 AI 문장을 한국어나 영어로 다시 씁니다. 사실과 단서는 남기고 군더더기는 뺍니다." /></td>
 <td><code>lit-humanizer</code><br /><sub><code>/lit-humanizer</code></sub></td>
 <td>딱딱한 AI 문장을 한국어나 영어로 다시 씁니다. 사실과 단서는 남기고 군더더기는 뺍니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-recap.webp" width="240" alt="읽기 전용 요약입니다. 끝난 일, 진행 중인 일, 막힌 곳, 증거 위치, 다음 단계를 보여줍니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-recap.webp" width="240" alt="읽기 전용 요약입니다. 끝난 일, 진행 중인 일, 막힌 곳, 증거 위치, 다음 단계를 보여줍니다." /></td>
 <td><code>lit-recap</code><br /><sub><code>/lit-recap</code></sub></td>
 <td>읽기 전용 요약입니다. 끝난 일, 진행 중인 일, 막힌 곳, 증거 위치, 다음 단계를 보여줍니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-comprehend.webp" width="240" alt="에이전트가 쓴 작업을 이해하도록 돕는 설명 페이지입니다. 직관, 흐름 설명, 짧은 퀴즈 순서입니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-comprehend.webp" width="240" alt="에이전트가 쓴 작업을 이해하도록 돕는 설명 페이지입니다. 직관, 흐름 설명, 짧은 퀴즈 순서입니다." /></td>
 <td><code>lit-comprehend</code><br /><sub><code>/lit-comprehend</code></sub></td>
 <td>에이전트가 쓴 작업을 이해하도록 돕는 설명 페이지입니다. 직관, 흐름 설명, 짧은 퀴즈 순서입니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-handoff.webp" width="240" alt="handoff라고 치면 다음 세션이 읽고 이어갈 인수인계 파일이 생깁니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-handoff.webp" width="240" alt="handoff라고 치면 다음 세션이 읽고 이어갈 인수인계 파일이 생깁니다." /></td>
 <td><code>lit-handoff</code><br /><sub><code>handoff</code> · <code>/lit-handoff</code></sub></td>
 <td><code>handoff</code>라고 치면 다음 세션이 읽고 이어갈 인수인계 파일이 생깁니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-scientific-visualization.webp" width="240" alt="학술지 규격 그림을 벡터와 600 DPI로 내보냅니다. 그래프 종류는 데이터 성격에 맞춰 고릅니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-scientific-visualization.webp" width="240" alt="학술지 규격 그림을 벡터와 600 DPI로 내보냅니다. 그래프 종류는 데이터 성격에 맞춰 고릅니다." /></td>
 <td><code>lit-scientific-visualization</code><br /><sub><code>/lit-scientific-visualization</code></sub></td>
 <td>학술지 규격 그림을 벡터와 600 DPI로 내보냅니다. 그래프 종류는 데이터 성격에 맞춰 고릅니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-diagram-drawer.webp" width="240" alt="슬라이드와 문서에 넣을 다이어그램을 편집 가능한 형태로 그리고, 검사한 뒤 PNG와 SVG로 내보냅니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-diagram-drawer.webp" width="240" alt="슬라이드와 문서에 넣을 다이어그램을 편집 가능한 형태로 그리고, 검사한 뒤 PNG와 SVG로 내보냅니다." /></td>
 <td><code>lit-diagram-drawer</code><br /><sub><code>skill picker</code></sub></td>
 <td>슬라이드와 문서에 넣을 다이어그램을 편집 가능한 형태로 그리고, 검사한 뒤 PNG와 SVG로 내보냅니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-pptx.webp" width="240" alt="lit으로 발표자료를 요청하면 Markdown 원고에서 편집 가능한 PowerPoint 파일을 만듭니다. 기본은 AZURE-PRO이고, 품질 검사와 렌더링 확인을 거칩니다. 스킬 선택기에서도 열 수 있습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-pptx.webp" width="240" alt="lit으로 발표자료를 요청하면 Markdown 원고에서 편집 가능한 PowerPoint 파일을 만듭니다. 기본은 AZURE-PRO이고, 품질 검사와 렌더링 확인을 거칩니다. 스킬 선택기에서도 열 수 있습니다." /></td>
 <td><code>lit-pptx</code><br /><sub><code>skill picker</code></sub></td>
 <td><code>lit</code>으로 발표자료를 요청하면 Markdown 원고에서 편집 가능한 PowerPoint 파일을 만듭니다. 기본은 AZURE-PRO이고, 품질 검사와 렌더링 확인을 거칩니다. 스킬 선택기에서도 열 수 있습니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-docx.webp" width="240" alt="lit으로 보고서를 요청하면 서식을 갖춘 Word 파일과 원고 Markdown이 나옵니다. 한국어는 korean-generic 서식을 쓰고, 문체 검사와 렌더링 확인이 뒤따릅니다. 스킬 선택기에서도 열 수 있습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-docx.webp" width="240" alt="lit으로 보고서를 요청하면 서식을 갖춘 Word 파일과 원고 Markdown이 나옵니다. 한국어는 korean-generic 서식을 쓰고, 문체 검사와 렌더링 확인이 뒤따릅니다. 스킬 선택기에서도 열 수 있습니다." /></td>
 <td><code>lit-docx</code><br /><sub><code>skill picker</code></sub></td>
 <td><code>lit</code>으로 보고서를 요청하면 서식을 갖춘 Word 파일과 원고 Markdown이 나옵니다. 한국어는 korean-generic 서식을 쓰고, 문체 검사와 렌더링 확인이 뒤따릅니다. 스킬 선택기에서도 열 수 있습니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/autoresearch.webp" width="240" alt="승인된 예산 안에서 실험을 반복합니다. 한 번에 하나만 바꾸고, 결과에 따라 남기거나 되돌립니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/autoresearch.webp" width="240" alt="승인된 예산 안에서 실험을 반복합니다. 한 번에 하나만 바꾸고, 결과에 따라 남기거나 되돌립니다." /></td>
 <td><code>autoresearch</code><br /><sub><code>/autoresearch</code> · <code>/autoresearch-&lt;mode&gt;</code></sub></td>
 <td>승인된 예산 안에서 실험을 반복합니다. 한 번에 하나만 바꾸고, 결과에 따라 남기거나 되돌립니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/autoconference.webp" width="240" alt="예산을 정한 연구 회의입니다. 연구자와 리뷰어가 따로 일하고, 종합에는 반대 의견도 남깁니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/autoconference.webp" width="240" alt="예산을 정한 연구 회의입니다. 연구자와 리뷰어가 따로 일하고, 종합에는 반대 의견도 남깁니다." /></td>
 <td><code>autoconference</code><br /><sub><code>/autoconference</code> · <code>/autoconference-&lt;mode&gt;</code></sub></td>
 <td>예산을 정한 연구 회의입니다. 연구자와 리뷰어가 따로 일하고, 종합에는 반대 의견도 남깁니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/wikify.webp" width="240" alt="검토를 거친 프로젝트 지식을 디스크에 두고, 나중 질문에 출처와 함께 답합니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/wikify.webp" width="240" alt="검토를 거친 프로젝트 지식을 디스크에 두고, 나중 질문에 출처와 함께 답합니다." /></td>
 <td><code>wikify</code><br /><sub><code>/wikify-ingest</code> · <code>/wikify-query</code></sub></td>
 <td>검토를 거친 프로젝트 지식을 디스크에 두고, 나중 질문에 출처와 함께 답합니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/frontend-ui-ux.webp" width="240" alt="실제로 동작하는 화면을 만들고, 측정 프로브로 일곱 가지 보기에서 확인합니다. 네 가지 폭, 다크 모드, 모션 줄이기, 200% 확대입니다. 스킬 선택기에서 엽니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/frontend-ui-ux.webp" width="240" alt="실제로 동작하는 화면을 만들고, 측정 프로브로 일곱 가지 보기에서 확인합니다. 네 가지 폭, 다크 모드, 모션 줄이기, 200% 확대입니다. 스킬 선택기에서 엽니다." /></td>
 <td><code>frontend-ui-ux</code><br /><sub><code>skill picker</code></sub></td>
 <td>실제로 동작하는 화면을 만들고, 측정 프로브로 일곱 가지 보기에서 확인합니다. 네 가지 폭, 다크 모드, 모션 줄이기, 200% 확대입니다. 스킬 선택기에서 엽니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/readme-studio.webp" width="240" alt="사실에 맞는 README와 확인을 거친 커버, 윤곽선 글자를 만듭니다. 스킬 선택기에서 엽니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/readme-studio.webp" width="240" alt="사실에 맞는 README와 확인을 거친 커버, 윤곽선 글자를 만듭니다. 스킬 선택기에서 엽니다." /></td>
 <td><code>readme-studio</code><br /><sub><code>skill picker</code></sub></td>
 <td>사실에 맞는 README와 확인을 거친 커버, 윤곽선 글자를 만듭니다. 스킬 선택기에서 엽니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/lit-typographic-motion.webp" width="240" alt="lit으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 무대 페이지를 그리거나 글자를 움직입니다. 영상은 검사와 눈으로 보는 확인을 거쳐 넘깁니다. 스킬 선택기에서도 열 수 있습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-typographic-motion.webp" width="240" alt="lit으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 무대 페이지를 그리거나 글자를 움직입니다. 영상은 검사와 눈으로 보는 확인을 거쳐 넘깁니다. 스킬 선택기에서도 열 수 있습니다." /></td>
 <td><code>lit-typographic-motion</code><br /><sub><code>skill picker</code></sub></td>
 <td><code>lit</code>으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 무대 페이지를 그리거나 글자를 움직입니다. 영상은 검사와 눈으로 보는 확인을 거쳐 넘깁니다. 스킬 선택기에서도 열 수 있습니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/visual-qa.webp" width="240" alt="실제 화면을 증거로 확인하고, 쓰기 권한은 늘리지 않습니다. 스킬 선택기에서 엽니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/visual-qa.webp" width="240" alt="실제 화면을 증거로 확인하고, 쓰기 권한은 늘리지 않습니다. 스킬 선택기에서 엽니다." /></td>
 <td><code>visual-qa</code><br /><sub><code>skill picker</code></sub></td>
 <td>실제 화면을 증거로 확인하고, 쓰기 권한은 늘리지 않습니다. 스킬 선택기에서 엽니다.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/skills/automatic-guards.webp" width="240" alt="알아서 돌아갑니다. LitOpenCode 에이전트를 등록하고, 수정 뒤 주석을 확인하고, 범위 없는 “항상 더 낫다” 주장을 막습니다." /></td>
+<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/automatic-guards.webp" width="240" alt="알아서 돌아갑니다. LitOpenCode 에이전트를 등록하고, 수정 뒤 주석을 확인하고, 범위 없는 “항상 더 낫다” 주장을 막습니다." /></td>
 <td><code>agent-roster</code> · <code>reference-benchmark-claims</code> · <code>native-goal-verdict</code> · <code>search-workflow-ideas</code> · <code>release-guardrails</code> · <code>comment-checker</code> · <code>tool-guards</code><br /><sub>자동 실행</sub></td>
 <td>알아서 돌아갑니다. LitOpenCode 에이전트를 등록하고, 수정 뒤 주석을 확인하고, 범위 없는 “항상 더 낫다” 주장을 막습니다.</td>
 </tr>
@@ -426,38 +426,38 @@ S3·S4·S11은 인터페이스 라운드, S5·S8·S9는 오피스 라운드 결�
 
 | 과제 | 기준선 | LitOpenCode |
 |---|---|---|
-| S3 | ![S3 기준선 가계부 대시보드, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S3/baseline-desktop.webp) | ![S3 LitOpenCode 가계부 대시보드, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S3/lit-desktop.webp) |
-| S4 | ![S4 기준선 카페 랜딩페이지, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S4/baseline-desktop.webp) | ![S4 LitOpenCode 카페 랜딩페이지, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S4/lit-desktop.webp) |
-| S11 | ![S11 기준선 회의실 예약 웹앱, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S11/baseline-desktop.webp) | ![S11 LitOpenCode 회의실 예약 웹앱, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S11/lit-desktop.webp) |
+| S3 | ![S3 기준선 가계부 대시보드, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S3/baseline-desktop.webp) | ![S3 LitOpenCode 가계부 대시보드, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S3/lit-desktop.webp) |
+| S4 | ![S4 기준선 카페 랜딩페이지, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S4/baseline-desktop.webp) | ![S4 LitOpenCode 카페 랜딩페이지, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S4/lit-desktop.webp) |
+| S11 | ![S11 기준선 회의실 예약 웹앱, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S11/baseline-desktop.webp) | ![S11 LitOpenCode 회의실 예약 웹앱, 데스크톱](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S11/lit-desktop.webp) |
 
 <details>
 <summary>휴대전화 화면</summary>
 
 | 과제 | 기준선 | LitOpenCode |
 |---|---|---|
-| S3 | ![S3 기준선 가계부 대시보드, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S3/baseline-phone.webp) | ![S3 LitOpenCode 가계부 대시보드, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S3/lit-phone.webp) |
-| S4 | ![S4 기준선 카페 랜딩페이지, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S4/baseline-phone.webp) | ![S4 LitOpenCode 카페 랜딩페이지, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S4/lit-phone.webp) |
-| S11 | ![S11 기준선 회의실 예약 웹앱, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S11/baseline-phone.webp) | ![S11 LitOpenCode 회의실 예약 웹앱, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S11/lit-phone.webp) |
+| S3 | ![S3 기준선 가계부 대시보드, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S3/baseline-phone.webp) | ![S3 LitOpenCode 가계부 대시보드, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S3/lit-phone.webp) |
+| S4 | ![S4 기준선 카페 랜딩페이지, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S4/baseline-phone.webp) | ![S4 LitOpenCode 카페 랜딩페이지, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S4/lit-phone.webp) |
+| S11 | ![S11 기준선 회의실 예약 웹앱, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S11/baseline-phone.webp) | ![S11 LitOpenCode 회의실 예약 웹앱, 휴대전화](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S11/lit-phone.webp) |
 
 </details>
 
 S5, lit 발표자료입니다. 기준선은 마크다운만 남겨 렌더링된 결과가 없습니다.
 
-![S5 LitOpenCode 파워포인트 발표자료](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S5/lit-slides.webp)
+![S5 LitOpenCode 파워포인트 발표자료](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S5/lit-slides.webp)
 
 S8, 기준선 발표자료와 lit 발표자료입니다.
 
-![S8 기준선 분기 실적 발표자료](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S8/baseline-slides.webp)
+![S8 기준선 분기 실적 발표자료](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S8/baseline-slides.webp)
 
-![S8 LitOpenCode 분기 실적 발표자료](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S8/lit-slides.webp)
+![S8 LitOpenCode 분기 실적 발표자료](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S8/lit-slides.webp)
 
 S9, lit 기획서 페이지입니다. 기준선은 파일 없이 대화창에만 답했습니다.
 
-![S9 LitOpenCode 신제품 기획서 페이지](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S9/lit-pages.webp)
+![S9 LitOpenCode 신제품 기획서 페이지](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S9/lit-pages.webp)
 
 S7, lit 구조도입니다.
 
-![S7 LitOpenCode 주문·결제·배송 구조도](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/ab/S7/lit-diagram.webp)
+![S7 LitOpenCode 주문·결제·배송 구조도](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S7/lit-diagram.webp)
 
 ## 명령어
 
@@ -493,9 +493,9 @@ canonical 경로를 사용합니다. 번호가 붙은 license·provenance 파일
 | `/lit-korean` | 의미를 유지하며 한국어 문장 다듬기 |
 | `/lit-scientific-visualization` | 패키지에 포함된 과학 시각화 워크플로 |
 
-Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference-Ko-KR.md#주요-명령)에,
-두 가지 rule 처리 경로는 [규칙 엔진 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference.md#safety-and-updates)에서 확인하세요.
-이전 스킬 이름은 한 릴리스 동안 별칭으로 연결됩니다. [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/migration.md#skill-id-renames)를 확인하세요.
+Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference-Ko-KR.md#주요-명령)에,
+두 가지 rule 처리 경로는 [규칙 엔진 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md#safety-and-updates)에서 확인하세요.
+이전 스킬 이름은 한 릴리스 동안 별칭으로 연결됩니다. [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/migration.md#skill-id-renames)를 확인하세요.
 
 ## 안전과 업데이트
 
@@ -506,7 +506,7 @@ Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](https://cd
   `--no-auto-update` 또는 `LITOPENCODE_NO_AUTO_UPDATE=1`로 자동 업데이트를 끌 수 있습니다.
 - 스킬 학습 결과는 명시적인 apply 명령이 있어야 반영됩니다. 학습의 review·변경·rollback·curator는
   POSIX를 지원하며 Windows에서는 해당 경계를 차단합니다. 설치, doctor, 수동 조회에는
-  이 제한이 적용되지 않습니다. [학습 루프 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference.md#skill-learning-loop).
+  이 제한이 적용되지 않습니다. [학습 루프 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md#skill-learning-loop).
 
 ## Jev 스킬 힌트 (선택)
 
@@ -540,7 +540,7 @@ export TYPESAFE_API_KEY=<본인의 TypeSafe 키>
 - 세션마다 조건에 맞는 첫 턴에 `✦ Jev skill hint is ON` 알림이 한 번 떠서 힌트가 켜져 있음을 알려 줍니다.
 - 끄려면 `LITOPENCODE_JEV`를 지우거나 `1`이 아닌 값으로 바꿉니다.
 
-세부 변수와 디버그 기록은 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)에 있습니다.
+세부 변수와 디버그 기록은 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)에 있습니다.
 
 ## 문제 해결
 
@@ -552,12 +552,12 @@ export TYPESAFE_API_KEY=<본인의 TypeSafe 키>
 npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 ```
 
-[설치와 모델 설정 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference-Ko-KR.md#설치)를 참고하세요.
+[설치와 모델 설정 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference-Ko-KR.md#설치)를 참고하세요.
 
 `install`과 `doctor`는 `<root>/skills`가 심볼릭 링크일 때 그 사실과 git 저장소 경고를
 보고하며, `~/.agents/skills`, `~/.claude/skills`, 프로젝트 스킬 디렉토리에 같은 이름의
 스킬이 있으면 함께 알려줍니다. 자세한 내용은
-[심볼릭 링크된 native 스킬 루트와 다른 위치의 같은 이름 스킬](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference-Ko-KR.md#심볼릭-링크된-native-스킬-루트와-다른-위치의-같은-이름-스킬)을
+[심볼릭 링크된 native 스킬 루트와 다른 위치의 같은 이름 스킬](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference-Ko-KR.md#심볼릭-링크된-native-스킬-루트와-다른-위치의-같은-이름-스킬)을
 참고하세요.
 
 ## 제거
@@ -573,7 +573,7 @@ npm uninstall -g @litfamily/litopencode
 설치된 명령·스킬 파일은 소유 관계를 확인한 뒤 설치 도구가 관리하는 복사본만 제거하세요.
 사용자가 만든 파일과 수정 내용은 보존합니다. route가 필요하면 `litopencode.json`을,
 작업을 재개할 계획이라면 프로젝트의 `.litopencode/` 기록을 남기세요. 제거 후 OpenCode를
-재시작합니다. [제거 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference-Ko-KR.md#제거).
+재시작합니다. [제거 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference-Ko-KR.md#제거).
 
 ## 라이선스
 
@@ -583,25 +583,25 @@ MIT
 
 ### 문서
 
-- [워크플로 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference-Ko-KR.md): 모델, 권한, host 연결, 명령, 검증 방법
-- [English reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference.md): 전체 스킬 목록, 학습 루프, 규칙 엔진 포함
-- [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/migration.md)
-- [터미널 마크와 활성화 확인 문구](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/lit-mark.md)
-- [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/CHANGELOG.md)
+- [워크플로 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference-Ko-KR.md): 모델, 권한, host 연결, 명령, 검증 방법
+- [English reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md): 전체 스킬 목록, 학습 루프, 규칙 엔진 포함
+- [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/migration.md)
+- [터미널 마크와 활성화 확인 문구](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/lit-mark.md)
+- [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/CHANGELOG.md)
 - 출시 담당자 체크리스트 (저장소 전용)
 
-- [기여 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/CONTRIBUTING.md) · [지원](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/SUPPORT.md) · [보안 제보](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/SECURITY.md)
-- [행동 규범](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/CODE_OF_CONDUCT.md) · [개인정보와 네트워크 동작](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/privacy.md)
+- [기여 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/CONTRIBUTING.md) · [지원](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/SUPPORT.md) · [보안 제보](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/SECURITY.md)
+- [행동 규범](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/CODE_OF_CONDUCT.md) · [개인정보와 네트워크 동작](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/privacy.md)
 
 ### LITFAMILY
 
-![LitClaude, LitHermes, LitCodex, LitOpenCode, LitGrok을 표현한 다섯 중장갑 머신](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/litfamily-machines.png)
+![LitClaude, LitHermes, LitCodex, LitOpenCode, LitGrok을 표현한 다섯 중장갑 머신](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/litfamily-machines.png)
 
 LitClaude · LitHermes · LitCodex · LitOpenCode · LitGrok.
 다섯 중장갑 머신으로 다섯 제품을 표현한 일러스트입니다. 각 제품은 자신이 지원하는 도구에서 독립적으로 동작합니다.
 
 ### Ignition motion
 
-[![Ignition 모션 그래픽 포스터](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/poster.png)](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/ignition-film.mp4)
+[![Ignition 모션 그래픽 포스터](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/poster.png)](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ignition-film.mp4)
 
-[10초 영상 보기](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/ignition-film.mp4) · [애니메이션 GIF](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/ignition-readme.gif) · [Lucide 아이콘 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/Lucide-LICENSE.txt) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/assets/readme/JetBrainsMono-OFL.txt)
+[10초 영상 보기](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ignition-film.mp4) · [애니메이션 GIF](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ignition-readme.gif) · [Lucide 아이콘 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/Lucide-LICENSE.txt) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/JetBrainsMono-OFL.txt)
