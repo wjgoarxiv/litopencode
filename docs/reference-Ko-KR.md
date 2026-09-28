@@ -253,6 +253,45 @@ npm uninstall -g @litfamily/litopencode
 - Public-source retrieval에는 SSRF 검사, redirect 검증, byte 제한, access verdict가
   있습니다. 가져온 본문은 명령이 아니라 데이터로 처리합니다.
 
+## Jev 스킬 힌트 (선택)
+
+`chat.message` hook이 TypeSafe의 판단 모델 Jev에게 사용자 턴에 맞는 runtime 스킬을 물을 수
+있습니다. `LITOPENCODE_JEV=1`과 `TYPESAFE_API_KEY`가 모두 프로세스 환경에 있어야 켜지고, 그렇지
+않으면 네트워크 요청을 하지 않습니다. 키는 환경 변수에서만 읽고 `Authorization` header로만
+보내며, 파일·로그·화면에 남기지 않습니다.
+
+- **대상 턴.** 루트 세션만 해당합니다. 슬래시 명령(`command.execute.before`가 펼친 명령 포함),
+  lit 경로가 이미 처리한 턴, 첨부 파일 본문 같은 synthetic part, 공백을 뺀 4자 미만의
+  프롬프트는 건너뜁니다. OpenCode는 `command.execute.before`가 받은 parts 배열이 아니라 새 배열을
+  `chat.message`에 넘기므로, 명령은 세션에 표시를 남기고 그 세션의 다음 `chat.message`가 이
+  표시를 소비합니다.
+- **요청.** 조건에 맞는 턴마다 `POST https://api.typesafe.ai/v1/systemone`을 한 번 보내고
+  다시 시도하지 않으며 리다이렉트도 따르지 않습니다(`redirect: "error"`). 본문에는 `model`,
+  `state`, `questions`만 들어갑니다. `state`는 프롬프트 앞 8,000자에서 홈 경로를 `~`로, 이메일을
+  `[email]`로, 토큰 형태의 문자열(`password=`/`token=`/`secret=` 형식의 대입과 키 자체 포함)을
+  `[secret]`으로 바꾼 뒤 2,000자에서 자릅니다. 잘린 자리에 토큰 문자 8개 이상이 남으면 그것도
+  `[secret]`이 됩니다. 호스트 이름이나 고객 이름처럼 토큰 형태가 아닌 내용은 그대로 전송됩니다.
+  후보 목록은 runtime 스킬과 `none`입니다.
+- **붙는 문장.** 힌트와 실패 안내는 `synthetic` text part로 붙습니다. OpenCode는 이 part를
+  모델에 그대로 보내지만, 사용자가 쓴 글로 표시하거나 복사하지 않습니다.
+- **응답.** HTTP 200, 올바른 JSON, 후보 id와 정확히 같은 `answers.which.choice`, 기준 이상의
+  `answers.which.confidence`를 모두 만족할 때만 힌트를 붙입니다. 붙는 문장은 LitOpenCode가 정한
+  고정 문장이며 응답 본문을 옮기지 않습니다.
+- **실패 시.** 시간 초과, 네트워크 오류, 200이 아닌 상태, 잘못된 응답, 호출 한도 도달 때는 힌트
+  없이 평소대로 진행합니다. 세션의 첫 실패에만 짧은 안내 한 줄이 붙습니다.
+- **상태.** `litopencode doctor`의 `jevSkillHint` 값이 `Jev skill hint: off`, `on`,
+  `flag on but TYPESAFE_API_KEY missing` 가운데 하나로 나옵니다.
+
+| 변수 | 기본값 | 효과 |
+| --- | --- | --- |
+| `LITOPENCODE_JEV` | 없음 | `1`이면 키가 있을 때 힌트를 켭니다. |
+| `TYPESAFE_API_KEY` | 없음 | 본인의 TypeSafe 키입니다. 요금은 입력 토큰 100만 개당 약 0.04달러입니다. |
+| `LITOPENCODE_JEV_MODEL` | `jev-1.13.0` | 요청에 담는 모델 이름입니다. |
+| `LITOPENCODE_JEV_TIMEOUT_MS` | `1500` | 제한 시간(ms)이며 최대 `3000`입니다. |
+| `LITOPENCODE_JEV_MAX_CALLS` | `200` | 세션당 요청 수 한도입니다. |
+| `LITOPENCODE_JEV_MIN_CONFIDENCE` | `0.35` | 힌트를 붙이는 최소 확신도입니다. |
+| `LITOPENCODE_JEV_TRACE` | 없음 | `1`이면 요청마다 `.litopencode/logs/jev-skill-hint.jsonl`에 시각, 프롬프트 SHA-256, 고른 id, 확신도, 지연 시간, HTTP 상태, 실패 사유를 한 줄씩 남깁니다. 프롬프트 본문, 키, 응답 본문은 남기지 않습니다. |
+
 ## 패키지 경로
 
 - 패키지와 plugin id: `litopencode`

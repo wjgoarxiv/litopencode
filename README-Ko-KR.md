@@ -508,6 +508,40 @@ Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](https://cd
   POSIX를 지원하며 Windows에서는 해당 경계를 차단합니다. 설치, doctor, 수동 조회에는
   이 제한이 적용되지 않습니다. [학습 루프 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference.md#skill-learning-loop).
 
+## Jev 스킬 힌트 (선택)
+
+기본값은 꺼짐입니다. 켜면 조건에 맞는 대화 턴마다 TypeSafe가 호스팅하는 판단 모델 Jev에게
+이 프롬프트에 맞는 LitOpenCode 스킬이 무엇인지 묻습니다. Jev가 LitOpenCode 스킬 가운데 하나를
+충분한 확신으로 고르면, 그 턴에 해당 스킬을 알려 주는 참고 문장 한 줄이 붙습니다. 스킬을
+불러올지는 여전히 모델이 정합니다. 힌트는 권한을 주지 않고 도구도 실행하지 않습니다. 슬래시
+명령, 하위 세션, 이미 lit 경로가 처리한 턴, 공백을 뺀 4자 미만의 프롬프트는 건너뜁니다.
+
+켜려면 OpenCode를 실행하는 환경에 두 변수를 모두 설정합니다.
+
+```sh
+export LITOPENCODE_JEV=1
+export TYPESAFE_API_KEY=<본인의 TypeSafe 키>
+```
+
+- **켜면 조건에 맞는 프롬프트가 TypeSafe(typesafe.ai)로 전송됩니다.** 프롬프트는 2,000자에서
+  자르고, 홈 경로·이메일 주소·토큰 형태의 문자열을 가린 뒤 보냅니다. 파일, 도구 출력, 이전
+  대화는 보내지 않습니다.
+- 토큰 형태가 아닌 내용은 쓴 그대로 전송됩니다. 호스트 이름, 고객 이름, `password=...` 형식이
+  아닌 비밀번호가 그 예입니다.
+- `TYPESAFE_API_KEY`는 OpenCode를 실행하는 셸에 export되어 있으므로 에이전트의 도구도 이 값을
+  읽을 수 있습니다. 이 기능 전용 키를 만들고 사용 한도를 낮게 잡아 두세요.
+- 요금은 본인의 TypeSafe 계정에 청구되며, 입력 토큰 100만 개당 약 0.04달러입니다.
+- 요청은 1.5초가 지나면 끊기고 다시 시도하지 않습니다. 실패해도 턴은 평소대로 진행되며,
+  세션에서 처음 실패했을 때만 짧은 안내가 한 번 붙습니다.
+- `litopencode doctor`는 `Jev skill hint: off`, `on`, `flag on but TYPESAFE_API_KEY missing`
+  가운데 하나를 보여 줍니다. 키는 표시하지 않습니다.
+- 힌트가 붙은 턴에는 OpenCode 화면에 `Jev → lit-humanizer (0.27s)`처럼 스킬 이름과 요청 시간을
+  담은 짧은 알림이 뜹니다. 기능이 꺼져 있거나 맞는 스킬이 없으면 알림도 뜨지 않습니다.
+- 세션마다 조건에 맞는 첫 턴에 `✦ Jev skill hint is ON` 알림이 한 번 떠서 힌트가 켜져 있음을 알려 줍니다.
+- 끄려면 `LITOPENCODE_JEV`를 지우거나 `1`이 아닌 값으로 바꿉니다.
+
+세부 변수와 디버그 기록은 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)에 있습니다.
+
 ## 문제 해결
 
 모델의 완료 보고와 실제 동작이 다르면 그 차이를 알려주세요.

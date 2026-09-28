@@ -504,6 +504,41 @@ Autoresearch, Autoconference, Wikify, UI/UX, and the two-lane repository rules e
   curator boundaries support POSIX; on Windows those boundaries fail closed. Install,
   doctor, and passive surfaces remain available. [Learning-loop details](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference.md#skill-learning-loop).
 
+## Jev skill hint (optional)
+
+This hint is off by default. When it is on, each eligible chat turn asks Jev, TypeSafe's hosted
+typed-decision model, which LitOpenCode skill fits the prompt. If Jev names one of LitOpenCode's
+own skills with enough confidence, the turn gets one advisory line naming that skill. The model
+still decides whether to load it; the hint grants no permission and starts no tool. Slash
+commands, child sessions, turns a lit route already claimed, and prompts under four characters
+are skipped.
+
+To turn it on, set both variables in the environment that starts OpenCode:
+
+```sh
+export LITOPENCODE_JEV=1
+export TYPESAFE_API_KEY=<your own TypeSafe key>
+```
+
+- **Turning it on sends each eligible prompt to TypeSafe (typesafe.ai).** The prompt is cut to
+  2,000 characters, and home paths, e-mail addresses and token-shaped strings are replaced
+  before it is sent. Files, tool output and earlier turns are not sent.
+- Anything in the prompt without a token shape is sent as written, for example hostnames,
+  customer names, or a password that is not written as `password=...`.
+- Because `TYPESAFE_API_KEY` is exported in the shell that starts OpenCode, the agent's own tools
+  can read it. Use a key made only for this feature, with a low spending limit.
+- TypeSafe bills your own account, at about $0.04 per million input tokens.
+- Each request stops after 1.5 seconds and is not retried. If it fails, the turn continues as
+  usual, with one short note the first time in a session.
+- `litopencode doctor` reports `Jev skill hint: off`, `on`, or
+  `flag on but TYPESAFE_API_KEY missing`. It never shows the key.
+- When a turn gets a hint, OpenCode shows a short toast such as `Jev → lit-humanizer (0.27s)`
+  with the skill and the request time; there is no toast when the feature is off or no skill fits.
+- On the first eligible turn of each session, a `✦ Jev skill hint is ON` toast shows once so you know the hint is active.
+- To turn it off, unset `LITOPENCODE_JEV` or set it to anything other than `1`.
+
+Tuning variables and the debug trace are in the [Jev skill hint reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.9/docs/reference.md#jev-skill-hint-optional).
+
 ## Troubleshooting
 
 If the behavior differs from the completion report, tell the agent what happened.

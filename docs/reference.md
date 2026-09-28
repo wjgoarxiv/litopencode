@@ -364,6 +364,49 @@ when discarding that project's ledger and receipts is intentional.
   Metadata-only overflow emits a bounded digest/omission rule fragment.
 - session-scoped rule delivery deduplicates matching content and stays bounded after compaction.
 
+## Jev skill hint (optional)
+
+The `chat.message` hook can ask Jev, TypeSafe's hosted typed-decision model, which runtime skill
+fits a user turn. It is off unless `LITOPENCODE_JEV=1` and `TYPESAFE_API_KEY` are both set in the
+process environment; otherwise it makes no network call. The key is read from the environment
+only. It is sent only in the `Authorization` header and is never written, logged or shown.
+
+- **Eligible turns.** Root sessions only. Slash commands (including every command expanded by
+  `command.execute.before`), turns a deterministic lit route already claimed, synthetic parts
+  such as attached file text, and prompts under four non-space characters are skipped. OpenCode
+  hands `chat.message` a new parts array rather than the one `command.execute.before` saw, so a
+  command marks its session instead, and that session's next `chat.message` consumes the mark.
+- **Request.** One `POST https://api.typesafe.ai/v1/systemone` per eligible turn, no retry and no
+  redirects (`redirect: "error"`). The body holds only `model`, `state` and `questions`. `state`
+  is built from the first 8,000 characters of the user's prompt text: home paths become `~`,
+  e-mail addresses `[email]`, and token-shaped strings (provider key prefixes, JWTs, PEM blocks,
+  `password=`/`token=`/`secret=`-style assignments, runs of 32 or more hex or base64
+  characters, and the key itself) `[secret]`. Only then is it cut to 2,000 characters, and a
+  run of eight or more token characters left at the cut also becomes `[secret]`. Anything
+  without a token shape, such as a hostname or a customer name, is sent as written. The catalog
+  is the Runtime Skills list above, each with its summary cut to 300 characters, plus `none`.
+- **Added text.** The hint or the fallback note is a `synthetic` text part: OpenCode still sends
+  it to the model, but does not show or copy it as the user's own words.
+- **Answer.** A hint is added only for HTTP 200, parseable JSON, an `answers.which.choice` that is
+  exactly a catalog id, and an `answers.which.confidence` at or above the threshold. The added text is
+  LitOpenCode's own fixed sentence with that id; no response text is copied into the turn.
+- **Fallback.** On a timeout, network error, non-200 status, invalid answer or reached cap, the
+  turn continues as it would without the hint. The first failure in a session adds one short
+  `LitOpenCode skill hint unavailable (<reason>); continuing normally.` line; later failures are
+  silent.
+- **Status.** `litopencode doctor` reports `jevSkillHint` as `Jev skill hint: off`, `on`, or
+  `flag on but TYPESAFE_API_KEY missing`.
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `LITOPENCODE_JEV` | unset | `1` turns the hint on when the key is also set. |
+| `TYPESAFE_API_KEY` | unset | Your own TypeSafe key. TypeSafe bills about $0.04 per million input tokens. |
+| `LITOPENCODE_JEV_MODEL` | `jev-1.13.0` | Model name sent with each request. |
+| `LITOPENCODE_JEV_TIMEOUT_MS` | `1500` | Hard timeout in milliseconds, capped at `3000`. |
+| `LITOPENCODE_JEV_MAX_CALLS` | `200` | Requests allowed per session. |
+| `LITOPENCODE_JEV_MIN_CONFIDENCE` | `0.35` | Lowest confidence that produces a hint. |
+| `LITOPENCODE_JEV_TRACE` | unset | `1` appends one record per request to `.litopencode/logs/jev-skill-hint.jsonl`: time, prompt SHA-256, chosen id, confidence, latency, HTTP status and fallback reason. It holds no prompt text, key or response body. |
+
 ## Package surface
 
 - Package and plugin id: `litopencode`

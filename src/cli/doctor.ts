@@ -18,6 +18,7 @@ import { inspectHostLimits } from "./host-limits.ts";
 import { inspectLspCapability } from "./lsp-capability.ts";
 import { probeMotionRuntime } from "./motion-runtime.ts";
 import { isLitOpenCodeEntry } from "./plugin-mutation.ts";
+import { jevSkillHintDoctorLine } from "../jev-skill-hint.ts";
 import {
   autoUpdateInstallLockPath,
   autoUpdateJournalPath,
@@ -156,6 +157,7 @@ export async function doctor(root: string): Promise<CliResult> {
         hostLimits: { path: hostConfig.path, ...inspectHostLimits(hostConfig.config) },
         lsp: inspectLspCapability(hostConfig.config),
         motion,
+        jevSkillHint: jevSkillHintDoctorLine(process.env),
         config: {
           source: loaded.source,
           sources: loaded.sources,

@@ -20,6 +20,7 @@ import { isReadOnlyWorkflowFamilyPlan } from "./workflow-families.ts";
 import { queryKnowledge } from "./knowledge.ts";
 import { activationDiscipline } from "./activation-probe.ts";
 import { micro, supportsMarkGlyphs } from "./lit-mark.ts";
+import { jevSkillHintAwarenessText, jevSkillHintToastText, type JevSkillHintPart } from "./jev-skill-hint.ts";
 
 // Prompt modules preserve minimum-first, single-task or few-task planning, avoidable custom code review,
 // and external-source safety; this module only coordinates their unchanged activation surfaces.
@@ -86,6 +87,34 @@ export function showActivationToast(
   }
 }
 
+/**
+ * One quiet `info` toast per hinted turn; notes, `none` and silent turns never reach it. On the first
+ * eligible turn of a session (`announce`) the standout ON notice goes out instead, with that turn's hint
+ * as its body: the TUI keeps a single toast, so a second one would replace the notice at once.
+ */
+export function showJevSkillHintToast(
+  client: ActivationToastClient | undefined,
+  hint: JevSkillHintPart | undefined,
+  announce = false
+): void {
+  const hinted = hint?.kind === "hint" ? jevSkillHintToastText(hint.skillId, hint.latencyMs) : undefined;
+  let body: NonNullable<TuiShowToastData["body"]>;
+  if (announce) {
+    body = hinted === undefined
+      ? { message: jevSkillHintAwarenessText, variant: "warning" }
+      : { title: jevSkillHintAwarenessText, message: hinted, variant: "warning" };
+  } else if (hinted !== undefined) {
+    body = { message: hinted, variant: "info" };
+  } else {
+    return;
+  }
+  try {
+    const pending = client?.tui?.showToast({ body });
+    void pending?.catch(() => undefined);
+  } catch { // no-excuse-ok: catch -- a missing or failing TUI must never block the user message.
+  }
+}
+
 const knownSubagentAgentNames = new Set<string>([
   ...litOpenCodeAgents.filter((agent) => agent.mode !== "primary").map((agent) => agent.id),
   "build",
@@ -102,10 +131,11 @@ export type ChatMessageActivationOptions = {
   readonly onScientificVisualizationActivation?: (sessionID: string) => void;
   readonly onRootUserTurn?: (sessionID: string) => void | Promise<void>;
   readonly onSkillActivation?: (sessionID: string, skillId: string, appendedLit?: boolean) => void | Promise<void>;
-  readonly trustedInjectedSkill?: (
-    sessionID: string,
-    parts: readonly { readonly type: string; readonly metadata?: { readonly [key: string]: unknown } }[]
-  ) => string | undefined;
+  /** Consumes the skill a trusted command activation recorded for this session, if any. */
+  readonly trustedInjectedSkill?: (sessionID: string) => string | undefined;
+  /** Consumes the mark `command.execute.before` left for this session's next message. */
+  readonly isCommandTurn?: (sessionID: string) => boolean;
+  readonly skillHint?: (sessionID: string, promptText: string) => Promise<JevSkillHintPart | undefined>;
 };
 
 // Activation belongs to root user sessions only: a delegated child prompt that
@@ -139,10 +169,13 @@ export function createChatMessageActivationHook(
     // it cannot be forged by a user-authored message to preserve stale state.
     if (processedOutputs.has(output)) return;
     processedOutputs.add(output);
+    // Command marks are keyed by session and consumed here, on every turn: the host hands this hook a
+    // new parts array, so the array `command.execute.before` saw can never be matched by identity.
+    const commandTurn = options.isCommandTurn?.(input.sessionID) === true;
+    const trustedInjectedSkill = options.trustedInjectedSkill?.(input.sessionID);
     const agent = input.agent ?? (typeof output.message.agent === "string" ? output.message.agent : undefined);
     const childSession = await isChildSessionMessage(input.sessionID, agent, options.getSession);
     if (!childSession) {
-      const trustedInjectedSkill = options.trustedInjectedSkill?.(input.sessionID, output.parts);
       await options.onRootUserTurn?.(input.sessionID);
       if (trustedInjectedSkill !== undefined) {
         await options.onSkillActivation?.(input.sessionID, trustedInjectedSkill);
@@ -186,6 +219,29 @@ export function createChatMessageActivationHook(
         }
       } catch { // no-excuse-ok: catch -- local relevance must never block the user message.
         // A malformed or unreadable knowledge store stays silent instead of inventing context.
+      }
+    }
+    // The optional skill hint only speaks on root turns that no command or deterministic route claimed.
+    if (!childSession && mode === undefined && options.skillHint !== undefined && !commandTurn) {
+      const promptText = nonEmptyTextParts
+        .filter((part) => (part as { readonly synthetic?: boolean }).synthetic !== true)
+        .map((part) => part.text)
+        .join("\n");
+      try {
+        const hint = await options.skillHint(input.sessionID, promptText);
+        if (hint !== undefined) {
+          output.parts.push({
+            id: `prt_litopencode_skill_hint_${idSuffix(input.messageID ?? output.message.id)}`,
+            sessionID: input.sessionID,
+            messageID: input.messageID ?? output.message.id,
+            type: "text",
+            text: hint.text,
+            // Sent to the model like any text part, but not shown or copied as the user's own words.
+            synthetic: true,
+            metadata: { litopencodeSkillHint: { kind: hint.kind, source: "chat.message" } }
+          });
+        }
+      } catch { // no-excuse-ok: catch -- the optional hint must never block the user message.
       }
     }
     if (mode === undefined || childSession) return;

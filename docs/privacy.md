@@ -14,6 +14,7 @@ providers, npm, and other tools have their own behavior and policies.
 | Project `.litopencode/litgoal/lit-loop/` | Goals, criteria, checkpoints, session identifiers, evidence references, a brief, ledger events, and bounded lifecycle state used to resume work. Evidence files can contain commands, output, or project material. |
 | Project `.litopencode/knowledge/` | Locally captured knowledge claims and review state. Legacy skill-learning files from earlier releases are left untouched and are no longer read. |
 | Project `.litopencode/logs/litopencode.log` | The logger's JSON-lines destination for timestamps, levels, and messages when explicitly enabled. The current server creates the logger with logging disabled by default. |
+| Project `.litopencode/logs/jev-skill-hint.jsonl` | Written only when `LITOPENCODE_JEV_TRACE=1`: one record per Jev skill hint request with time, prompt SHA-256, chosen skill id, confidence, latency, HTTP status and fallback reason. No prompt text, key or response body. |
 | OpenCode config root | Plugin registration, `litopencode.json` routes and choices, and installed command/skill files. The default is `~/.config/opencode`; `XDG_CONFIG_HOME` or a CLI `--root` changes the applicable root. |
 | Home `~/.litopencode/` | Update cache, locks, transaction journal and receipt, and retained recovery backups after an unsuccessful automatic update. Backups can contain OpenCode configuration and installed command/skill content. |
 
@@ -49,6 +50,17 @@ browser cookies or provider credentials. A destination can still see the request
 path and query string and normal network metadata. Never put secrets in a URL:
 redacting a returned result cannot retract a request already sent to its server.
 Retrieved text and source addresses can become part of tool output and host context.
+
+**Jev skill hint (off by default).** When `LITOPENCODE_JEV=1` and `TYPESAFE_API_KEY`
+are both set, the `chat.message` hook sends each eligible user prompt to TypeSafe at
+`api.typesafe.ai`, together with the LitOpenCode skill ids and summaries. The prompt is cut
+to 2,000 characters and home paths, e-mail addresses and token-shaped strings are replaced
+first. Anything in the prompt without a token shape is sent as written, for example hostnames,
+customer names, or a password that is not written as `password=...`. Files, tool output and
+earlier turns are not sent. Because `TYPESAFE_API_KEY` is exported in the shell that starts
+OpenCode, the agent's own tools can read it; use a key made only for this feature, with a low
+spending limit. TypeSafe's own retention and billing terms apply. Unset `LITOPENCODE_JEV` to
+stop these requests.
 
 **OpenCode and providers.** Agent prompts, user requests, selected files, and tool
 results are processed through the OpenCode host and configured provider. LitOpenCode

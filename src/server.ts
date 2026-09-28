@@ -1,6 +1,7 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createChatMessageActivationHook, showActivationToast } from "./activation.ts";
+import { createChatMessageActivationHook, showActivationToast, showJevSkillHintToast } from "./activation.ts";
 import { registerLitOpenCodeAgents } from "./agents.ts";
 import { createBoundedAuthorityEventHook } from "./bounded-authority-hooks.ts";
 import { createCommandActivationHook } from "./commands.ts";
@@ -8,6 +9,7 @@ import { loadConfig } from "./config.ts";
 import { createDeliverableHedgeGuard } from "./deliverable-hedge-guard.ts";
 import { createToolExecuteAfterHook, createToolExecuteBeforeHook } from "./hooks.ts";
 import { createLogger } from "./logger.ts";
+import { createJevSkillHint } from "./jev-skill-hint.ts";
 import { createIgnitionState } from "./ignition.ts";
 import { createSessionLookup } from "./session-lineage.ts";
 import { applyCompactionRuleReset, applyStaticRuleInjection } from "./rules/hooks.ts";
@@ -52,7 +54,10 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       ignitionState.activate(sessionID, skillId, !appendedLit);
     };
     const boundedAuthorityEvent = createBoundedAuthorityEventHook(root, input?.client, loaded.config.boundedAuthority);
-    const trustedCommandActivations = new WeakMap<object, { readonly sessionID: string; readonly skillId: string }>();
+    const skillHint = createJevSkillHint({ traceFile: path.join(loaded.paths.logsDir, "jev-skill-hint.jsonl") });
+    // Keyed by session: the host resolves command parts into a new array before chat.message runs.
+    const pendingCommand = new Set<string>();
+    const trustedCommandActivations = new Map<string, string>();
     const commandActivation = createCommandActivationHook(root, {
       commandAliasRoot: defaultOpenCodeConfigRoot(),
       boundedAuthority: loaded.config.boundedAuthority,
@@ -67,6 +72,9 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       event: async (eventInput) => {
         if (eventInput.event.type === "session.deleted") {
           ignitionState.clear(eventInput.event.properties.info.id);
+          skillHint.forget(eventInput.event.properties.info.id);
+          pendingCommand.delete(eventInput.event.properties.info.id);
+          trustedCommandActivations.delete(eventInput.event.properties.info.id);
         }
         await boundedAuthorityEvent(eventInput);
       },
@@ -79,22 +87,28 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           ignitionState.resetDiscipline(sessionID);
         },
         onSkillActivation: recordSkillActivation,
-        trustedInjectedSkill: (sessionID, parts) => {
-          const trusted = trustedCommandActivations.get(parts);
-          trustedCommandActivations.delete(parts);
-          return trusted?.sessionID === sessionID ? trusted.skillId : undefined;
+        isCommandTurn: (sessionID) => pendingCommand.delete(sessionID),
+        skillHint: async (sessionID, promptText) => {
+          const hint = await skillHint.hintFor(sessionID, promptText);
+          showJevSkillHintToast(input?.client, hint, skillHint.claimAwareness(sessionID, promptText));
+          return hint;
+        },
+        trustedInjectedSkill: (sessionID) => {
+          const skillId = trustedCommandActivations.get(sessionID);
+          trustedCommandActivations.delete(sessionID);
+          return skillId;
         }
       }),
       "command.execute.before": async (commandInput, commandOutput) => {
+        pendingCommand.add(commandInput.sessionID);
         const priorLength = commandOutput.parts.length;
         await commandActivation(commandInput, commandOutput);
         const activationPart = commandOutput.parts.slice(priorLength).reverse().find(
           (part) => trustedCommandSkillId(part) !== undefined
         );
         const skillId = trustedCommandSkillId(activationPart);
-        if (skillId !== undefined) {
-          trustedCommandActivations.set(commandOutput.parts, { sessionID: commandInput.sessionID, skillId });
-        }
+        if (skillId === undefined) trustedCommandActivations.delete(commandInput.sessionID);
+        else trustedCommandActivations.set(commandInput.sessionID, skillId);
       },
       "experimental.text.complete": ignitionState.complete,
       "experimental.chat.system.transform": async (transformInput, transformOutput) => {
