@@ -1,0 +1,24 @@
+UI/UX Pro Max design data
+
+This package includes a normalized subset of design data from
+nextlevelbuilder/ui-ux-pro-max-skill at Git commit
+1307d97a72e6c1cda572cb65471ae5ce82995218.
+
+The reused data is licensed under the MIT License. The full pinned license is
+distributed beside this notice as LICENSE. PROVENANCE.json records all 34 allowlisted CSV source files
+with their raw hashes, selected columns, row counts,
+the deterministic repair receipt, and the canonical dataset hash.
+
+No upstream scripts, templates, CLI, installers, manifests, screenshots, previews,
+documentation, premium features, host integrations, code-example columns,
+documentation-URL columns, or google-fonts.csv data are included.
+
+The independently written craft checks also draw on these published rule mechanisms:
+- pbakaus/impeccable (https://github.com/pbakaus/impeccable), Paul Bakaus,
+  Apache License 2.0, reviewed at commit 9d715cc.
+- jakubkrehel/skills (https://github.com/jakubkrehel/skills), Copyright (c) 2026
+  Jakub Krehel, MIT License, reviewed at commit 267330e.
+- ibelick/ui-skills (https://github.com/ibelick/ui-skills), Copyright (c) 2026
+  Julien Thibeaut, MIT License; its public playbook is at
+  https://www.ui-skills.com/playbook.
+No source files or prose from these three projects are bundled here.

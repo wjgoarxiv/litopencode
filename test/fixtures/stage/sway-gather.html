@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="/lit/fonts.css">
+  <script src="/lit/stage-kit.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #fff7e8; }
+    body { color: #234c3d; font-family: "LitOpenCode Sans", sans-serif; }
+    svg { position: absolute; inset: 0; width: 1080px; height: 1920px; }
+    .copy { position: absolute; inset: 0; }
+    .line { position: absolute; left: 100px; width: 880px; text-align: center; line-height: 1.3; font-weight: 700; margin: 0; }
+    .eyebrow { top: 208px; font-size: 35px; font-weight: 400; }
+    .title { top: 298px; font-size: 88px; letter-spacing: -3px; }
+    .second { top: 412px; }
+    .note { top: 1620px; font-size: 34px; font-weight: 400; letter-spacing: -1px; }
+    .label { top: 1525px; font-size: 42px; }
+  </style>
+</head>
+<body>
+  <svg viewBox="0 0 1080 1920">
+    <defs>
+      <clipPath id="frameClip"><rect id="frameReveal" x="185" y="620" width="710" height="860" rx="355" /></clipPath>
+      <g id="stalk">
+        <path d="M0 0 C-14 -125 12 -235 0 -405" fill="none" stroke="#234c3d" stroke-width="16" stroke-linecap="round" />
+        <path d="M-3 -145 C-145 -177 -160 -298 -140 -320 C-51 -291 -18 -216 -3 -145Z" fill="#638565" />
+        <path d="M0 -80 C133 -131 152 -218 137 -239 C62 -220 12 -159 0 -80Z" fill="#8da47a" />
+        <g class="head">
+          <path d="M0 -376 C-121 -373 -145 -468 -122 -546 L-52 -500 L0 -575 L52 -500 L122 -546 C145 -468 121 -373 0 -376Z" fill="currentColor" />
+          <path d="M-122 -546 C-105 -451 -67 -394 0 -376 C-38 -421 -53 -467 -52 -500Z" fill="#fff7e8" opacity=".22" />
+          <path d="M122 -546 C105 -451 67 -394 0 -376 C38 -421 53 -467 52 -500Z" fill="#234c3d" opacity=".1" />
+        </g>
+      </g>
+    </defs>
+    <circle cx="1060" cy="55" r="250" fill="#dbe6cc" opacity=".45" />
+    <circle cx="-40" cy="1850" r="270" fill="#eeb94a" opacity=".1" />
+    <g clip-path="url(#frameClip)"><rect id="panel" x="185" y="620" width="710" height="860" fill="#dbe6cc" /></g>
+    <ellipse id="shadow" cx="540" cy="1450" rx="245" ry="24" fill="#234c3d" opacity=".08" />
+    <g id="cluster">
+      <g id="back"><path d="M-340 -350 L0 -265 L340 -350 L118 178 L-110 178Z" fill="#ecd8b7" /></g>
+      <g id="stalks"></g>
+      <g id="front">
+        <path d="M-340 -350 L85 -80 L-110 178Z" fill="#f6e5c9" />
+        <path d="M340 -350 L-85 -80 L118 178Z" fill="#e8cfaa" />
+        <path d="M-98 77 Q0 54 102 77" stroke="#234c3d" stroke-width="20" fill="none" />
+        <path d="M0 77 C-119 -12 -160 125 0 77 C119 -12 160 125 0 77 M0 77 L-55 170 M0 77 L70 157" stroke="#234c3d" stroke-width="13" fill="none" stroke-linecap="round" />
+      </g>
+    </g>
+    <path id="underline" d="M388 583 Q540 604 692 583" stroke="#ea786b" stroke-width="7" fill="none" stroke-linecap="round" />
+  </svg>
+  <div id="copy"></div>
+  <script>
+    // Every value is a pure function of t. Layers leave opacity 0 on the 6 s cut while a sine sway
+    // rotates the stalks; the replay matched the master only when it captured every frame too.
+    const COPY = {
+      hook: ["지붕의 비가", "사흘을 버틴다"],
+      shop: "처마 아래",
+      event: "물길 보기",
+      details: "안내는 현장에서 합니다",
+      highlight: ["빗물을", "한 곳에"],
+      close: ["처마 아래에서", "다시 봐요"]
+    };
+    const scenes = [
+      [['title', COPY.hook[0]], ['title second', COPY.hook[1]]],
+      [['eyebrow', COPY.shop], ['title', COPY.event], ['note', COPY.details]],
+      [['title', COPY.highlight[0]], ['title second', COPY.highlight[1]]],
+      [['title', COPY.close[0]], ['title second', COPY.close[1]], ['label', COPY.event], ['note', COPY.details]]
+    ].map(lines => {
+      const scene = document.createElement('section');
+      scene.className = 'copy';
+      lines.forEach(([style, text]) => {
+        const line = document.createElement('p');
+        line.className = `line ${style}`;
+        line.textContent = text;
+        scene.appendChild(line);
+        LitStage.text(line);
+      });
+      document.querySelector('#copy').appendChild(scene);
+      return scene;
+    });
+    const ns = 'http://www.w3.org/2000/svg';
+    const stalks = [-2, -1, 0, 1, 2].map((i) => {
+      const group = document.createElementNS(ns, 'g');
+      const stalk = document.querySelector('#stalk').cloneNode(true);
+      stalk.removeAttribute('id');
+      stalk.style.color = Math.abs(i) === 1 ? '#eeb94a' : '#ea786b';
+      group.appendChild(stalk);
+      document.querySelector('#stalks').appendChild(group);
+      return group;
+    });
+    const clamp = x => Math.max(0, Math.min(1, x));
+    const ease = x => { x = clamp(x); return x * x * (3 - 2 * x); };
+    const el = id => document.getElementById(id);
+    LitStage.define({ width: 1080, height: 1920, fps: 30, duration: 12, render(t) {
+      scenes.forEach((scene, i) => {
+        const enter = ease((t - i * 3) / .38);
+        const leave = i === 3 ? 1 : 1 - ease((t - (i + 1) * 3 + .28) / .28);
+        scene.style.opacity = enter * leave;
+        scene.style.transform = `translateY(${(1 - enter) * 24}px)`;
+      });
+      const market = ease((t - 3) / .9);
+      const bundle = ease((t - 6) / 1.1);
+      const ending = ease((t - 9) / .9);
+      const growth = ease(t / 1.1);
+      el('panel').setAttribute('transform', `translate(0 ${(1 - market) * 870})`);
+      el('panel').style.opacity = (1 - bundle) * .85 + ending * .36;
+      el('cluster').setAttribute('transform', `translate(540 ${1370 - ending * 35}) scale(${.95 - ending * .08})`);
+      stalks.forEach((stalk, n) => {
+        const i = n - 2;
+        const arrival = i === 0 ? growth : Math.abs(i) === 1 ? market : bundle;
+        const spread = i * 165 * market * (1 - bundle);
+        const angle = i * 16 * bundle + Math.sin(t * 1.5 + i) * 1.2 * arrival;
+        const openStart = i === 0 ? .2 : Math.abs(i) === 1 ? 3.15 : 6.15;
+        const open = ease((t - openStart) / .85);
+        stalk.querySelector('.head').setAttribute('transform', `translate(0 -376) scale(${.2 + .8 * open} ${.65 + .35 * open}) translate(0 376)`);
+        stalk.style.opacity = arrival;
+        stalk.setAttribute('transform', `translate(${spread} ${-Math.abs(i) * 20 * bundle}) rotate(${angle}) scale(${(.8 + .2 * arrival) * (1 - Math.abs(i) * .035 * bundle)} ${(.3 + .7 * arrival) * (1 - Math.abs(i) * .035 * bundle)})`);
+      });
+      el('back').style.opacity = bundle;
+      el('front').style.opacity = bundle;
+      el('front').setAttribute('transform', `translate(0 ${(1 - bundle) * 100})`);
+      el('shadow').style.opacity = .08 * growth;
+      el('underline').style.strokeDasharray = '310';
+      el('underline').style.strokeDashoffset = 310 * (1 - ease((t - .5) / .9));
+      el('underline').style.opacity = 1 - market * (1 - bundle);
+    }});
+  </script>
+</body>
+</html>

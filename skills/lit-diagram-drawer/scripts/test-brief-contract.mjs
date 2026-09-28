@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { checkBrief, parseBrief } from './brief-contract.mjs';
+
+const brief=`- 소스 participates in the labeled relationships below.\n- 대상 participates in the labeled relationships below.\n- Required relationships:\n- 소스 → 대상 (전달)`;
+const good=`<svg><text>소스</text><text>대상</text><path data-from="소스" data-to="대상" data-label="전달"/><text data-edge-for="소스|대상">전달</text></svg>`;
+const parsed=parseBrief(brief);
+assert.deepEqual(parsed.nodes,['소스','대상']);
+assert.deepEqual(checkBrief(good,parsed),{language:'ko',nodes:2,relationships:1,missingNodes:[],missingLabels:[],missingEdges:[],unpairedLabels:[],languageMismatches:[],boundaryMembership:{declared:false,boundaryCount:0,issues:[]}});
+const wrongDirection=good.replace('data-from="소스" data-to="대상"','data-from="대상" data-to="소스"');
+assert.equal(checkBrief(wrongDirection,parsed).missingEdges.length,1,'reversed edge fails');
+const wrongLabel=good.replace('>전달</text>','>전달됨</text>');
+assert.equal(checkBrief(wrongLabel,parsed).missingLabels.length,1,'non-exact label fails');
+const koreanTechnical=`# API 데이터 경로\n- Purpose: 요청은 DB에 전달된다.\n- 게이트웨이 API participates in the labeled relationships below.\n- DB participates in the labeled relationships below.\n- Required relationships:\n- 게이트웨이 API → DB (HTTPS)`;
+const technicalGood=`<svg><text>게이트웨이 API</text><text>DB</text><text>HTTPS</text><path data-from="게이트웨이 API" data-to="DB" data-label="HTTPS"/><text data-edge-for="게이트웨이 API|DB">HTTPS</text></svg>`;
+assert.equal(checkBrief(technicalGood,koreanTechnical).languageMismatches.length,0,'verbatim technical names in a Korean brief remain allowed');
+const mixedLabel=technicalGood.replace('<text>DB</text>','<text>DB build</text>');
+const languageCheck=checkBrief(mixedLabel,koreanTechnical);
+assert(languageCheck.languageMismatches.some((item)=>item.terms.includes('build')),'unlisted English words in Korean visible text fail');
+assert.equal(parseBrief('# Release map\n- Package participates in the labeled relationships below.\n- Build → Package (ready)').language,'en','language follows the semantic labels, not boilerplate headings');
+const membershipBrief=['# Trust boundary','- 모바일 앱 participates in the labeled relationships below.','- API 게이트웨이 participates in the labeled relationships below.','- 작업 소비자 participates in the labeled relationships below.','- 재고 서비스 participates in the labeled relationships below.','- 결제사 participates in the labeled relationships below.','- Trust boundary internal nodes: API 게이트웨이; 작업 소비자; 재고 서비스','- Trust boundary external nodes: 모바일 앱; 결제사'].join('\n');
+const membershipContract=parseBrief(membershipBrief);
+const membershipSource=(workerX,inventoryX)=>'<svg><rect x="195" y="155" width="710" height="408" data-trust-boundary="internal"/><rect x="40" y="304" width="144" height="64" data-node-id="모바일 앱"/><rect x="280" y="304" width="144" height="64" data-node-id="API 게이트웨이"/><rect x="'+workerX+'" y="304" width="144" height="64" data-node-id="작업 소비자"/><rect x="'+inventoryX+'" y="176" width="144" height="64" data-node-id="재고 서비스"/><rect x="910" y="450" width="120" height="64" data-node-id="결제사"/></svg>';
+const membershipDefect=checkBrief(membershipSource(910,910),membershipContract).boundaryMembership;
+assert(membershipDefect.issues.includes('BOUNDARY_NODE_NOT_INTERNAL name=작업 소비자'),'the reviewed worker-outside-boundary defect fails');
+assert(membershipDefect.issues.includes('BOUNDARY_NODE_NOT_INTERNAL name=재고 서비스'),'the reviewed inventory-outside-boundary defect fails');
+assert.deepEqual(checkBrief(membershipSource(740,740),membershipContract).boundaryMembership.issues,[],'declared internal nodes inside and external nodes outside pass');
+console.log('BRIEF_CONTRACT_FIXTURES_PASS exact-nodes labels endpoints direction Korean-language-exempt-terms boundary-membership');

@@ -1,0 +1,13 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="/lit/stage-kit.js"></script>
+<style>
+  html, body { margin: 0; background: #202020; }
+  #swatch { position: absolute; left: 600px; top: 300px; width: 400px; height: 400px; background-color: rgb(0, 0, 0); transition: background-color 1s linear; }
+  #swatch.on { background-color: rgb(200, 0, 0); }
+</style>
+<div id="swatch"></div>
+<script>
+  // The transition starts when render() adds the class at t = 2 s; at t = 2.1 s it is 10 % along.
+  LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4.2, render(t) { document.getElementById("swatch").classList.toggle("on", t >= 2); } });
+</script>

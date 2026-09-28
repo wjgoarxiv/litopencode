@@ -1,0 +1,15 @@
+{
+  "lit-crucible": "hyperplan",
+  "lit-init": "init-deep",
+  "lit-commit": "git-master",
+  "lit-burnoff": "remove-ai-slops",
+  "lit-burnoff-file": "ai-slop-remover",
+  "lit-humanizer": [
+    "lit-korean",
+    "text-naturalization",
+    "text-neutralization",
+    "korean-ai-slop-remover"
+  ],
+  "lit-fetch": "public-source-fetch",
+  "lit-code": "programming"
+}

@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/stage-kit.js"></script>
+<style>
+  html, body { margin: 0; background: #2a2a2a; overflow: hidden; }
+  .t { position: absolute; font: 700 64px "LitOpenCode Sans"; color: #f2f2f2; white-space: nowrap; }
+  #low { left: 200px; top: 200px; color: #3a3a3a; }
+  #edge { left: 10px; top: 420px; }
+  #brief { left: 200px; top: 600px; }
+  #sign { left: 12px; top: 820px; font-size: 40px; color: #333333; }
+  #decorcopy { left: 1200px; top: 820px; font-size: 40px; }
+  #shape { position: absolute; left: 1300px; top: 160px; width: 360px; height: 360px; border-radius: 40px; background: #4fa3a5; }
+</style>
+<div id="shape"></div>
+<div class="t" id="low">낮은 대비의 문장</div>
+<div class="t" id="edge">가장자리 문장</div>
+<div class="t" id="brief">짧게 스친 문장</div>
+<div class="t" id="sign">장식 간판</div>
+<div class="t" id="decorcopy">가장자리 문장</div>
+<script>
+  // Copy that fails each text check (low contrast, off title-safe, too brief) beside decor text that
+  // may do all of those, and one decor run that carries a copy line.
+  for (const id of ["low", "edge", "brief"]) LitStage.text(document.getElementById(id));
+  LitStage.text(document.getElementById("sign"), { decor: true });
+  LitStage.text(document.getElementById("decorcopy"), { decor: true });
+  LitStage.define({
+    width: 1920, height: 1080, fps: 30, duration: 4.2,
+    render(t) {
+      document.getElementById("brief").style.opacity = t >= 1.0 && t < 1.4 ? "1" : "0";
+      document.getElementById("sign").style.opacity = t >= 2.0 && t < 2.3 ? "1" : "0";
+      document.getElementById("shape").style.transform = `rotate(${t * 20}deg)`;
+    }
+  });
+</script>

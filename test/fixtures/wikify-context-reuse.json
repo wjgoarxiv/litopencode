@@ -1,0 +1,19 @@
+{
+  "projectContext": "The project stores accepted knowledge in .litopencode/knowledge/claims.jsonl as the only authority.",
+  "event": {
+    "text": "The project stores accepted knowledge in .litopencode/knowledge/claims.jsonl as the only authority.",
+    "evidenceRef": "README.md:165"
+  },
+  "baselineQueries": [
+    "The project stores accepted knowledge in .litopencode/knowledge/claims.jsonl as the only authority. Where is accepted knowledge stored?",
+    "The project stores accepted knowledge in .litopencode/knowledge/claims.jsonl as the only authority. Which file is authoritative?",
+    "The project stores accepted knowledge in .litopencode/knowledge/claims.jsonl as the only authority. Does the project use derived truth?",
+    "The project stores accepted knowledge in .litopencode/knowledge/claims.jsonl as the only authority. Is storage project-local?"
+  ],
+  "knowledgeQueries": [
+    "Where is accepted knowledge stored?",
+    "Which knowledge file is authoritative?",
+    "Does accepted knowledge use derived truth?",
+    "Is knowledge storage project local?"
+  ]
+}

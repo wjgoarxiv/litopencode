@@ -1,0 +1,183 @@
+{
+  "schema_version": "litfamily.uiux-visual-qa-scenarios/v1",
+  "scenarios": [
+    {
+      "id": "public-service-form-ko",
+      "detector": "public-accessibility",
+      "expected_finding_codes": [
+        "WCAG_2_4_7_FOCUS_VISIBLE",
+        "WCAG_1_4_3_CONTRAST_MINIMUM"
+      ],
+      "expected_blocked_codes": [],
+      "input": {
+        "kind": "public-accessibility",
+        "focus_visible": false,
+        "contrast_ratio": 3.2,
+        "required_contrast_ratio": 4.5
+      },
+      "control_input": {
+        "kind": "public-accessibility",
+        "focus_visible": true,
+        "contrast_ratio": 7,
+        "required_contrast_ratio": 4.5
+      }
+    },
+    {
+      "id": "fintech-dashboard",
+      "detector": "chart-accessibility",
+      "expected_finding_codes": [
+        "CHART_COLOR_ONLY_ENCODING",
+        "CHART_NONVISUAL_FALLBACK_MISSING"
+      ],
+      "expected_blocked_codes": [],
+      "input": {
+        "kind": "chart-accessibility",
+        "color_only_encoding": true,
+        "nonvisual_fallback": null
+      },
+      "control_input": {
+        "kind": "chart-accessibility",
+        "color_only_encoding": false,
+        "nonvisual_fallback": "data table"
+      }
+    },
+    {
+      "id": "healthcare-mobile",
+      "detector": "healthcare-safety",
+      "expected_finding_codes": [
+        "DESTRUCTIVE_ACTION_CONFIRMATION_MISSING",
+        "WCAG_2_5_8_TARGET_SIZE_MINIMUM"
+      ],
+      "expected_blocked_codes": [],
+      "input": {
+        "kind": "healthcare-safety",
+        "destructive_confirmation": false,
+        "minimum_target_size": 44,
+        "target": { "width": 32, "height": 32 },
+        "source_before_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "source_after_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "control_input": {
+        "kind": "healthcare-safety",
+        "destructive_confirmation": true,
+        "minimum_target_size": 44,
+        "target": { "width": 44, "height": 44 },
+        "source_before_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "source_after_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "id": "saas-landing-responsive",
+      "detector": "responsive-motion",
+      "expected_finding_codes": [
+        "RESPONSIVE_OVERFLOW",
+        "REDUCED_MOTION_NOT_HONORED"
+      ],
+      "expected_blocked_codes": [],
+      "input": {
+        "kind": "responsive-motion",
+        "viewport_width": 320,
+        "content_right": 486,
+        "reduced_motion_honored": false
+      },
+      "control_input": {
+        "kind": "responsive-motion",
+        "viewport_width": 320,
+        "content_right": 320,
+        "reduced_motion_honored": true
+      }
+    },
+    {
+      "id": "brownfield-design-system",
+      "detector": "brownfield-system",
+      "expected_finding_codes": [
+        "DESIGN_TOKEN_BYPASS",
+        "DUPLICATE_PRIMITIVE"
+      ],
+      "expected_blocked_codes": [],
+      "input": {
+        "kind": "brownfield-system",
+        "token_reference_used": false,
+        "primitives": [
+          { "id": "button-border", "value": "#005fcc" },
+          { "id": "input-border", "value": "#005fcc" }
+        ],
+        "source_pointer": "src/components/Button.tsx:18"
+      },
+      "control_input": {
+        "kind": "brownfield-system",
+        "token_reference_used": true,
+        "primitives": [
+          { "id": "button-border", "value": "#005fcc" },
+          { "id": "input-border", "value": "#667788" }
+        ],
+        "source_pointer": "src/components/Button.tsx:18"
+      }
+    },
+    {
+      "id": "reference-fidelity",
+      "detector": "reference-fidelity",
+      "expected_finding_codes": [
+        "REFERENCE_DIMENSION_MISMATCH",
+        "REFERENCE_SCREENSHOT_SUBSTITUTION"
+      ],
+      "expected_blocked_codes": [],
+      "input": {
+        "kind": "reference-fidelity",
+        "expected_dimensions": [1440, 900],
+        "actual_dimensions": [1280, 720],
+        "expected_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "actual_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "similarity": 0.99
+      },
+      "control_input": {
+        "kind": "reference-fidelity",
+        "expected_dimensions": [1440, 900],
+        "actual_dimensions": [1440, 900],
+        "expected_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "actual_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "similarity": 1
+      }
+    },
+    {
+      "id": "cjk-terminal-dashboard",
+      "detector": "tui",
+      "expected_finding_codes": [
+        "TUI_BORDER_TOPOLOGY_BROKEN"
+      ],
+      "expected_blocked_codes": [],
+      "input": {
+        "text": "┌────┐\n│\u001b]8;;https://example.invalid\u0007한\u001b]8;;\u0007👩‍💻 │\n└────┘",
+        "ambiguous_width": 1,
+        "zwj_grapheme": "👩‍💻"
+      },
+      "control_input": {
+        "text": "plain",
+        "ambiguous_width": 1,
+        "zwj_grapheme": "👩‍💻"
+      }
+    },
+    {
+      "id": "missing-capture-auth-review",
+      "detector": "capabilities",
+      "expected_finding_codes": [],
+      "expected_blocked_codes": [
+        "BLOCKED_RENDERER_UNAVAILABLE",
+        "BLOCKED_AUTH_UNAVAILABLE",
+        "BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE"
+      ],
+      "input": {
+        "captureAvailable": false,
+        "authAvailable": false,
+        "testAccountSafe": true,
+        "independentReviewAvailable": false
+      },
+      "control_input": {
+        "captureAvailable": true,
+        "authAvailable": true,
+        "testAccountSafe": true,
+        "independentReviewAvailable": true
+      }
+    }
+  ]
+}

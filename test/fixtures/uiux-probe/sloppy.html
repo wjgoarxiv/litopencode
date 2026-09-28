@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Example board</title>
+<style>
+  body { margin: 0; font: 16px/1.5 system-ui; color: #aaa; background: #fff; }
+  main { width: 1100px; padding: 20px; }
+  .clip { width: 120px; white-space: nowrap; overflow: hidden; }
+  a { display: inline-block; width: 16px; height: 16px; }
+  @keyframes appear { from { transform: scale(0); } to { transform: scale(1); } }
+  button { animation: appear .2s; }
+</style>
+<main>
+  <h1>Example board</h1>
+  <p class="clip">A sentence that cannot fit inside its box.</p>
+  <a href="#">Go</a><a href="#">To</a>
+  <button type="button">Open</button>
+</main>
+</html>

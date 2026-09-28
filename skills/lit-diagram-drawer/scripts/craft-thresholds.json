@@ -1,0 +1,15 @@
+{
+  "groupRatioMin": 2,
+  "accentLightnessMin": 0.12,
+  "accentLightnessMax": 0.93,
+  "accentSaturationMin": 0.12,
+  "accentHueBucketDegrees": 20,
+  "accentMedium": 3,
+  "accentHigh": 4,
+  "fullBleedFraction": 0.92,
+  "latinFractionMin": 0.8,
+  "titleWordFractionMin": 0.6,
+  "titleWordMinLetters": 4,
+  "titleWordMinCount": 2,
+  "labelInsetPx": 2
+}

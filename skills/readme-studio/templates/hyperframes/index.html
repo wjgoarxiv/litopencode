@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" data-fps="60">
+<head>
+<meta charset="utf-8">
+<title>README cover</title>
+<style>
+* { box-sizing: border-box }
+body { margin: 0 }
+#cover {
+  position: relative; width: 1600px; height: 800px; overflow: hidden;
+  background: #15242a; --far-blur: 9px; --middle-blur: 2px; --grain: .04; --glow: .18;
+}
+.background { position: absolute; width: 100%; height: 100%; object-fit: cover }
+.depth-plane-far {
+  filter: blur(var(--far-blur)); transform: scale(1.04);
+  animation: field 5s ease-in-out both;
+}
+.depth-plane-middle {
+  filter: blur(var(--middle-blur)); opacity: .68; transform: scale(1.03);
+  mask-image: linear-gradient(to bottom, transparent 5%, black 28%, black 72%, transparent 94%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 5%, black 28%, black 72%, transparent 94%);
+  animation: middle-plane 5s ease-in-out both;
+}
+.glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 80% 10%, rgba(170,240,196,var(--glow)), transparent 60%);
+}
+.rim-light {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; mix-blend-mode: screen; opacity: .78;
+  background: linear-gradient(112deg, transparent 42%, rgba(255,244,196,.04) 46%, rgba(255,239,184,.38) 49%, rgba(255,255,245,.2) 50%, rgba(255,239,184,.08) 53%, transparent 59%);
+}
+.panel {
+  position: absolute; z-index: 4; left: 64px; top: 60px; width: 1024px; padding: 36px;
+  background: #15242a; border: 1px solid #f4f1e9; animation: entry 5s cubic-bezier(.2,.8,.2,1) both;
+}
+.sharp-foreground { filter: none }
+.label { height: 24px; width: 42%; object-fit: contain; object-position: left }
+.title { width: 100%; display: block; margin-top: 42px }
+.subtitle { display: block; width: 94%; margin-top: 24px }
+.rule { height: 1px; background: #f4f1e9; opacity: .35; margin-top: 40px }
+.pixel { position: absolute; z-index: 5; right: 80px; bottom: 68px; width: 240px; height: 186px; animation: sprite 5s ease-in-out both }
+@keyframes field { 0%,100% { transform: scale(1.04) } 50% { transform: scale(1.065) } }
+@keyframes middle-plane { 0%,100% { transform: scale(1.03) } 50% { transform: scale(1.045) } }
+@keyframes entry { 0%,100% { transform: translateY(12px) } 8%,92% { transform: translateY(0) } }
+@keyframes sprite { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-16px) } }
+@media (prefers-reduced-motion: reduce) {
+  .depth-plane-far, .depth-plane-middle, .panel, .pixel { animation: none !important }
+}
+</style>
+</head>
+<body>
+<div id="cover" data-composition-id="ReadmeCover" data-start="0" data-width="1600" data-height="800" data-duration="5" data-no-timeline>
+  <img class="background depth-plane-far" src="background.png" alt="">
+  <img class="background depth-plane-middle" src="background.png" alt="">
+  <div class="glow"></div>
+  <div class="rim-light"></div>
+  <svg width="1600" height="800" style="position:absolute;z-index:2;opacity:var(--grain)"><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="17"/></filter><rect width="100%" height="100%" filter="url(#grain)"/></svg>
+  <div class="panel sharp-foreground"><img class="label" src="label-light.svg" alt="Technical label"><img class="title" src="title-light.svg" alt="Project title"><img class="subtitle" src="subtitle-light.svg" alt="Purpose"><div class="rule"></div></div>
+  <svg class="pixel" viewBox="0 0 9 7" shape-rendering="crispEdges" aria-label="Original pixel sprite"><path fill="#c9ee95" d="M3 0h4v1H3zM2 1h6v1H2zM1 2h2v1H1zM4 2h1v1H4zM6 2h3v1H6zM0 3h9v1H0zM1 4h7v1H1zM2 5h1v1H2zM5 5h2v1H5zM1 6h2v1H1zM5 6h3v1H5z"/></svg>
+</div>
+</body>
+</html>

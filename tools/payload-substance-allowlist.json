@@ -1,0 +1,45 @@
+{
+  "schema": "litfamily.payload-substance/v1",
+  "parityDivergences": {
+    "lit-code": {
+      "date": "2026-08-30",
+      "reason": "The OpenCode lit-code port intentionally ships a focused four-language reference set for its static route; richer sibling packages include additional host-specific stack and generator material that OpenCode does not bind, so this reduced native closure is an explicit reviewed divergence."
+    },
+    "lit-fetch": {
+      "date": "2026-09-05",
+      "reason": "The rename joins a shared ID with a twelve-file standalone reader port. OpenCode retains its complete single-file skill contract backed by the packaged fetchPublicSource runtime, CLI fetch-public, SSRF guards, and source tests; copying the other host implementation would duplicate this native runtime."
+    },
+    "lit-korean": {
+      "date": "2026-09-25",
+      "reason": "Other host ports retain this legacy prose-skill id. LitOpenCode replaced its former single-file skill with the independently packaged lit-humanizer contract, detector, managed assets, and native write guard; the older cross-product row remains for products that still ship the prior id."
+    }
+  },
+  "skills": {
+    "agent-roster": "The file defines the native agent registry, role boundaries, routing, and safety contract; runtime code is packaged separately.",
+    "lit-burnoff-file": "It gives a complete post-edit cleanup taxonomy, triage, safety, and verification contract tied to native hooks.",
+    "comment-checker": "Comment intent, accuracy, necessity, maintenance checks, and the after-tool binding are fully described in one file.",
+    "deep-interview": "The command and agent route, decision questions, approval state, and readiness output form a complete procedure.",
+    "doctor-installer": "CLI doctor and install inspection, config roots, managed files, failure modes, and evidence are bounded without a corpus.",
+    "durable-litgoal": "The skill binds the packaged goal operations and ledger symbols, whose compiled runtime is present in the product payload.",
+    "lit-commit": "Native command routing plus bounded Git inventory, isolation, diff, history, and remote safety are complete in the body.",
+    "lit-crucible": "Parallel delegation, exploration, contradiction checks, synthesis, and planning handoff form a complete native procedure.",
+    "lit-init": "Repository discovery, instruction placement, complexity decisions, conflict analysis, and verification are fully specified.",
+    "lit-recap": "The read-only recap contract covers current repo and ledger state, evidence hierarchy, stale claims, and output format.",
+    "litresearch": "Research commands and exported retrieval APIs are mapped with source, safety, and report contracts in the instruction.",
+    "litwork": "The document is a complete static hook and route contract backed by packaged command, tool, and feature runtime bindings.",
+    "lsp": "It states that no server is bundled and gives the host-capability probe, diagnostics workflow, and fallback evidence.",
+    "native-goal-verdict": "The verdict procedure is backed by the packaged durable ledger and native status surfaces named in the document.",
+    "lit-fetch": "The exported fetch route, URL and content safety, redaction, and verification contract are complete instructions.",
+    "refactor": "Command routing, characterization, structural strategy, safety, verification, and rollback are fully bounded in one file.",
+    "reference-benchmark-claims": "Benchmark and claim classes, evidence requirements, and packaged claim-guard APIs are completely specified.",
+    "release-guardrails": "Release freeze, version and pack checks, scanners, host boundaries, and evidence requirements form a full contract.",
+    "lit-burnoff": "Test locking, cleanup categories, meaning preservation, native routes, safety, and verification are fully specified.",
+    "review-work": "Plan and completion review modes, evidence lanes, DoneClaim challenge, and native routes are all bounded.",
+    "rules": "Native rule discovery, precedence, hook binding, static and dynamic lanes, and verification are completely described.",
+    "search-workflow-ideas": "The exported workflow catalog and lookup surfaces support the bounded search, safety, and reporting procedure.",
+    "start-work": "Approved-plan loading, authority and lifecycle gates, native command routes, evidence, and cleanup are fully specified.",
+    "structural-search": "Capability detection, lexical fallback, host-tool limits, structural questions, and evidence are complete and honest.",
+    "tool-guards": "The document names the packaged guard module and hook contract, which supply the implementation for its bounded behavior.",
+    "workflow-loop": "The runtime-class contract and cycle, authority, evidence, and stop rules map to the packaged workflow runtime."
+  }
+}

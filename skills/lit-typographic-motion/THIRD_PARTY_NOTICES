@@ -1,0 +1,25 @@
+lit-typographic-motion third-party notices
+
+Engine: Typographic-motion engine adapted from mexicat/pdoom-video (MIT, Giacomo Magnanini), commit `ca251e3`.
+The full MIT notice for the adapted engine is in NOTICE, next to this file.
+
+Fonts bundled in this skill (paths relative to this file):
+- Archivo static instances, fonts/Archivo-{75,100,125}-{400,700,900}.ttf: SIL OFL 1.1, licence at fonts/Archivo-OFL.txt
+- VT323, fonts/VT323-Regular.ttf: SIL OFL 1.1, licence at fonts/VT323-OFL.txt
+- Silkscreen, fonts/Silkscreen-Regular.ttf and fonts/Silkscreen-Bold.ttf: SIL OFL 1.1, licence at fonts/Silkscreen-OFL.txt
+- EMS single-stroke SVG fonts (EMSAllure, EMSFelix, EMSOsmotron, EMSReadability, EMSTech), fonts/stroke/*.svg: SIL OFL 1.1, licence at fonts/stroke/OFL.txt, credits at fonts/stroke/CREDITS
+
+Fonts reused by path from the sibling lit-pptx skill:
+- LitOpenCode Sans Regular and Bold, ../lit-pptx/pretendard-font/public/static/LitOpenCodeSans-{Regular,Bold}.otf: SIL OFL 1.1, licence at ../lit-pptx/pretendard-font/LICENSE.txt
+
+Fonts fetched at pre-warm (litopencode motion-runtime install) into the motion runtime cache,
+${XDG_CACHE_HOME:-~/.cache}/litopencode/motion-runtime/fonts-<pin hash>/, each verified against fonts/pins.json:
+- Galmuri9, Galmuri9.ttf (unmodified official file): SIL OFL 1.1, licence at Galmuri-OFL.md in that cache directory
+- MesloLGS NF Regular, MesloLGS-NF-Regular.ttf: Apache-2.0 plus the inherited Bitstream Vera and Arev notices, licence files MesloLGS-NF-License.txt, Apache-2.0.txt and Vera-Arev-LICENSE in that cache directory
+- Pretendard Regular (fallback only, fetched when the lit-pptx pair is absent), Pretendard-Regular.otf: SIL OFL 1.1, licence at Pretendard-LICENSE in that cache directory
+
+Engine packages installed at pre-warm from package-lock.json into ${XDG_CACHE_HOME:-~/.cache}/litopencode/motion-runtime/node-<lock hash>/node_modules:
+- playwright-core (Apache-2.0), opentype.js (MIT), ws (MIT); each keeps its own licence file inside its package directory.
+
+Optional audio tier, installed only by litopencode motion-runtime install --audio from requirements-audio.txt:
+- librosa (ISC) and its hash-pinned dependencies, each under its own licence inside the venv.

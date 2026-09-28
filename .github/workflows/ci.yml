@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build runtime for QA
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run behavior replacement probes
+        run: npm run qa:behavior-replacement
+
+      - name: Run installed resource tamper probe
+        run: npm run qa:installed-resource-tamper
+
+      - name: Run negative gate matrix
+        run: npm run qa:negative-gate-matrix
+
+      - name: Run rules glob differential
+        run: npm run qa:rules-glob-differential
+
+      - name: Run Wikify surface probe
+        run: node tools/run-wikify-surface-probe.mjs
+
+      # Excluded qa:real-surface: its composite probes run above individually,
+      # so invoking it here would duplicate the same CI work and hide the layer
+      # that failed behind the aggregate command.
+
+      - name: Run legacy-token scanner
+        run: npm run scan:legacy-tokens
+
+      - name: Run version lockstep check
+        run: npm run check:version
+
+      - name: Check managed skill manifest
+        run: npm run check:managed-skill-manifest
+
+      - name: Dry pack
+        run: |
+          set -euo pipefail
+          npm pack --dry-run --json > "$RUNNER_TEMP/pack-report.json"
+
+      - name: Run pack payload guard
+        run: node tools/check-pack-payload.mjs --file "$RUNNER_TEMP/pack-report.json"
+
+      - name: No release-command placeholder guard
+        run: |
+          set -euo pipefail
+          terms=(
+            "npm publi""sh"
+            "NPM_""TOKEN"
+            "NODE_AUTH_""TOKEN"
+            "git pu""sh"
+            "git ta""g"
+            "--access publi""c"
+          )
+          found=0
+          for term in "${terms[@]}"; do
+            if grep -R -n -F --exclude-dir=.git --exclude=pack-report.json -- "$term" .github package.json src test; then
+              found=1
+            fi
+          done
+          if [ "$found" -ne 0 ]; then
+            echo "release-command placeholder guard failed" >&2
+            exit 1
+          fi
+          echo "release-command placeholder guard passed"
+
+      - name: Run evidence ledger stress test (non-blocking)
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          npm run test:stress
+          rc=$?
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            {
+              echo "## Evidence ledger stress test"
+              if [ "$rc" -eq 0 ]; then
+                echo "✅ PASS — 40 concurrent evidence mutations preserved every state entry and matching audit event."
+              else
+                echo "❌ FAIL — 40 concurrent evidence mutations test failed (exit code $rc)."
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$rc"

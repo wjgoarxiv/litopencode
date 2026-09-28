@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<!-- LitOpenCode comprehend explainer scaffold -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--bg:#faf8f5;--fg:#1a1a1a;--accent:#8a5a2b;--muted:#6b5e50;
+  --border:#d4c8bb;--code-bg:#f0ebe4;--ok:#2d7a3a;--warn:#b07d20;--bad:#b33;
+  --quiz-bg:#eee8df;--world-bg:#f5f0e8}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1c1a17;--fg:#e8e0d4;--accent:#d4a064;--muted:#a89880;
+    --border:#3a342c;--code-bg:#26231e;--ok:#5cb86c;--warn:#d4a030;--bad:#e66;
+    --quiz-bg:#28241e;--world-bg:#24211c}
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Segoe UI","Noto Sans KR",sans-serif;
+  background:var(--bg);color:var(--fg);line-height:1.65;margin:0;padding:0}
+.wrap{max-width:52rem;margin:0 auto;padding:1.5rem 1.25rem}
+.doc h1{font-size:1.6rem;color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:.4rem}
+.doc h2{font-size:1.25rem;margin-top:2.2rem;color:var(--accent)}
+.doc h3{font-size:1.05rem;margin-top:1.5rem}
+.doc h4{font-size:.95rem;margin-top:1rem;color:var(--muted)}
+.toc{background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:.8rem 1.2rem;margin:1.2rem 0}
+.toc a{color:var(--accent);text-decoration:none}
+.toc a:hover{text-decoration:underline}
+pre,code{font-family:"Fira Code","JetBrains Mono","SF Mono",monospace;font-size:.88rem}
+pre{background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:.8rem 1rem;
+  overflow-x:auto;white-space:pre;line-height:1.5}
+code{background:var(--code-bg);padding:.15rem .35rem;border-radius:3px}
+pre code{background:none;padding:0}
+.add{color:var(--ok);font-weight:600}
+.del{color:var(--bad);text-decoration:line-through}
+.note{border-left:3px solid var(--border);padding:.5rem .8rem;margin:.8rem 0;border-radius:0 4px 4px 0;font-size:.9rem}
+.note.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,transparent)}
+.note.warn{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,transparent)}
+.note.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,transparent)}
+.skippable{opacity:.7;font-size:.9rem}
+.pipe{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.8rem 0}
+.pipe .box,.box{background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:.4rem .8rem;font-size:.88rem}
+.pipe .box::after{content:"\2192";margin-left:.5rem;color:var(--muted)}
+.pipe .box:last-child::after{content:""}
+.box.done{background:color-mix(in srgb,var(--ok) 15%,var(--code-bg));border-color:var(--ok)}
+.box.active{background:color-mix(in srgb,var(--accent) 15%,var(--code-bg));border-color:var(--accent)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:.8rem 0}
+@media(max-width:40rem){.ba{grid-template-columns:1fr}}
+.world{background:var(--world-bg);border:1px solid var(--border);border-radius:6px;padding:1rem;margin:1rem 0}
+.world input[type="range"]{width:100%;max-width:20rem}
+.scroll-x{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border:1px solid var(--border);padding:.4rem .6rem;text-align:left}
+th{background:var(--code-bg)}
+.quiz-q{background:var(--quiz-bg);border:1px solid var(--border);border-radius:6px;padding:1rem;margin:1rem 0}
+.quiz-q h4{margin-top:0}
+.opt{display:block;margin:.3rem 0;padding:.4rem .6rem;border:1px solid var(--border);border-radius:4px;
+  cursor:pointer;transition:background .15s}
+.opt:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.opt.correct{background:color-mix(in srgb,var(--ok) 15%,transparent);border-color:var(--ok)}
+.opt.wrong{background:color-mix(in srgb,var(--bad) 10%,transparent);border-color:var(--bad)}
+.fb{display:none;margin:.3rem 0 .3rem 1rem;padding:.3rem .6rem;font-size:.88rem;
+  border-left:2px solid var(--muted);color:var(--muted)}
+.fb.show{display:block}
+#quiz-score{font-weight:600;color:var(--accent);margin-top:.8rem}
+</style>
+</head>
+<body>
+<div class="wrap doc">
+
+<h1>__TITLE__</h1>
+<p>__SUBTITLE__</p>
+
+__TOC__
+
+__CONTENT__
+
+<div id="quiz-score"></div>
+
+</div>
+<script>
+(()=>{
+  let answered=0,correct=0;
+  const total=document.querySelectorAll('.quiz-q').length;
+  document.querySelectorAll('.quiz-q').forEach(q=>{
+    const answer=q.dataset.answer;
+    let done=false;
+    q.querySelectorAll('.opt').forEach(o=>{
+      o.addEventListener('click',()=>{
+        if(done)return;
+        done=true;answered++;
+        const pick=o.dataset.i;
+        if(pick===answer){correct++;o.classList.add('correct')}
+        else{o.classList.add('wrong');
+          q.querySelector('.opt[data-i="'+answer+'"]')?.classList.add('correct')}
+        q.querySelectorAll('.fb').forEach(f=>f.classList.add('show'));
+        const el=document.getElementById('quiz-score');
+        if(el)el.textContent=correct+'/'+answered+(answered===total?' complete':'');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

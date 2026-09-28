@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "litfamily.evidence-manifest/v1alpha1",
+  "title": "LitFamily Evidence Manifest v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "design_contract_hash",
+    "source_revision",
+    "tier",
+    "created_at",
+    "maximum_age_seconds",
+    "freshness",
+    "capabilities",
+    "captures",
+    "inventory",
+    "mechanical_checks",
+    "accessibility_checks",
+    "tui_checks",
+    "review_receipt_hashes",
+    "findings",
+    "exception_references",
+    "cleanup",
+    "verdict"
+  ],
+  "properties": {
+    "schema_id": { "const": "litfamily.evidence-manifest/v1alpha1" },
+    "design_contract_hash": { "$ref": "#/$defs/hash" },
+    "source_revision": { "$ref": "#/$defs/text" },
+    "tier": { "enum": ["smoke", "full", "reference-fidelity"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "maximum_age_seconds": { "type": "number", "minimum": 1, "maximum": 86400 },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessed_at",
+        "expires_at",
+        "fresh",
+        "contract_hash_match",
+        "source_hash_match",
+        "capture_hash_match"
+      ],
+      "properties": {
+        "assessed_at": { "type": "string", "format": "date-time" },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "fresh": { "type": "boolean" },
+        "contract_hash_match": { "type": "boolean" },
+        "source_hash_match": { "type": "boolean" },
+        "capture_hash_match": { "type": "boolean" }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capture", "auth", "test_account_safe", "independent_review"],
+      "properties": {
+        "capture": { "type": "boolean" },
+        "auth": { "type": "boolean" },
+        "test_account_safe": { "type": "boolean" },
+        "independent_review": { "type": "boolean" }
+      }
+    },
+    "captures": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/capture" }
+    },
+    "inventory": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "status", "exception_id", "evidence_path", "evidence_hash"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "kind": { "$ref": "#/$defs/text" },
+          "status": { "enum": ["captured", "not_applicable", "accepted_exception", "blocked"] },
+          "exception_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 4096 },
+          "evidence_path": { "$ref": "#/$defs/text" },
+          "evidence_hash": { "$ref": "#/$defs/hash" }
+        },
+        "allOf": [{
+          "if": { "properties": { "status": { "const": "accepted_exception" } } },
+          "then": { "properties": { "exception_id": { "$ref": "#/$defs/text" } } },
+          "else": { "properties": { "exception_id": { "type": "null" } } }
+        }]
+      }
+    },
+    "mechanical_checks": { "$ref": "#/$defs/checks" },
+    "accessibility_checks": { "$ref": "#/$defs/checks" },
+    "tui_checks": { "$ref": "#/$defs/checks" },
+    "review_receipt_hashes": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/hash" }
+    },
+    "findings": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "severity", "evidence"],
+        "properties": {
+          "code": { "$ref": "#/$defs/text" },
+          "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/hash" }
+          }
+        }
+      }
+    },
+    "exception_references": {
+      "type": "array",
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owned_processes_stopped", "temporary_artifacts_removed", "remaining"],
+      "properties": {
+        "owned_processes_stopped": { "type": "boolean" },
+        "temporary_artifacts_removed": { "type": "boolean" },
+        "remaining": { "type": "array", "maxItems": 1000, "items": { "$ref": "#/$defs/text" } }
+      }
+    },
+    "verdict": { "enum": ["PASS", "REVISE", "FAIL", "BLOCKED"] }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "evidence_path", "evidence_hash"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "status": { "enum": ["pass", "fail", "blocked", "not_applicable"] },
+          "evidence_path": { "$ref": "#/$defs/text" },
+          "evidence_hash": { "$ref": "#/$defs/hash" }
+        }
+      }
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capture_id",
+        "source_hash",
+        "capture_hash",
+        "created_at",
+        "viewport",
+        "dpr",
+        "os",
+        "runtime",
+        "runtime_version",
+        "font_set",
+        "locale",
+        "reduced_motion",
+        "animation_settling",
+        "color_scheme",
+        "auth_owner",
+        "process_owner"
+      ],
+      "properties": {
+        "capture_id": { "$ref": "#/$defs/text" },
+        "source_hash": { "$ref": "#/$defs/hash" },
+        "capture_hash": { "$ref": "#/$defs/hash" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "viewport": { "$ref": "#/$defs/text" },
+        "dpr": { "type": "number", "exclusiveMinimum": 0, "maximum": 8 },
+        "os": { "$ref": "#/$defs/text" },
+        "runtime": { "$ref": "#/$defs/text" },
+        "runtime_version": { "$ref": "#/$defs/text" },
+        "font_set": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" } },
+        "locale": { "$ref": "#/$defs/text" },
+        "reduced_motion": { "type": "boolean" },
+        "animation_settling": { "$ref": "#/$defs/text" },
+        "color_scheme": { "$ref": "#/$defs/text" },
+        "auth_owner": { "$ref": "#/$defs/text" },
+        "process_owner": { "$ref": "#/$defs/text" }
+      }
+    }
+  }
+}

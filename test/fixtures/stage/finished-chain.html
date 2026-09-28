@@ -1,0 +1,17 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="/lit/stage-kit.js"></script>
+<style>
+  html, body { margin: 0; background: #202020; }
+  .block { position: absolute; top: 400px; width: 100px; height: 100px; }
+  #first { left: 100px; background: #3a7bd5; }
+  #second { left: 100px; top: 700px; background: #e9ebe4; }
+</style>
+<div class="block" id="first"></div>
+<div class="block" id="second"></div>
+<script>
+  // A WAAPI chain: the second animation starts only when the first one's finished promise resolves.
+  const first = document.getElementById("first").animate([{ transform: "translateX(0)" }, { transform: "translateX(800px)" }], { duration: 1000, fill: "forwards" });
+  first.finished.then(() => document.getElementById("second").animate([{ transform: "translateX(0)" }, { transform: "translateX(800px)" }], { duration: 1000, fill: "forwards", easing: "linear" }));
+  LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4.2, render() {} });
+</script>

@@ -1,0 +1,50 @@
+# OS and editor noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Dependencies and generated build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# LitOpenCode and local agent runtime state
+.litclaude/
+.litcodex/
+.litopencode/
+.opencode/
+.o[m]o/
+.omx/
+.omc/
+.sisyphus/
+evidence/
+plans/
+
+# Read-only reference archives
+[#] REFERENCE/
+
+# Package dry-run artifacts and logs
+*.tgz
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local secrets and machine-specific config
+.env
+.env.*
+!.env.example
+.npmrc
+
+# Temporary caches
+.cache/
+**/__pycache__/
+*.pyc
+.tmp/
+tmp/
+HANDOFF.md
+!vendor/handoff/templates/HANDOFF.md

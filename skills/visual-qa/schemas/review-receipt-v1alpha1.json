@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "litfamily.review-receipt/v1alpha1",
+  "title": "LitFamily Review Receipt v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "review_id",
+    "reviewer_id",
+    "fresh_context_id",
+    "reviewer_capability_class",
+    "input_hashes",
+    "reviewed_inventory",
+    "findings",
+    "confidence",
+    "independence_assertion",
+    "started_at",
+    "ended_at",
+    "timeout_seconds",
+    "timed_out",
+    "cancelled",
+    "cancellation_reason",
+    "round",
+    "verdict"
+  ],
+  "properties": {
+    "schema_id": { "const": "litfamily.review-receipt/v1alpha1" },
+    "review_id": { "$ref": "#/$defs/text" },
+    "reviewer_id": { "$ref": "#/$defs/text" },
+    "fresh_context_id": { "$ref": "#/$defs/text" },
+    "reviewer_capability_class": { "$ref": "#/$defs/text" },
+    "input_hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["design_contract", "evidence_manifest", "source", "capture"],
+      "properties": {
+        "design_contract": { "$ref": "#/$defs/hash" },
+        "evidence_manifest": { "$ref": "#/$defs/hash" },
+        "source": { "$ref": "#/$defs/hash" },
+        "capture": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "reviewed_inventory": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "status"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "kind": { "$ref": "#/$defs/text" },
+          "status": { "enum": ["captured", "not_applicable", "accepted_exception", "blocked"] }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "severity", "evidence_pointers", "message"],
+        "properties": {
+          "code": { "$ref": "#/$defs/text" },
+          "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+          "evidence_pointers": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "hash"],
+              "properties": {
+                "path": { "$ref": "#/$defs/text" },
+                "hash": { "$ref": "#/$defs/hash" }
+              }
+            }
+          },
+          "message": { "$ref": "#/$defs/text" }
+        }
+      }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "independence_assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fresh_context", "same_immutable_inputs", "other_draft_received", "other_verdict_received"],
+      "properties": {
+        "fresh_context": { "const": true },
+        "same_immutable_inputs": { "const": true },
+        "other_draft_received": { "const": false },
+        "other_verdict_received": { "const": false }
+      }
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": "string", "format": "date-time" },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0, "maximum": 3600 },
+    "timed_out": { "type": "boolean" },
+    "cancelled": { "type": "boolean" },
+    "cancellation_reason": { "type": ["string", "null"] },
+    "round": { "type": "integer", "minimum": 1, "maximum": 2 },
+    "verdict": { "enum": ["PASS", "REVISE", "FAIL", "BLOCKED"] }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

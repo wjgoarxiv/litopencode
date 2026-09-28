@@ -1,0 +1,49 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/stage-kit.js"></script>
+<style>
+  html, body { margin: 0; background: #14161c; overflow: hidden; }
+  .layer { position: absolute; }
+  #blur { left: 120px; top: 120px; width: 300px; height: 300px; background: #d9a441; filter: blur(12px); }
+  #glass { left: 260px; top: 200px; width: 420px; height: 260px; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(18px) saturate(1.4); border-radius: 24px; }
+  #blend { left: 760px; top: 140px; width: 360px; height: 360px; border-radius: 50%; background: #0f7a82; mix-blend-mode: screen; }
+  #blend2 { left: 900px; top: 220px; width: 360px; height: 360px; border-radius: 50%; background: #c24b3a; mix-blend-mode: screen; }
+  #shadow { left: 1400px; top: 160px; width: 240px; height: 240px; background: #e9ebe4; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px #0f7a82; }
+  .copy { left: 140px; top: 900px; font: 700 64px "LitOpenCode Sans"; color: #e9ebe4; }
+</style>
+<div class="layer" id="blur"></div>
+<div class="layer" id="glass"></div>
+<div class="layer" id="blend"></div>
+<div class="layer" id="blend2"></div>
+<div class="layer" id="shadow"></div>
+<svg class="layer" style="left:0;top:0" width="1920" height="1080"><defs><filter id="soft"><feGaussianBlur stdDeviation="9"/></filter></defs><circle id="c" cx="400" cy="700" r="90" fill="#8fd3c0" filter="url(#soft)"/></svg>
+<canvas class="layer" id="c2d" width="600" height="300" style="left:700px;top:620px"></canvas>
+<canvas class="layer" id="gl" width="400" height="300" style="left:1380px;top:620px"></canvas>
+<div class="layer copy" id="copy">지붕의 비가 사흘을 버틴다</div>
+<script>
+  LitStage.text(document.getElementById("copy"));
+  const ctx = document.getElementById("c2d").getContext("2d");
+  const gl = document.getElementById("gl").getContext("webgl");
+  const vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, "attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }"); gl.compileShader(vs);
+  const fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, "precision mediump float; uniform float t; void main(){ vec2 uv = gl_FragCoord.xy / vec2(400.0, 300.0); gl_FragColor = vec4(0.5 + 0.5 * sin(uv.x * 9.0 + t * 3.0), uv.y, 0.5 + 0.5 * cos(t * 2.0 + uv.y * 7.0), 1.0); }"); gl.compileShader(fs);
+  const prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const tLoc = gl.getUniformLocation(prog, "t");
+  const r = LitStage.rand();
+  const dots = Array.from({ length: 12 }, () => [r.range(40, 560), r.range(40, 260)]);
+  LitStage.define({
+    width: 1920, height: 1080, fps: 30, duration: 4.2,
+    render(t) {
+      document.getElementById("glass").style.transform = `translateX(${Math.sin(t * 1.7) * 140}px)`;
+      document.getElementById("blend2").style.transform = `translate(${Math.cos(t) * 80}px, ${Math.sin(t * 1.3) * 60}px)`;
+      document.getElementById("c").setAttribute("cx", String(400 + 200 * Math.sin(t)));
+      ctx.clearRect(0, 0, 600, 300);
+      ctx.shadowColor = "#d9a441"; ctx.shadowBlur = 24;
+      ctx.fillStyle = "#e9ebe4";
+      for (const [x, y] of dots) { ctx.beginPath(); ctx.arc(x + 30 * Math.sin(t + x), y, 14, 0, Math.PI * 2); ctx.fill(); }
+      gl.viewport(0, 0, 400, 300); gl.uniform1f(tLoc, t); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+  });
+</script>

@@ -1,0 +1,8 @@
+skills/frontend-ui-ux/references/design/** -text
+skills/frontend-ui-ux/references/designpowers/** -text
+skills/frontend-ui-ux/references/perfection/** -text
+skills/frontend-ui-ux/references/ui-ux-db/** -text
+skills/frontend-ui-ux/references/_canonical-corpus/LICENSE -text
+skills/frontend-ui-ux/references/_canonical-corpus/ATTRIBUTION.md -text
+skills/frontend-ui-ux/references/_canonical-corpus/LICENSE-Apache-2.0.txt -text
+docs/assets/readme/JetBrainsMono-OFL.txt whitespace=-blank-at-eol

@@ -1,0 +1,154 @@
+supported_layouts:
+  - cover
+  - content
+  - main
+  - summary
+  - closing
+  - section
+
+supported_blocks:
+  cover: [title]
+  content: [title, key-message, body, chart, image, notes, kpi-table, figure-caption, table-caption]
+  main: [title, key-message, body, chart, main-box, kpi-table, image, figure-caption, table-caption]
+  summary: [title, key-message, summary-group, image, kpi-table, figure-caption, table-caption]
+  closing: [title]
+  section: [title, notes]
+
+supported_body_items:
+  - bullet
+  - numbered
+  - section
+
+font_roles:
+  cover_title:
+    font: "LitOpenCode Sans"
+    size: 50
+    char_spacing: -2.0
+    line_spacing: 1.06
+    align: left
+    bold: true
+    color: "#0E1B2C"
+  key_message:
+    font: "LitOpenCode Sans"
+    size: 15
+    char_spacing: -0.2
+    line_spacing: 1.3
+    align: left
+    bold: true
+    color: "#1D4ED8"
+  eyebrow:
+    font: "LitOpenCode Sans"
+    size: 11
+    char_spacing: 1.5
+    align: left
+    bold: true
+    color: "#1D4ED8"
+  subtitle:
+    font: "LitOpenCode Sans"
+    size: 16
+    char_spacing: -0.3
+    line_spacing: 1.35
+    align: left
+    bold: false
+    color: "#51607A"
+  cover_date:
+    font: "LitOpenCode Sans"
+    size: 12
+    char_spacing: 0.2
+    align: center
+    bold: true
+    color: "#FFFFFF"
+  section_title:
+    font: "LitOpenCode Sans"
+    size: 27
+    char_spacing: -1.0
+    align: left
+    bold: true
+    color: "#0E1B2C"
+  divider_title:
+    font: "LitOpenCode Sans"
+    size: 42
+    char_spacing: -1.5
+    line_spacing: 1.05
+    align: left
+    bold: true
+    color: "#FFFFFF"
+  closing_title:
+    font: "LitOpenCode Sans"
+    size: 44
+    char_spacing: -1.5
+    align: center
+    bold: true
+    color: "#0E1B2C"
+  body_text:
+    font: "LitOpenCode Sans"
+    size: 13
+    char_spacing: -0.3
+    line_spacing: 1.4
+    align: left
+    bold: false
+    color: "#0E1B2C"
+  section_header:
+    font: "LitOpenCode Sans"
+    size: 15
+    char_spacing: -0.3
+    align: left
+    bold: true
+    color: "#0E1B2C"
+  numbered_item:
+    font: "LitOpenCode Sans"
+    size: 13
+    char_spacing: -0.3
+    align: left
+    bold: false
+    color: "#0E1B2C"
+  table_header:
+    font: "LitOpenCode Sans"
+    size: 12
+    align: left
+    bold: true
+    color: "#0E1B2C"
+    fill: "#EEF4FF"
+  table_data:
+    font: "LitOpenCode Sans"
+    size: 12
+    align: left
+    bold: false
+    color: "#0E1B2C"
+  kpi_value:
+    font: "LitOpenCode Sans"
+    size: 34
+    char_spacing: -1.0
+    align: left
+    bold: true
+    color: "#1D4ED8"
+  kpi_label:
+    font: "LitOpenCode Sans"
+    size: 9.5
+    char_spacing: 0.4
+    align: left
+    bold: false
+    color: "#51607A"
+  figure_caption:
+    font: "LitOpenCode Sans"
+    size: 9
+    align: center
+    bold: false
+    color: "#51607A"
+  table_caption:
+    font: "LitOpenCode Sans"
+    size: 9
+    align: center
+    bold: false
+    color: "#51607A"
+  disclaimer:
+    font: "LitOpenCode Sans"
+    size: 8
+    align: left
+    bold: false
+    color: "#51607A"
+
+constraints:
+  max_columns_per_table: 6
+  no_bold_on_bold_fonts: false
+  body_text_stays_black: false

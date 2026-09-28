@@ -1,0 +1,5 @@
+python-docx==1.2.0
+Markdown==3.10.2
+beautifulsoup4==4.14.3
+PyMuPDF==1.28.0
+PyYAML==6.0.3

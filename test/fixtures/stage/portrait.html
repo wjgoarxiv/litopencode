@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/stage-kit.js"></script>
+<style>
+  html, body { margin: 0; background: #0e1420; overflow: hidden; }
+  svg { position: absolute; inset: 0; }
+  #copy { position: absolute; left: 120px; right: 120px; bottom: 260px; font: 700 76px "LitOpenCode Sans"; color: #e8ecef; line-height: 1.3; }
+</style>
+<svg viewBox="0 0 1080 1920"><path id="shape" fill="#e07856"/><circle id="sun" cx="540" cy="620" r="0" fill="#e8ecef"/></svg>
+<div id="copy">지붕의 비가 사흘을 버틴다</div>
+<script>
+  LitStage.text(document.getElementById("copy"));
+  const blob = LitStage.morph("M340 900 C 340 700, 740 700, 740 900 C 740 1100, 340 1100, 340 900 Z", "M290 760 L 790 760 L 790 1060 L 290 1060 Z");
+  LitStage.define({
+    width: 1080, height: 1920, fps: 30, duration: 4.2,
+    render(t) {
+      document.getElementById("shape").setAttribute("d", blob(LitStage.at(t, 0.6, 2.4, "inOutCubic")));
+      document.getElementById("sun").setAttribute("r", String(LitStage.spring({ stiffness: 120, damping: 14, from: 0, to: 110 })(t - 0.3)));
+      document.getElementById("copy").style.opacity = String(LitStage.at(t, 1.2, 0.6, "outCubic"));
+    }
+  });
+</script>

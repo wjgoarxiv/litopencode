@@ -1,0 +1,3 @@
+LitOpenCode PowerPoint engine
+
+The deck compiler, template system, authoring scripts, and thesis/antithesis/synthesis guidance are credited to Woojin Go (wjgoarxiv). LitOpenCode adaptation and the layout/OOXML checks are maintained in this product. LitOpenCode Sans is a subset of Pretendard GOV (Regular and Bold), renamed because Pretendard is a Reserved Font Name. The original copyright and SIL Open Font License 1.1 are in pretendard-font/LICENSE.txt. The subset retains all Hangul syllables, Hangul compatibility Jamo, common Latin, and punctuation. A2Z font licensing and source are in fonts/a2z-font/OFL.txt and SOURCE.md.

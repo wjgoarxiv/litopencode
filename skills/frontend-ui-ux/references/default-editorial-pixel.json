@@ -1,0 +1,19 @@
+{
+  "profile": "editorial-pixel",
+  "origin": "authored defaults; not measurements of an external design",
+  "spacing": {"base": 8, "micro": 4, "sectionDesktop": [80,128], "sectionMobile": [40,64]},
+  "type": {"displayDesktop": [56,104], "displayMobile": [36,56], "latinLeading": [0.95,1.05], "koreanLeading": [1.12,1.25], "bodyLeading": [1.5,1.7]},
+  "composition": ["deliberate line breaks", "compact display leading", "terminal micro-labels", "thin boundaries", "atmospheric fields", "intentional asymmetry"],
+  "pixel_illustration": {
+    "default_when_brief_unspecified": true,
+    "primary_visual_anchor": "original task-specific pixel-art illustration",
+    "minimum_rendered_cell_css_px": 6,
+    "rendering": "crisp non-smoothed",
+    "original": true,
+    "grid_aligned": true,
+    "crisp_edges": true,
+    "limited_palette": true,
+    "smooth_vector_alone_is_insufficient": true
+  },
+  "fit": "User direction and existing tokens win; preserve readable content at 320px."
+}

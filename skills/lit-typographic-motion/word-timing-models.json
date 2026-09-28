@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "tier": "word-timing",
+  "optIn": "--word-timing",
+  "note": "Tier 3 is opt-in only and never runs from bare lit. A model counts only with a pinned id, revision, byte size and a verified licence that allows commercial use. This build records no such Korean alignment model, so the install fails closed before any download.",
+  "models": [
+    {
+      "role": "Korean-capable multilingual transcription",
+      "id": null,
+      "revision": null,
+      "bytes": null,
+      "licence": null,
+      "licenceVerified": false
+    },
+    {
+      "role": "Korean forced alignment",
+      "id": null,
+      "revision": null,
+      "bytes": null,
+      "licence": null,
+      "licenceVerified": false
+    }
+  ],
+  "forbidden": ["MMS_FA", "madmom", "aubio", "essentia"]
+}

@@ -1,0 +1,1 @@
+{"name":"readme-studio-motion","private":true,"type":"module","scripts":{"compositions":"remotion compositions src/index.tsx"},"dependencies":{"@remotion/cli":"4.0.526","remotion":"4.0.526","react":"19.2.0","react-dom":"19.2.0"}}

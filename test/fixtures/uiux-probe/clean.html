@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Example board</title>
+<style>
+  body { margin: 0; font: 16px/1.55 system-ui; color: #1f2937; background: #fff; }
+  main { box-sizing: border-box; max-width: 70ch; padding: 24px; margin: auto; }
+  h1 { line-height: 1.2; }
+  a, button { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin-right: 12px; }
+  a { color: #123f80; }
+  button { border: 1px solid #1f2937; border-radius: 4px; background: #fff; color: #1f2937; font: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid #123f80; outline-offset: 2px; }
+</style>
+<main id="start">
+  <h1>Example board</h1>
+  <p>A compact page with a link and an action.</p>
+  <a href="/details.html">Read</a>
+  <button type="button" onclick="this.textContent='Opened'">Open</button>
+</main>
+</html>

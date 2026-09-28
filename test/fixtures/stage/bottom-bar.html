@@ -1,0 +1,13 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="/lit/stage-kit.js"></script>
+<style>
+  html, body { margin: 0; background: #202020; overflow: hidden; }
+  #bar { position: fixed; left: 0; right: 0; bottom: 0; height: 40px; background: rgb(0, 200, 0); }
+</style>
+<div id="bar"></div>
+<script>
+  // A bar pinned to the viewport's bottom edge: it stays on the frame's last rows only while the page
+  // keeps the format's full height after every capture.
+  LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4.2, render() {} });
+</script>

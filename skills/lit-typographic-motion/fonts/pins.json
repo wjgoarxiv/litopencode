@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "fetched": {
+    "Galmuri9.ttf": { "url": "https://raw.githubusercontent.com/quiple/galmuri/v2.40.4/dist/Galmuri9.ttf", "sha256": "5cb68052ee0a15571747e91c20f145e24b51bb459c6cd58226fafee78d9c0b16", "bytes": 4649144, "licence": ["Galmuri-OFL.md"], "presets": ["terminalcore"] },
+    "Galmuri-OFL.md": { "url": "https://raw.githubusercontent.com/quiple/galmuri/v2.40.4/ofl.md", "sha256": "9a9e5a342c430c3fcf01a408b680f4405d5bf4ac659c931be35f8a1b27ea69c9" },
+    "MesloLGS-NF-Regular.ttf": { "url": "https://raw.githubusercontent.com/romkatv/powerlevel10k-media/145eb9fbc2f42ee408dacd9b22d8e6e0e553f83d/MesloLGS%20NF%20Regular.ttf", "sha256": "d97946186e97f8d7c0139e8983abf40a1d2d086924f2c5dbf1c29bd8f2c6e57d", "bytes": 2594368, "licence": ["MesloLGS-NF-License.txt", "Apache-2.0.txt", "Vera-Arev-LICENSE"], "presets": ["swiss-signal", "terminalcore", "tidal"] },
+    "MesloLGS-NF-License.txt": { "url": "https://raw.githubusercontent.com/romkatv/powerlevel10k-media/145eb9fbc2f42ee408dacd9b22d8e6e0e553f83d/MesloLGS%20NF%20License.txt", "sha256": "0eb25f1a4e86320ceae5f650cb75e628117c3f575bc2e332bb13cd08c3be438e" },
+    "Apache-2.0.txt": { "url": "https://www.apache.org/licenses/LICENSE-2.0.txt", "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30" },
+    "Vera-Arev-LICENSE": { "url": "https://raw.githubusercontent.com/dejavu-fonts/dejavu-fonts/version_2_37/LICENSE", "sha256": "7a083b136e64d064794c3419751e5c7dd10d2f64c108fe5ba161eae5e5958a93" }
+  },
+  "fallback": {
+    "Pretendard-Regular.otf": { "url": "https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/public/static/Pretendard-Regular.otf", "sha256": "3ffbacde6ab8411f1d2db54bb9b1f0b3ee2a738932033722cf0388c06aed1c93", "bytes": 1574352, "licence": ["Pretendard-LICENSE"] },
+    "Pretendard-LICENSE": { "url": "https://raw.githubusercontent.com/orioncactus/pretendard/v1.3.9/LICENSE", "sha256": "d31ddd9f2bed32fd7e302a205cf2380ba0de6529152d239ef99cfb6f261bfc04" }
+  },
+  "litPptxPair": {
+    "Regular": { "path": "../lit-pptx/pretendard-font/public/static/LitOpenCodeSans-Regular.otf", "sha256": "c77d9a1b2941f4c30a9de454ff645753ddbd1a512cf56dca77377bba3b85d1ea" },
+    "Bold": { "path": "../lit-pptx/pretendard-font/public/static/LitOpenCodeSans-Bold.otf", "sha256": "87fcc1bc47ea1d7c2a000808c53e4b3f9b7ca4a434a607644e25209b09167d65" },
+    "licence": "../lit-pptx/pretendard-font/LICENSE.txt"
+  },
+  "bundled": {
+    "fonts/Archivo-75-400.ttf": "16818bc93b91019499930b4a033b9c4e8057a1dd21c931f4db0d83397b938f4b",
+    "fonts/Archivo-75-700.ttf": "89ddaeec8cd1258e64123559468619d3a2c76e7f073279fc403c1793a959561e",
+    "fonts/Archivo-75-900.ttf": "3a45d80c7bc3d1e5ffb1ec7884de410188f8102b0e727fadccb326d857099b8f",
+    "fonts/Archivo-100-400.ttf": "91f9a06df5ee82d8638c61c0b978c9423c572dead51dec56f48081f5814df8b2",
+    "fonts/Archivo-100-700.ttf": "706fd4e266b7cb49411657e5122d3e904e88642a71e109ebf5ec88a02fd43cf1",
+    "fonts/Archivo-100-900.ttf": "4e755f7bdaeed914ce4eedbf59a87ffa4a4fff29b32f481d418e61045abd17e3",
+    "fonts/Archivo-125-400.ttf": "57c3f4a52b11f5910358fd82bcb6d2cf1c7b6f14cb77db1d9e887ac22740d4fb",
+    "fonts/Archivo-125-700.ttf": "854d3d95245ce3ce9879d4e42208e76b8b0e3315a2b84dc31e98b74795ebde56",
+    "fonts/Archivo-125-900.ttf": "5503606472bd0965ed6b51d7ad3d432bc3beaa2c004860da37f62d69bce8f561",
+    "fonts/Archivo-OFL.txt": "108b4e57c9c796d3d38d0428ca7ee39de47ad93187302718d9b2d8864b9b716b",
+    "fonts/VT323-Regular.ttf": "cf4de751ada78ceac033dbe16a687742939995b77bc2a052ae17a4957958594d",
+    "fonts/VT323-OFL.txt": "27d9af34210253e7ca1251fbace86c6f65b40031d6ce1a75493a1b2093631298",
+    "fonts/Silkscreen-Regular.ttf": "c845473330b94c2079ce9af01c51ac8ba2d99c24f4d14c039843bbb8e642ebd8",
+    "fonts/Silkscreen-Bold.ttf": "768476aa712d4f5c3e18d3bce80f980a8bd3f72b7094d22ec5e768df3acfed61",
+    "fonts/Silkscreen-OFL.txt": "86c5e9c9382cdcc5948704fdfe60f2aa164a719746931219a42736ecd9cefbd3",
+    "fonts/stroke/EMSAllure.svg": "55ed2de9c602229f32dd2784aae704023a5594eb8d208131f2552fae330a2a67",
+    "fonts/stroke/EMSFelix.svg": "e7b2463c6cb2a2cbef59db9b1f9f5a20a0ecd9158eeb8f01f2015c9e5be7dca4",
+    "fonts/stroke/EMSOsmotron.svg": "158b0f247a005ca5b6b8556f85684ad10cbb04c41ebbd394b9090c8ea2f16c52",
+    "fonts/stroke/EMSReadability.svg": "eebece4f2a47b9d3a8f40cab2b0f689ca60902997abd5c81064ef0d2a3a05522",
+    "fonts/stroke/EMSTech.svg": "7b5a420d4e16285213e7e2b1d187d086835c2dd7a7f64c5b8057434f082fc46f",
+    "fonts/stroke/OFL.txt": "f19c674290e5dc79f02e8efe16139ab56a06a7128876f5b1579ffd0db5bc897e",
+    "fonts/stroke/CREDITS": "7be8857db66d53b6c6a7b82465a522cb4bbd1533af40f3e02f7dd7ffc9d44f9a"
+  }
+}

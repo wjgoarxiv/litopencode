@@ -1,0 +1,53 @@
+{
+  "schema": "litfamily.payload-references/v1",
+  "surfaces": [
+    {
+      "prefix": ".litopencode/",
+      "reason": "The .litopencode tree is OpenCode session and ledger state created in the user's project, not an installed skill resource."
+    },
+    {
+      "prefix": "~/.litopencode/",
+      "reason": "The user-level .litopencode tree is host-managed state and is intentionally outside the npm payload."
+    },
+    {
+      "prefix": "~/.config/opencode/",
+      "reason": "OpenCode's user configuration is supplied by the host and is not a package-relative resource."
+    },
+    {
+      "prefix": ".handoff/",
+      "reason": "The consuming project's handoff file is host workspace state, not a template shipped by this skill package."
+    },
+    {
+      "prefix": "test/",
+      "reason": "These are consuming-repository test paths used by verification commands; they are not installed skill assets."
+    },
+    {
+      "prefix": "src/",
+      "reason": "Source paths in the instructions refer to the consuming project implementation, not this package payload."
+    },
+    {
+      "prefix": ".github/",
+      "reason": "Repository workflow and Copilot instruction files belong to the consuming project's host checkout."
+    },
+    {
+      "prefix": "wiki/",
+      "reason": "Wikify output is written into the consuming project's knowledge workspace and is not an installed resource."
+    },
+    {
+      "token": "schema/wiki-rules.md",
+      "reason": "This schema path is a consuming-project application artifact, not a file supplied by the OpenCode package."
+    },
+    {
+      "prefix": "/github.com/",
+      "reason": "These absolute paths are documentation links to public repositories, not files in the package payload."
+    },
+    {
+      "prefix": "/registry.npmjs.org/",
+      "reason": "This absolute registry path is a host lookup endpoint, not a package-relative file."
+    },
+    {
+      "prefix": "/lit/",
+      "reason": "These are the stage-page URLs the motion renderer answers itself during a render (the kit and the font stylesheet), not package-relative files."
+    }
+  ]
+}

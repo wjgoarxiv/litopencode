@@ -1,0 +1,59 @@
+{
+  "name": "@litfamily/litopencode",
+  "version": "1.0.9",
+  "description": "LitOpenCode OpenCode plugin bootstrap package.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wjgoarxiv/litopencode.git"
+  },
+  "homepage": "https://github.com/wjgoarxiv/litopencode#readme",
+  "author": "LitOpenCode contributors",
+  "type": "module",
+  "bin": {
+    "litopencode": "bin/litopencode.cjs"
+  },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    }
+  },
+  "scripts": {
+    "build": "node tools/run-build.mjs",
+    "check:pack-payload": "npm run build && npm pack --dry-run --json --ignore-scripts | node tools/check-pack-payload.mjs --stdin",
+    "check:version": "node tools/check-version-lockstep.mjs",
+    "check:managed-skill-manifest": "node tools/gen-managed-skill-manifest.mjs --check",
+    "gen:managed-skill-manifest": "node tools/gen-managed-skill-manifest.mjs",
+    "prepublishOnly": "node tools/prepublish-test-gate.mjs",
+    "prepack": "npm run build",
+    "pretest": "npm run build",
+    "qa:behavior-replacement": "node tools/run-behavior-replacement-probes.mjs",
+    "qa:installed-resource-tamper": "node tools/run-installed-resource-tamper-probe.mjs",
+    "qa:negative-gate-matrix": "node tools/run-negative-gate-matrix.mjs",
+    "qa:rules-glob-differential": "node tools/run-rules-glob-differential.mjs --check",
+    "qa:real-surface": "npm run build && node tools/run-negative-gate-matrix.mjs && node tools/run-installed-resource-tamper-probe.mjs && node tools/run-behavior-replacement-probes.mjs && node tools/run-wikify-surface-probe.mjs",
+    "scan:legacy-tokens": "node tools/scan-legacy-tokens.mjs",
+    "test": "node --test --test-concurrency=4 \"test/*.test.mjs\"",
+    "test:stress": "node --test test/performance/evidence-ledger-stress.test.mjs",
+    "typecheck": "node tools/run-typecheck.mjs"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0",
+    "zod": "4.1.8"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.17.6",
+    "@types/node": "^24.12.2",
+    "picomatch": "^4.0.5",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "latinMeasureMax": 90,
+  "cjkMeasureMax": 38,
+  "cjkMajority": 0.5,
+  "latinGlyphFactor": 0.56,
+  "cjkGlyphFactor": 0.98,
+  "fallbackFontPt": 11,
+  "fallbackPageWidthTwips": 12240,
+  "fallbackMarginTwips": 1440,
+  "numericMajority": 0.7
+}

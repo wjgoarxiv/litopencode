@@ -1,0 +1,79 @@
+# Local agent and runtime state
+.litcodex/
+.litopencode/
+**/.lit*/
+**/.hermes/
+**/.[o]mo/
+node_modules/
+.git/
+
+# Internal planning, provenance, and automation
+INITIAL_PROMPT.md
+HANDOFF.md
+!vendor/handoff/templates/HANDOFF.md
+.github/
+generate_cover.py
+cover.png
+docs/assets/cover.svg
+# README media and linked licenses are pinned to this package version.
+docs/assets/readme/*
+!docs/assets/readme/ascii-readme.svg
+!docs/assets/readme/badge-version.svg
+!docs/assets/readme/badge-license.svg
+!docs/assets/readme/JetBrainsMono-OFL.txt
+!docs/assets/readme/Lucide-LICENSE.txt
+!docs/assets/readme/ignition-film.mp4
+!docs/assets/readme/ignition-readme.gif
+!docs/assets/readme/litfamily-machines.png
+!docs/assets/readme/litopencode-wordmark.svg
+!docs/assets/readme/litopencode-clay-icon.png
+!docs/assets/readme/lucide-book-open.svg
+!docs/assets/readme/lucide-play.svg
+!docs/assets/readme/lucide-shield-check.svg
+!docs/assets/readme/poster.png
+docs/release-checklist.md
+tools/prepublish-test-gate.mjs
+docs/recon/
+docs/spec/
+plans/
+
+# Local evidence and reference archives
+evidence/
+**/evidence/
+\# REFERENCE/
+**/\# REFERENCE/
+
+# Tests are local-only pack inputs
+src/
+test/
+tests/
+test-support/
+!vendor/scientific-visualization/tests/
+!vendor/scientific-visualization/tests/test_figure_export.py
+!vendor/scientific-visualization/tests/test_style_presets.py
+**/__pycache__/
+*.pyc
+
+# Local scanner state for retained internal provenance files
+tools/legacy-token-allowlist.json
+
+# Stale package artifacts from local dry-runs
+*.tgz
+
+# Local agent navigation guidance; tracked in git, never published
+AGENTS.md
+
+# Diagram review fixtures and locally rendered outputs stay in source control only
+skills/lit-diagram-drawer/ab/
+skills/lit-diagram-drawer/evidence/
+skills/lit-diagram-drawer/.work/
+skills/lit-diagram-drawer/**/constructed-naive-foil.html
+skills/lit-diagram-drawer/**/*.png
+skills/lit-diagram-drawer/**/*.jpg
+skills/lit-diagram-drawer/**/*.jpeg
+skills/lit-diagram-drawer/**/*.webp
+skills/lit-diagram-drawer/scripts/office-proof.py
+
+# Portable motion template source is an intentional managed asset.
+!skills/readme-studio/templates/remotion/src/
+!skills/readme-studio/templates/remotion/src/index.tsx
