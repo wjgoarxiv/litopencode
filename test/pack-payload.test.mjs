@@ -87,11 +87,12 @@ const requiredReadmePaths = [
   "docs/assets/readme/poster.png"
 ];
 const readmeCdn = `https://cdn.jsdelivr.net/npm/${packageId}/`;
-const readmeImagePaths = [...new Set(["README.md", "README-Ko-KR.md"].flatMap((file) =>
+// The npm pages pin package-CDN images; the GitHub pages load the same shipped files by relative path.
+const readmeImagePaths = [...new Set(["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md"].flatMap((file) =>
   [...fsSync.readFileSync(file, "utf8").matchAll(/(?:!\[[^\]]*\]\(|\b(?:src|srcset)=")([^)"\s]+)/gu)]
     .map((match) => match[1])
-    .filter((target) => target.startsWith(readmeCdn))
-    .map((target) => target.slice(readmeCdn.length))
+    .filter((target) => target.startsWith(readmeCdn) || target.startsWith("./"))
+    .map((target) => target.startsWith("./") ? target.slice(2) : target.slice(readmeCdn.length))
 ))];
 const requiredPackagePaths = [
   ...new Set([...requiredReadmePaths, ...readmeImagePaths]),
@@ -145,7 +146,7 @@ function runChecker(args, input) {
 
 test("README assets and linked files ship while unrelated presentation files stay excluded", () => {
   const required = ["package.json", "dist/index.js", ...requiredPackagePaths];
-  for (const unwanted of ["cover.png", "docs/assets/cover.svg", "docs/release-checklist.md", "generate_cover.py", "docs/assets/readme/unapproved-source.psd"]) {
+  for (const unwanted of ["cover.png", "docs/assets/cover.svg", "docs/release-checklist.md", "generate_cover.py", "docs/assets/readme/unapproved-source.psd", "README-npm.md", "README-npm-Ko-KR.md", ".readme-npm-backup/README.md", "tools/readme-for-npm.mjs"]) {
     const result = runChecker(["--stdin"], JSON.stringify(packageReport([...required, unwanted])));
     assert.equal(result.status, 1, `${unwanted} must stay out of npm: ${result.stdout}`);
     assert.ok(result.stdout.includes(unwanted));

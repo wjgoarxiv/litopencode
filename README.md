@@ -1,6 +1,6 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ascii-readme.svg" width="480" alt="LIT ASCII B mark" /></p>
+<p align="center"><img src="./docs/assets/readme/ascii-readme.svg" width="480" alt="LIT ASCII B mark" /></p>
 
 <details>
 <summary>Copy ASCII logo</summary>
@@ -32,59 +32,72 @@
 
 # LitOpenCode
 
-[English](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/README.md) · [한국어](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/README-Ko-KR.md)
+[English](./README.md) · [한국어](./README-Ko-KR.md)
 
 **Keep the work lit.**
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/litopencode-wordmark.svg" width="480" alt="LITOPENCODE display type" /></p>
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/litopencode-clay-icon.png" width="160" alt="LitOpenCode clay mark" /></p>
+<p align="center"><img src="./docs/assets/readme/litopencode-wordmark.svg" width="480" alt="LITOPENCODE display type" /></p>
+<p align="center"><img src="./docs/assets/readme/litopencode-clay-icon.png" width="160" alt="LitOpenCode clay mark" /></p>
 
 <p align="center">
-<a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/badge-version.svg" alt="1.0.10" /></a>
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
+<a href="#install"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.11" /></a>
+<a href="./LICENSE"><img src="./docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 </p>
 
 <p align="center">
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/lucide-book-open.svg" width="16" alt="" /> Docs</a> &nbsp; <a href="#install">Install</a> &nbsp; <a href="#skills-at-a-glance">Skills</a> &nbsp; <a href="#ignition-motion"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
+<a href="./docs/reference.md"><img src="./docs/assets/readme/lucide-book-open.svg" width="16" alt="" /> Docs</a> &nbsp; <a href="#install">Install</a> &nbsp; <a href="#skills-at-a-glance">Skills</a> &nbsp; <a href="#ignition-motion"><img src="./docs/assets/readme/lucide-play.svg" width="16" alt="" /> Ignition</a> &nbsp; <a href="./LICENSE"><img src="./docs/assets/readme/lucide-shield-check.svg" width="16" alt="" /> MIT</a>
 </p>
-
-## What is LitOpenCode
 
 LitOpenCode adds workflow agents, slash commands, and a local evidence ledger to OpenCode.
 
+You keep using OpenCode the way you do now. Add `lit` to a prompt, or type `/lit`, and LitOpenCode picks the workflow. OpenCode still runs the model and asks the permission questions; the plugin keeps the project records.
+
+## Why it exists
+
+> **The spark is yours.**<br>
+> **Bring it to your work.**
+
+A bug to fix. A screen to build. A project to finish.
+
+Starting takes one line. Keeping going is the hard part. When a conversation runs long or a session ends, you have to work out where you stopped: what you decided, what you checked, and what comes next.
+
+LitOpenCode keeps that in the project. It writes down the goal, the plan, the results it verified, and the next steps, so another session can read them and carry on.
+
+```text
+Plan → Build → Verify → Leave the next step
+```
+
+Keeping the work lit doesn't mean a program runs forever. It means the work is ready to continue when the session ends. It works with the tool you already use, and you don't need any other LitFamily product.
+
 ## Install
 
-Install the scoped package with Node.js/npm and OpenCode available:
+You need Node.js with npm, and OpenCode. Then run:
 
 ```sh
 LIT_PACKAGE='@litfamily/litopencode@latest'
 npm exec --package "$LIT_PACKAGE" -- litopencode install
 ```
 
-Restart OpenCode, press **Tab**, and select **lit-loop**. Model access and credentials
-come from your OpenCode provider setup. The installer offers model, permission, and
-output-style choices; the default permission mode is safe/ask-first.
+Restart OpenCode, press **Tab**, and pick **lit-loop**.
 
-With the OpenAI provider, fresh installs use GPT-6 Astra (`gpt-6-astra`) at `xhigh` for planning and review, and GPT-6 Luna (`gpt-6-luna`) at `max` for execution and research. The installer also offers supported model and effort choices.
+The installer asks about models, permissions, and output style. Permissions default to safe/ask-first. Model access and credentials come from your OpenCode provider setup.
+
+With the OpenAI provider, a fresh install uses GPT-6 Astra (`gpt-6-astra`) at `xhigh` for planning and review, and GPT-6 Luna (`gpt-6-luna`) at `max` for execution and research. You can pick other supported models and effort levels during install.
+
+Want to see the changes first, or skip the questions?
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode install --dry-run  # preview changes
 npm exec --package @litfamily/litopencode@latest -- litopencode install --yes     # use defaults; preserve saved choices
 ```
 
-Installation registers the plugin and native command/skill files under your OpenCode
-config root. Routes live in `~/.config/opencode/litopencode.json`; `XDG_CONFIG_HOME`
-changes that root. Existing custom routes remain user-owned. See the
-[installation and model reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md#install) for custom roots,
-provider choices, terminal policy, and unattended setup.
+Install registers the plugin and writes native command and skill files under your OpenCode config root. Your routes live in `~/.config/opencode/litopencode.json`; setting `XDG_CONFIG_HOME` moves that root. Custom routes you already have stay yours. The [installation and model reference](./docs/reference.md#install) covers custom roots, provider choices, terminal behavior, and unattended setup.
 
-This checkout is `@litfamily/litopencode@1.0.10`. Registry `@latest` can differ; inspect it with
-`npm view @litfamily/litopencode version` when an exact version matters.
+This checkout is `@litfamily/litopencode@1.0.11`. The registry's `@latest` can be different, so run `npm view @litfamily/litopencode version` when the exact version matters.
 
-## First use
+## Your first task
 
-Start with one small task. Open an empty project folder in OpenCode, select
-`lit-loop`, and send:
+Start small. Open an empty folder in OpenCode, pick `lit-loop`, and send:
 
 ```text
 lit Build a to-do list in one index.html with no dependencies; check adding and completing items, then leave results and next steps.
@@ -92,96 +105,11 @@ lit Build a to-do list in one index.html with no dependencies; check adding and 
 
 Your first result is `index.html`. Open it and try adding and completing an item.
 
-When you return, use `/lit-recap` to read the record and find the next step.
+When you come back later, `/lit-recap` reads the record and shows you the next step.
 
-Use `/lit` for the same workflow. For work that needs a reviewed plan, select
-`lit-plan`, approve the plan, then run `/start-work`; finish with `/review-work`.
-`lit-implement` executes the approved plan. The planner waits for explicit user
-confirmation and cannot edit files or run shell commands.
+`/lit` starts the same workflow. When the work deserves a reviewed plan, pick `lit-plan`, approve the plan, run `/start-work`, and finish with `/review-work`. `lit-implement` carries out the approved plan. The planner waits for explicit user confirmation, and it can't edit files or run shell commands.
 
-Progress and evidence live in `.litopencode/litgoal/`. OpenCode does not expose a
-native goal primitive; this repository-local ledger supports resuming work. Static
-skills provide guidance when their documented routes select them.
-
-## Key features
-
-> **The spark is yours.**<br>
-> **Bring it to your work.**
-
-A bug to fix. A screen to build. A project to finish.
-
-Starting takes a line. Continuing takes more. When a conversation grows long or a
-session ends, you have to recover where you stopped: what you decided, what you
-checked, and what comes next.
-
-**LIT keeps that spark in the project.** It records the goal, the plan, verified
-results, and the next steps so another session can read them and continue.
-
-**Where one conversation ends, the next piece of work begins.**
-
- Keep the tool you already use; no other LitFamily product is required.
-A lasting flame does not mean a program runs forever. **It means leaving work ready
-to continue when the session ends.**
-
-```text
-Plan → Build → Verify → Leave the next step
-```
-
-### Practical routes and visual cues
-
-Use `lit` or `/lit` to start a bounded task; `handoff` or `/lit-handoff` carries the checked result and next step; `lit-plan` prepares a plan; `/start-work <approved-plan>` executes an approved plan; `/review-work` checks the change and its evidence; and `/litresearch` uses the shipped source-backed research route. The expected effect is a project-local goal, evidence, and next-step record that another session can resume. The host limit is explicit: OpenCode owns model execution and permission prompts, while the plugin supplies routes and records; selecting a route does not prove execution or a visual check.
-
-When a Lit route activates, the reply starts with a bold ignition line. The plugin requests a six-second warning toast with five micro-logo rows and a final `🔥 LIT IGNITED · <discipline> 🔥` line when the environment supports mark glyphs; otherwise, it shows only that line.
-
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/litopencode-ignition-1600.webp" width="48%" alt="LitOpenCode ignition apparatus" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/litopencode-continuity-1600.webp" width="48%" alt="LitOpenCode continuity apparatus" /></p>
-
-<p align="center"><a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ignition-film.mp4"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/poster.png" width="720" alt="Ignition motion poster" /></a></p>
-
-The poster opens the optional film; this README keeps motion opt-in.
-
-The retained `docs/assets/cover.svg` is the editable, low-bandwidth fallback; the WebP above is the product emphasis export.
-
-### How LitOpenCode fits into OpenCode
-
-OpenCode loads the plugin from its config. Agents and chat/command routes select
-workflows and installed skills. Tools and lifecycle hooks keep the project records
-that you can read when you return.
-
-```mermaid
-flowchart TD
-    Config["OpenCode config: opencode.json / opencode.jsonc"] --> Plugin["LitOpenCode plugin"]
-    Plugin --> Routes["Agents and chat / command routes"]
-    Plugin --> Tools["lit / litwork / start-work tools"]
-    Plugin --> Hooks["Message, tool and session hooks"]
-    Routes --> Skills["Installed skills and canonical references"]
-    Tools --> Records["Project records: .litopencode/litgoal/"]
-    Hooks -->|Work lifecycle events| Records
-    Records -->|Explicit recap| Routes
-    classDef host fill:#080D14,stroke:#F2EFDF,color:#F2EFDF
-    classDef lit fill:#080D14,stroke:#FF6337,color:#F2EFDF
-    classDef local fill:#080D14,stroke:#D7F75B,color:#F2EFDF
-    class Config host
-    class Plugin,Routes,Tools,Hooks lit
-    class Skills,Records local
-```
-
-### Design production and README Studio
-
-The native `frontend-ui-ux` skill takes an adequate authorized build request through working implementation and rendered inspection. It asks only material design choices and retains answers; review and plan requests remain read-only.
-
-Select `readme-studio` through OpenCode's native skill tool for factual README writing and local cover composition. The installed resources include outlined typography helpers and pinned Remotion/HyperFrames recipes. Without a native image generator it reports `IMAGE_GENERATION_UNAVAILABLE` and can continue from a supplied background. Public GitHub/npm rendering is a separate gate. No dedicated slash command is claimed.
-
-Select `lit-diagram-drawer` through OpenCode's native skill picker for conceptual diagrams, local verification, safe imports, and exports without installing tools when the renderer and browser are already available. Product interfaces remain with `frontend-ui-ux`; measured scientific figures remain with `lit-scientific-visualization`. For a bounded diagram-creation request ending in `lit`, the workflow directs OpenCode to load this native skill before authoring. There is no dedicated slash command or standalone diagram chat route.
-
-### Word reports and PowerPoint decks
-
-`lit-docx` creates an editable Word report from a Markdown source; `lit-pptx` compiles slides to an editable PowerPoint deck. Bare `lit` requests for reports or slides direct OpenCode to load the relevant native skill, and a joint request loads both. Korean reports default to the korean-generic profile; decks default to AZURE-PRO and Pretendard. Pinned dependencies install on first use in a LitOpenCode-owned cache. The skills retain the source Markdown, run their structural and quality gates, and ask for a rendered inspection when LibreOffice is available. Publisher profiles, DOCX editing/PDF conversion, template learning, and font embedding are documented in the installed skills. `litopencode doctor` reports readiness without installing dependencies.
-
-### Prose and browser workflows
-
-Use `/lit-humanizer` for a substantial prose revision or explicit review. It preserves meaning, voice, and useful qualifiers; `/lit-korean`, `/text-naturalization`, `/text-neutralization`, and `/korean-ai-slop-remover` remain compatibility routes. Clear drafting residue is blocked before supported text writes, while lower-confidence style signals are advisory. DOCX, PPTX, and available PDF text are checked after creation.
-
-`browser-drive` uses the `agent-browser` engine from [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser). Its verified floor is 0.34.0; newer well-formed versions are reported as beyond that floor. If you need the engine, install it yourself with `npm install -g agent-browser`, run `agent-browser install`, then check it with `node skills/browser-drive/scripts/capability-probe.mjs`. LitOpenCode does not install it automatically.
+Progress and evidence go to `.litopencode/litgoal/` in your project. OpenCode has no native goal primitive, so this local record is what lets you resume. Static skills give guidance when their documented routes select them.
 
 ## Skills at a glance
 
@@ -190,192 +118,192 @@ Each row shows what a skill produces, how to open it, and what you get.
 <table>
 <tr><th>What it looks like</th><th>Skill</th><th>What you get</th></tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/litwork.webp" width="240" alt="Add lit to a request. The work goes Frame, Ground, Plan, Execute, Verify, Review, Recap." /></td>
+<td><img src="./docs/assets/skills/litwork.webp" width="240" alt="Add lit to a request. The work goes Frame, Ground, Plan, Execute, Verify, Review, Recap." /></td>
 <td><code>litwork</code> · <code>workflow-loop</code><br /><sub><code>lit</code> · <code>/litwork</code></sub></td>
 <td>Add <code>lit</code> to a request. The work goes Frame, Ground, Plan, Execute, Verify, Review, Recap.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/durable-litgoal.webp" width="240" alt="One goal with checkable criteria, kept on disk when OpenCode has no native goal." /></td>
+<td><img src="./docs/assets/skills/durable-litgoal.webp" width="240" alt="One goal with checkable criteria, kept on disk when OpenCode has no native goal." /></td>
 <td><code>durable-litgoal</code><br /><sub><code>/litgoal</code> · <code>/lit-goal</code></sub></td>
 <td>One goal with checkable criteria, kept on disk when OpenCode has no native goal.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-plan.webp" width="240" alt="A checklist that stops at an approval gate. The lit-plan agent cannot edit files or run shell commands." /></td>
+<td><img src="./docs/assets/skills/lit-plan.webp" width="240" alt="A checklist that stops at an approval gate. The lit-plan agent cannot edit files or run shell commands." /></td>
 <td><code>lit-plan</code><br /><sub><code>/lit-plan</code></sub></td>
 <td>A checklist that stops at an approval gate. The lit-plan agent cannot edit files or run shell commands.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/start-work.webp" width="240" alt="Runs an approved plan slice by slice. A stale grant or revision stops the run." /></td>
+<td><img src="./docs/assets/skills/start-work.webp" width="240" alt="Runs an approved plan slice by slice. A stale grant or revision stops the run." /></td>
 <td><code>start-work</code><br /><sub><code>/start-work</code></sub></td>
 <td>Runs an approved plan slice by slice. A stale grant or revision stops the run.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/review-work.webp" width="240" alt="Five review lanes: findings by severity, then pass, fail or not-run for each lane." /></td>
+<td><img src="./docs/assets/skills/review-work.webp" width="240" alt="Five review lanes: findings by severity, then pass, fail or not-run for each lane." /></td>
 <td><code>review-work</code><br /><sub><code>/review-work</code></sub></td>
 <td>Five review lanes: findings by severity, then pass, fail or not-run for each lane.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/litresearch.webp" width="240" alt="Research in waves, with claim receipts and uncertainty kept." /></td>
+<td><img src="./docs/assets/skills/litresearch.webp" width="240" alt="Research in waves, with claim receipts and uncertainty kept." /></td>
 <td><code>litresearch</code><br /><sub><code>lit research &lt;question&gt;</code> · <code>/litresearch</code></sub></td>
 <td>Research in waves, with claim receipts and uncertainty kept.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/doctor-installer.webp" width="240" alt="Installs LitOpenCode into OpenCode. --dry-run previews the change and writes nothing." /></td>
+<td><img src="./docs/assets/skills/doctor-installer.webp" width="240" alt="Installs LitOpenCode into OpenCode. --dry-run previews the change and writes nothing." /></td>
 <td><code>doctor-installer</code><br /><sub><code>litopencode install</code> · <code>litopencode doctor</code></sub></td>
 <td>Installs LitOpenCode into OpenCode. <code>--dry-run</code> previews the change and writes nothing.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-fetch.webp" width="240" alt="Fetches a public page behind SSRF guards and returns a named verdict." /></td>
+<td><img src="./docs/assets/skills/lit-fetch.webp" width="240" alt="Fetches a public page behind SSRF guards and returns a named verdict." /></td>
 <td><code>lit-fetch</code><br /><sub><code>/lit-fetch</code> · <code>litopencode fetch-public &lt;url&gt; --json</code></sub></td>
 <td>Fetches a public page behind SSRF guards and returns a named verdict.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-init.webp" width="240" alt="Writes sparse AGENTS.md guides, only where the code needs one." /></td>
+<td><img src="./docs/assets/skills/lit-init.webp" width="240" alt="Writes sparse AGENTS.md guides, only where the code needs one." /></td>
 <td><code>lit-init</code><br /><sub><code>/lit-init</code></sub></td>
 <td>Writes sparse AGENTS.md guides, only where the code needs one.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-crucible.webp" width="240" alt="Pressure-tests a brief before planning. Only the risks that survive critique reach the plan." /></td>
+<td><img src="./docs/assets/skills/lit-crucible.webp" width="240" alt="Pressure-tests a brief before planning. Only the risks that survive critique reach the plan." /></td>
 <td><code>lit-crucible</code><br /><sub><code>/lit-crucible</code></sub></td>
 <td>Pressure-tests a brief before planning. Only the risks that survive critique reach the plan.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/refactor.webp" width="240" alt="Restructures code while tests pin its behavior before and after every step." /></td>
+<td><img src="./docs/assets/skills/refactor.webp" width="240" alt="Restructures code while tests pin its behavior before and after every step." /></td>
 <td><code>refactor</code><br /><sub><code>/refactor</code></sub></td>
 <td>Restructures code while tests pin its behavior before and after every step.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-burnoff.webp" width="240" alt="Cleans AI-written bloat out of a change set after tests lock what it does." /></td>
+<td><img src="./docs/assets/skills/lit-burnoff.webp" width="240" alt="Cleans AI-written bloat out of a change set after tests lock what it does." /></td>
 <td><code>lit-burnoff</code><br /><sub><code>/lit-burnoff</code></sub></td>
 <td>Cleans AI-written bloat out of a change set after tests lock what it does.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-burnoff-file.webp" width="240" alt="Cleans one just-edited file against its own diff." /></td>
+<td><img src="./docs/assets/skills/lit-burnoff-file.webp" width="240" alt="Cleans one just-edited file against its own diff." /></td>
 <td><code>lit-burnoff-file</code><br /><sub><code>/lit-burnoff-file</code></sub></td>
 <td>Cleans one just-edited file against its own diff.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-code.webp" width="240" alt="Minimum-first code with Given/When/Then tests and a cleanup receipt." /></td>
+<td><img src="./docs/assets/skills/lit-code.webp" width="240" alt="Minimum-first code with Given/When/Then tests and a cleanup receipt." /></td>
 <td><code>lit-code</code><br /><sub><code>/lit-code</code></sub></td>
 <td>Minimum-first code with Given/When/Then tests and a cleanup receipt.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/debugging.webp" width="240" alt="Reproduces the bug, tests at least three explanations, and fixes only the confirmed cause." /></td>
+<td><img src="./docs/assets/skills/debugging.webp" width="240" alt="Reproduces the bug, tests at least three explanations, and fixes only the confirmed cause." /></td>
 <td><code>debugging</code><br /><sub><code>/debugging</code></sub></td>
 <td>Reproduces the bug, tests at least three explanations, and fixes only the confirmed cause.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-commit.webp" width="240" alt="Splits your changes into atomic commits in the repo's own style and leaves unrelated work alone." /></td>
+<td><img src="./docs/assets/skills/lit-commit.webp" width="240" alt="Splits your changes into atomic commits in the repo's own style and leaves unrelated work alone." /></td>
 <td><code>lit-commit</code><br /><sub><code>/lit-commit</code></sub></td>
 <td>Splits your changes into atomic commits in the repo's own style and leaves unrelated work alone.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lsp.webp" width="240" alt="Reads diagnostics from the language server OpenCode already has. LitOpenCode ships no server." /></td>
+<td><img src="./docs/assets/skills/lsp.webp" width="240" alt="Reads diagnostics from the language server OpenCode already has. LitOpenCode ships no server." /></td>
 <td><code>lsp</code><br /><sub><code>/lsp</code></sub></td>
 <td>Reads diagnostics from the language server OpenCode already has. LitOpenCode ships no server.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lsp-setup.webp" width="240" alt="Proposes one install command when no server covers a file type, then waits for your approval." /></td>
+<td><img src="./docs/assets/skills/lsp-setup.webp" width="240" alt="Proposes one install command when no server covers a file type, then waits for your approval." /></td>
 <td><code>lsp-setup</code><br /><sub><code>/lsp-setup</code></sub></td>
 <td>Proposes one install command when no server covers a file type, then waits for your approval.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/rules.webp" width="240" alt="Loads repository rules in two lanes: once for the session, and again for files you edit." /></td>
+<td><img src="./docs/assets/skills/rules.webp" width="240" alt="Loads repository rules in two lanes: once for the session, and again for files you edit." /></td>
 <td><code>rules</code><br /><sub><code>/rules</code></sub></td>
 <td>Loads repository rules in two lanes: once for the session, and again for files you edit.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/deep-interview.webp" width="240" alt="One question per round until non-goals and decision boundaries are explicit." /></td>
+<td><img src="./docs/assets/skills/deep-interview.webp" width="240" alt="One question per round until non-goals and decision boundaries are explicit." /></td>
 <td><code>deep-interview</code><br /><sub><code>/deep-interview</code></sub></td>
 <td>One question per round until non-goals and decision boundaries are explicit.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/structural-search.webp" width="240" alt="Finds code by syntax shape behind a verified engine. Anything else is labelled TEXTUAL." /></td>
+<td><img src="./docs/assets/skills/structural-search.webp" width="240" alt="Finds code by syntax shape behind a verified engine. Anything else is labelled TEXTUAL." /></td>
 <td><code>structural-search</code><br /><sub><code>/structural-search</code></sub></td>
 <td>Finds code by syntax shape behind a verified engine. Anything else is labelled TEXTUAL.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/browser-drive.webp" width="240" alt="Drives a real page after verifying the browser driver. If there is none, it says so." /></td>
+<td><img src="./docs/assets/skills/browser-drive.webp" width="240" alt="Drives a real page after verifying the browser driver. If there is none, it says so." /></td>
 <td><code>browser-drive</code><br /><sub><code>/browser-drive</code></sub></td>
 <td>Drives a real page after verifying the browser driver. If there is none, it says so.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-humanizer.webp" width="240" alt="Rewrites stiff model prose in English or Korean. Facts and hedges stay; filler goes." /></td>
+<td><img src="./docs/assets/skills/lit-humanizer.webp" width="240" alt="Rewrites stiff model prose in English or Korean. Facts and hedges stay; filler goes." /></td>
 <td><code>lit-humanizer</code><br /><sub><code>/lit-humanizer</code></sub></td>
 <td>Rewrites stiff model prose in English or Korean. Facts and hedges stay; filler goes.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-recap.webp" width="240" alt="A read-only summary: done, in progress, blocked, where the evidence is, what comes next." /></td>
+<td><img src="./docs/assets/skills/lit-recap.webp" width="240" alt="A read-only summary: done, in progress, blocked, where the evidence is, what comes next." /></td>
 <td><code>lit-recap</code><br /><sub><code>/lit-recap</code></sub></td>
 <td>A read-only summary: done, in progress, blocked, where the evidence is, what comes next.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-comprehend.webp" width="240" alt="An explainer page for agent-written work: intuition first, then the walkthrough, then a short quiz." /></td>
+<td><img src="./docs/assets/skills/lit-comprehend.webp" width="240" alt="An explainer page for agent-written work: intuition first, then the walkthrough, then a short quiz." /></td>
 <td><code>lit-comprehend</code><br /><sub><code>/lit-comprehend</code></sub></td>
 <td>An explainer page for agent-written work: intuition first, then the walkthrough, then a short quiz.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-handoff.webp" width="240" alt="Type handoff to get a continuation file the next session can read and resume from." /></td>
+<td><img src="./docs/assets/skills/lit-handoff.webp" width="240" alt="Type handoff to get a continuation file the next session can read and resume from." /></td>
 <td><code>lit-handoff</code><br /><sub><code>handoff</code> · <code>/lit-handoff</code></sub></td>
 <td>Type <code>handoff</code> to get a continuation file the next session can read and resume from.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-scientific-visualization.webp" width="240" alt="A journal-sized figure with vector and 600 DPI exports. The chart type follows the data." /></td>
+<td><img src="./docs/assets/skills/lit-scientific-visualization.webp" width="240" alt="A journal-sized figure with vector and 600 DPI exports. The chart type follows the data." /></td>
 <td><code>lit-scientific-visualization</code><br /><sub><code>/lit-scientific-visualization</code></sub></td>
 <td>A journal-sized figure with vector and 600 DPI exports. The chart type follows the data.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-diagram-drawer.webp" width="240" alt="A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports." /></td>
+<td><img src="./docs/assets/skills/lit-diagram-drawer.webp" width="240" alt="A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports." /></td>
 <td><code>lit-diagram-drawer</code><br /><sub><code>skill picker</code></sub></td>
 <td>A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and get an editable PowerPoint deck from a Markdown source, AZURE-PRO by default. A QA gate and a rendered check follow. It is also in the skill picker." /></td>
+<td><img src="./docs/assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and get an editable PowerPoint deck from a Markdown source, AZURE-PRO by default. A QA gate and a rendered check follow. It is also in the skill picker." /></td>
 <td><code>lit-pptx</code><br /><sub><code>skill picker</code></sub></td>
 <td>Ask for slides with <code>lit</code> and get an editable PowerPoint deck from a Markdown source, AZURE-PRO by default. A QA gate and a rendered check follow. It is also in the skill picker.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and get a styled Word file with its Markdown source; Korean text uses korean-generic. Lint and a rendered page check follow. It is also in the skill picker." /></td>
+<td><img src="./docs/assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and get a styled Word file with its Markdown source; Korean text uses korean-generic. Lint and a rendered page check follow. It is also in the skill picker." /></td>
 <td><code>lit-docx</code><br /><sub><code>skill picker</code></sub></td>
 <td>Ask for a report with <code>lit</code> and get a styled Word file with its Markdown source; Korean text uses korean-generic. Lint and a rendered page check follow. It is also in the skill picker.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/autoresearch.webp" width="240" alt="An approved, budgeted experiment loop. Each round changes one thing and keeps or reverts it." /></td>
+<td><img src="./docs/assets/skills/autoresearch.webp" width="240" alt="An approved, budgeted experiment loop. Each round changes one thing and keeps or reverts it." /></td>
 <td><code>autoresearch</code><br /><sub><code>/autoresearch</code> · <code>/autoresearch-&lt;mode&gt;</code></sub></td>
 <td>An approved, budgeted experiment loop. Each round changes one thing and keeps or reverts it.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/autoconference.webp" width="240" alt="A budgeted research conference: separate researchers, reviewers, and a synthesis that keeps disagreement." /></td>
+<td><img src="./docs/assets/skills/autoconference.webp" width="240" alt="A budgeted research conference: separate researchers, reviewers, and a synthesis that keeps disagreement." /></td>
 <td><code>autoconference</code><br /><sub><code>/autoconference</code> · <code>/autoconference-&lt;mode&gt;</code></sub></td>
 <td>A budgeted research conference: separate researchers, reviewers, and a synthesis that keeps disagreement.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/wikify.webp" width="240" alt="Keeps reviewed project knowledge on disk and answers later questions from it, with sources." /></td>
+<td><img src="./docs/assets/skills/wikify.webp" width="240" alt="Keeps reviewed project knowledge on disk and answers later questions from it, with sources." /></td>
 <td><code>wikify</code><br /><sub><code>/wikify-ingest</code> · <code>/wikify-query</code></sub></td>
 <td>Keeps reviewed project knowledge on disk and answers later questions from it, with sources.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/frontend-ui-ux.webp" width="240" alt="Builds a working interface and checks it with a measured probe in seven views: four widths, dark, reduced motion and 200% zoom. Open it from the skill picker." /></td>
+<td><img src="./docs/assets/skills/frontend-ui-ux.webp" width="240" alt="Builds a working interface and checks it with a measured probe in seven views: four widths, dark, reduced motion and 200% zoom. Open it from the skill picker." /></td>
 <td><code>frontend-ui-ux</code><br /><sub><code>skill picker</code></sub></td>
 <td>Builds a working interface and checks it with a measured probe in seven views: four widths, dark, reduced motion and 200% zoom. Open it from the skill picker.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/readme-studio.webp" width="240" alt="A factual README with an inspected cover and outlined type. Open it from the skill picker." /></td>
+<td><img src="./docs/assets/skills/readme-studio.webp" width="240" alt="A factual README with an inspected cover and outlined type. Open it from the skill picker." /></td>
 <td><code>readme-studio</code><br /><sub><code>skill picker</code></sub></td>
 <td>A factual README with an inspected cover and outlined type. Open it from the skill picker.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. It writes a treatment, then draws a stage page or sets the words in motion; the film is gated and looked at before delivery. It is also in the skill picker." /></td>
+<td><img src="./docs/assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. It writes a treatment, then draws a stage page or sets the words in motion; the film is gated and looked at before delivery. It is also in the skill picker." /></td>
 <td><code>lit-typographic-motion</code><br /><sub><code>skill picker</code></sub></td>
 <td>Ask for a video with <code>lit</code>. It writes a treatment, then draws a stage page or sets the words in motion; the film is gated and looked at before delivery. It is also in the skill picker.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/visual-qa.webp" width="240" alt="Checks a real screen with evidence and adds no write access. Open it from the skill picker." /></td>
+<td><img src="./docs/assets/skills/visual-qa.webp" width="240" alt="Checks a real screen with evidence and adds no write access. Open it from the skill picker." /></td>
 <td><code>visual-qa</code><br /><sub><code>skill picker</code></sub></td>
 <td>Checks a real screen with evidence and adds no write access. Open it from the skill picker.</td>
 </tr>
 <tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/skills/automatic-guards.webp" width="240" alt="Runs on its own: registers the LitOpenCode agents, checks comments after edits, and blocks unscoped “always better” claims." /></td>
+<td><img src="./docs/assets/skills/automatic-guards.webp" width="240" alt="Runs on its own: registers the LitOpenCode agents, checks comments after edits, and blocks unscoped “always better” claims." /></td>
 <td><code>agent-roster</code> · <code>reference-benchmark-claims</code> · <code>native-goal-verdict</code> · <code>search-workflow-ideas</code> · <code>release-guardrails</code> · <code>comment-checker</code> · <code>tool-guards</code><br /><sub>runs on its own</sub></td>
 <td>Runs on its own: registers the LitOpenCode agents, checks comments after edits, and blocks unscoped “always better” claims.</td>
 </tr>
@@ -383,7 +311,11 @@ Each row shows what a skill produces, how to open it, and what you get.
 
 ## A/B results
 
-Each task is one casual Korean prompt. The lit arm sends the same line with ` lit` added and nothing else. Both arms ran on OpenCode 1.18.32 with `openai/gpt-6-sol` at `high` effort on 2026-09-26 (UTC): the baseline as plain OpenCode in an isolated profile, the lit arm with a local pre-release build of LitOpenCode. Each pair compares one run per arm; the baseline ran once, and the lit side is its latest run after product fixes. A blind judge (Claude Opus 5.5) compared the two outputs in both orders with product markings removed, and counted a tie when the two orders disagreed. The maintainer then looked at both outputs side by side and made the final call.
+Each task is one casual Korean prompt. The lit arm sends the same line with ` lit` added and nothing else.
+
+Both arms ran on 2026-09-26 (UTC), on OpenCode 1.18.32 with `openai/gpt-6-sol` at `high` effort. The baseline was plain OpenCode in an isolated profile; the lit arm used a local pre-release build of LitOpenCode. Each pair compares one run per arm. The baseline ran once, and the lit side is its latest run after product fixes.
+
+Two verdicts sit side by side in the table. A blind judge (Claude Opus 5.5) compared the two outputs in both orders with product markings removed, and counted a tie when the two orders disagreed. Then the maintainer looked at both outputs side by side and made the final call.
 
 S3, S4 and S11 come from the interface round, and S5, S8 and S9 from the office round; they replace earlier runs of the same tasks.
 
@@ -422,87 +354,120 @@ Interface round, desktop view:
 
 | Task | Baseline | LitOpenCode |
 |---|---|---|
-| S3 | ![S3 baseline budget dashboard, desktop](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S3/baseline-desktop.webp) | ![S3 LitOpenCode budget dashboard, desktop](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S3/lit-desktop.webp) |
-| S4 | ![S4 baseline café landing page, desktop](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S4/baseline-desktop.webp) | ![S4 LitOpenCode café landing page, desktop](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S4/lit-desktop.webp) |
-| S11 | ![S11 baseline meeting-room booking app, desktop](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S11/baseline-desktop.webp) | ![S11 LitOpenCode meeting-room booking app, desktop](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S11/lit-desktop.webp) |
+| S3 | ![S3 baseline budget dashboard, desktop](./docs/ab/S3/baseline-desktop.webp) | ![S3 LitOpenCode budget dashboard, desktop](./docs/ab/S3/lit-desktop.webp) |
+| S4 | ![S4 baseline café landing page, desktop](./docs/ab/S4/baseline-desktop.webp) | ![S4 LitOpenCode café landing page, desktop](./docs/ab/S4/lit-desktop.webp) |
+| S11 | ![S11 baseline meeting-room booking app, desktop](./docs/ab/S11/baseline-desktop.webp) | ![S11 LitOpenCode meeting-room booking app, desktop](./docs/ab/S11/lit-desktop.webp) |
 
 <details>
 <summary>Phone views</summary>
 
 | Task | Baseline | LitOpenCode |
 |---|---|---|
-| S3 | ![S3 baseline budget dashboard, phone](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S3/baseline-phone.webp) | ![S3 LitOpenCode budget dashboard, phone](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S3/lit-phone.webp) |
-| S4 | ![S4 baseline café landing page, phone](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S4/baseline-phone.webp) | ![S4 LitOpenCode café landing page, phone](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S4/lit-phone.webp) |
-| S11 | ![S11 baseline meeting-room booking app, phone](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S11/baseline-phone.webp) | ![S11 LitOpenCode meeting-room booking app, phone](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S11/lit-phone.webp) |
+| S3 | ![S3 baseline budget dashboard, phone](./docs/ab/S3/baseline-phone.webp) | ![S3 LitOpenCode budget dashboard, phone](./docs/ab/S3/lit-phone.webp) |
+| S4 | ![S4 baseline café landing page, phone](./docs/ab/S4/baseline-phone.webp) | ![S4 LitOpenCode café landing page, phone](./docs/ab/S4/lit-phone.webp) |
+| S11 | ![S11 baseline meeting-room booking app, phone](./docs/ab/S11/baseline-phone.webp) | ![S11 LitOpenCode meeting-room booking app, phone](./docs/ab/S11/lit-phone.webp) |
 
 </details>
 
 S5, lit slides. The baseline wrote Markdown only, so it has nothing rendered to show:
 
-![S5 LitOpenCode PowerPoint slides](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S5/lit-slides.webp)
+![S5 LitOpenCode PowerPoint slides](./docs/ab/S5/lit-slides.webp)
 
 S8, baseline slides, then lit slides:
 
-![S8 baseline quarterly results slides](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S8/baseline-slides.webp)
+![S8 baseline quarterly results slides](./docs/ab/S8/baseline-slides.webp)
 
-![S8 LitOpenCode quarterly results slides](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S8/lit-slides.webp)
+![S8 LitOpenCode quarterly results slides](./docs/ab/S8/lit-slides.webp)
 
 S9, lit pages. The baseline answered in the chat without a file:
 
-![S9 LitOpenCode new product plan pages](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S9/lit-pages.webp)
+![S9 LitOpenCode new product plan pages](./docs/ab/S9/lit-pages.webp)
 
 S7, the lit diagram:
 
-![S7 LitOpenCode order, payment and shipping diagram](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/ab/S7/lit-diagram.webp)
+![S7 LitOpenCode order, payment and shipping diagram](./docs/ab/S7/lit-diagram.webp)
 
 ## Commands
 
-### Start with one lit task
+Add `lit` to a prompt, or type a slash command. These are the ones you'll use most:
 
-Append `lit` to a prompt, or use `/lit`, to select the LitOpenCode workflow. OpenCode owns the model and permission prompts; the plugin keeps project records.
-
-| Prompt or route | Effect |
+| Type | What happens |
 | --- | --- |
-| `lit` or `/lit` | Start a bounded task and record what was checked. |
-| `handoff` or `/lit-handoff` | Carry the current result and next step into another session. |
-| `lit-plan` | Prepare a plan before implementation. |
+| `lit` at the end of a prompt, `/lit`, or `/litwork` | Start a bounded task, implement it, and record what was checked. |
+| `lit-plan` or `/lit-plan` | Prepare a plan before implementation. |
 | `/start-work <approved-plan>` | Execute an approved plan. |
-| `/review-work` | Review the change and evidence. |
-| `/litresearch` | Use the shipped source-backed research route. |
-
-Selecting a route does not claim that the model ran or that a visual check passed.
-
-The packaged reference corpora use the canonical paths `vendor/handoff/` and
-`vendor/scientific-visualization/`. Their numbered license and provenance filenames
-remain source-attribution records.
-
-### Core routes
-
-| Route | Use it to |
-| --- | --- |
-| `/lit` or `/litwork` | Implement and verify a bounded task. |
-| `/lit-plan` → `/start-work` → `/review-work` | Plan, approve, execute, and review work. |
-| `/litresearch` or `/lit-research` | Research with source evidence and a sequential fallback. |
-| `/lit-handoff` | Leave resumable context; exact bare `handoff` also works. |
-| `/lit-recap` | Read a concise recap from local state. |
-| `/lit-code`, `/debugging`, `/refactor` | Apply coding, debugging, or refactoring guidance. |
+| `/review-work` | Review the change and its evidence. |
+| `handoff` or `/lit-handoff` | Leave resumable context: the current result and the next step, for another session. |
+| `/lit-recap` | Read a short recap from local state. |
+| `/litresearch` or `/lit-research` | Research with source evidence, with a sequential fallback. |
+| `/lit-code`, `/debugging`, `/refactor` | Get coding, debugging, or refactoring guidance. |
 | `/lit-korean` | Improve Korean prose without changing its meaning. |
 | `/lit-scientific-visualization` | Use the packaged scientific-visualization workflow. |
 
-The [full route and skill reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md#core-commands) covers
-Autoresearch, Autoconference, Wikify, UI/UX, and the two-lane repository rules engine.
-[Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/migration.md#skill-id-renames) explain the one-release skill aliases.
+A bare `handoff`, typed on its own, works the same as `/lit-handoff`.
+
+OpenCode runs the model and asks the permission questions; the plugin supplies the routes and keeps the records. So picking a route doesn't show that the model ran it, or that a visual check passed.
+
+Autoresearch, Autoconference, Wikify, UI/UX, and the two-lane repository rules engine are in the [full route and skill reference](./docs/reference.md#core-commands). Old skill names keep working as aliases for one release; the [migration notes](./docs/migration.md#skill-id-renames) list them.
+
+## How it works
+
+OpenCode loads the plugin from its config. Agents and the chat and command routes pick a workflow and the installed skills it needs. Tools and lifecycle hooks write the project records you read when you come back.
+
+```mermaid
+flowchart TD
+    Config["OpenCode config: opencode.json / opencode.jsonc"] --> Plugin["LitOpenCode plugin"]
+    Plugin --> Routes["Agents and chat / command routes"]
+    Plugin --> Tools["lit / litwork / start-work tools"]
+    Plugin --> Hooks["Message, tool and session hooks"]
+    Routes --> Skills["Installed skills and canonical references"]
+    Tools --> Records["Project records: .litopencode/litgoal/"]
+    Hooks -->|Work lifecycle events| Records
+    Records -->|Explicit recap| Routes
+    classDef host fill:#080D14,stroke:#F2EFDF,color:#F2EFDF
+    classDef lit fill:#080D14,stroke:#FF6337,color:#F2EFDF
+    classDef local fill:#080D14,stroke:#D7F75B,color:#F2EFDF
+    class Config host
+    class Plugin,Routes,Tools,Hooks lit
+    class Skills,Records local
+```
+
+### What you see when a route starts
+
+When a Lit route activates, the reply opens with a bold ignition line. The plugin also asks OpenCode for a six-second warning toast: five micro-logo rows and a final `🔥 LIT IGNITED · <discipline> 🔥` line when the environment supports the mark glyphs, or just that line when it doesn't.
+
+<p align="center"><img src="./docs/assets/litopencode-ignition-1600.webp" width="48%" alt="LitOpenCode ignition apparatus" /><img src="./docs/assets/litopencode-continuity-1600.webp" width="48%" alt="LitOpenCode continuity apparatus" /></p>
+
+<p align="center"><a href="./docs/assets/readme/ignition-film.mp4"><img src="./docs/assets/readme/poster.png" width="720" alt="Ignition motion poster" /></a></p>
+
+The poster opens the optional film, so the video only plays when you choose it.
+
+### Design, READMEs, and diagrams
+
+`frontend-ui-ux` is a native skill. Give it a build request with enough detail, and it takes the work through a working implementation and a rendered check. It asks only about design choices that matter, and keeps your answers. Review and plan requests stay read-only.
+
+`readme-studio` writes factual READMEs and composes local covers. Pick it with OpenCode's native skill tool; it has no slash command of its own. It installs outlined typography helpers and pinned Remotion/HyperFrames recipes. Without a native image generator it reports `IMAGE_GENERATION_UNAVAILABLE`, and it can continue from a background you supply. Checking how a page renders on GitHub or npm is a separate step.
+
+`lit-diagram-drawer` draws conceptual diagrams, checks them locally, imports safely, and exports without installing tools, as long as the renderer and browser are already there. Pick it from OpenCode's native skill picker. Product interfaces stay with `frontend-ui-ux`, and measured scientific figures with `lit-scientific-visualization`. When a bounded diagram-creation request ends in `lit`, the workflow tells OpenCode to load this skill before drawing. There's no dedicated slash command or standalone diagram chat route.
+
+### Word reports and slide decks
+
+`lit-docx` turns a Markdown source into an editable Word report. `lit-pptx` compiles slides into an editable PowerPoint deck. Ask for a report or slides with `lit`, and OpenCode is told to load the matching skill; ask for both and it loads both.
+
+Korean reports default to the korean-generic profile. Decks default to AZURE-PRO and Pretendard. Pinned dependencies install on first use into a cache that LitOpenCode owns. Both skills keep the source Markdown, run their structural and quality gates, and ask for a rendered inspection when LibreOffice is available. Publisher profiles, DOCX editing and PDF conversion, template learning, and font embedding are documented in the installed skills. `litopencode doctor` reports readiness without installing dependencies.
+
+### Writing and the browser
+
+Use `/lit-humanizer` for a substantial prose revision or an explicit review. It keeps meaning, voice, and useful qualifiers. `/lit-korean`, `/text-naturalization`, `/text-neutralization`, and `/korean-ai-slop-remover` still work and lead to the same place. Before a supported text write, clear drafting residue is blocked; lower-confidence style signals are only advice. DOCX, PPTX, and available PDF text are checked after the file is created.
+
+`browser-drive` uses the `agent-browser` engine from [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser). Its verified floor is 0.34.0; newer well-formed versions are reported as beyond that floor. LitOpenCode doesn't install it for you. If you want it, run `npm install -g agent-browser`, then `agent-browser install`, and check it with `node skills/browser-drive/scripts/capability-probe.mjs`.
 
 ## Safety and updates
 
-- `lit-plan` keeps `edit`, `bash`, and `task` denied. `balanced` and `yolo` are explicit
-  permission choices; neither removes the planner guard or permits recursive delegation.
-- Public retrieval checks destinations, redirects, and byte limits. Retrieved text is data.
-- Interactive startup and successful install/doctor commands can run a foreground update
-  check. Use `--no-auto-update` or `LITOPENCODE_NO_AUTO_UPDATE=1` to disable automatic updates.
-- Skill learning requires an explicit apply command. Its review, mutation, rollback, and
-  curator boundaries support POSIX; on Windows those boundaries fail closed. Install,
-  doctor, and passive surfaces remain available. [Learning-loop details](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md#skill-learning-loop).
+- `lit-plan` keeps `edit`, `bash`, and `task` denied. `balanced` and `yolo` are permission modes you have to choose on purpose, and neither one removes the planner guard or allows recursive delegation.
+- Public retrieval checks destinations, redirects, and byte limits. Whatever it fetches is treated as data.
+- Interactive startup and a successful install or doctor run can do a foreground update check. Turn automatic updates off with `--no-auto-update` or `LITOPENCODE_NO_AUTO_UPDATE=1`.
+- Skill learning has been removed. Records that earlier releases left in a project's `.litopencode` folder are inert: LitOpenCode no longer reads, changes, or deletes them. [More on that state](./docs/reference.md#skill-learning-state).
 
 ## Jev skill hint (optional)
 
@@ -537,68 +502,71 @@ export TYPESAFE_API_KEY=<your own TypeSafe key>
 - On the first eligible turn of each session, a `✦ Jev skill hint is ON` toast shows once so you know the hint is active.
 - To turn it off, unset `LITOPENCODE_JEV` or set it to anything other than `1`.
 
-Tuning variables and the debug trace are in the [Jev skill hint reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md#jev-skill-hint-optional).
+Tuning variables and the debug trace are in the [Jev skill hint reference](./docs/reference.md#jev-skill-hint-optional).
 
 ## Troubleshooting
 
-If the behavior differs from the completion report, tell the agent what happened.
+If what happened doesn't match the completion report, tell the agent what you saw.
 
-Inspect package and configuration health with:
+To check the package and your configuration:
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 ```
 
-See the [installation and model reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md#install).
+The [installation and model reference](./docs/reference.md#install) goes deeper.
 
-Install and `doctor` report when `<root>/skills` is a symlink (and its git-repository
-warning) and any same-named skill shadowing it in `~/.agents/skills`, `~/.claude/skills`,
-or a project skills directory. See
-[symlinked native skills root and shadow copies](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md#symlinked-native-skills-root-and-shadow-copies).
+Install and `doctor` also tell you when `<root>/skills` is a symlink (with a warning if it points into a git repository), and when a skill with the same name shadows it in `~/.agents/skills`, `~/.claude/skills`, or a project skills folder. See [symlinked native skills root and shadow copies](./docs/reference.md#symlinked-native-skills-root-and-shadow-copies).
 
 ## Uninstall
 
-There is no `litopencode uninstall` command. Remove the `@litfamily/litopencode` or
-`@litfamily/litopencode@<version>` entry from the `plugin` array in OpenCode's `opencode.jsonc`
-(or a custom root's `opencode.json`). Also remove legacy `litopencode` package entries if present. If installed globally,
-remove the npm binary:
+There's no `litopencode uninstall` command. Removing it by hand takes a few steps:
 
-```sh
-npm uninstall -g @litfamily/litopencode
-```
+1. Delete the `@litfamily/litopencode` or `@litfamily/litopencode@<version>` entry from the `plugin` array in OpenCode's `opencode.jsonc` (or a custom root's `opencode.json`). Remove any legacy `litopencode` package entries too.
+2. If you installed it globally, remove the npm binary:
 
-Review installed command/skill files before removing installer-owned copies; preserve
-user-created files and edits. Keep `litopencode.json` if you still need its routes, and
-keep project `.litopencode/` ledgers if you plan to resume. Restart OpenCode after removal.
-See the [removal reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md#remove).
+   ```sh
+   npm uninstall -g @litfamily/litopencode
+   ```
+
+3. Look over the installed command and skill files before you remove the installer's copies, and keep anything you created or edited.
+4. Restart OpenCode.
+
+Keep `litopencode.json` if you still want its routes, and keep a project's `.litopencode/` records if you plan to resume. The [removal reference](./docs/reference.md#remove) has the details.
 
 ## License
 
-MIT
+MIT. See [LICENSE](./LICENSE).
+
+The reference material bundled for `lit-handoff` and `lit-scientific-visualization` lives in `vendor/handoff/` and `vendor/scientific-visualization/`. Their numbered license and provenance files are kept as source attribution.
 
 ## Links
 
 ### Documentation
 
-- [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference.md): models, permissions, host hooks, all skills, learning loop, and reproducible verification.
-- [한국어 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/reference-Ko-KR.md)
-- [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/migration.md)
-- [Terminal mark and activation probes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/lit-mark.md)
-- [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/CHANGELOG.md)
-- Maintainer release checklist (repository only)
+- [Workflow reference](./docs/reference.md): models, permissions, host hooks, every skill, and reproducible verification.
+- [한국어 상세 안내](./docs/reference-Ko-KR.md)
+- [Migration notes](./docs/migration.md)
+- [Terminal mark and activation probes](./docs/lit-mark.md)
+- [Changelog](./CHANGELOG.md)
+- [Release checklist](./docs/release-checklist.md), for maintainers. It stays in this repository and is not part of the npm package.
 
-- [Contributing](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/CONTRIBUTING.md) · [Support](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/SUPPORT.md) · [Security](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/SECURITY.md)
-- [Code of conduct](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/CODE_OF_CONDUCT.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/privacy.md)
+### Contributing
+
+- [Contributing](./CONTRIBUTING.md) · [Support](./SUPPORT.md) · [Security](./SECURITY.md)
+- [Code of conduct](./CODE_OF_CONDUCT.md) · [Privacy and network behavior](./docs/privacy.md)
 
 ### LITFAMILY
 
-![Five armored machines representing LitClaude, LitHermes, LitCodex, LitOpenCode and LitGrok](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/litfamily-machines.png)
+![Five armored machines representing LitClaude, LitHermes, LitCodex, LitOpenCode and LitGrok](./docs/assets/readme/litfamily-machines.png)
 
 LitClaude · LitHermes · LitCodex · LitOpenCode · LitGrok.
 Five armored machines for five independent products, each working in its own host.
 
 ### Ignition motion
 
-[![Ignition motion graphic poster](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/poster.png)](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ignition-film.mp4)
+[![Ignition motion graphic poster](./docs/assets/readme/poster.png)](./docs/assets/readme/ignition-film.mp4)
 
-[Watch the 10-second film](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ignition-film.mp4) · [Animated GIF](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/ignition-readme.gif) · [Lucide icon license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/Lucide-LICENSE.txt) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets/readme/JetBrainsMono-OFL.txt)
+[Watch the 10-second film](./docs/assets/readme/ignition-film.mp4) · [Animated GIF](./docs/assets/readme/ignition-readme.gif) · [Lucide icon license](./docs/assets/readme/Lucide-LICENSE.txt) · [ASCII font license](./docs/assets/readme/JetBrainsMono-OFL.txt)
+
+The editable, low-bandwidth vector version of the cover is [docs/assets/cover.svg](./docs/assets/cover.svg).

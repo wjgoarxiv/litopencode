@@ -463,6 +463,9 @@ async function readRegularFileIfPresent(filePath: string, paths: KnowledgePaths,
   try {
     await assertParentStable(parent, paths);
     const descriptorStat = await handle.stat();
+    if (descriptorStat.isFile() && descriptorStat.nlink === 0) {
+      throw new KnowledgeFileDisappearedError(`Knowledge file disappeared after descriptor open at ${filePath}.`);
+    }
     if (!descriptorStat.isFile() || !sameFileIdentity(fileIdentityOf(descriptorStat), fileIdentityOf(pathStat))) {
       throw new KnowledgeStoreError(`Unsafe knowledge file replacement at ${filePath}.`);
     }

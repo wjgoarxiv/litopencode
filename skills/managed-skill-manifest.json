@@ -3273,11 +3273,11 @@
         },
         {
           "path": "package-lock.json",
-          "sha256": "20c343e515fe08f7e4b0cf07a5ba0b91462d0f22b4ff3531448206ac24a475f1"
+          "sha256": "141539ca253c3cf4f81988db6f69aaf78574d0c8ca9e9d7e45f56af8f2e96cac"
         },
         {
           "path": "package.json",
-          "sha256": "e75e13ba0060e99b21e8e8c945710ecf3a65e44f851f3ebde54ab7f562c96400"
+          "sha256": "5962e5607dba2b2d8e08fbf51e982e8517ee26a84c43ac838934e8394f3551cd"
         },
         {
           "path": "probe.mjs",

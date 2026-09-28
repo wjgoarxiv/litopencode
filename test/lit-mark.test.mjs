@@ -106,7 +106,7 @@ test("locale precedence and dumb terminals select the plain LIT wordmark", () =>
 });
 
 test("English and Korean README heroes use the version-free banner lockup", async () => {
-  for (const file of ["README.md", "README-Ko-KR.md"]) {
+  for (const file of ["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md"]) {
     const text = await fs.readFile(new URL(`../${file}`, import.meta.url), "utf8");
     const heroes = [...text.matchAll(/<details>\n<summary>(?:Copy ASCII logo|ASCII 로고 복사)<\/summary>\n\n```text\n([\s\S]*?)\n```\n\n<\/details>/gu)];
     assert.equal(heroes.length, 1, `${file} must have one explicitly labeled copyable ASCII banner`);

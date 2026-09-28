@@ -11,6 +11,8 @@ import { registerVisualQaEvidenceContract } from "../test-support/visualqa-evide
 const requiredDocs = [
   "README.md",
   "README-Ko-KR.md",
+  "README-npm.md",
+  "README-npm-Ko-KR.md",
   "docs/reference.md",
   "docs/reference-Ko-KR.md",
   "CHANGELOG.md",
@@ -211,26 +213,30 @@ test("required W5 documentation files exist", async () => {
 });
 
 test("README links resolve to local docs", async () => {
-  const readme = await readText("README.md");
   const version = JSON.parse(await readText("package.json")).version;
   const npmPackage = `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/`;
-  const links = [...readme.matchAll(/\[[^\]]+\]\(([^)]+\.md)(?:#[^)]+)?\)/gu)]
-    .map((match) => match[1].startsWith(npmPackage) ? match[1].slice(npmPackage.length) : match[1]);
+  for (const file of ["README.md", "README-npm.md"]) {
+    const readme = await readText(file);
+    const links = [...readme.matchAll(/\[[^\]]+\]\(([^)]+\.md)(?:#[^)]+)?\)/gu)]
+      .map((match) => match[1].startsWith(npmPackage) ? match[1].slice(npmPackage.length) : match[1].replace(/^\.\//u, ""));
 
-  assert.ok(links.includes("docs/migration.md"), "README should link migration docs");
-  assert.ok(!links.includes("docs/release-checklist.md"), "npm README must not link the excluded repository-only release checklist");
-  assert.ok(links.includes("CHANGELOG.md"), "README should link the changelog");
-  assert.ok(links.includes("docs/reference.md"), "README should link the detailed operational reference");
+    assert.ok(links.includes("docs/migration.md"), `${file} should link migration docs`);
+    assert.ok(links.includes("CHANGELOG.md"), `${file} should link the changelog`);
+    assert.ok(links.includes("docs/reference.md"), `${file} should link the detailed operational reference`);
+    if (file === "README-npm.md") {
+      assert.ok(!links.includes("docs/release-checklist.md"), "npm README must not link the excluded repository-only release checklist");
+    }
 
-  for (const link of links) {
-    await fs.stat(path.resolve(link));
+    for (const link of links.filter((target) => !/^https?:\/\//u.test(target))) {
+      await fs.stat(path.resolve(link));
+    }
   }
 });
 
 test("bilingual entry paths and operational references keep local document links reachable", async () => {
   const version = JSON.parse(await readText("package.json")).version;
   const npmPackage = `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/`;
-  for (const file of ["README.md", "README-Ko-KR.md", "docs/reference.md", "docs/reference-Ko-KR.md"]) {
+  for (const file of ["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md", "docs/reference.md", "docs/reference-Ko-KR.md"]) {
     const content = await readText(file);
     for (const [, target] of content.matchAll(/\[[^\]]+\]\(([^)]+\.md)(?:#[^)]+)?\)/gu)) {
       if (target.startsWith(npmPackage)) {
@@ -281,29 +287,40 @@ test("bilingual quick starts preserve executable package names and resolve the r
   assert.equal(still.subarray(0, 4).toString("ascii"), "RIFF");
   assert.equal(still.subarray(8, 12).toString("ascii"), "WEBP");
   assert.equal(createHash("sha256").update(still).digest("hex"), "048f141ad91425e1e41737e822f8d32ac865ada352a5edcc10a6a654130d01ce");
-  const assets = "https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.10/docs/assets";
-  for (const file of ["README.md", "README-Ko-KR.md"]) {
+  const npmAssets = "https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.11/docs/assets";
+  const pages = [
+    { file: "README.md", assets: "./docs/assets", english: true, github: true },
+    { file: "README-Ko-KR.md", assets: "./docs/assets", english: false, github: true },
+    { file: "README-npm.md", assets: npmAssets, english: true, github: false },
+    { file: "README-npm-Ko-KR.md", assets: npmAssets, english: false, github: false }
+  ];
+  for (const { file, assets, english, github } of pages) {
     const content = await readText(file);
-    const alt = file === "README.md"
+    const alt = english
       ? "LitFamily motion cover: five armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."
       : "LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상";
-    assert.ok(content.includes('<source media="(prefers-reduced-motion: reduce)" srcset="' + assets + '/cover-motion-still.webp" />'));
-    assert.ok(content.includes('<img src="' + assets + '/cover-motion.webp" width="100%" alt="' + alt + '" />'));
-    assert.ok(!content.includes(assets + '/cover.webp'), file + ": the motion cover replaces the separate static robot cover");
+    assert.ok(content.includes('<source media="(prefers-reduced-motion: reduce)" srcset="' + assets + '/cover-motion-still.webp" />'), file);
+    assert.ok(content.includes('<img src="' + assets + '/cover-motion.webp" width="100%" alt="' + alt + '" />'), file);
+    assert.doesNotMatch(content, /docs\/assets\/cover\.webp/u, file + ": the motion cover replaces the separate static robot cover");
     assert.doesNotMatch(content, /View the static (?:family )?cover|정지 (?:패밀리 )?표지 보기/u);
-    const linksHeading = file === "README.md" ? "## Links" : "## 링크";
-    const linksStart = content.indexOf(linksHeading);
-    const familyStart = content.indexOf("### LITFAMILY", linksStart);
-    const motionStart = content.indexOf("### Ignition motion", familyStart);
-    const familyImages = [...content.slice(familyStart, motionStart).matchAll(/!\[[^\]]+\]\(([^)]+cover\.webp)\)/gu)];
-    assert.equal(familyImages.length, 0, file + ": the robot cover no longer repeats near the end");
+    if (github) {
+      const linksHeading = english ? "## Links" : "## 링크";
+      const linksStart = content.indexOf(linksHeading);
+      const familyStart = content.indexOf("### LITFAMILY", linksStart);
+      const motionStart = content.indexOf("### Ignition motion", familyStart);
+      assert.ok(linksStart >= 0 && familyStart > linksStart && motionStart > familyStart, file + ": family art sits in Links");
+      const familyImages = [...content.slice(familyStart, motionStart).matchAll(/!\[[^\]]+\]\(([^)]+cover\.webp)\)/gu)];
+      assert.equal(familyImages.length, 0, file + ": the robot cover no longer repeats near the end");
+    }
     assert.doesNotMatch(content, /raw\.githubusercontent/u);
     assert.match(content, /npm exec --package @litfamily\/litopencode@latest -- litopencode install/u);
     assert.match(content, /```text\nlit [^\n]+\n```/u);
     assert.match(content, /npm uninstall -g @litfamily\/litopencode/u);
     assert.match(content, /LITOPENCODE_NO_AUTO_UPDATE=1/u);
-    assert.match(content, /POSIX/u);
-    assert.match(content, /Windows/u);
+    // Skill learning is retired (see docs/reference.md "Skill learning state"); the pages say so
+    // instead of describing its old apply command and POSIX/Windows boundaries.
+    assert.match(content, english ? /Skill learning has been removed\./u : /스킬 학습 기능은 제거되었습니다\./u, file);
+    assert.doesNotMatch(content, /explicit apply command|명시적인 apply 명령/u, file);
   }
 });
 
@@ -604,12 +621,15 @@ test("release checklist follows the authoritative handoff and real-surface probe
 });
 
 test("README documents current behavior without cumulative version chronology", async () => {
-  const readme = await readText("README.md");
   const version = JSON.parse(await readText("package.json")).version;
-  assert.doesNotMatch(readme, /^v0\.1\.\d+ /m);
-  assert.doesNotMatch(readme, /\bv0\.1\.8\b/iu);
-  assert.doesNotMatch(readme, /\bprepared(?: release| tree| as)\b/i);
-  assert.ok(readme.includes(`[Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/CHANGELOG.md)`));
+  for (const file of ["README.md", "README-npm.md"]) {
+    const readme = await readText(file);
+    assert.doesNotMatch(readme, /^v0\.1\.\d+ /m);
+    assert.doesNotMatch(readme, /\bv0\.1\.8\b/iu);
+    assert.doesNotMatch(readme, /\bprepared(?: release| tree| as)\b/i);
+  }
+  assert.ok((await readText("README.md")).includes("[Changelog](./CHANGELOG.md)"));
+  assert.ok((await readText("README-npm.md")).includes(`[Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/CHANGELOG.md)`));
   assertContainsAll(await readText("docs/reference.md"), ["Autoresearch", "Autoconference", "Wikify", "canonical frontend library"]);
 });
 
@@ -940,13 +960,15 @@ test("docs describe lit-plan to start-work to review-work without borrowed execu
 });
 
 test("public README omits maintainer benchmark terminology while release checklist keeps claim guards", async () => {
-  const readme = await readText("README.md");
   const releaseChecklist = await readText("docs/release-checklist.md");
 
-  assert.doesNotMatch(readme, /\bREFERENCE\b/);
-  assert.doesNotMatch(readme, /benchmark-backed superiority claims/i);
-  assert.doesNotMatch(readme, /unconditional all-task superiority/i);
-  assert.doesNotMatch(readme, /^v0\.1\.\d+ /m);
+  for (const file of ["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md"]) {
+    const readme = await readText(file);
+    assert.doesNotMatch(readme, /\bREFERENCE\b/, file);
+    assert.doesNotMatch(readme, /benchmark-backed superiority claims/i, file);
+    assert.doesNotMatch(readme, /unconditional all-task superiority/i, file);
+    assert.doesNotMatch(readme, /^v0\.1\.\d+ /m, file);
+  }
   assertContainsAll(releaseChecklist, [
     "benchmark-backed superiority",
     "classifyReferenceSuperiorityClaim",
@@ -973,10 +995,11 @@ test("operational reference Runtime Skills catalog exactly matches the actual to
 });
 
 test("release docs do not hard-code a stale top-level skill count", async () => {
-  const readme = await readText("README.md");
   const releaseChecklist = await readText("docs/release-checklist.md");
 
-  assert.doesNotMatch(readme, /\b\d+-skill Runtime Skills catalog\b/i);
+  for (const file of ["README.md", "README-npm.md"]) {
+    assert.doesNotMatch(await readText(file), /\b\d+-skill Runtime Skills catalog\b/i, file);
+  }
   assert.doesNotMatch(releaseChecklist, /\ball \d+ actual top-level `skills\/\*\/SKILL\.md` directories\b/i);
 });
 

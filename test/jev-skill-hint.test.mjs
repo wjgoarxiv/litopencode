@@ -291,6 +291,23 @@ test("the trace refuses to write through a symlink", async () => {
   });
 });
 
+for (const linked of [".litopencode/logs", ".litopencode"]) {
+  test(`the trace refuses to write through a symlinked ${linked} folder`, async () => {
+    await withProject(async (dir) => {
+      const outside = path.join(dir, "outside");
+      await fs.mkdir(outside);
+      const project = path.join(dir, "project");
+      await fs.mkdir(path.dirname(path.join(project, linked)), { recursive: true });
+      await fs.symlink(outside, path.join(project, linked), "dir");
+      const traceFile = path.join(project, ".litopencode", "logs", "jev-skill-hint.jsonl");
+      const { hint } = hintWith(respond(answer("lit-humanizer")), { ...onEnv, LITOPENCODE_JEV_TRACE: "1" }, { traceFile, traceRoot: project });
+      assert.equal((await hint.hintFor("s", "please polish this Korean paragraph"))?.kind, "hint");
+      assert.deepEqual(await fs.readdir(outside, { recursive: true }), []);
+      assert.equal((await fs.lstat(path.join(project, linked))).isSymbolicLink(), true);
+    });
+  });
+}
+
 test("the request carries only model, state and questions, with the redacted prompt", async () => {
   const { calls, hint } = hintWith(respond(answer("none")), { ...onEnv, LITOPENCODE_JEV_MODEL: "jev-test" });
   await hint.hintFor("s", "polish /Users/alice/draft.md for me@example.com");
@@ -326,7 +343,7 @@ test("the key string appears in no hint, note, trace, request body or doctor out
       () => Promise.reject(new Error(`Authorization: Bearer ${fakeKey}`)),
       respond(`{"answers":{"which":{"choice":"${fakeKey}","confidence":1}}}`)
     ]) {
-      const { calls, hint } = hintWith(responder, env, { traceFile });
+      const { calls, hint } = hintWith(responder, env, { traceFile, traceRoot: dir });
       const part = await hint.hintFor("s", `polish this ${fakeKey} paragraph`);
       captured.push(part?.text ?? "", ...calls.map((call) => call.init.body));
     }
@@ -607,10 +624,10 @@ test("a trusted command activation survives the host copying parts before chat.m
       assert.equal(ignited.length, 1);
       const hostParts = command.parts.map((part) => ({ ...part }));
       await hooks["chat.message"]({ sessionID: "session_trusted", messageID: "msg_trusted" }, { message: { id: "msg_trusted", sessionID: "session_trusted", role: "user" }, parts: hostParts });
-      assert.equal(ignited.length, 2, "chat.message re-activates the command skill after the root-turn reset");
+      assert.equal(ignited.length, 1, "chat.message restores the command skill without repeating its toast");
       const later = chatOutput("please explain this stack trace", "later");
       await hooks["chat.message"]({ sessionID: "session_trusted", messageID: "msg_later" }, later);
-      assert.equal(ignited.length, 2, "the trusted mark is consumed by that one turn");
+      assert.equal(ignited.length, 1, "the trusted mark is consumed by that one turn");
     } finally {
       await hooks.dispose();
       if (saved === undefined) delete process.env.XDG_CONFIG_HOME;

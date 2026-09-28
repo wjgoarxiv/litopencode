@@ -4,8 +4,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
 
-const version = JSON.parse(await fs.readFile("package.json", "utf8")).version;
-const cdn = `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/`;
+// The skills gallery and A/B pictures live on the GitHub pages and load by relative path.
+const local = "./";
 const readmes = {
   "README.md": {
     install: "## Install",
@@ -104,8 +104,8 @@ async function listFiles(root) {
 function referenced(content, prefix) {
   return [...new Set([...content.matchAll(/(?:!\[[^\]]*\]\(|\b(?:src|srcset)=")([^)"\s]+)/gu)]
     .map((match) => match[1])
-    .filter((url) => url.startsWith(cdn + prefix))
-    .map((url) => url.slice(cdn.length)))].sort();
+    .filter((url) => url.startsWith(local + prefix))
+    .map((url) => url.slice(local.length)))].sort();
 }
 
 test("A/B tables show the maintainer's final verdicts with the blind judge beside them", async () => {
@@ -148,8 +148,8 @@ test("Skills at a glance lists every snapshot once, in the same order in both la
     assert.ok(install >= 0 && skills > install && ab > skills, `${file}: install, skills, then A/B`);
     const table = section(content, labels.skills, labels.ab);
     const images = [...table.matchAll(/<img src="([^"]+)" width="240" alt="([^"]*)" \/>/gu)];
-    const order = images.map((match) => match[1].slice(`${cdn}docs/assets/skills/`.length));
-    assert.ok(images.every((match) => match[1].startsWith(`${cdn}docs/assets/skills/`)), `${file}: snapshots load from the pinned package`);
+    const order = images.map((match) => match[1].slice(`${local}docs/assets/skills/`.length));
+    assert.ok(images.every((match) => match[1].startsWith(`${local}docs/assets/skills/`)), `${file}: snapshots load from the repository by relative path`);
     assert.deepEqual([...order].sort(), snapshots, `${file}: rows match the snapshot files`);
     assert.equal(table.split("\n<tr>\n").length - 1, snapshots.length, `${file}: one row per snapshot`);
     assert.ok(images.every((match) => match[2].trim().length > 0), `${file}: snapshots carry alt text`);
@@ -166,4 +166,27 @@ test("the npm package carries every README comparison and skill picture", () => 
   for (const file of abPictures) assert.ok(packed.has(file), `${file} ships`);
   for (const id of newSkills) assert.ok(packed.has(`docs/assets/skills/${id}.webp`), `${id} snapshot ships`);
   assert.equal([...packed].filter((file) => file.startsWith("docs/ab/") && file.endsWith(".png")).length, 0, "old PNG captures do not ship");
+});
+
+test("the npm pages summarize the A/B honestly and send readers to the GitHub gallery and results", async () => {
+  const pages = {
+    "README-npm.md": {
+      gallery: "https://github.com/wjgoarxiv/litopencode#skills-at-a-glance",
+      results: "https://github.com/wjgoarxiv/litopencode#ab-results",
+      judge: "4 wins, 3 ties, and 3 losses"
+    },
+    "README-npm-Ko-KR.md": {
+      gallery: "https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#스킬-한눈에-보기",
+      results: "https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#ab-결과",
+      judge: "4승 3무 3패"
+    }
+  };
+  for (const [file, expected] of Object.entries(pages)) {
+    const content = await text(file);
+    assert.ok(content.includes(`](${expected.gallery})`), `${file} links the GitHub skills gallery`);
+    assert.ok(content.includes(`](${expected.results})`), `${file} links the GitHub A/B results`);
+    assert.ok(content.includes(expected.judge), `${file} keeps the blind judge's tally, including the baseline wins`);
+    assert.equal(referenced(content, "docs/ab/").length, 0, `${file} leaves the A/B pictures to GitHub`);
+    assert.doesNotMatch(content, /docs\/assets\/skills\//u, `${file} leaves the skill snapshots to GitHub`);
+  }
 });

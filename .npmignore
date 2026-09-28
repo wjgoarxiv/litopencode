@@ -33,6 +33,12 @@ docs/assets/readme/*
 !docs/assets/readme/poster.png
 docs/release-checklist.md
 tools/prepublish-test-gate.mjs
+# The npm README sources are copied over README.md / README-Ko-KR.md at pack time;
+# the copies ship, the sources, backup and swap script stay in the repository.
+README-npm.md
+README-npm-Ko-KR.md
+.readme-npm-backup/
+tools/readme-for-npm.mjs
 docs/recon/
 docs/spec/
 plans/

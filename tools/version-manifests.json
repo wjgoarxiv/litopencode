@@ -11,14 +11,26 @@
     {
       "path": "README-Ko-KR.md",
       "kind": "pinned",
-      "occurrences": 102,
-      "why": "The bilingual landing pages pin artwork and package links to the current package version."
+      "occurrences": 2,
+      "why": "The GitHub landing pages load assets by relative path; the release badge alt text and the checkout-version note repeat the package version."
+    },
+    {
+      "path": "README-npm-Ko-KR.md",
+      "kind": "pinned",
+      "occurrences": 18,
+      "why": "The npm package pages pin artwork and package links to the current package version; tools/readme-for-npm.mjs copies them over README.md and README-Ko-KR.md at pack time."
+    },
+    {
+      "path": "README-npm.md",
+      "kind": "pinned",
+      "occurrences": 18,
+      "why": "The npm package pages pin artwork and package links to the current package version; tools/readme-for-npm.mjs copies them over README.md and README-Ko-KR.md at pack time."
     },
     {
       "path": "README.md",
       "kind": "pinned",
-      "occurrences": 101,
-      "why": "The bilingual landing pages pin artwork and package links to the current package version."
+      "occurrences": 2,
+      "why": "The GitHub landing pages load assets by relative path; the release badge alt text and the checkout-version note repeat the package version."
     },
     {
       "path": "docs/assets/readme/badge-version.svg",
@@ -43,6 +55,12 @@
       "kind": "pinned",
       "occurrences": 1,
       "why": "This package manifest is the source of truth used by the lockstep guard."
+    },
+    {
+      "path": "skills/lit-pptx/package-lock.json",
+      "kind": "derived",
+      "occurrences": 2,
+      "why": "The lit-pptx runtime lockfile has 2 occurrence(s) of an unrelated dependency version matching this package release by coincidence; it is not release metadata, and the count follows the current package version."
     },
     {
       "path": "test/docs.test.mjs",

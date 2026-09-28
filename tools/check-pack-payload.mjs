@@ -13,6 +13,9 @@ const FORBIDDEN_PATH_RULES = [
   { label: "repository cover vector", pattern: /^docs\/assets\/cover\.svg$/u },
   { label: "unapproved README presentation asset", pattern: /^docs\/assets\/readme\/(?!(?:ascii-readme|badge-version|badge-license|lucide-book-open|lucide-play|lucide-shield-check)\.svg$|litopencode-wordmark\.svg$|litopencode-clay-icon\.png$|(?:litfamily-machines|poster)\.png$|ignition-film\.mp4$|ignition-readme\.gif$|(?:Lucide-LICENSE|JetBrainsMono-OFL)\.txt$)/u },
   { label: "maintainer release checklist", pattern: /^docs\/release-checklist\.md$/u },
+  { label: "npm README source (packed as README.md / README-Ko-KR.md)", pattern: /^README-npm(?:-Ko-KR)?\.md$/u },
+  { label: "GitHub README backup from the npm README swap", pattern: /^\.readme-npm-backup(?:\/|$)/u },
+  { label: "npm README swap script", pattern: /^tools\/readme-for-npm\.mjs$/u },
   { label: "internal recon/spec document", pattern: /^docs\/(?:recon|spec)(\/|$)/u },
   { label: "implementation plan", pattern: /(^|\/)plans(\/|$)/u },
   { label: ".litcodex runtime state", pattern: /(^|\/)\.litcodex(\/|$)/u },
@@ -70,18 +73,33 @@ const REQUIRED_README_PATHS = [
   "docs/assets/readme/poster.png"
 ];
 
-// Every image the bilingual READMEs load from the package CDN must ship in the tarball.
+// Every image the READMEs show must ship: the npm pages load pinned package-CDN copies, and the
+// GitHub pages load the same files by relative path. Inside a packed artifact the npm sources
+// are absent and README.md / README-Ko-KR.md already hold the npm pages.
 async function readmeImagePaths() {
   const { version } = JSON.parse(await fs.readFile("package.json", "utf8"));
   const prefix = `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/`;
   const paths = new Set();
-  for (const file of ["README.md", "README-Ko-KR.md"]) {
+  const sources = [];
+  for (const [npmSource, target] of [["README-npm.md", "README.md"], ["README-npm-Ko-KR.md", "README-Ko-KR.md"]]) {
+    sources.push(target);
+    try {
+      await fs.access(npmSource);
+      sources.push(npmSource);
+    } catch {
+      // Packed artifact: the target already is the npm page.
+    }
+  }
+  for (const file of sources) {
     const text = await fs.readFile(file, "utf8");
     const targets = [
       ...[...text.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/gu)].map((match) => match[1]),
       ...[...text.matchAll(/\b(?:src|srcset)="([^"\s]+)"/gu)].map((match) => match[1])
     ];
-    for (const target of targets) if (target.startsWith(prefix)) paths.add(target.slice(prefix.length));
+    for (const target of targets) {
+      if (target.startsWith(prefix)) paths.add(target.slice(prefix.length));
+      else if (target.startsWith("./")) paths.add(target.slice(2));
+    }
   }
   return [...paths];
 }

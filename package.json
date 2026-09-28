@@ -1,6 +1,6 @@
 {
   "name": "@litfamily/litopencode",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "LitOpenCode OpenCode plugin bootstrap package.",
   "license": "MIT",
   "repository": {
@@ -28,10 +28,12 @@
     "build": "node tools/run-build.mjs",
     "check:pack-payload": "npm run build && npm pack --dry-run --json --ignore-scripts | node tools/check-pack-payload.mjs --stdin",
     "check:version": "node tools/check-version-lockstep.mjs",
+    "check:npm-readme": "node tools/readme-for-npm.mjs check",
     "check:managed-skill-manifest": "node tools/gen-managed-skill-manifest.mjs --check",
     "gen:managed-skill-manifest": "node tools/gen-managed-skill-manifest.mjs",
     "prepublishOnly": "node tools/prepublish-test-gate.mjs",
-    "prepack": "npm run build",
+    "prepack": "npm run build && node tools/readme-for-npm.mjs apply",
+    "postpack": "node tools/readme-for-npm.mjs restore",
     "pretest": "npm run build",
     "qa:behavior-replacement": "node tools/run-behavior-replacement-probes.mjs",
     "qa:installed-resource-tamper": "node tools/run-installed-resource-tamper-probe.mjs",

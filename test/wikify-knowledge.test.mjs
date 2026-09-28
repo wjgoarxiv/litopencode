@@ -1466,6 +1466,43 @@ test("a cooperative lock owner release during descriptor read retries lock obser
   });
 });
 
+test("a cooperative lock owner release between descriptor open and stat retries lock observation", async () => {
+  await withTempDir("litopencode-wikify-lock-owner-release-open-", async (root) => {
+    await captureAccepted(root);
+    const paths = knowledgePaths(root);
+    const ownerPath = path.join(paths.lockDirectory, "owner.json");
+    await fs.mkdir(paths.lockDirectory);
+    await fs.writeFile(ownerPath, JSON.stringify({ pid: process.pid, nonce: "cooperative-owner-release-open" }));
+    const originalOpen = fs.open;
+    let released = false;
+    fs.open = async (...args) => {
+      const handle = await originalOpen(...args);
+      if (path.resolve(String(args[0])) !== ownerPath || released) return handle;
+      const originalStat = handle.stat.bind(handle);
+      handle.stat = async (...statArgs) => {
+        released = true;
+        // The owner's release unlinks owner.json and then removes the lock directory.
+        await fs.unlink(ownerPath);
+        const stat = await originalStat(...statArgs);
+        await fs.rmdir(paths.lockDirectory);
+        return stat;
+      };
+      return handle;
+    };
+    try {
+      const result = await captureKnowledgeEvent(root, event({
+        text: "An owner release after the descriptor open must retry the lock observation.",
+        evidenceRef: "docs/owner-release-open-retry.md:1"
+      }), { surface: "tool.wikify" });
+      assert.equal(result.status, "captured");
+    } finally {
+      fs.open = originalOpen;
+    }
+    assert.equal(released, true, "the owner descriptor stat must observe the cooperative release");
+    assert.deepEqual((await fs.readdir(paths.directory)).sort(), ["claims.jsonl"]);
+  });
+});
+
 test("a cooperative lock parent release between metadata checks retries lock observation", async () => {
   await withTempDir("litopencode-wikify-lock-parent-release-", async (root) => {
     await captureAccepted(root);

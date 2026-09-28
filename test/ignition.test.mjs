@@ -165,6 +165,38 @@ test("chat activation shows the OpenCode ignition toast through the plugin clien
   }
 });
 
+test("a lit slash command shows the ignition toast once across the command and its chat message", async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-command-toast-"));
+  const previousXdg = process.env.XDG_CONFIG_HOME;
+  process.env.XDG_CONFIG_HOME = path.join(root, "xdg");
+  const calls = [];
+  const hooks = await createLitOpenCodePlugin(async () => ({ status: "skipped" }))({
+    directory: root,
+    worktree: root,
+    client: {
+      session: { get: async () => ({ data: {} }) },
+      tui: { showToast: async (options) => { calls.push(options); } }
+    }
+  });
+  try {
+    const command = { parts: [] };
+    await hooks["command.execute.before"]({ command: "/lit-code", sessionID: "session-command-toast", arguments: "" }, command);
+    const hostParts = command.parts.map((part) => ({ ...part }));
+    await hooks["chat.message"](
+      { sessionID: "session-command-toast", messageID: "message-command-toast" },
+      { message: { id: "message-command-toast", sessionID: "session-command-toast", role: "user" }, parts: hostParts }
+    );
+    const ignited = calls.filter((call) => call.body.title === "🔥 LIT IGNITED");
+    assert.equal(ignited.length, 1, JSON.stringify(calls));
+    assert.match(ignited[0].body.message, /LIT IGNITED · lit-code/u);
+  } finally {
+    await hooks.dispose();
+    if (previousXdg === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previousXdg;
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
 test("a task with appended lit keeps the answer clean while the activation toast remains", async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-plain-completion-"));
   const calls = [];

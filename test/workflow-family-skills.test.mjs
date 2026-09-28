@@ -1352,7 +1352,11 @@ test("README is current-behavior documentation, not cumulative prepared-release 
   assert.doesNotMatch(readme, /^v0\.1\.\d+ /gmu);
   assert.doesNotMatch(readme, /\bv0\.1\.8\b/iu);
   assert.doesNotMatch(readme, /\b(?:530 tests|529 pass|283-entry|73-asset|17\/17|27\/27)\b/u);
-  assert.ok(readme.includes(`[Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/CHANGELOG.md)`));
+  assert.ok(readme.includes("[Changelog](./CHANGELOG.md)"), "the GitHub README links the changelog by relative path");
+  const npmReadme = await fs.readFile("README-npm.md", "utf8");
+  assert.doesNotMatch(npmReadme, /\bprepared(?: release| tree| as)\b/iu);
+  assert.doesNotMatch(npmReadme, /\b(?:530 tests|529 pass|283-entry|73-asset|17\/17|27\/27)\b/u);
+  assert.ok(npmReadme.includes(`[Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/CHANGELOG.md)`));
   assert.match(readme, /lit-plan.*start-work.*review-work/is);
 
   const reference = await fs.readFile("docs/reference.md", "utf8");

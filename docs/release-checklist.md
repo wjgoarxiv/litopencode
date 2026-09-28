@@ -6,6 +6,13 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.11 Release Scope
+
+- The motion skill's runtime now installs `ws` 8.22.0 instead of 8.18.3, which fixes a memory-exhaustion denial of service and an uninitialized-memory disclosure in that package. After upgrading, run `litopencode motion-runtime install` again so the cache picks up the new version.
+- Two Wikify captures running at the same moment no longer fail with a blocked store error when one of them releases its lock while the other is checking it. The waiting capture now retries.
+- A Lit slash command now shows the `🔥 LIT IGNITED` toast once. Before, the same toast appeared twice, with the second one replacing the first.
+- The Jev debug trace (`LITOPENCODE_JEV_TRACE=1`) now also refuses a symlinked `.litopencode` or `.litopencode/logs` folder. It writes nothing and the turn continues normally.
+
 ## 1.0.10 Release Scope
 
 - Add an optional Jev skill hint. It is off by default. With `LITOPENCODE_JEV=1` and your own `TYPESAFE_API_KEY` set, an eligible chat turn gets one advisory line naming a LitOpenCode skill. The model still decides whether to load it.
@@ -415,6 +422,28 @@ Any benchmark-backed superiority statement against the REFERENCE must be checked
 - Strong wording is allowed only when scoped to the measured OpenCode-native benchmark suite and every threshold passes.
 - For a declared benchmark universe, run `certifyDeclaredBenchmarkUniverse` and `renderDeclaredBenchmarkUniverseClaim`; this may say all tasks in that declared universe passed, but it must not imply all possible real development tasks.
 - If the claim guard returns `blocked`, replace the wording with the safe benchmark-scoped alternative returned by the API.
+
+## GitHub and npm README Pages
+
+The repository's `README.md` and `README-Ko-KR.md` are the GitHub pages: the full guide, skills gallery and A/B results, with assets loaded by relative `./docs/...` paths. The npm package page is a shorter card kept in `README-npm.md` and `README-npm-Ko-KR.md`, with every asset and link pinned to `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@<version>/`. Those pinned URLs return 404 until the version is published. The npm sources use a hyphen, not `README.npm.md`, because npm always packs root files named `README.*`.
+
+`tools/readme-for-npm.mjs` swaps the pages:
+
+- `node tools/readme-for-npm.mjs check` validates the npm pages: every jsDelivr pin matches `package.json`, no relative or non-HTTPS target remains, the GitHub full-guide link is present, the repository-only checklist is not linked, and each page stays under 32 KiB and under half of its GitHub page.
+- `apply` runs `check`, saves the GitHub pages with their SHA-256 in the ignored `.readme-npm-backup/` directory, and copies the npm pages over `README.md` and `README-Ko-KR.md`. A second `apply` is a no-op.
+- `restore` puts the GitHub pages back byte-identical after checking the recorded hashes, then removes the backup.
+
+`prepack` runs `npm run build && node tools/readme-for-npm.mjs apply` and `postpack` runs `restore`, so a plain `npm pack` or `npm publish` packs the npm pages and leaves the working tree unchanged. `prepublishOnly` runs before `prepack`, so the test gate still reads the GitHub pages. `.npmignore` and `check:pack-payload` keep `README-npm*.md`, `.readme-npm-backup/` and the swap script out of the tarball.
+
+A publish that passes `--ignore-scripts` skips `prepack` and `postpack`. For that flow, run the tests first, then:
+
+```sh
+node tools/readme-for-npm.mjs apply
+npm publish --access public --ignore-scripts
+node tools/readme-for-npm.mjs restore
+```
+
+Do not run `npm test` or `prepublishOnly` while the npm pages are applied; the README tests read the GitHub pages and fail. If a pack fails before `postpack`, run `restore` by hand. `npm pack --dry-run --json --ignore-scripts` lists the same files with or without the swap; only the contents of the two README files differ.
 
 ## HUMAN-ONLY Registry Publication
 

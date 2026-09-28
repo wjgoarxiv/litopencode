@@ -54,7 +54,10 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       ignitionState.activate(sessionID, skillId, !appendedLit);
     };
     const boundedAuthorityEvent = createBoundedAuthorityEventHook(root, input?.client, loaded.config.boundedAuthority);
-    const skillHint = createJevSkillHint({ traceFile: path.join(loaded.paths.logsDir, "jev-skill-hint.jsonl") });
+    const skillHint = createJevSkillHint({
+      traceFile: path.join(loaded.paths.logsDir, "jev-skill-hint.jsonl"),
+      traceRoot: loaded.paths.projectRoot
+    });
     // Keyed by session: the host resolves command parts into a new array before chat.message runs.
     const pendingCommand = new Set<string>();
     const trustedCommandActivations = new Map<string, string>();
@@ -97,6 +100,9 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           const skillId = trustedCommandActivations.get(sessionID);
           trustedCommandActivations.delete(sessionID);
           return skillId;
+        },
+        onTrustedSkillResume: (sessionID, skillId) => {
+          ignitionState.activate(sessionID, skillId);
         }
       }),
       "command.execute.before": async (commandInput, commandOutput) => {

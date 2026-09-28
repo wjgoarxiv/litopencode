@@ -40,6 +40,8 @@ export type JevSkillHintOptions = {
   readonly fetch?: JevFetch;
   readonly catalog?: readonly JevCatalogEntry[];
   readonly traceFile?: string;
+  /** Project root: every folder between it and the trace file must be a real folder, never a symlink. */
+  readonly traceRoot?: string;
   readonly now?: () => number;
 };
 
@@ -190,6 +192,26 @@ export type JevSkillHint = {
   forget(sessionID: string): void;
 };
 
+/**
+ * Walks the trace folder below the project root one level at a time, creating a missing folder
+ * without following links. Any symlink or non-folder on the way means no trace.
+ */
+async function realTraceFolder(root: string, folder: string): Promise<boolean> {
+  const relative = path.relative(root, folder);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) return false;
+  let current = root;
+  for (const segment of relative.split(path.sep).filter((part) => part !== "")) {
+    current = path.join(current, segment);
+    let stat = await fs.lstat(current).catch(() => undefined);
+    if (stat === undefined) {
+      await fs.mkdir(current).catch(() => undefined);
+      stat = await fs.lstat(current).catch(() => undefined);
+    }
+    if (stat === undefined || stat.isSymbolicLink() || !stat.isDirectory()) return false;
+  }
+  return true;
+}
+
 export function createJevSkillHint(options: JevSkillHintOptions = {}): JevSkillHint {
   const env = options.env ?? process.env;
   const fetchImpl: JevFetch = options.fetch ?? ((url, init) => fetch(url, init));
@@ -198,14 +220,18 @@ export function createJevSkillHint(options: JevSkillHintOptions = {}): JevSkillH
 
   async function trace(record: Record<string, unknown>): Promise<void> {
     if (env[`${jevFlag}_TRACE`] !== "1" || options.traceFile === undefined) return;
+    const folder = path.dirname(options.traceFile);
+    const root = options.traceRoot ?? path.dirname(folder);
     try {
-      await fs.mkdir(path.dirname(options.traceFile), { recursive: true });
+      if (!(await realTraceFolder(root, folder))) return;
       // Refuse a symlink or other non-file at the trace path; O_NOFOLLOW closes the lstat race.
       const existing = await fs.lstat(options.traceFile).catch(() => undefined);
       if (existing !== undefined && !existing.isFile()) return;
       const flags = fsConstants.O_WRONLY | fsConstants.O_APPEND | fsConstants.O_CREAT | (fsConstants.O_NOFOLLOW ?? 0);
       const handle = await fs.open(options.traceFile, flags, 0o600);
       try {
+        // A folder swapped for a symlink after the first check still gets no record.
+        if (!(await realTraceFolder(root, folder))) return;
         await handle.appendFile(`${JSON.stringify(record)}\n`, "utf8");
       } finally {
         await handle.close();

@@ -40,6 +40,9 @@ pnpm-debug.log*
 !.env.example
 .npmrc
 
+# GitHub README backup kept while the npm README is swapped in for packing
+.readme-npm-backup/
+
 # Temporary caches
 .cache/
 **/__pycache__/

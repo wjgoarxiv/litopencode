@@ -133,6 +133,8 @@ export type ChatMessageActivationOptions = {
   readonly onSkillActivation?: (sessionID: string, skillId: string, appendedLit?: boolean) => void | Promise<void>;
   /** Consumes the skill a trusted command activation recorded for this session, if any. */
   readonly trustedInjectedSkill?: (sessionID: string) => string | undefined;
+  /** Restores that skill after the root-turn reset; the command already showed its activation toast. */
+  readonly onTrustedSkillResume?: (sessionID: string, skillId: string) => void | Promise<void>;
   /** Consumes the mark `command.execute.before` left for this session's next message. */
   readonly isCommandTurn?: (sessionID: string) => boolean;
   readonly skillHint?: (sessionID: string, promptText: string) => Promise<JevSkillHintPart | undefined>;
@@ -178,7 +180,7 @@ export function createChatMessageActivationHook(
     if (!childSession) {
       await options.onRootUserTurn?.(input.sessionID);
       if (trustedInjectedSkill !== undefined) {
-        await options.onSkillActivation?.(input.sessionID, trustedInjectedSkill);
+        await options.onTrustedSkillResume?.(input.sessionID, trustedInjectedSkill);
         return;
       }
     }
