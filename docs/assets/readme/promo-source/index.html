@@ -1,0 +1,394 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/stage-kit.js"></script>
+<style>
+  :root { --ink:#080D14; --cream:#F2EFDF; --ember:#FF6337; --lime:#D7F75B; --panel:#1A2330; --panel2:#111823; --muted:#8A97A6; }
+  html, body { margin:0; width:1920px; height:1080px; overflow:hidden; background:var(--ink); }
+  body { position:relative; color:var(--cream); font-family:"Archivo", sans-serif; }
+  .abs { position:absolute; }
+  #bg { position:absolute; inset:0; background:
+      radial-gradient(1100px 700px at 78% 108%, rgba(255,99,55,.16), rgba(255,99,55,0) 60%),
+      radial-gradient(900px 600px at 8% -10%, rgba(215,247,91,.06), rgba(215,247,91,0) 60%),
+      var(--ink); }
+  #grid { position:absolute; left:-60px; top:-60px; width:2040px; height:1200px; }
+  #vig { position:absolute; inset:0; background:radial-gradient(1400px 900px at 50% 50%, rgba(8,13,20,0) 55%, rgba(8,13,20,.72) 100%); }
+  #brand { position:absolute; left:0; top:0; transform-origin:0 0; white-space:nowrap; font-weight:900; font-stretch:125%;
+           font-size:26px; letter-spacing:.14em; line-height:1; color:var(--cream); }
+  #brand b { color:var(--ember); font-weight:900; }
+  .hl { position:absolute; left:110px; top:230px; width:860px; height:560px; margin:0; display:flex; align-items:center;
+        font-weight:900; font-stretch:100%; font-size:112px; line-height:.98; letter-spacing:-.02em; color:var(--cream); }
+  .w { display:inline-block; overflow:hidden; vertical-align:top; padding:.06em 0 .2em; margin:-.06em 0 -.2em; }
+  .wi { display:inline-block; will-change:transform; }
+  .em { color:var(--ember); } .lm { color:var(--lime); }
+  #win { position:absolute; left:1010px; top:190px; width:820px; height:660px; border-radius:20px; background:var(--panel2);
+         border:2px solid rgba(242,239,223,.16); box-shadow:0 40px 90px rgba(0,0,0,.55); overflow:hidden; }
+  #bar { position:absolute; left:0; top:0; right:0; height:58px; background:#141C28; border-bottom:1px solid rgba(242,239,223,.08); }
+  .dot { position:absolute; top:22px; width:14px; height:14px; border-radius:50%; background:#2A3546; }
+  #ttl { position:absolute; left:0; right:0; top:0; height:58px; line-height:58px; text-align:center; font:400 22px/58px "MesloLGS NF", monospace; color:var(--muted); }
+  .mono { font-family:"MesloLGS NF", monospace; font-weight:400; }
+  #prompt { position:absolute; left:40px; top:502px; width:740px; height:118px; background:var(--panel); border-radius:6px; }
+  #prompt .bar { position:absolute; left:0; top:0; bottom:0; width:7px; border-radius:6px 0 0 6px; background:#3D7BE0; }
+  .ptx { position:absolute; left:38px; top:34px; white-space:pre; font:400 27px/48px "MesloLGS NF", monospace; color:var(--cream); }
+  .caret { display:inline-block; width:16px; height:34px; margin-left:3px; vertical-align:-6px; background:var(--cream); }
+  #toast { position:absolute; left:318px; top:84px; width:462px; height:98px; background:#151A22; }
+  #toast .e { position:absolute; top:0; bottom:0; width:6px; background:var(--ember); }
+  #toast svg { position:absolute; left:34px; top:29px; }
+  #toast .tx { position:absolute; left:84px; top:0; height:98px; line-height:98px; font:400 25px/98px "MesloLGS NF", monospace; white-space:nowrap; color:var(--cream); }
+  .chip { position:absolute; left:40px; width:262px; height:66px; border-radius:12px; border:2px solid rgba(242,239,223,.18); background:var(--panel);
+          font:400 28px/62px "MesloLGS NF", monospace; padding-left:64px; box-sizing:border-box; color:var(--cream); }
+  .chip i { position:absolute; left:26px; top:22px; width:18px; height:18px; border-radius:50%; background:#2F3B4D; }
+  #planner { position:absolute; left:40px; top:112px; width:740px; height:440px; }
+  #planner .ttl { position:absolute; left:0; top:0; height:56px; line-height:56px; font:400 32px/56px "MesloLGS NF", monospace; color:var(--cream); }
+  #planner .tag { position:absolute; right:0; top:8px; height:40px; line-height:38px; padding:0 18px; border:2px solid rgba(242,239,223,.3); border-radius:20px; font:400 22px/36px "MesloLGS NF", monospace; color:#B9C4D0; }
+  .row { position:absolute; left:0; width:740px; height:96px; border-radius:12px; background:var(--panel); overflow:hidden; }
+  .row .tint { position:absolute; inset:0; background:rgba(255,99,55,.16); border-left:6px solid var(--ember); }
+  .row .lb { position:absolute; left:36px; top:0; line-height:96px; font:400 38px/96px "MesloLGS NF", monospace; color:var(--cream); }
+  .row svg { position:absolute; left:520px; top:24px; }
+  .row .dn { position:absolute; right:26px; top:26px; height:44px; padding:0 20px; border-radius:22px; background:var(--ember); color:#080D14; font:400 24px/44px "MesloLGS NF", monospace; }
+  #chain { position:absolute; left:40px; top:120px; width:740px; height:440px; }
+  #chain .nl { position:absolute; top:168px; width:160px; margin-left:-80px; text-align:center; font:400 27px/34px "MesloLGS NF", monospace; color:var(--cream); }
+  #ledger { position:absolute; left:0; top:262px; width:740px; }
+  #ledger .fp { position:absolute; left:46px; top:0; height:44px; font:400 27px/44px "MesloLGS NF", monospace; color:var(--lime); white-space:pre; }
+  #ledger svg { position:absolute; left:0; top:6px; }
+  .lg { position:absolute; left:0; height:14px; border-radius:7px; background:#243044; width:740px; overflow:hidden; }
+  .lg i { position:absolute; left:0; top:0; bottom:0; background:var(--lime); border-radius:7px; }
+  #recap { position:absolute; left:40px; top:92px; width:740px; height:430px; }
+  .rr { position:absolute; left:0; width:740px; height:112px; border-radius:12px; background:var(--panel); border:2px solid rgba(242,239,223,.12); box-sizing:border-box; }
+  .rr .lb { position:absolute; left:100px; top:16px; font:400 26px/34px "MesloLGS NF", monospace; color:var(--muted); }
+  .rr .ln { position:absolute; left:100px; height:12px; border-radius:6px; background:#2C3A50; }
+  .rr svg { position:absolute; left:28px; top:34px; }
+  #tag { position:absolute; left:0; width:1920px; top:640px; text-align:center; font:400 60px/68px "MesloLGS NF", monospace; color:var(--lime); letter-spacing:.02em; }
+  #glow { position:absolute; left:460px; top:220px; width:1000px; height:600px; border-radius:50%;
+          background:radial-gradient(closest-side, rgba(255,99,55,.55), rgba(255,99,55,0)); }
+  #segs { position:absolute; left:110px; top:960px; width:900px; height:8px; }
+  .seg { position:absolute; top:0; height:8px; width:140px; border-radius:4px; background:#1E2836; overflow:hidden; }
+  .seg i { position:absolute; left:0; top:0; bottom:0; background:var(--ember); }
+</style>
+<body>
+  <div id="bg"></div>
+  <svg id="grid" viewBox="0 0 2040 1200" width="2040" height="1200"></svg>
+  <div id="glow"></div>
+  <div id="brand"><b>LIT</b>OPENCODE</div>
+
+  <h1 class="hl" id="h1"><span class="t"></span></h1>
+  <h1 class="hl" id="h2"><span class="t"></span></h1>
+  <h1 class="hl" id="h3"><span class="t"></span></h1>
+  <h1 class="hl" id="h4"><span class="t"></span></h1>
+  <h1 class="hl" id="h5"><span class="t"></span></h1>
+
+  <div id="win">
+    <div id="bar"><i class="dot" style="left:22px"></i><i class="dot" style="left:46px"></i><i class="dot" style="left:70px"></i><div id="ttl">OpenCode</div></div>
+
+    <div id="routes"></div>
+
+    <div id="planner">
+      <div class="ttl" id="ph">lit-plan</div><div class="tag" id="ptag">plans only</div>
+    </div>
+
+    <div id="chain">
+      <svg width="740" height="300" viewBox="0 0 740 300" style="position:absolute;left:0;top:0">
+        <path id="cpath" d="M80 110 H660" stroke="#3A4860" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path id="cpath2" d="M80 110 H660" stroke="#D7F75B" stroke-width="6" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div id="nodes"></div>
+      <div id="ledger">
+        <svg width="40" height="34" viewBox="0 0 24 24"><path d="M3 6.5h6.5l2 2.5H21v10.5H3z" fill="none" stroke="#D7F75B" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <div class="fp" id="fp"></div>
+        <div class="lg" style="top:68px"><i id="lg0"></i></div>
+        <div class="lg" style="top:104px"><i id="lg1"></i></div>
+        <div class="lg" style="top:140px"><i id="lg2"></i></div>
+      </div>
+    </div>
+
+    <div id="recap">
+      <div class="rr" id="rr0" style="top:0"><svg width="44" height="44" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#D7F75B"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#080D14" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="lb" id="rl0">Done</div><div class="ln" style="top:64px;width:520px"></div></div>
+      <div class="rr" id="rr1" style="top:132px"><svg width="44" height="44" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#D7F75B"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#080D14" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="lb" id="rl1">Checked</div><div class="ln" style="top:64px;width:400px"></div></div>
+      <div class="rr" id="rr2" style="top:264px"><svg width="44" height="44" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#FF6337" stroke-width="2.6"/><path d="M9 8.5l6 3.5-6 3.5z" fill="#FF6337"/></svg><div class="lb" id="rl2" style="color:#D7F75B">Next step</div><div class="ln" style="top:64px;width:460px;background:#D7F75B"></div></div>
+    </div>
+
+    <div id="prompt"><div class="bar"></div>
+      <div class="ptx" id="p1"><span id="p1a" class="em"></span><span id="p1b"></span><span class="caret" id="c1"></span></div>
+      <div class="ptx" id="p2"><span id="p2a"></span><span class="caret" id="c2"></span></div>
+    </div>
+
+    <div id="toast"><div class="e" style="left:0"></div><div class="e" style="right:0"></div>
+      <svg width="34" height="40" viewBox="0 0 24 28"><path d="M12 1c.6 4.6 7.8 7.2 7.8 14.4A7.8 7.8 0 0 1 12 27a7.8 7.8 0 0 1-7.8-11.6c.4 2.2 1.6 3.4 2.9 3.6C6.5 14 8.6 6.2 12 1z" fill="#FF6337"/><path d="M12 14c.3 2.3 3.2 3.4 3.2 6.1a3.2 3.2 0 0 1-6.4 0c0-1.6 1-2.4 1.6-3.2.6.7 1.3.9 1.6.6z" fill="#D7F75B"/></svg>
+      <div class="tx" id="tt">LIT IGNITED · lit-loop</div>
+    </div>
+  </div>
+
+  <div id="tag">Keep the work lit.</div>
+  <div id="segs"></div>
+
+  <script>
+    const COPY = {
+      brand: "LITOPENCODE",
+      h1: "Add lit to a prompt.",
+      prompt: "lit Build a to-do list in one index.html",
+      h2: "LitOpenCode picks the workflow.",
+      h3: "The planner only reads.",
+      h4: "Every step leaves a record.",
+      recap: "/lit-recap",
+      h5: "Pick up where you stopped.",
+      tag: "Keep the work lit."
+    };
+    const UI = { title: "OpenCode", toast: "LIT IGNITED · lit-loop", routes: ["lit-loop", "lit-plan", "start-work", "review-work"],
+                 planner: "lit-plan", tag: "plans only", rows: ["edit", "bash", "task"], nodes: ["Plan", "Build", "Verify", "Next"],
+                 folder: "litgoal/" };
+    const { define, text, ease, at, kf, spring, splitText, drawPath, clipRect, mix, rgba, clamp, lerp, smoothstep, cubicBezier } = LitStage;
+    const $ = (id) => document.getElementById(id);
+    const NS = "http://www.w3.org/2000/svg";
+    const EMBER = "#FF6337", LIME = "#D7F75B", CREAM = "#F2EFDF";
+    const cuts = [0, 3.6, 7.4, 11.4, 15.8, 19.4, 23];
+
+    // grid texture
+    const grid = $("grid");
+    for (let x = 0; x <= 2040; x += 60) { const l = document.createElementNS(NS, "line"); l.setAttribute("x1", x); l.setAttribute("x2", x); l.setAttribute("y1", 0); l.setAttribute("y2", 1200); l.setAttribute("stroke", "rgba(242,239,223,0.05)"); grid.appendChild(l); }
+    for (let y = 0; y <= 1200; y += 60) { const l = document.createElementNS(NS, "line"); l.setAttribute("y1", y); l.setAttribute("y2", y); l.setAttribute("x1", 0); l.setAttribute("x2", 2040); l.setAttribute("stroke", "rgba(242,239,223,0.05)"); grid.appendChild(l); }
+
+    // headlines: word masks
+    function buildHeadline(id, str, accents) {
+      const h = $(id), t = h.querySelector(".t");
+      const words = str.split(" ");
+      const inners = [];
+      words.forEach((w, i) => {
+        const outer = document.createElement("span"); outer.className = "w";
+        const inner = document.createElement("span"); inner.className = "wi"; inner.textContent = w;
+        if (accents[w]) inner.classList.add(accents[w]);
+        outer.appendChild(inner); t.appendChild(outer); inners.push(inner);
+        if (i < words.length - 1) t.appendChild(document.createTextNode(" "));
+      });
+      text(h);
+      return { el: h, words: inners };
+    }
+    const H = [
+      buildHeadline("h1", COPY.h1, { "lit": "em" }),
+      buildHeadline("h2", COPY.h2, { "workflow.": "em" }),
+      buildHeadline("h3", COPY.h3, { "reads.": "em" }),
+      buildHeadline("h4", COPY.h4, { "record.": "lm" }),
+      buildHeadline("h5", COPY.h5, { "stopped.": "lm" })
+    ];
+    function headline(ttl, t, tin, tout) {
+      const n = ttl.words.length;
+      let any = 0;
+      ttl.words.forEach((w, i) => {
+        const pin = at(t, tin + i * 0.09, 0.72, ease.decelerate);
+        const pout = at(t, tout + i * 0.05, 0.4, ease.accelerate);
+        const y = (1 - pin) * 118 - pout * 118;
+        w.style.transform = "translateY(" + y.toFixed(2) + "%)";
+        if (pin > 0 && pout < 1) any = 1;
+      });
+      ttl.el.style.visibility = any ? "visible" : "hidden";
+    }
+
+    // UI text marks (illustrative text inside the drawn window)
+    text($("ttl"), { decor: true });
+    text($("tt"), { decor: true });
+    text($("ph"), { decor: true });
+    text($("ptag"), { decor: true });
+    text($("fp"), { decor: true });
+    ["rl0", "rl1", "rl2"].forEach((id) => text($(id), { decor: true }));
+
+    // route chips
+    const routes = $("routes");
+    const chipEls = UI.routes.map((name, i) => {
+      const c = document.createElement("div"); c.className = "chip"; c.style.top = (96 + i * 84) + "px";
+      c.innerHTML = "<i></i>" + name; routes.appendChild(c); text(c, { decor: true }); return c;
+    });
+
+    // planner rows
+    const planner = $("planner");
+    const lockSvg = (open) => '<svg width="48" height="48" viewBox="0 0 24 24"><g class="shk"><path d="M8 11V7.5a4 4 0 0 1 8 0V11" fill="none" stroke="#F2EFDF" stroke-width="2" stroke-linecap="round"/></g><rect x="5" y="11" width="14" height="10" rx="2.2" fill="#F2EFDF"/><circle cx="12" cy="16" r="1.5" fill="#1A2330"/></svg>';
+    const rowEls = UI.rows.map((name, i) => {
+      const r = document.createElement("div"); r.className = "row"; r.style.top = (78 + i * 118) + "px";
+      r.innerHTML = '<div class="tint"></div><div class="lb">' + name + "</div>" + lockSvg() + '<div class="dn">denied</div>';
+      planner.appendChild(r);
+      text(r.querySelector(".lb"), { decor: true }); text(r.querySelector(".dn"), { decor: true });
+      return { el: r, tint: r.querySelector(".tint"), shk: r.querySelector(".shk"), dn: r.querySelector(".dn"), svg: r.querySelector("svg") };
+    });
+
+    // chain nodes
+    const nodesEl = $("nodes");
+    const nodeX = [80, 273, 467, 660];
+    const nodeEls = UI.nodes.map((name, i) => {
+      const s = document.createElementNS(NS, "svg"); s.setAttribute("width", 100); s.setAttribute("height", 100); s.setAttribute("viewBox", "-50 -50 100 100");
+      s.style.cssText = "position:absolute;left:" + (nodeX[i] - 50) + "px;top:" + (110 - 50) + "px;overflow:visible";
+      const ring = document.createElementNS(NS, "circle"); ring.setAttribute("r", 34); ring.setAttribute("fill", "#111823"); ring.setAttribute("stroke", i === 3 ? EMBER : LIME); ring.setAttribute("stroke-width", 6);
+      const fill = document.createElementNS(NS, "circle"); fill.setAttribute("r", 34); fill.setAttribute("fill", LIME);
+      const chk = document.createElementNS(NS, "path"); chk.setAttribute("d", "M-14 1 L-4 11 L15 -10"); chk.setAttribute("stroke", "#080D14"); chk.setAttribute("stroke-width", 8); chk.setAttribute("fill", "none"); chk.setAttribute("stroke-linecap", "round"); chk.setAttribute("stroke-linejoin", "round");
+      const play = document.createElementNS(NS, "path"); play.setAttribute("d", "M-9 -14 L15 0 L-9 14 Z"); play.setAttribute("fill", EMBER);
+      s.appendChild(ring); if (i < 3) { s.appendChild(fill); s.appendChild(chk); } else s.appendChild(play);
+      nodesEl.appendChild(s);
+      const lab = document.createElement("div"); lab.className = "nl"; lab.style.left = nodeX[i] + "px"; lab.textContent = name; $("chain").appendChild(lab); text(lab, { decor: true });
+      return { s, fill: i < 3 ? fill : null, chk: i < 3 ? chk : null, lab };
+    });
+
+    // bottom segments (beat progress)
+    const segs = $("segs");
+    const segEls = [];
+    for (let i = 0; i < 6; i++) { const d = document.createElement("div"); d.className = "seg"; d.style.left = (i * 152) + "px"; d.innerHTML = "<i></i>"; segs.appendChild(d); segEls.push(d.firstChild); }
+
+    const cpath = $("cpath2");
+    const brand = $("brand");
+    const tagEl = $("tag");
+    text(brand); text(tagEl);
+    const p1 = $("p1"), p2 = $("p2");
+    text(p1); text(p2);
+
+    const clampi = (v, a, b) => Math.max(a, Math.min(b, v));
+    function typed(str, t, t0, t1) { return Math.floor(clamp((t - t0) / (t1 - t0), 0, 1) * str.length + 1e-6); }
+    function setT(el, o, x = 0, y = 0, s = 1) { el.style.opacity = o.toFixed(3); el.style.transform = "translate(" + x.toFixed(2) + "px," + y.toFixed(2) + "px) scale(" + s.toFixed(4) + ")"; }
+    const spr = spring({ stiffness: 260, damping: 15 });
+    const sprSoft = spring({ stiffness: 180, damping: 17 });
+    const lockSpr = spring({ stiffness: 420, damping: 13 });
+
+    define({ width: 1920, height: 1080, fps: 60, duration: 23, render(t) {
+      // background drift
+      grid.style.transform = "translate(" + (-(t * 3) % 60).toFixed(2) + "px," + (-(t * 2) % 60).toFixed(2) + "px)";
+      const gridA = 1 * (1 - at(t, 19.3, 1.2, ease.standard) * 0.5);
+      grid.style.opacity = gridA.toFixed(3);
+
+      // brand: corner -> centre
+      const bw = brand.offsetWidth || 340, bh = brand.offsetHeight || 26;
+      const bp = at(t, 19.55, 1.5, ease.emphasized);
+      const S1 = 1500 / bw;
+      const bs = lerp(1, S1, bp);
+      const bx = lerp(110, (1920 - bw * S1) / 2, bp);
+      const by = lerp(64, 470 - bh * S1 / 2, bp);
+      brand.style.transform = "translate(" + bx.toFixed(2) + "px," + by.toFixed(2) + "px) scale(" + bs.toFixed(4) + ")";
+      brand.style.opacity = "1";
+
+      // headlines
+      headline(H[0], t, 0.12, 3.3);
+      headline(H[1], t, 3.72, 7.15);
+      headline(H[2], t, 7.55, 11.05);
+      headline(H[3], t, 11.55, 15.4);
+      headline(H[4], t, 15.95, 19.05);
+
+      // window
+      const win = $("win");
+      const rise = lerp(0.55, 1, at(t, 0, 0.9, ease.decelerate));
+      const winOut = at(t, 19.2, 0.6, ease.accelerate);
+      const winDim = kf(t, [{ t: 15.55, v: 0.16 }, { t: 15.9, v: 0.06 }, { t: 16.5, v: 0.16 }]);
+      win.style.opacity = (rise * (1 - winOut)).toFixed(3);
+      win.style.transform = "translate(0," + ((1 - rise) / 0.45 * 90 + winOut * 30).toFixed(2) + "px) scale(" + (1 - winOut * 0.05).toFixed(4) + ")";
+      win.style.borderColor = "rgba(242,239,223," + winDim.toFixed(3) + ")";
+      win.style.visibility = winOut < 1 ? "visible" : "hidden";
+
+      // prompt panel: in at start, out at planner, back for recap
+      const pOut1 = at(t, 6.9, 0.45, ease.accelerate);
+      const pIn2 = at(t, 16.2, 0.5, ease.decelerate);
+      const pVis = t < 12 ? 1 - pOut1 : pIn2;
+      $("prompt").style.opacity = pVis.toFixed(3);
+      $("prompt").style.transform = "translateY(" + ((t < 12 ? pOut1 : 1 - pIn2) * 150).toFixed(2) + "px)";
+      const send = kf(t, [{ t: 3.2, v: 0 }, { t: 3.5, v: 1 }, { t: 4.4, v: 0 }]);
+      $("prompt").querySelector(".bar").style.background = mix("#3D7BE0", EMBER, send);
+      // prompt 1 (copy) and prompt 2 (copy)
+      const n1 = typed(COPY.prompt, t, 0.95, 3.0);
+      $("p1a").textContent = COPY.prompt.slice(0, Math.min(n1, 3));
+      $("p1b").textContent = COPY.prompt.slice(3, n1);
+      const blink = (Math.floor(t * 2) % 2 === 0);
+      $("c1").style.opacity = (t < 3.6 && (n1 < COPY.prompt.length || blink) && t > 0.9) ? "1" : "0";
+      p1.style.opacity = t < 12 ? (1).toString() : "0";
+      const n2 = typed(COPY.recap, t, 16.75, 17.55);
+      $("p2a").textContent = COPY.recap.slice(0, n2);
+      $("c2").style.opacity = (t > 16.7 && t < 19.2 && (n2 < COPY.recap.length || blink)) ? "1" : "0";
+      p2.style.opacity = t >= 12 ? "1" : "0";
+      p1.style.display = t < 12 ? "block" : "none";
+      p2.style.display = t >= 12 ? "block" : "none";
+
+      // toast
+      const tout = at(t, 6.75, 0.3, ease.accelerate);
+      const ts = spr(t - 3.6);
+      const toast = $("toast");
+      toast.style.opacity = (at(t, 3.6, 0.12, ease.standard) * (1 - tout)).toFixed(3);
+      toast.style.transform = "translate(0," + ((1 - clamp(ts, 0, 1.15)) * -46 - tout * 20).toFixed(2) + "px)";
+      toast.style.visibility = (t >= 3.58 && tout < 1) ? "visible" : "hidden";
+
+      // routes chips
+      chipEls.forEach((c, i) => {
+        const a = at(t, 4.15 + i * 0.12, 0.55, ease.decelerate);
+        const o = at(t, 6.85 + i * 0.05, 0.4, ease.accelerate);
+        const lit = i === 0 ? at(t, 5.3, 0.4, ease.standard) : 0;
+        const dim = i === 0 ? 1 : 1 - at(t, 5.3, 0.4, ease.standard) * 0.55;
+        c.style.opacity = (a * (1 - o) * dim).toFixed(3);
+        c.style.transform = "translateX(" + (((1 - a) * -40) - o * 60).toFixed(2) + "px)";
+        c.style.borderColor = mix("rgba(242,239,223,.18)", EMBER, lit);
+        c.style.background = mix("#1A2330", "#3A2119", lit);
+        c.querySelector("i").style.background = mix("#2F3B4D", EMBER, lit);
+        c.style.visibility = (a > 0 && o < 1) ? "visible" : "hidden";
+      });
+
+      // planner card
+      const pin = at(t, 7.5, 0.55, ease.decelerate), pout = at(t, 11.0, 0.5, ease.accelerate);
+      planner.style.opacity = (pin * (1 - pout)).toFixed(3);
+      planner.style.transform = "translateX(" + ((1 - pin) * 70 - pout * 60).toFixed(2) + "px)";
+      planner.style.visibility = (pin > 0 && pout < 1) ? "visible" : "hidden";
+      rowEls.forEach((r, i) => {
+        const d = 7.9 + i * 0.3;
+        const drop = at(t, d, 0.5, ease.decelerate);
+        const lockT = 8.55 + i * 0.32;
+        const closed = lockSpr(t - lockT);
+        const sweep = at(t, lockT, 0.5, ease.standard);
+        r.el.style.opacity = drop.toFixed(3);
+        r.el.style.transform = "translateY(" + ((1 - drop) * -34).toFixed(2) + "px)";
+        r.shk.style.transform = "translateY(" + (((t < lockT) ? -3.4 : (1 - clamp(closed, 0, 1.4)) * -3.4)).toFixed(3) + "px)";
+        r.tint.style.clipPath = "inset(0 " + ((1 - sweep) * 100).toFixed(2) + "% 0 0)";
+        const dp = at(t, lockT + 0.05, 0.3, ease.outBack);
+        r.dn.style.opacity = clamp(dp, 0, 1).toFixed(3);
+        r.dn.style.transform = "scale(" + lerp(0.6, 1, dp).toFixed(3) + ")";
+      });
+
+      // chain
+      const cin = at(t, 11.55, 0.5, ease.decelerate), cout = at(t, 15.45, 0.45, ease.accelerate);
+      const chain = $("chain");
+      chain.style.opacity = (cin * (1 - cout)).toFixed(3);
+      chain.style.transform = "translateY(" + ((1 - cin) * 40 - cout * 20).toFixed(2) + "px)";
+      chain.style.visibility = (cin > 0 && cout < 1) ? "visible" : "hidden";
+      drawPath(cpath, at(t, 11.85, 3.0, ease.inOutSine));
+      const nodeT = [12.05, 13.05, 14.05, 15.0];
+      nodeEls.forEach((n, i) => {
+        const s = clamp(spr(t - nodeT[i]), 0, 1.25);
+        const on = t >= nodeT[i] ? s : 0;
+        n.s.style.transform = "scale(" + lerp(0.4, 1, clamp(on, 0, 1.25)).toFixed(4) + ")";
+        n.s.style.opacity = clamp(on * 3, 0, 1).toFixed(3);
+        n.lab.style.opacity = at(t, nodeT[i] + 0.1, 0.4, ease.decelerate).toFixed(3);
+        if (n.fill) n.fill.style.opacity = clamp(at(t, nodeT[i] + 0.08, 0.3, ease.standard), 0, 1).toFixed(3);
+        if (n.chk) n.chk.style.opacity = clamp(at(t, nodeT[i] + 0.16, 0.25, ease.standard), 0, 1).toFixed(3);
+      });
+      const nl = typed(UI.folder, t, 12.5, 13.3);
+      $("fp").textContent = UI.folder.slice(0, nl);
+      [0, 1, 2].forEach((i) => { $("lg" + i).style.width = (at(t, 13.1 + i * 0.5, 0.8, ease.decelerate) * [0.92, 0.7, 0.56][i] * 100).toFixed(2) + "%"; });
+
+      // recap card
+      const recap = $("recap");
+      const rin = at(t, 17.6, 0.5, ease.decelerate), rout = at(t, 19.0, 0.4, ease.accelerate);
+      recap.style.opacity = (1 - rout).toFixed(3);
+      recap.style.visibility = (rin > 0 && rout < 1) ? "visible" : "hidden";
+      [0, 1, 2].forEach((i) => {
+        const a = at(t, 17.6 + i * 0.22, 0.5, ease.decelerate);
+        const r = $("rr" + i);
+        r.style.opacity = a.toFixed(3);
+        r.style.transform = "translateY(" + ((1 - a) * 34).toFixed(2) + "px)";
+      });
+      const nx = at(t, 18.35, 0.5, ease.standard);
+      $("rr2").style.borderColor = mix("rgba(242,239,223,.12)", LIME, nx);
+      $("rr2").style.boxShadow = "0 0 " + (nx * 34).toFixed(1) + "px rgba(215,247,91," + (nx * 0.28).toFixed(3) + ")";
+
+      // close: glow + tagline
+      const g = at(t, 19.9, 1.8, ease.standard);
+      $("glow").style.opacity = (g * 0.42).toFixed(3);
+      $("glow").style.transform = "scale(" + lerp(0.8, 1, g).toFixed(3) + ")";
+      const tg = at(t, 21.5, 0.6, ease.decelerate);
+      clipRect(tagEl, tg, { from: "left" });
+      tagEl.style.opacity = (tg > 0 ? 1 : 0).toString();
+      tagEl.style.transform = "translateY(" + ((1 - tg) * 14).toFixed(2) + "px)";
+
+      // bottom progress segments
+      const segOut = at(t, 19.2, 0.5, ease.standard);
+      segs.style.opacity = (1 - segOut).toFixed(3);
+      segEls.forEach((el, i) => { el.style.width = (clamp((t - cuts[i]) / (cuts[i + 1] - cuts[i]), 0, 1) * 100).toFixed(2) + "%"; });
+    } });
+  </script>
+</body>

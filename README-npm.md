@@ -102,7 +102,7 @@ With the OpenAI provider, a fresh install uses GPT-6 Astra (`gpt-6-astra`) at `x
 - The planner only plans. `lit-plan` has `edit`, `bash` and `task` denied, and it stays that way even if you choose the looser `balanced` or `yolo` mode.
 - LitOpenCode can update itself when it starts interactively and after an install or doctor run succeeds. To turn that off, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`.
 - Skill learning has been removed. Learning records an earlier release left in a project's `.litopencode` folder are no longer used; keep or delete them as you like.
-- The Jev skill hint is optional and off by default. Turning it on sends eligible prompts to TypeSafe, so read the [Jev skill hint reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/reference.md#jev-skill-hint-optional) first.
+- The Jev skill hint is optional and off by default. Turning it on sends eligible prompts to TypeSafe, so read the [Jev skill hint reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/reference.md#jev-skill-hint-optional) first. The GitHub page shows [what the toast and the doctor line look like](https://github.com/wjgoarxiv/litopencode#what-you-will-see).
 - If something seems off, `npm exec --package @litfamily/litopencode@latest -- litopencode doctor` checks the package and your configuration.
 
 ## Uninstall

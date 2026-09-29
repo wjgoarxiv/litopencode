@@ -113,6 +113,14 @@ When you come back later, `/lit-recap` reads the record and shows you the next s
 
 Everything it records, from progress to the checks it ran, goes into `.litopencode/litgoal/` in your project. OpenCode itself has no place to keep a goal between sessions, so this folder is how the next session knows where you were. Some skills are written guidance only; they come into play when one of their listed routes picks them.
 
+## Watch it in motion
+
+Twenty-three seconds, one prompt. You put `lit` in front of a request, LitOpenCode picks a workflow, the planner shows that it can only read, every step is written into a record, and a fresh session picks that record up. The windows in the film are drawings of what this page describes. Nothing in it was captured from a live session.
+
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/readme/promo-still.webp" /><img src="./docs/assets/readme/promo-preview.webp" width="100%" alt="LitOpenCode promo film: a prompt that starts with lit is typed into an OpenCode window and a toast announces the lit-loop workflow. The lit-plan card shows edit, bash and task locked and denied. A chain of Plan, Build, Verify and Next steps fills in beside the litgoal folder. A new session runs /lit-recap and shows the next step. The LITOPENCODE wordmark closes on Keep the work lit." /></picture></p>
+
+[Watch the film as an MP4](./docs/assets/readme/promo.mp4)
+
 ## Skills at a glance
 
 Each row shows what a skill produces, how to open it, and what you get.
@@ -493,11 +501,41 @@ The key needs care as well. Because `TYPESAFE_API_KEY` is exported in the shell 
 
 The hint never holds a turn up for long. Each request stops after 1.5 seconds and isn't retried; if it fails, the turn carries on as usual, with one short note the first time it happens in a session.
 
-You can always see whether it's working. `litopencode doctor` reports `Jev skill hint: off`, `on`, or `flag on but TYPESAFE_API_KEY missing`, and never shows the key. On the first eligible turn of each session, a `✦ Jev skill hint is ON` toast shows once. When a turn gets a hint, a short toast such as `Jev → lit-humanizer (0.27s)` names the skill and the request time; when the feature is off or no skill fits, nothing pops up.
+You can always see whether it's working. `litopencode doctor` reports `Jev skill hint: off`, `on`, or `flag on but TYPESAFE_API_KEY missing`, and never shows the key. On the first eligible turn of each session, a `✦ Jev skill hint is ON` toast shows once. When a turn gets a hint, a short toast such as `Jev → lit-humanizer (0.27s)` names the skill and the request time; when the feature is off or no skill fits, nothing pops up. [What you will see](#what-you-will-see) shows each of these.
 
 To turn it off, unset `LITOPENCODE_JEV` or set it to anything other than `1`.
 
 Tuning variables and the debug trace are in the [Jev skill hint reference](./docs/reference.md#jev-skill-hint-optional).
+
+### What you will see
+
+Jev is quiet on screen. When it's on you'll notice two things: a small toast in the top-right corner of OpenCode, and one line in `litopencode doctor`. Here is each one, so you know what to expect before you turn it on.
+
+**In the terminal.** `litopencode doctor` is the quickest check. With nothing set it says the hint is off. Set the flag without a key and it says the key is missing, which is the line to act on if you expected hints and none arrive. With both set it says on. It never prints the key.
+
+<p align="center"><img src="./docs/assets/readme/jev-doctor.webp" width="694" alt="Terminal window showing three runs of litopencode doctor with the Jev line picked out. With nothing set: Jev skill hint: off. After export LITOPENCODE_JEV=1: Jev skill hint: flag on but TYPESAFE_API_KEY missing. After export TYPESAFE_API_KEY=example-key: Jev skill hint: on." /></p>
+
+*Captured from the real `litopencode doctor` in an isolated shell, with the Jev line picked out by `jq`. The key in the picture is a placeholder; doctor only checks that a key exists.*
+
+**The first prompt of a session.** A toast announces that the hint is on. The feature sends prompts out of your machine, so it says so once per session in case you forgot you had switched it on. If Jev has no suggestion for that prompt, this is all you see.
+
+<p align="center"><img src="./docs/assets/readme/jev-toast-notice.webp" width="694" alt="OpenCode home screen with an amber-edged toast in the top-right corner that reads: ✦ Jev skill hint is ON." /></p>
+
+*Sample output: the toast text and style come from the plugin's own toast function, and OpenCode drew it. No request went to TypeSafe.*
+
+**A first prompt that gets a hint.** OpenCode shows one toast at a time, so the notice and the hint share a box. The notice is the title, and the suggested skill and the request time sit below it. The skill and the time here are examples.
+
+<p align="center"><img src="./docs/assets/readme/jev-toast-first-hint.webp" width="694" alt="OpenCode home screen with an amber-edged toast in the top-right corner. Its first line reads: ✦ Jev skill hint is ON. Its second line reads: Jev → lit-humanizer (0.27s)." /></p>
+
+*Sample output, produced the same way. The skill name and the time are examples.*
+
+**Later prompts.** Each prompt that gets a hint shows a quieter toast with only the skill and the time. When no skill fits, or Jev is off, nothing appears.
+
+<p align="center"><img src="./docs/assets/readme/jev-toast-hint.webp" width="694" alt="OpenCode home screen with a teal-edged toast in the top-right corner that reads: Jev → lit-humanizer (0.27s)." /></p>
+
+*Sample output, produced the same way. The skill name and the time are examples.*
+
+The suggestion itself is one sentence naming the skill. It goes to the model and isn't shown as something you typed.
 
 ## Troubleshooting
 

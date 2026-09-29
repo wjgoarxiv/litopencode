@@ -1,0 +1,211 @@
+{
+  "request": "A short motion film about how this product runs and looks: what a person types, what appears, and what they get.",
+  "genre": "announcement",
+  "path": "stage",
+  "pathReason": "The film shows a drawn OpenCode window, a toast, a permission card and a step chain, so it needs shapes and a drawn subject beyond type.",
+  "idea": "Follow one typed prompt through OpenCode: the workflow lights up, the planner shows it can only read, each step is written to a record, and a new session picks the record up.",
+  "audience": "Developers who already use OpenCode and are deciding whether to add a workflow plugin.",
+  "channel": "The top of the LitOpenCode GitHub page, played inline and opened as an MP4.",
+  "format": "16:9",
+  "formatReason": "A README hero sits in a wide column, and the cover it follows is 16:9.",
+  "durationSec": 23,
+  "fps": 60,
+  "posterBeat": 2,
+  "beats": [
+    {
+      "t0": 0,
+      "t1": 3.6,
+      "purpose": "Hook: a person types a plain prompt with the word lit in it.",
+      "onScreen": "The brand mark sits small at top left. A dark OpenCode-style window rises on the right; its prompt line types a to-do-list request with the word lit in ember orange, a caret blinking. Large type on the left says Add lit to a prompt.",
+      "motion": "Window rises and settles with a spring; headline words stagger up from a mask; typing at a steady pace.",
+      "sound": "pad and pulse enter softly under the typing"
+    },
+    {
+      "t0": 3.6,
+      "t1": 7.4,
+      "purpose": "Context: the workflow is picked and announced.",
+      "onScreen": "A toast with a drawn flame lands top right of the window reading LIT IGNITED with the workflow name. Four route chips stack in the window and the lit-loop chip lights in ember. Headline swaps to LitOpenCode picks the workflow.",
+      "motion": "Old headline wipes up and out, new one masks in; toast slides in and settles; chips stagger down and one lights.",
+      "sound": "hit on the toast landing"
+    },
+    {
+      "t0": 7.4,
+      "t1": 11.4,
+      "purpose": "Key moment: the planner can only plan.",
+      "onScreen": "The window becomes a planner card headed lit-plan. Three permission rows, edit, bash and task, each lock shut with a small overshoot while an ember tint sweeps across the row and a denied tag pops in. Headline: The planner only reads.",
+      "motion": "Card slides over the routes; rows drop in on a stagger; each lock closes on a spring; the tint sweeps left to right.",
+      "sound": "hit as the card lands"
+    },
+    {
+      "t0": 11.4,
+      "t1": 15.8,
+      "purpose": "Details: every step is written down in the project.",
+      "onScreen": "A path draws across the window through four nodes named Plan, Build, Verify and Next; nodes fill lime one after another. A mono line types the goal folder name below. Headline: Every step leaves a record.",
+      "motion": "Path draws in; nodes pop on a stagger; ledger bars fill; folder path types.",
+      "sound": "rise into the recap"
+    },
+    {
+      "t0": 15.8,
+      "t1": 19.4,
+      "purpose": "Payoff: a new session continues from the record.",
+      "onScreen": "The first window fades to a dark outline. A new prompt types the recap command and a card shows a done row and a highlighted next-step row in lime. Headline: Pick up where you stopped.",
+      "motion": "Old contents dim and shrink; new prompt types; result rows slide in and the next row lights.",
+      "sound": "soft pulse continues, brighter pad"
+    },
+    {
+      "t0": 19.4,
+      "t1": 23,
+      "purpose": "Close: the brand mark and the line.",
+      "onScreen": "The window and headline clear. The brand mark grows from the corner to centre as a large wordmark with LIT in ember, and the line Keep the work lit. settles beneath in lime, with a warm glow behind the mark.",
+      "motion": "Contents collapse toward the centre; the mark scales up on an emphasized ease; tagline masks in; long hold.",
+      "sound": "cadence resolve on the wordmark and ring out"
+    }
+  ],
+  "subject": {
+    "name": "A LitOpenCode session inside OpenCode",
+    "source": "user",
+    "specifics": [
+      "The person adds lit to a prompt and LitOpenCode picks a workflow, announcing it with a toast.",
+      "The planner has edit, bash and task denied, so it can only read and plan.",
+      "Progress goes to a record in the project folder, and a recap command reads it in the next session."
+    ]
+  },
+  "visualDevices": [
+    {
+      "kind": "illustration",
+      "role": "subject",
+      "beats": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "kind": "icon",
+      "role": "support",
+      "beats": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "kind": "diagram",
+      "role": "support",
+      "beats": [
+        3,
+        4
+      ]
+    },
+    {
+      "kind": "path",
+      "role": "support",
+      "beats": [
+        2,
+        3
+      ]
+    },
+    {
+      "kind": "shape",
+      "role": "support",
+      "beats": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "kind": "grid",
+      "role": "texture",
+      "beats": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "kind": "gradient",
+      "role": "texture",
+      "beats": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    }
+  ],
+  "typePlan": {
+    "faces": [
+      "Archivo",
+      "MesloLGS NF"
+    ],
+    "hierarchy": "Archivo 900 at wide stretch for the headline, one line at a time and about five words; MesloLGS NF for everything the person would type or the tool would print.",
+    "maxWordsOnScreen": 14
+  },
+  "palette": [
+    {
+      "color": "#080D14",
+      "role": "ink background shared with the cover"
+    },
+    {
+      "color": "#F2EFDF",
+      "role": "cream headline and window text"
+    },
+    {
+      "color": "#FF6337",
+      "role": "ember accent for lit, the toast and denied"
+    },
+    {
+      "color": "#D7F75B",
+      "role": "lime for recorded and verified"
+    },
+    {
+      "color": "#1A2330",
+      "role": "raised panel"
+    },
+    {
+      "color": "#8A97A6",
+      "role": "muted mono"
+    }
+  ],
+  "sound": {
+    "mode": "generated",
+    "plan": "A driving synth pulse under a filtered pad in A minor at 112 BPM, one impact when the toast lands, one when the locks close, a riser into the record, and a resolving chord on the wordmark.",
+    "palette": {
+      "timbre": "pulse-synth",
+      "key": "A",
+      "mode": "minor",
+      "tempo": 112
+    }
+  },
+  "copy": {
+    "source": "invented",
+    "lines": [
+      "LITOPENCODE",
+      "Add lit to a prompt.",
+      "lit Build a to-do list in one index.html",
+      "LitOpenCode picks the workflow.",
+      "The planner only reads.",
+      "Every step leaves a record.",
+      "/lit-recap",
+      "Pick up where you stopped.",
+      "Keep the work lit."
+    ]
+  },
+  "inventions": [
+    "The copy lines other than the typed to-do-list prompt and the brand name are written for this film from the product's documented behaviour.",
+    "The toast, permission card, step chain and recap card are drawn illustrations of what the documentation describes, not screen captures.",
+    "The generated sound bed."
+  ],
+  "ambition": "A type-led reel where the window is a stage: one headline per beat with a masked entry and a clean exit, a drawn subject that transforms in place rather than cutting, easing that overshoots once and settles, and ignition events (toast, locks, last node) that land exactly on the sound accents. The final hold is long enough to read the line and see the mark."
+}

@@ -23,7 +23,10 @@ const assetPrefix = (file) => githubReadmes.includes(file) ? "./docs/assets" : n
 const motionPins = {
   "poster.png": "0fac2d0fc78d311710d1658968a45f8d9ff07ff73c6ca6f3ebc60bcb698d318f",
   "ignition-film.mp4": "b1579c89a677ab453765f77ae6361bd9730fabc4291a85071de7f373fc5ebfad",
-  "ignition-readme.gif": "0be7badaee33df26a5a200c4f664273a21e9f2513fc066571f579f235220ca81"
+  "ignition-readme.gif": "0be7badaee33df26a5a200c4f664273a21e9f2513fc066571f579f235220ca81",
+  "promo.mp4": "c11effc005bb2fc4dae11a81ac1388dc39c8936b10737b9c6d311ed689d84559",
+  "promo-preview.webp": "35e3784ddffdb7262d3daa591da78c97a79c54dd00db7f79510856fa9e27eea1",
+  "promo-still.webp": "56079fddb727f3349e883f9f2ec60c01fa10fd24f33b82cee754d0943848366b"
 };
 
 function assertOutlinedMark(svg, rows) {
@@ -188,5 +191,44 @@ test("README places the cover and decoration before its intro, then install and 
       assert.ok(clay > wordmark && clay < intro, file + ": clay mark follows the wordmark");
       assert.match(content, /litfamily-machines\.png/u);
     }
+  }
+});
+
+test("README promo film is embedded once per GitHub page with capped files and a reduced-motion still", async () => {
+  const promo = { mp4: "promo.mp4", preview: "promo-preview.webp", still: "promo-still.webp" };
+  assert.ok((await fs.stat(`${assetRoot}/${promo.mp4}`)).size <= 8 * 1024 * 1024, "promo MP4 must stay under 8 MiB");
+  assert.ok((await fs.stat(`${assetRoot}/${promo.preview}`)).size <= 2_621_440, "promo preview must stay under 2.5 MiB");
+  assert.ok((await fs.stat(`${assetRoot}/${promo.still}`)).size <= 262_144, "promo still must stay small");
+  for (const name of [promo.preview, promo.still]) {
+    const bytes = await fs.readFile(`${assetRoot}/${name}`);
+    assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", name);
+    assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", name);
+  }
+  const mp4 = await fs.readFile(`${assetRoot}/${promo.mp4}`);
+  assert.equal(mp4.subarray(4, 8).toString("ascii"), "ftyp", "promo.mp4 is an MP4 container");
+  assert.ok((await fs.stat(`${assetRoot}/promo-source/index.html`)).size < 65_536, "editable film source stays small");
+  const treatment = JSON.parse(await fs.readFile(`${assetRoot}/promo-source/treatment.json`, "utf8"));
+  assert.ok(treatment.durationSec >= 15 && treatment.durationSec <= 25, "promo runs 15 to 25 seconds");
+  assert.equal(treatment.format, "16:9");
+  for (const file of githubReadmes) {
+    const content = await text(file);
+    const english = isEnglish(file);
+    const heading = english ? "## Watch it in motion" : "## 움직이는 화면으로 보기";
+    const start = content.indexOf(heading);
+    assert.ok(start > content.indexOf(english ? "## Your first task" : "## 첫 작업"), `${file}: the promo follows the first task`);
+    assert.ok(start < content.indexOf(english ? "## Skills at a glance" : "## 스킬 한눈에 보기"), `${file}: the promo sits before the skills tour`);
+    const section = content.slice(start, content.indexOf("\n## ", start + 4));
+    const picture = section.match(/<picture><source media="\(prefers-reduced-motion: reduce\)" srcset="\.\/docs\/assets\/readme\/promo-still\.webp" \/><img src="\.\/docs\/assets\/readme\/promo-preview\.webp" width="100%" alt="([^"]+)" \/><\/picture>/u);
+    assert.ok(picture, `${file}: promo uses the reduced-motion picture pattern`);
+    for (const word of ["lit-loop", "lit-plan", "/lit-recap", "Keep the work lit."]) assert.ok(picture[1].includes(word), `${file}: alt text names ${word}`);
+    assert.ok(section.includes("](./docs/assets/readme/promo.mp4)"), `${file}: the MP4 is linked separately`);
+    assert.equal(content.split("promo-preview.webp").length - 1, 1, `${file}: the animated preview appears once`);
+    assert.ok(content.indexOf(COVER) < start, `${file}: the cover stays the first screen`);
+  }
+  for (const file of npmReadmes) assert.doesNotMatch(await text(file), /promo/u, `${file}: the npm card does not embed the promo`);
+  const ignore = await text(".npmignore");
+  assert.ok(ignore.includes(`\n${assetRoot}/*\n`), "the README asset folder is excluded by default");
+  for (const name of [promo.mp4, promo.preview, promo.still, "promo-source"]) {
+    assert.ok(!ignore.includes(`!${assetRoot}/${name}`), `${name} is shown by the GitHub pages only, so .npmignore must not re-include it`);
   }
 });

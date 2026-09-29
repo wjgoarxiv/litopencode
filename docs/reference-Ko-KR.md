@@ -281,6 +281,11 @@ npm uninstall -g @litfamily/litopencode
   없이 평소대로 진행합니다. 세션의 첫 실패에만 짧은 안내 한 줄이 붙습니다.
 - **상태.** `litopencode doctor`의 `jevSkillHint` 값이 `Jev skill hint: off`, `on`,
   `flag on but TYPESAFE_API_KEY missing` 가운데 하나로 나옵니다.
+- **화면 표시.** 세션에서 조건에 맞는 첫 턴에는 `warning` 알림에 `✦ Jev skill hint is ON`이
+  뜹니다. 그 턴에 힌트도 붙으면 이 안내가 알림의 제목이 되고 `Jev → <skill> (<seconds>s)`가
+  본문이 됩니다. TUI가 알림을 한 번에 하나만 유지하기 때문입니다. 이후 힌트가 붙는 턴에는
+  `Jev → <skill> (<seconds>s)`만 담은 `info` 알림이 뜹니다. 실패 안내, `none` 응답, 건너뛴 턴에는
+  아무것도 뜨지 않습니다. 두 알림 모두 OpenCode의 기본 표시 시간을 씁니다.
 
 | 변수 | 기본값 | 효과 |
 | --- | --- | --- |

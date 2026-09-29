@@ -103,7 +103,7 @@ OpenAI 제공자를 쓰면 새로 설치했을 때 계획과 검토는 GPT-6 Ast
 - planner는 계획만 세웁니다. `lit-plan`은 `edit`, `bash`, `task` 권한이 거부되어 있고, 더 느슨한 `balanced`나 `yolo` 모드를 직접 골라도 그대로입니다.
 - LitOpenCode는 대화형으로 시작할 때와 install이나 doctor가 성공한 뒤에 스스로 업데이트할 수 있습니다. 끄려면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요.
 - 스킬 학습 기능은 제거되었습니다. 이전 릴리스가 프로젝트의 `.litopencode` 폴더에 남긴 학습 기록은 더 이상 쓰이지 않으니, 남겨 두든 지우든 편한 대로 하면 됩니다.
-- Jev 스킬 힌트는 선택 기능이고 기본값은 꺼짐입니다. 켜면 조건에 맞는 프롬프트가 TypeSafe로 전송되니, 먼저 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)를 읽어 보세요.
+- Jev 스킬 힌트는 선택 기능이고 기본값은 꺼짐입니다. 켜면 조건에 맞는 프롬프트가 TypeSafe로 전송되니, 먼저 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)를 읽어 보세요. 알림과 doctor 줄이 어떻게 보이는지는 [GitHub 페이지](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#화면에서-보이는-것)에서 볼 수 있습니다.
 - 뭔가 이상하면 `npm exec --package @litfamily/litopencode@latest -- litopencode doctor`로 패키지와 설정 상태를 확인하세요.
 
 ## 제거

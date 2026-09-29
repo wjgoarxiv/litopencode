@@ -16,6 +16,8 @@ generate_cover.py
 cover.png
 docs/assets/cover.svg
 # README media and linked licenses are pinned to this package version.
+# The Jev snapshots and the promo film (jev-*.webp, promo-*, promo-source/) are shown only by the GitHub pages,
+# so the docs/assets/readme/* rule below keeps them out of the package.
 docs/assets/readme/*
 !docs/assets/readme/ascii-readme.svg
 !docs/assets/readme/badge-version.svg

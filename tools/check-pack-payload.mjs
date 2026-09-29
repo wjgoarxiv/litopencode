@@ -4,6 +4,9 @@ import path from "node:path";
 import process from "node:process";
 import { readStableRegularFile } from "../skills/frontend-ui-ux/scripts/stable-file-read.mjs";
 
+// Shown by the GitHub pages only; the npm cards never reference them, so they stay out of the package.
+const GITHUB_ONLY_README_MEDIA = /^docs\/assets\/readme\/(?:jev-[^/]+\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
+
 const FORBIDDEN_PATH_RULES = [
   { label: "original prompt provenance", pattern: /^INITIAL_PROMPT\.md$/u },
   { label: "handoff state document", pattern: /^HANDOFF\.md$/u },
@@ -11,6 +14,7 @@ const FORBIDDEN_PATH_RULES = [
   { label: "local asset generator", pattern: /^generate_cover\.py$/u },
   { label: "repository cover PNG", pattern: /^cover\.png$/u },
   { label: "repository cover vector", pattern: /^docs\/assets\/cover\.svg$/u },
+  { label: "GitHub-only README media (Jev snapshots, promo film)", pattern: GITHUB_ONLY_README_MEDIA },
   { label: "unapproved README presentation asset", pattern: /^docs\/assets\/readme\/(?!(?:ascii-readme|badge-version|badge-license|lucide-book-open|lucide-play|lucide-shield-check)\.svg$|litopencode-wordmark\.svg$|litopencode-clay-icon\.png$|(?:litfamily-machines|poster)\.png$|ignition-film\.mp4$|ignition-readme\.gif$|(?:Lucide-LICENSE|JetBrainsMono-OFL)\.txt$)/u },
   { label: "maintainer release checklist", pattern: /^docs\/release-checklist\.md$/u },
   { label: "npm README source (packed as README.md / README-Ko-KR.md)", pattern: /^README-npm(?:-Ko-KR)?\.md$/u },
@@ -73,9 +77,9 @@ const REQUIRED_README_PATHS = [
   "docs/assets/readme/poster.png"
 ];
 
-// Every image the READMEs show must ship: the npm pages load pinned package-CDN copies, and the
-// GitHub pages load the same files by relative path. Inside a packed artifact the npm sources
-// are absent and README.md / README-Ko-KR.md already hold the npm pages.
+// Every image the READMEs show must ship, except the GitHub-only media above: the npm pages load
+// pinned package-CDN copies, and the GitHub pages load the same files by relative path. Inside a
+// packed artifact the npm sources are absent and README.md / README-Ko-KR.md already hold the npm pages.
 async function readmeImagePaths() {
   const { version } = JSON.parse(await fs.readFile("package.json", "utf8"));
   const prefix = `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/`;
@@ -101,7 +105,7 @@ async function readmeImagePaths() {
       else if (target.startsWith("./")) paths.add(target.slice(2));
     }
   }
-  return [...paths];
+  return [...paths].filter((imagePath) => !GITHUB_ONLY_README_MEDIA.test(imagePath));
 }
 
 async function readManagedManifest() {

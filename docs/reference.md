@@ -396,6 +396,11 @@ only. It is sent only in the `Authorization` header and is never written, logged
   silent.
 - **Status.** `litopencode doctor` reports `jevSkillHint` as `Jev skill hint: off`, `on`, or
   `flag on but TYPESAFE_API_KEY missing`.
+- **On screen.** On the first eligible turn of a session, a `warning` toast reads
+  `✦ Jev skill hint is ON`. When that turn also gets a hint, the notice becomes the toast's title
+  and `Jev → <skill> (<seconds>s)` its message, because the TUI keeps one toast at a time. Later
+  hinted turns show an `info` toast with only `Jev → <skill> (<seconds>s)`. Fallback notes, `none`
+  answers and skipped turns show nothing. Both toasts use OpenCode's default duration.
 
 | Variable | Default | Effect |
 | --- | --- | --- |
