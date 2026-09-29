@@ -1,6 +1,6 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/assets/readme/ascii-readme.svg" width="480" alt="LIT ASCII B 마크" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/readme/ascii-readme.svg" width="480" alt="LIT ASCII B 마크" /></p>
 
 <details>
 <summary>ASCII 로고 복사</summary>
@@ -32,14 +32,14 @@
 
 # LitOpenCode
 
-[English](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/README.md) · [한국어](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/README-Ko-KR.md)
+[English](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/README.md) · [한국어](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/README-Ko-KR.md)
 
 > **불씨를 건네받았다.**<br>
 > **이제, 당신의 작업에 옮길 차례다.**
 
 <p align="center">
-<a href="#설치"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/assets/readme/badge-version.svg" alt="1.0.12" /></a>
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/assets/readme/badge-license.svg" alt="MIT 라이선스" /></a>
+<a href="#설치"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/readme/badge-version.svg" alt="1.0.13" /></a>
+<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/readme/badge-license.svg" alt="MIT 라이선스" /></a>
 </p>
 
 LitOpenCode는 OpenCode에 워크플로 agent, 슬래시 명령, 로컬 근거 기록을 더합니다.
@@ -103,7 +103,7 @@ OpenAI 제공자를 쓰면 새로 설치했을 때 계획과 검토는 GPT-6 Ast
 - planner는 계획만 세웁니다. `lit-plan`은 `edit`, `bash`, `task` 권한이 거부되어 있고, 더 느슨한 `balanced`나 `yolo` 모드를 직접 골라도 그대로입니다.
 - LitOpenCode는 대화형으로 시작할 때와 install이나 doctor가 성공한 뒤에 스스로 업데이트할 수 있습니다. 끄려면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요.
 - 스킬 학습 기능은 제거되었습니다. 이전 릴리스가 프로젝트의 `.litopencode` 폴더에 남긴 학습 기록은 더 이상 쓰이지 않으니, 남겨 두든 지우든 편한 대로 하면 됩니다.
-- Jev 스킬 힌트는 선택 기능이고 기본값은 꺼짐입니다. 켜면 조건에 맞는 프롬프트가 TypeSafe로 전송되니, 먼저 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)를 읽어 보세요. 알림과 doctor 줄이 어떻게 보이는지는 [GitHub 페이지](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#화면에서-보이는-것)에서 볼 수 있습니다.
+- Jev 스킬 힌트는 선택 기능이고 기본값은 꺼짐입니다. 켜면 조건에 맞는 프롬프트가 TypeSafe로 전송되니, 먼저 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)를 읽어 보세요. 알림과 doctor 줄이 어떻게 보이는지는 [GitHub 페이지](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#화면에서-보이는-것)에서 볼 수 있습니다.
 - 뭔가 이상하면 `npm exec --package @litfamily/litopencode@latest -- litopencode doctor`로 패키지와 설정 상태를 확인하세요.
 
 ## 제거
@@ -114,11 +114,11 @@ OpenAI 제공자를 쓰면 새로 설치했을 때 계획과 검토는 GPT-6 Ast
 npm uninstall -g @litfamily/litopencode
 ```
 
-남겨 둘 만한 설치 파일과 기록은 [제거 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/reference-Ko-KR.md#제거)에 정리되어 있습니다.
+남겨 둘 만한 설치 파일과 기록은 [제거 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/reference-Ko-KR.md#제거)에 정리되어 있습니다.
 
 ## 더 보기
 
 - [GitHub 전체 안내](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md)
-- [워크플로 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/reference-Ko-KR.md) · [English reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/reference.md)
-- [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/CHANGELOG.md) · [개인정보와 네트워크 동작](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/privacy.md)
-- [MIT 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/LICENSE) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.12/docs/assets/readme/JetBrainsMono-OFL.txt)
+- [워크플로 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/reference-Ko-KR.md) · [English reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/reference.md)
+- [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/CHANGELOG.md) · [개인정보와 네트워크 동작](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/privacy.md)
+- [MIT 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/LICENSE) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/readme/JetBrainsMono-OFL.txt)

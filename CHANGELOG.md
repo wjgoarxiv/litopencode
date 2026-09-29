@@ -5,6 +5,12 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.13 - 2026-09-30
+
+- The GitHub pages (English and Korean) now show what Jev looks like: the `litopencode doctor` line and the toasts when Jev is off, on, or missing its key. Jev stays off unless you turn it on, and the reference lists what each toast says.
+- The GitHub pages gained a short motion film that follows one `lit` prompt from request to record.
+- The package no longer carries the Jev pictures and the film, which only the GitHub pages show, so the download is about 1.8 MB smaller.
+
 ## 1.0.12 - 2026-09-29
 
 - The npm page is a short install card that links to the full guide on GitHub.

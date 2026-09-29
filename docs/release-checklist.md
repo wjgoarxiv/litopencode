@@ -6,6 +6,12 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.13 Release Scope
+
+- The GitHub pages (English and Korean) now show what Jev looks like: the `litopencode doctor` line and the toasts when Jev is off, on, or missing its key. Jev stays off unless you turn it on, and the reference lists what each toast says.
+- The GitHub pages gained a short motion film that follows one `lit` prompt from request to record.
+- The package no longer carries the Jev pictures and the film, which only the GitHub pages show, so the download is about 1.8 MB smaller.
+
 ## 1.0.12 Release Scope
 
 - The npm page is a short install card that links to the full guide on GitHub.
