@@ -43,7 +43,7 @@
 
 LitOpenCode adds workflow agents, slash commands, and a local evidence ledger to OpenCode.
 
-Add `lit` to a prompt and it plans, builds, checks, and writes down the next step in your project, so a later session can pick up where this one stopped. OpenCode still runs the model and asks the permission questions.
+Add `lit` to a prompt and it plans, builds, checks, and writes down the next step in your project, so a later session can pick up where this one stopped. OpenCode still runs the model and asks for permission the way it always has.
 
 **[Full guide, skills gallery and A/B results on GitHub →](https://github.com/wjgoarxiv/litopencode#readme)**
 
@@ -56,7 +56,9 @@ LIT_PACKAGE='@litfamily/litopencode@latest'
 npm exec --package "$LIT_PACKAGE" -- litopencode install
 ```
 
-Restart OpenCode, press **Tab**, and pick **lit-loop**. Permissions default to safe/ask-first, and model access comes from your OpenCode provider setup.
+Restart OpenCode, press **Tab**, and pick **lit-loop**. Permissions start at `safe`, where OpenCode asks you before acting. Logins and API keys stay with the provider you already set up in OpenCode.
+
+To see the changes first, add `--dry-run`; it writes nothing. To skip the questions, add `--yes`; it takes the defaults and keeps choices you saved before.
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode install --dry-run  # preview changes
@@ -77,7 +79,7 @@ You get an `index.html` to open and try. Next time, `/lit-recap` shows where you
 
 | Type | What happens |
 | --- | --- |
-| `lit` or `/lit` | Start a bounded task and record what was checked. |
+| `lit` or `/lit` | Start a task with a clear scope and record what was checked. |
 | `lit-plan` → `/start-work` → `/review-work` | Plan, approve, execute, and review. The planner can't edit files or run shell commands. |
 | `handoff` or `/lit-handoff` | Carry the current result and next step into another session. |
 | `/lit-recap` | Read a short recap from local state. |
@@ -91,17 +93,17 @@ Ten casual Korean prompts went to plain OpenCode and to LitOpenCode; the LitOpen
 
 ## What install changes
 
-It registers the plugin and writes native command and skill files under your OpenCode config root. Routes live in `~/.config/opencode/litopencode.json` (`XDG_CONFIG_HOME` moves that root), and custom routes you already have stay yours. Work records go to `.litopencode/litgoal/` inside each project.
+Not much. Install adds the plugin to OpenCode's config and copies LitOpenCode's commands and skills into your OpenCode config folder. Your routes, which say which model handles each kind of work, are kept in `~/.config/opencode/litopencode.json`. Setting `XDG_CONFIG_HOME` moves that folder, and routes you've already customized are left as they are. Each project keeps its work record in `.litopencode/litgoal/`, and that record is what a later session reads to carry on.
 
 With the OpenAI provider, a fresh install uses GPT-6 Astra (`gpt-6-astra`) at `xhigh` for planning and review, and GPT-6 Luna (`gpt-6-luna`) at `max` for execution and research.
 
 ## Safety and updates
 
-- `lit-plan` keeps `edit`, `bash`, and `task` denied; `balanced` and `yolo` are opt-in and don't lift that guard.
-- Turn automatic updates off with `--no-auto-update` or `LITOPENCODE_NO_AUTO_UPDATE=1`.
-- Skill learning has been removed. Records that earlier releases left in a project's `.litopencode` folder are inert.
-- The optional Jev skill hint is off by default. Turning it on sends eligible prompts to TypeSafe; read the [Jev skill hint reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.11/docs/reference.md#jev-skill-hint-optional) first.
-- `npm exec --package @litfamily/litopencode@latest -- litopencode doctor` checks the package and your configuration.
+- The planner only plans. `lit-plan` has `edit`, `bash` and `task` denied, and it stays that way even if you choose the looser `balanced` or `yolo` mode.
+- LitOpenCode can update itself when it starts interactively and after an install or doctor run succeeds. To turn that off, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`.
+- Skill learning has been removed. Learning records an earlier release left in a project's `.litopencode` folder are no longer used; keep or delete them as you like.
+- The Jev skill hint is optional and off by default. Turning it on sends eligible prompts to TypeSafe, so read the [Jev skill hint reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.11/docs/reference.md#jev-skill-hint-optional) first.
+- If something seems off, `npm exec --package @litfamily/litopencode@latest -- litopencode doctor` checks the package and your configuration.
 
 ## Uninstall
 

@@ -51,7 +51,7 @@
 
 LitOpenCode는 OpenCode에 워크플로 agent, 슬래시 명령, 로컬 근거 기록을 더합니다.
 
-OpenCode는 지금 쓰던 그대로 쓰면 됩니다. 프롬프트 끝에 `lit`을 붙이거나 `/lit`을 입력하면 LitOpenCode가 워크플로를 고릅니다. 모델 실행과 권한 질문은 여전히 OpenCode가 맡고, 플러그인은 프로젝트에 기록을 남깁니다.
+OpenCode는 지금 쓰던 그대로 쓰면 됩니다. 프롬프트 끝에 `lit`을 붙이거나 `/lit`을 입력하면 LitOpenCode가 일에 맞는 워크플로를 고릅니다. 모델을 돌리고 권한을 묻는 일은 지금처럼 OpenCode가 하고, 플러그인은 프로젝트에 기록을 남깁니다.
 
 ## 왜 만들었나
 
@@ -65,7 +65,7 @@ LitOpenCode는 그 내용을 프로젝트에 남깁니다. 목표와 계획, 확
 계획하기 → 만들기 → 확인하기 → 다음 작업에 건네기
 ```
 
-“꺼지지 않는 불”은 프로그램이 끝없이 돌아간다는 뜻이 아닙니다. 세션이 끝나도 이어갈 작업이 남아 있다는 뜻입니다. 지금 쓰는 도구 그대로 쓰면 되고, 다른 LitFamily 제품을 설치할 필요도 없습니다.
+“꺼지지 않는 불”이란 세션이 끝나도 다음 세션이 이어받을 수 있게 작업을 남겨 두는 일입니다. 지금 쓰는 도구 안에서 그대로 돌아가고, 다른 LitFamily 제품을 설치할 필요도 없습니다.
 
 ## 설치
 
@@ -78,20 +78,22 @@ npm exec --package "$LIT_PACKAGE" -- litopencode install
 
 OpenCode를 다시 시작하고 `Tab` 키를 눌러 `lit-loop`를 고르세요.
 
-설치 중에 모델, 권한, 출력 스타일을 고를 수 있고, 권한 기본값은 safe/ask-first입니다. 모델 접근과 인증에는 OpenCode의 provider 설정을 그대로 씁니다.
+설치하는 동안 어떤 모델을 쓸지, 에이전트에게 권한을 얼마나 줄지, 답변을 어떤 모양으로 받을지 묻습니다. 권한은 `safe`에서 시작하는데, 무언가 하기 전에 OpenCode가 먼저 물어보는 설정입니다. 로그인과 API 키는 OpenCode에 이미 설정해 둔 모델 제공자(provider) 쪽 것을 그대로 씁니다.
 
-OpenAI provider로 새로 설치하면 계획·검토에는 GPT-6 Astra (`gpt-6-astra`)/`xhigh`, 실행·연구에는 GPT-6 Luna (`gpt-6-luna`)/`max`를 기본으로 씁니다. 지원되는 다른 모델과 추론 수준은 설치 중에 고를 수 있습니다.
+OpenAI 제공자를 쓰면 새로 설치했을 때 계획과 검토는 GPT-6 Astra(`gpt-6-astra`)가 `xhigh`로, 만들기와 조사는 GPT-6 Luna(`gpt-6-luna`)가 `max`로 맡습니다. 지원되는 다른 모델과 추론 수준은 설치 중에 고를 수 있습니다.
 
-바뀔 내용을 먼저 보고 싶거나 질문 없이 설치하려면 이렇게 하세요.
+바뀔 내용을 먼저 보고 싶거나 질문 없이 설치하려면 둘 중 하나를 붙이세요.
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode install --dry-run  # 변경 사항 미리 보기
 npm exec --package @litfamily/litopencode@latest -- litopencode install --yes     # 기본값 사용, 저장된 선택 유지
 ```
 
-설치 도구는 OpenCode 설정 루트에 플러그인을 등록하고 native 명령·스킬 파일을 씁니다. route 파일은 `~/.config/opencode/litopencode.json`인데, `XDG_CONFIG_HOME`을 지정하면 설정 루트와 함께 위치가 바뀝니다. 이미 만들어 둔 custom route는 건드리지 않습니다. custom root, 모델 선택, 터미널 정책, 무인 설치는 [상세 안내](./docs/reference-Ko-KR.md#설치)에 있습니다.
+`--dry-run`은 무엇이 바뀔지만 보여 주고 아무것도 쓰지 않습니다. `--yes`는 질문을 건너뛰고 기본값으로 설치하되, 예전에 저장해 둔 선택은 그대로 둡니다.
 
-이 checkout의 패키지는 `@litfamily/litopencode@1.0.11`입니다. registry의 `@latest`와 다를 수 있으니, 정확한 버전이 중요하면 `npm view @litfamily/litopencode version`으로 확인하세요.
+설치가 하는 일은 많지 않습니다. OpenCode 설정에 플러그인을 등록하고, LitOpenCode의 명령과 스킬 파일을 OpenCode 설정 폴더에 복사합니다. 어떤 일에 어떤 모델을 쓸지 정한 route는 `~/.config/opencode/litopencode.json`에 저장됩니다. `XDG_CONFIG_HOME`을 지정하면 설정 폴더가 통째로 그쪽으로 옮겨 갑니다. 이미 손봐 둔 route는 건드리지 않습니다. 설정 폴더를 직접 정하는 방법, 모델 선택, 터미널 정책, 무인 설치는 [상세 안내](./docs/reference-Ko-KR.md#설치)에 있습니다.
+
+이 체크아웃의 패키지 버전은 `@litfamily/litopencode@1.0.11`입니다. registry의 `@latest`와 다를 수 있으니, 정확한 버전이 중요하면 `npm view @litfamily/litopencode version`으로 확인하세요.
 
 ## 첫 작업
 
@@ -105,9 +107,9 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 나중에 돌아왔을 때는 `/lit-recap`이 기록을 읽고 다음 할 일을 알려 줍니다.
 
-`/lit`도 같은 워크플로를 시작합니다. 계획을 검토받아야 하는 작업이라면 `lit-plan`에서 계획을 세워 승인하고 `/start-work`로 실행합니다. 이때 승인된 계획을 실제로 수행하는 것은 `lit-implement`이고, 마무리는 `/review-work`로 합니다. planner는 명시적인 사용자 승인을 기다리며, 파일을 고치거나 shell을 실행할 권한이 없습니다.
+`/lit`도 같은 워크플로를 시작합니다. 규모가 큰 일은 계획부터 세우는 편이 좋습니다. `lit-plan`을 골라 계획을 읽고 승인한 뒤 `/start-work`로 실행하고, `/review-work`로 마무리합니다. planner는 계획만 세웁니다. 명시적인 사용자 승인을 기다리고, 파일을 고치거나 셸 명령을 실행할 방법이 없습니다. 승인하고 나면 `lit-implement`가 계획을 실제로 수행합니다.
 
-진행 상황과 근거는 프로젝트의 `.litopencode/litgoal/`에 쌓입니다. OpenCode에는 native goal primitive가 없어서, 이 로컬 기록으로 작업을 이어 갑니다. 정적 스킬은 문서에 나온 경로로 불렀을 때 작업 지침을 줍니다.
+진행 상황과 확인한 결과까지, 기록은 모두 프로젝트의 `.litopencode/litgoal/`에 쌓입니다. OpenCode에는 세션을 넘어 목표를 보관할 곳이 따로 없어서, 다음 세션은 이 폴더를 보고 어디까지 했는지 압니다. 작업 지침만 담긴 스킬도 있는데, 문서에 나온 경로로 그 스킬을 부르면 지침이 작업에 적용됩니다.
 
 ## 스킬 한눈에 보기
 
@@ -131,19 +133,19 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 <td>승인 관문에서 멈추는 체크리스트를 만듭니다. lit-plan 에이전트는 파일 수정도, 셸 명령도 할 수 없습니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/start-work.webp" width="240" alt="승인된 계획을 조각마다 실행합니다. 권한이나 버전이 어긋나면 멈춥니다." /></td>
+<td><img src="./docs/assets/skills/start-work.webp" width="240" alt="승인된 계획을 한 조각씩 실행하고, 승인이나 계획 버전이 낡았으면 멈춥니다." /></td>
 <td><code>start-work</code><br /><sub><code>/start-work</code></sub></td>
-<td>승인된 계획을 조각마다 실행합니다. 권한이나 버전이 어긋나면 멈춥니다.</td>
+<td>승인된 계획을 한 조각씩 실행하고, 승인이나 계획 버전이 낡았으면 멈춥니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/review-work.webp" width="240" alt="리뷰 다섯 갈래가 심각한 문제부터 보여주고, 갈래마다 통과·실패·미실행을 적습니다." /></td>
+<td><img src="./docs/assets/skills/review-work.webp" width="240" alt="변경을 다섯 방향에서 검토해 심각한 문제부터 보여 주고, 방향마다 통과·실패·미실행을 적습니다." /></td>
 <td><code>review-work</code><br /><sub><code>/review-work</code></sub></td>
-<td>리뷰 다섯 갈래가 심각한 문제부터 보여주고, 갈래마다 통과·실패·미실행을 적습니다.</td>
+<td>변경을 다섯 방향에서 검토해 심각한 문제부터 보여 주고, 방향마다 통과·실패·미실행을 적습니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/litresearch.webp" width="240" alt="여러 차례로 나눠 조사하고, 주장마다 근거 기록과 불확실성을 남깁니다." /></td>
+<td><img src="./docs/assets/skills/litresearch.webp" width="240" alt="여러 차례에 걸쳐 조사하고, 주장마다 출처와 아직 불확실한 점을 함께 남깁니다." /></td>
 <td><code>litresearch</code><br /><sub><code>lit research &lt;question&gt;</code> · <code>/litresearch</code></sub></td>
-<td>여러 차례로 나눠 조사하고, 주장마다 근거 기록과 불확실성을 남깁니다.</td>
+<td>여러 차례에 걸쳐 조사하고, 주장마다 출처와 아직 불확실한 점을 함께 남깁니다.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/doctor-installer.webp" width="240" alt="LitOpenCode를 OpenCode에 설치합니다. --dry-run은 바뀔 내용만 보여주고 아무것도 쓰지 않습니다." /></td>
@@ -151,9 +153,9 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 <td>LitOpenCode를 OpenCode에 설치합니다. <code>--dry-run</code>은 바뀔 내용만 보여주고 아무것도 쓰지 않습니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-fetch.webp" width="240" alt="보안 검사를 거쳐 공개 페이지를 가져오고, 결과를 이름 붙은 판정으로 돌려줍니다." /></td>
+<td><img src="./docs/assets/skills/lit-fetch.webp" width="240" alt="요청이 어디로 갈 수 있는지 먼저 확인한 뒤 공개 페이지를 가져오고, 성공, 페이지 없음, 유료 구독 필요처럼 결과를 이름으로 알려 줍니다." /></td>
 <td><code>lit-fetch</code><br /><sub><code>/lit-fetch</code> · <code>litopencode fetch-public &lt;url&gt; --json</code></sub></td>
-<td>보안 검사를 거쳐 공개 페이지를 가져오고, 결과를 이름 붙은 판정으로 돌려줍니다.</td>
+<td>요청이 어디로 갈 수 있는지 먼저 확인한 뒤 공개 페이지를 가져오고, 성공, 페이지 없음, 유료 구독 필요처럼 결과를 이름으로 알려 줍니다.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/lit-init.webp" width="240" alt="필요한 폴더에만 짧은 AGENTS.md 안내서를 만듭니다." /></td>
@@ -181,9 +183,9 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 <td>방금 수정한 파일 하나를 그 변경분 기준으로 정리합니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-code.webp" width="240" alt="최소한의 코드부터 씁니다. Given/When/Then 테스트와 정리 기록을 남깁니다." /></td>
+<td><img src="./docs/assets/skills/lit-code.webp" width="240" alt="필요한 만큼만 코드를 쓰고, Given/When/Then 테스트와 함께 무엇을 정리했는지 적어 둡니다." /></td>
 <td><code>lit-code</code><br /><sub><code>/lit-code</code></sub></td>
-<td>최소한의 코드부터 씁니다. Given/When/Then 테스트와 정리 기록을 남깁니다.</td>
+<td>필요한 만큼만 코드를 쓰고, Given/When/Then 테스트와 함께 무엇을 정리했는지 적어 둡니다.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/debugging.webp" width="240" alt="버그를 재현하고, 가설을 세 개 이상 세워 확인한 뒤, 확인된 원인만 고칩니다." /></td>
@@ -196,9 +198,9 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 <td>변경을 저장소 스타일에 맞는 작은 커밋으로 나눕니다. 관계없는 작업은 건드리지 않습니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lsp.webp" width="240" alt="OpenCode가 이미 가진 언어 서버에서 진단을 읽습니다. LitOpenCode는 서버를 따로 넣지 않습니다." /></td>
+<td><img src="./docs/assets/skills/lsp.webp" width="240" alt="OpenCode가 이미 쓰는 언어 서버에서 오류와 경고를 읽어 옵니다. 언어 서버를 따로 설치하지는 않습니다." /></td>
 <td><code>lsp</code><br /><sub><code>/lsp</code></sub></td>
-<td>OpenCode가 이미 가진 언어 서버에서 진단을 읽습니다. LitOpenCode는 서버를 따로 넣지 않습니다.</td>
+<td>OpenCode가 이미 쓰는 언어 서버에서 오류와 경고를 읽어 옵니다. 언어 서버를 따로 설치하지는 않습니다.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/lsp-setup.webp" width="240" alt="어떤 파일 형식에 언어 서버가 없으면 설치 명령 하나를 제안하고, 승인을 기다립니다." /></td>
@@ -216,9 +218,9 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 <td>하지 않을 일과 결정 범위가 분명해질 때까지 한 번에 한 질문씩 묻습니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/structural-search.webp" width="240" alt="확인된 엔진으로 문법 구조를 찾습니다. 그렇지 않은 결과에는 TEXTUAL 표시를 붙입니다." /></td>
+<td><img src="./docs/assets/skills/structural-search.webp" width="240" alt="검색 엔진이 제대로 도는지 먼저 확인하고 문법 구조로 코드를 찾습니다. 글자만 맞춰 찾은 결과에는 TEXTUAL 표시를 붙입니다." /></td>
 <td><code>structural-search</code><br /><sub><code>/structural-search</code></sub></td>
-<td>확인된 엔진으로 문법 구조를 찾습니다. 그렇지 않은 결과에는 TEXTUAL 표시를 붙입니다.</td>
+<td>검색 엔진이 제대로 도는지 먼저 확인하고 문법 구조로 코드를 찾습니다. 글자만 맞춰 찾은 결과에는 TEXTUAL 표시를 붙입니다.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/browser-drive.webp" width="240" alt="브라우저 드라이버를 먼저 확인한 뒤 실제 페이지를 조작합니다. 드라이버가 없으면 그렇다고 말합니다." /></td>
@@ -296,9 +298,9 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 <td><code>lit</code>으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 무대 페이지를 그리거나 글자를 움직입니다. 영상은 검사와 눈으로 보는 확인을 거쳐 넘깁니다. 스킬 선택기에서도 열 수 있습니다.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/visual-qa.webp" width="240" alt="실제 화면을 증거로 확인하고, 쓰기 권한은 늘리지 않습니다. 스킬 선택기에서 엽니다." /></td>
+<td><img src="./docs/assets/skills/visual-qa.webp" width="240" alt="실제 화면을 보고 본 것을 그대로 보여 줍니다. 파일을 고칠 권한은 받지 않습니다. 스킬 선택기에서 엽니다." /></td>
 <td><code>visual-qa</code><br /><sub><code>skill picker</code></sub></td>
-<td>실제 화면을 증거로 확인하고, 쓰기 권한은 늘리지 않습니다. 스킬 선택기에서 엽니다.</td>
+<td>실제 화면을 보고 본 것을 그대로 보여 줍니다. 파일을 고칠 권한은 받지 않습니다. 스킬 선택기에서 엽니다.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/automatic-guards.webp" width="240" alt="알아서 돌아갑니다. LitOpenCode 에이전트를 등록하고, 수정 뒤 주석을 확인하고, 범위 없는 “항상 더 낫다” 주장을 막습니다." /></td>
@@ -397,20 +399,20 @@ S7, lit 구조도입니다.
 | `/review-work` | 변경 내용과 근거를 검토합니다. |
 | `handoff` 또는 `/lit-handoff` | 현재 결과와 다음 할 일을 다음 세션에 넘깁니다. |
 | `/lit-recap` | 로컬 기록을 짧게 요약해 보여 줍니다. |
-| `/litresearch` 또는 `/lit-research` | 출처 근거를 남기며 조사합니다. 순차 대체 경로도 있습니다. |
+| `/litresearch` 또는 `/lit-research` | 주장마다 출처를 남기며 조사합니다. OpenCode가 허용하면 보조 에이전트가 나눠서 동시에 조사하고, 아니면 차례로 진행합니다. |
 | `/lit-code`, `/debugging`, `/refactor` | 코딩, 디버깅, 리팩터링 지침을 씁니다. |
 | `/lit-korean` | 의미는 그대로 두고 한국어 문장을 다듬습니다. |
 | `/lit-scientific-visualization` | 패키지에 들어 있는 과학 시각화 워크플로를 씁니다. |
 
 `handoff`만 단독으로 입력해도 `/lit-handoff`와 똑같이 동작합니다.
 
-모델 실행과 권한 질문은 OpenCode가 맡고, 플러그인은 경로와 기록을 제공합니다. 그래서 경로를 골랐다고 해서 모델이 실제로 실행했다거나 화면 확인을 통과했다는 뜻은 아닙니다.
+경로는 작업을 준비할 뿐이고, 실제 작업은 OpenCode 안의 모델이 합니다. 답변에 어떤 단계를 실행했다거나 화면 확인을 통과했다고 나오면, 믿기 전에 파일이나 페이지를 직접 열어 확인하세요.
 
-Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](./docs/reference-Ko-KR.md#주요-명령)에, 두 가지 rule 처리 경로는 [규칙 엔진 상세 안내](./docs/reference.md#safety-and-updates)에 있습니다. 예전 스킬 이름은 한 릴리스 동안 별칭으로 계속 동작합니다. 목록은 [마이그레이션 안내](./docs/migration.md#skill-id-renames)를 보세요.
+Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](./docs/reference-Ko-KR.md#주요-명령)에, 저장소 규칙을 두 갈래로 읽는 규칙 엔진은 [규칙 엔진 상세 안내](./docs/reference.md#safety-and-updates)에 있습니다. 예전 스킬 이름은 한 릴리스 동안 별칭으로 계속 동작합니다. 목록은 [마이그레이션 안내](./docs/migration.md#skill-id-renames)를 보세요.
 
 ## 동작 방식
 
-OpenCode는 설정 파일에서 플러그인을 불러옵니다. agent와 채팅·명령 경로가 워크플로와 필요한 설치 스킬을 고릅니다. 도구와 작업 수명주기 hook이 프로젝트에 기록을 남기고, 돌아왔을 때 그 기록을 읽어 이어 갑니다.
+OpenCode는 설정 파일을 읽을 때 플러그인을 불러옵니다. 그 뒤로 프롬프트나 명령을 보내면 LitOpenCode가 알맞은 워크플로와 거기에 필요한 설치 스킬을 고릅니다. 작업이 진행되는 동안 도구와 훅이 일어난 일을 프로젝트에 적어 두고, 나중에 돌아오면 그 기록을 읽고 이어 갑니다.
 
 ```mermaid
 flowchart TD
@@ -432,7 +434,7 @@ flowchart TD
 
 ### 경로가 시작될 때 보이는 것
 
-Lit 경로가 켜지면 답변이 굵은 점화 문구로 시작합니다. 플러그인은 OpenCode에 6초짜리 경고 토스트도 요청합니다. 글리프를 지원하는 환경에서는 다섯 줄의 micro 로고와 마지막 `🔥 LIT IGNITED · <discipline> 🔥` 문구가, 지원하지 않는 환경에서는 그 문구만 나옵니다.
+Lit 경로가 시작됐는지는 바로 알 수 있습니다. 답변이 굵은 점화 문구로 시작하고, OpenCode 화면에 경고 모양의 알림이 6초 동안 뜹니다. 터미널이 마크의 특수 문자를 제대로 표시하면 다섯 줄짜리 작은 로고 아래에 `🔥 LIT IGNITED · <discipline> 🔥` 문구가, 그렇지 않으면 그 문구만 나옵니다. 어느 쪽이든 워크플로가 시작됐다는 표시이니, 결과는 작업이 끝난 뒤 직접 확인하세요.
 
 <p align="center"><img src="./docs/assets/litopencode-ignition-1600.webp" width="48%" alt="LitOpenCode 점화 장치" /><img src="./docs/assets/litopencode-continuity-1600.webp" width="48%" alt="LitOpenCode 연속 장치" /></p>
 
@@ -442,38 +444,39 @@ Lit 경로가 켜지면 답변이 굵은 점화 문구로 시작합니다. 플�
 
 ### 디자인, README, 다이어그램
 
-`frontend-ui-ux`는 OpenCode 네이티브 스킬입니다. 구현 요청이 충분히 구체적이면 실제로 동작하는 화면을 만들고 렌더링까지 확인합니다. 중요한 방향이 모호할 때만 묻고, 받은 답은 기억해 둡니다. 검토·계획 요청은 읽기 전용입니다.
+`frontend-ui-ux`는 화면을 만드는 스킬입니다. 원하는 것을 충분히 구체적으로 말하면 실제로 동작하는 화면까지 만들고, 렌더링해서 직접 살펴봅니다. 중요한 디자인 선택이 걸릴 때만 묻고, 받은 답은 기억해 둡니다. 검토나 계획을 부탁하면 읽기만 하고 파일은 건드리지 않습니다.
 
-`readme-studio`는 실제 저장소 정보로 README를 쓰고 로컬에서 표지를 만듭니다. OpenCode의 네이티브 스킬 도구에서 고르며, 전용 슬래시 명령은 없습니다. 로컬 글꼴의 윤곽선 도구, Remotion/HyperFrames 예제, 정적·동적 출력 절차가 함께 설치됩니다. 이미지 생성 도구가 없으면 `IMAGE_GENERATION_UNAVAILABLE`을 알리고, 사용자가 준 배경으로 이어 갑니다. GitHub나 npm에서 어떻게 보이는지 확인하는 일은 별도 단계입니다.
+`readme-studio`는 저장소에 실제로 있는 내용으로 README를 쓰고, 표지도 내 컴퓨터에서 만듭니다. 전용 슬래시 명령이 없어서 OpenCode의 스킬 도구에서 고릅니다. 글자를 윤곽선으로 바꾸는 도구, 버전을 고정한 Remotion·HyperFrames 예제, 정적·동적 출력 절차가 함께 설치됩니다. 이미지 생성 도구가 없으면 `IMAGE_GENERATION_UNAVAILABLE`로 알리고, 사용자가 준 배경으로 이어 갑니다. GitHub나 npm에서 최종적으로 어떻게 보이는지는 따로 확인해야 합니다.
 
-`lit-diagram-drawer`는 개념도를 그리고 로컬에서 검증합니다. 다이어그램을 안전하게 가져올 수 있고, 렌더러와 브라우저가 이미 있으면 아무것도 새로 설치하지 않고 내보냅니다. OpenCode 네이티브 스킬 선택기에서 고르세요. 제품 화면은 `frontend-ui-ux`, 측정한 과학 데이터 그림은 `lit-scientific-visualization`이 맡습니다. 범위가 정해진 다이어그램 제작 요청 끝에 `lit`을 붙이면, 그리기 전에 이 스킬을 불러오라고 OpenCode에 안내합니다. 전용 슬래시 명령이나 별도의 다이어그램 채팅 경로는 없습니다.
+`lit-diagram-drawer`는 개념도를 그리고, 내 컴퓨터에서 검사한 뒤 내보냅니다. 렌더러와 브라우저가 이미 있으면 아무것도 새로 설치하지 않고, 기존 다이어그램도 안전하게 가져옵니다. OpenCode 스킬 선택기에서 고르거나, 범위가 분명한 다이어그램 요청 끝에 `lit`을 붙이면 됩니다. 그러면 워크플로가 그리기 전에 이 스킬을 불러오라고 OpenCode에 안내합니다. 전용 슬래시 명령이나 채팅 경로는 따로 없습니다. 제품 화면은 `frontend-ui-ux`, 측정한 과학 데이터 그림은 `lit-scientific-visualization`이 맡습니다.
 
 ### 워드 보고서와 발표자료
 
 `lit-docx`는 마크다운 원고로 편집 가능한 워드 보고서를 만들고, `lit-pptx`는 발표자료를 편집 가능한 파워포인트로 컴파일합니다. 보고서나 발표자료 요청에 `lit`을 붙이면 OpenCode가 알맞은 스킬을 불러오도록 안내하고, 둘 다 요청하면 두 스킬을 모두 씁니다.
 
-한국어 보고서의 기본 서식은 korean-generic, 발표자료의 기본값은 AZURE-PRO와 Pretendard입니다. 고정 버전의 의존성은 처음 쓸 때 LitOpenCode 전용 캐시에 설치됩니다. 두 스킬 모두 마크다운 원고를 남기고, 구조·품질 검사를 거친 뒤 LibreOffice가 있으면 렌더링 결과를 눈으로 확인하게 합니다. 출판사 프로필, DOCX 편집과 PDF 변환, 템플릿 학습, 글꼴 포함 방법은 설치된 스킬에 설명되어 있습니다. `litopencode doctor`는 아무것도 설치하지 않고 준비 상태만 보여 줍니다.
+한국어 보고서는 따로 정하지 않으면 korean-generic 서식을 쓰고, 발표자료는 AZURE-PRO 디자인과 Pretendard 글꼴로 시작합니다. 두 스킬 모두 처음 쓸 때 필요한 도구를 정해진 버전으로 LitOpenCode 전용 캐시에 설치합니다. 완성 파일과 함께 마크다운 원고도 남기고, 구조·품질 검사를 거칩니다. LibreOffice가 있으면 렌더링된 페이지도 눈으로 확인하게 합니다. 출판사 서식, 기존 DOCX 편집, PDF 변환, 템플릿 학습, 글꼴 포함 방법은 설치된 스킬에 설명되어 있습니다. 준비가 됐는지 보려면 `litopencode doctor`를 실행하세요. 상태만 알려 주고 아무것도 설치하지 않습니다.
 
 ### 글 다듬기와 브라우저
 
-긴 글을 다듬거나 검토를 요청할 때는 `/lit-humanizer`를 쓰세요. 의미와 글쓴이의 목소리, 필요한 한정 표현은 그대로 둡니다. `/lit-korean`, `/text-naturalization`, `/text-neutralization`, `/korean-ai-slop-remover`도 계속 쓸 수 있고 같은 곳으로 연결됩니다. 지원하는 텍스트 파일은 저장하기 전에 초안 흔적이 뚜렷한 표현을 막고, 확신이 낮은 문체 신호는 참고로만 알려 줍니다. DOCX·PPTX와 읽을 수 있는 PDF 텍스트는 파일이 만들어진 뒤에 확인합니다.
+글을 제대로 고쳐 써야 하거나 꼼꼼히 검토받고 싶을 때는 `/lit-humanizer`를 쓰세요. 의미와 글쓴이의 목소리, 꼭 필요한 한정 표현은 그대로 둡니다. 예전 명령인 `/lit-korean`, `/text-naturalization`, `/text-neutralization`, `/korean-ai-slop-remover`도 계속 쓸 수 있고 같은 곳으로 연결됩니다. 에이전트가 쓰는 글도 살펴봅니다. 지원하는 텍스트 파일을 저장하려는데 초안 흔적이 뚜렷하면 저장을 막고, 확신이 낮은 문체 신호는 참고 의견으로만 알려 줍니다. 워드·파워포인트 파일과 텍스트를 뽑아낼 수 있는 PDF는 만들어진 직후에 확인합니다.
 
-`browser-drive`는 [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)의 `agent-browser` 엔진을 씁니다. 검증된 최소 버전은 0.34.0이고, 그보다 새 버전은 형식이 올바르면 검증 기준보다 새 버전이라고 표시합니다. LitOpenCode가 대신 설치하지는 않습니다. 필요하면 `npm install -g agent-browser`와 `agent-browser install`을 실행한 뒤 `node skills/browser-drive/scripts/capability-probe.mjs`로 확인하세요.
+`browser-drive`를 쓰려면 [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)의 `agent-browser` 엔진을 직접 설치해야 합니다. `npm install -g agent-browser`와 `agent-browser install`을 실행한 뒤 `node skills/browser-drive/scripts/capability-probe.mjs`로 확인하세요. 검증된 최소 버전은 0.34.0입니다. 형식이 올바른 더 새 버전도 받아들이고, 검증한 버전보다 새것이라고 표시합니다.
 
 ## 안전과 업데이트
 
-- `lit-plan`의 `edit`, `bash`, `task`는 계속 거부됩니다. `balanced`와 `yolo`는 직접 골라야 켜지는 권한 모드이고, 어느 쪽도 planner 보호를 풀거나 하위 agent의 재귀 위임을 허용하지 않습니다.
-- 공개 자료를 가져올 때는 목적지, redirect, byte 한도를 검사합니다. 가져온 본문은 데이터로만 다룹니다.
-- 대화형으로 시작할 때와 install/doctor가 성공한 뒤에 foreground 업데이트 검사가 실행될 수 있습니다. 자동 업데이트는 `--no-auto-update` 또는 `LITOPENCODE_NO_AUTO_UPDATE=1`로 끕니다.
-- 스킬 학습 기능은 제거되었습니다. 이전 릴리스가 프로젝트의 `.litopencode` 폴더에 남긴 학습 기록은 이제 아무 역할도 하지 않으며, LitOpenCode는 그 파일을 읽지도, 바꾸지도, 지우지도 않습니다. [자세한 내용](./docs/reference.md#skill-learning-state)
+planner는 계획만 세웁니다. `lit-plan`은 `edit`, `bash`, `task` 권한이 모두 거부되어 있어서 파일을 고치거나, 명령을 실행하거나, 다른 에이전트에게 일을 넘길 수 없습니다. 나머지 작업의 권한은 `balanced`나 `yolo` 모드를 직접 골라 넓힐 수 있습니다. 그래도 planner는 읽기 전용으로 남고, 보조 에이전트가 또 다른 보조 에이전트를 부를 수도 없습니다.
+
+공개 페이지를 가져올 때는 요청이 어디로 가는지 먼저 확인하고, 리디렉션도 하나하나 검사하며, 받아 오는 양에 한도를 둡니다. 가져온 본문은 데이터로만 읽고, 그 안에 적힌 지시는 따르지 않습니다.
+
+LitOpenCode는 스스로 업데이트할 수 있습니다. 대화형으로 시작할 때와 install이나 doctor가 성공한 뒤에 새 버전을 확인할 수 있는데, 이 확인이 끝날 때까지 기다리므로 잠깐 멈출 수 있습니다. 자동 업데이트를 끄려면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요.
+
+스킬 학습 기능은 제거되었습니다. 이전 릴리스가 프로젝트의 `.litopencode` 폴더에 남긴 학습 기록이 있더라도, LitOpenCode는 이제 그 파일을 읽지도, 바꾸지도, 지우지도 않습니다. 남겨 둘지 지울지는 직접 정하면 됩니다. [자세한 내용](./docs/reference.md#skill-learning-state)
 
 ## Jev 스킬 힌트 (선택)
 
-기본값은 꺼짐입니다. 켜면 조건에 맞는 대화 턴마다 TypeSafe가 호스팅하는 판단 모델 Jev에게
-이 프롬프트에 맞는 LitOpenCode 스킬이 무엇인지 묻습니다. Jev가 LitOpenCode 스킬 가운데 하나를
-충분한 확신으로 고르면, 그 턴에 해당 스킬을 알려 주는 참고 문장 한 줄이 붙습니다. 스킬을
-불러올지는 여전히 모델이 정합니다. 힌트는 권한을 주지 않고 도구도 실행하지 않습니다. 슬래시
-명령, 하위 세션, 이미 lit 경로가 처리한 턴, 공백을 뺀 4자 미만의 프롬프트는 건너뜁니다.
+프롬프트만 봐서는 어떤 스킬이 맞는지 분명하지 않을 때가 있습니다. 이 선택 기능은 바깥 모델에게 한 번 더 의견을 묻습니다. 기본값은 꺼짐입니다.
+
+켜 두면 조건에 맞는 대화 턴마다 TypeSafe가 호스팅하는 판단 모델 Jev에게 이 프롬프트에 맞는 LitOpenCode 스킬이 무엇인지 묻습니다. Jev가 LitOpenCode 스킬 가운데 하나를 충분한 확신으로 고르면, 그 턴에 해당 스킬을 알려 주는 참고 문장 한 줄이 붙습니다. 어디까지나 제안이라서, 스킬을 불러올지는 여전히 모델이 정하고 힌트가 권한을 주거나 도구를 실행하지는 않습니다. 슬래시 명령, 하위 세션, 이미 lit 경로가 처리한 턴, 공백을 뺀 4자 미만의 프롬프트는 건너뜁니다.
 
 켜려면 OpenCode를 실행하는 환경에 두 변수를 모두 설정합니다.
 
@@ -482,30 +485,23 @@ export LITOPENCODE_JEV=1
 export TYPESAFE_API_KEY=<본인의 TypeSafe 키>
 ```
 
-- **켜면 조건에 맞는 프롬프트가 TypeSafe(typesafe.ai)로 전송됩니다.** 프롬프트는 2,000자에서
-  자르고, 홈 경로·이메일 주소·토큰 형태의 문자열을 가린 뒤 보냅니다. 파일, 도구 출력, 이전
-  대화는 보내지 않습니다.
-- 토큰 형태가 아닌 내용은 쓴 그대로 전송됩니다. 호스트 이름, 고객 이름, `password=...` 형식이
-  아닌 비밀번호가 그 예입니다.
-- `TYPESAFE_API_KEY`는 OpenCode를 실행하는 셸에 export되어 있으므로 에이전트의 도구도 이 값을
-  읽을 수 있습니다. 이 기능 전용 키를 만들고 사용 한도를 낮게 잡아 두세요.
-- 요금은 본인의 TypeSafe 계정에 청구되며, 입력 토큰 100만 개당 약 0.04달러입니다.
-- 요청은 1.5초가 지나면 끊기고 다시 시도하지 않습니다. 실패해도 턴은 평소대로 진행되며,
-  세션에서 처음 실패했을 때만 짧은 안내가 한 번 붙습니다.
-- `litopencode doctor`는 `Jev skill hint: off`, `on`, `flag on but TYPESAFE_API_KEY missing`
-  가운데 하나를 보여 줍니다. 키는 표시하지 않습니다.
-- 힌트가 붙은 턴에는 OpenCode 화면에 `Jev → lit-humanizer (0.27s)`처럼 스킬 이름과 요청 시간을
-  담은 짧은 알림이 뜹니다. 기능이 꺼져 있거나 맞는 스킬이 없으면 알림도 뜨지 않습니다.
-- 세션마다 조건에 맞는 첫 턴에 `✦ Jev skill hint is ON` 알림이 한 번 떠서 힌트가 켜져 있음을 알려 줍니다.
-- 끄려면 `LITOPENCODE_JEV`를 지우거나 `1`이 아닌 값으로 바꿉니다.
+**켜는 순간부터 조건에 맞는 프롬프트는 내 컴퓨터를 떠나 TypeSafe(typesafe.ai)로 전송됩니다.** 보내기 전에 프롬프트를 2,000자에서 자르고, 홈 경로·이메일 주소·토큰 형태의 문자열을 가립니다. 파일, 도구 출력, 이전 대화는 보내지 않습니다. 나머지는 쓴 그대로 전송되므로 호스트 이름, 고객 이름, `password=...` 형식이 아닌 비밀번호도 함께 넘어갑니다.
+
+키도 조심해서 다뤄야 합니다. `TYPESAFE_API_KEY`는 OpenCode를 실행하는 셸에 export되어 있어서 에이전트의 도구도 이 값을 읽을 수 있습니다. 이 기능 전용 키를 따로 만들고 사용 한도를 낮게 잡아 두세요. 요금은 본인의 TypeSafe 계정에 청구되며, 입력 토큰 100만 개당 약 0.04달러입니다.
+
+힌트 때문에 대화가 오래 멈추지는 않습니다. 요청은 1.5초가 지나면 끊기고 다시 시도하지 않습니다. 실패해도 턴은 평소대로 진행되고, 세션에서 처음 실패했을 때만 짧은 안내가 한 번 붙습니다.
+
+켜져 있는지는 언제든 확인할 수 있습니다. `litopencode doctor`는 `Jev skill hint: off`, `on`, `flag on but TYPESAFE_API_KEY missing` 가운데 하나를 보여 주고, 키는 표시하지 않습니다. 세션마다 조건에 맞는 첫 턴에는 `✦ Jev skill hint is ON` 알림이 한 번 뜹니다. 힌트가 붙은 턴에는 `Jev → lit-humanizer (0.27s)`처럼 스킬 이름과 요청 시간을 담은 짧은 알림이 뜨고, 기능이 꺼져 있거나 맞는 스킬이 없으면 아무 알림도 뜨지 않습니다.
+
+끄려면 `LITOPENCODE_JEV`를 지우거나 `1`이 아닌 값으로 바꿉니다.
 
 세부 변수와 디버그 기록은 [Jev 스킬 힌트 참조 문서](./docs/reference-Ko-KR.md#jev-스킬-힌트-선택)에 있습니다.
 
 ## 문제 해결
 
-완료 보고와 실제 동작이 다르면, 본 그대로 agent에게 알려 주세요.
+결과가 에이전트의 완료 보고와 다르면, 실제로 본 것을 에이전트에게 그대로 알려 주세요.
 
-패키지와 설정 상태는 다음 명령으로 확인합니다.
+패키지가 제대로 설치됐는지, 설정에 문제가 없는지는 다음 명령으로 확인합니다.
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode doctor
@@ -513,14 +509,14 @@ npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 
 더 자세한 내용은 [설치와 모델 설정 안내](./docs/reference-Ko-KR.md#설치)에 있습니다.
 
-`install`과 `doctor`는 `<root>/skills`가 심볼릭 링크이면 그 사실을 알리고, 링크가 git 저장소를 가리키면 경고도 함께 보여 줍니다. `~/.agents/skills`, `~/.claude/skills`, 프로젝트 스킬 디렉토리에 같은 이름의 스킬이 있어 가려질 때도 알려 줍니다. 자세한 내용은 [심볼릭 링크된 native 스킬 루트와 다른 위치의 같은 이름 스킬](./docs/reference-Ko-KR.md#심볼릭-링크된-native-스킬-루트와-다른-위치의-같은-이름-스킬)을 보세요.
+스킬 폴더 구성 때문에 헷갈리는 경우가 두 가지 있는데, `install`과 `doctor`가 둘 다 알려 줍니다. 첫째는 스킬 폴더 `<root>/skills`가 다른 곳을 가리키는 심볼릭 링크인 경우입니다. 설치는 링크를 따라가 그 위치에 LitOpenCode 스킬 폴더를 만들기 때문에, 그곳이 git 저장소 안이면 경고를 함께 보여 줍니다. 둘째는 OpenCode가 함께 읽는 다른 폴더, 예를 들어 `~/.agents/skills`, `~/.claude/skills`, 프로젝트 스킬 폴더에 같은 이름의 스킬이 있는 경우입니다. 이때는 OpenCode가 LitOpenCode 대신 그쪽 스킬을 불러올 수 있습니다. 자세한 내용은 [심볼릭 링크된 native 스킬 루트와 다른 위치의 같은 이름 스킬](./docs/reference-Ko-KR.md#심볼릭-링크된-native-스킬-루트와-다른-위치의-같은-이름-스킬)을 보세요.
 
 ## 제거
 
 `litopencode uninstall` 명령은 없습니다. 직접 지우려면 다음 순서로 하세요.
 
 1. OpenCode의 `opencode.jsonc`(custom root라면 `opencode.json`)에서 `plugin` 배열의 `@litfamily/litopencode` 또는 `@litfamily/litopencode@<version>` 항목을 지웁니다. 예전 `litopencode` 패키지 항목이 있으면 그것도 지웁니다.
-2. 전역으로 설치했다면 npm binary도 제거합니다.
+2. 전역으로 설치했다면 npm 실행 파일도 제거합니다.
 
    ```sh
    npm uninstall -g @litfamily/litopencode
@@ -535,7 +531,7 @@ route가 계속 필요하면 `litopencode.json`을, 나중에 작업을 이어 �
 
 MIT입니다. [LICENSE](./LICENSE)를 보세요.
 
-`lit-handoff`와 `lit-scientific-visualization`에 함께 들어 있는 참조 원본은 `vendor/handoff/`와 `vendor/scientific-visualization/`에 있습니다. 번호가 붙은 license·provenance 파일은 출처 기록으로 그대로 둡니다.
+`lit-handoff`와 `lit-scientific-visualization`에 함께 들어 있는 참조 원본은 `vendor/handoff/`와 `vendor/scientific-visualization/`에 있습니다. 번호가 붙은 라이선스·출처 파일은 출처 기록으로 그대로 둡니다.
 
 ## 링크
 

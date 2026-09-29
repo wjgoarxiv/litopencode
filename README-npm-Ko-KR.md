@@ -44,7 +44,7 @@
 
 LitOpenCode는 OpenCode에 워크플로 agent, 슬래시 명령, 로컬 근거 기록을 더합니다.
 
-프롬프트에 `lit`을 붙이면 계획하고, 만들고, 확인한 뒤 다음 할 일을 프로젝트에 적어 둡니다. 그래서 다음 세션이 멈춘 자리에서 바로 이어 갈 수 있습니다. 모델 실행과 권한 질문은 여전히 OpenCode가 맡습니다.
+프롬프트에 `lit`을 붙이면 계획하고, 만들고, 확인한 뒤 다음 할 일을 프로젝트에 적어 둡니다. 그래서 다음 세션이 멈춘 자리에서 바로 이어 갈 수 있습니다. 모델을 돌리고 권한을 묻는 일은 지금처럼 OpenCode가 합니다.
 
 **[전체 안내, 스킬 갤러리, A/B 결과는 GitHub에서 →](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md)**
 
@@ -57,7 +57,9 @@ LIT_PACKAGE='@litfamily/litopencode@latest'
 npm exec --package "$LIT_PACKAGE" -- litopencode install
 ```
 
-OpenCode를 다시 시작하고 `Tab` 키를 눌러 `lit-loop`를 고르세요. 권한 기본값은 safe/ask-first이고, 모델 접근은 OpenCode의 provider 설정을 그대로 씁니다.
+OpenCode를 다시 시작하고 `Tab` 키를 눌러 `lit-loop`를 고르세요. 권한은 `safe`에서 시작하는데, 무언가 하기 전에 OpenCode가 먼저 물어보는 설정입니다. 로그인과 API 키는 OpenCode에 이미 설정해 둔 모델 제공자(provider) 쪽 것을 그대로 씁니다.
+
+바뀔 내용을 먼저 보려면 `--dry-run`을 붙이세요. 아무것도 쓰지 않습니다. 질문 없이 설치하려면 `--yes`를 붙이세요. 기본값으로 설치하되 예전에 저장해 둔 선택은 그대로 둡니다.
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode install --dry-run  # 변경 사항 미리 보기
@@ -78,7 +80,7 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 | 입력 | 하는 일 |
 | --- | --- |
-| `lit` 또는 `/lit` | 범위가 분명한 작업을 시작하고 확인한 내용을 기록합니다. |
+| `lit` 또는 `/lit` | 범위가 분명한 작업을 시작하고, 확인한 내용을 기록합니다. |
 | `lit-plan` → `/start-work` → `/review-work` | 계획, 승인, 실행, 검토. planner는 파일을 고치거나 shell을 실행할 수 없습니다. |
 | `handoff` 또는 `/lit-handoff` | 현재 결과와 다음 할 일을 다음 세션에 넘깁니다. |
 | `/lit-recap` | 로컬 기록을 짧게 요약해 보여 줍니다. |
@@ -92,17 +94,17 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 ## 설치하면 바뀌는 것
 
-OpenCode 설정 루트에 플러그인을 등록하고 native 명령·스킬 파일을 씁니다. route 파일은 `~/.config/opencode/litopencode.json`이고(`XDG_CONFIG_HOME`을 지정하면 루트가 바뀝니다), 이미 만들어 둔 custom route는 그대로 남습니다. 작업 기록은 프로젝트마다 `.litopencode/litgoal/`에 쌓입니다.
+많지 않습니다. OpenCode 설정에 플러그인을 등록하고, LitOpenCode의 명령과 스킬 파일을 OpenCode 설정 폴더에 복사합니다. 어떤 일에 어떤 모델을 쓸지 정한 route는 `~/.config/opencode/litopencode.json`에 저장됩니다. `XDG_CONFIG_HOME`을 지정하면 설정 폴더가 그쪽으로 옮겨 가고, 이미 손봐 둔 route는 건드리지 않습니다. 작업 기록은 프로젝트마다 `.litopencode/litgoal/`에 쌓이고, 다음 세션은 이 기록을 읽고 이어 갑니다.
 
-OpenAI provider로 새로 설치하면 계획·검토에는 GPT-6 Astra (`gpt-6-astra`)/`xhigh`, 실행·연구에는 GPT-6 Luna (`gpt-6-luna`)/`max`를 기본으로 씁니다.
+OpenAI 제공자를 쓰면 새로 설치했을 때 계획과 검토는 GPT-6 Astra(`gpt-6-astra`)가 `xhigh`로, 만들기와 조사는 GPT-6 Luna(`gpt-6-luna`)가 `max`로 맡습니다.
 
 ## 안전과 업데이트
 
-- `lit-plan`의 `edit`, `bash`, `task`는 계속 거부됩니다. `balanced`와 `yolo`는 직접 골라야 켜지는 모드이고, 어느 쪽을 켜도 planner 보호는 풀리지 않습니다.
-- 자동 업데이트는 `--no-auto-update` 또는 `LITOPENCODE_NO_AUTO_UPDATE=1`로 끕니다.
-- 스킬 학습 기능은 제거되었습니다. 이전 릴리스가 프로젝트의 `.litopencode` 폴더에 남긴 학습 기록은 이제 아무 역할도 하지 않습니다.
-- 선택 기능인 Jev 스킬 힌트는 기본값이 꺼짐입니다. 켜면 조건에 맞는 프롬프트가 TypeSafe로 전송되니, 먼저 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.11/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)를 읽어 보세요.
-- `npm exec --package @litfamily/litopencode@latest -- litopencode doctor`로 패키지와 설정 상태를 확인할 수 있습니다.
+- planner는 계획만 세웁니다. `lit-plan`은 `edit`, `bash`, `task` 권한이 거부되어 있고, 더 느슨한 `balanced`나 `yolo` 모드를 직접 골라도 그대로입니다.
+- LitOpenCode는 대화형으로 시작할 때와 install이나 doctor가 성공한 뒤에 스스로 업데이트할 수 있습니다. 끄려면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요.
+- 스킬 학습 기능은 제거되었습니다. 이전 릴리스가 프로젝트의 `.litopencode` 폴더에 남긴 학습 기록은 더 이상 쓰이지 않으니, 남겨 두든 지우든 편한 대로 하면 됩니다.
+- Jev 스킬 힌트는 선택 기능이고 기본값은 꺼짐입니다. 켜면 조건에 맞는 프롬프트가 TypeSafe로 전송되니, 먼저 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.11/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)를 읽어 보세요.
+- 뭔가 이상하면 `npm exec --package @litfamily/litopencode@latest -- litopencode doctor`로 패키지와 설정 상태를 확인하세요.
 
 ## 제거
 
