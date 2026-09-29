@@ -39,7 +39,7 @@ test("package and lock select the full product name at the approved local releas
   const pkg = JSON.parse(await fs.readFile(new URL("../package.json", import.meta.url), "utf8"));
   const lock = JSON.parse(await fs.readFile(new URL("../package-lock.json", import.meta.url), "utf8"));
   assert.equal(pkg.name, "@litfamily/litopencode");
-  assert.equal(pkg.version, "1.0.11");
+  assert.equal(pkg.version, "1.0.12");
   assert.deepEqual(pkg.bin, { litopencode: "bin/litopencode.cjs" });
   assert.equal(lock.name, pkg.name);
   assert.equal(lock.packages[""].name, pkg.name);

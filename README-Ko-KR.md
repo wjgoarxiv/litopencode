@@ -41,7 +41,7 @@
 <p align="center"><img src="./docs/assets/readme/litopencode-clay-icon.png" width="160" alt="LitOpenCode 클레이 마크" /></p>
 
 <p align="center">
-<a href="#설치"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.11" /></a>
+<a href="#설치"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.12" /></a>
 <a href="./LICENSE"><img src="./docs/assets/readme/badge-license.svg" alt="MIT 라이선스" /></a>
 </p>
 
@@ -93,7 +93,7 @@ npm exec --package @litfamily/litopencode@latest -- litopencode install --yes   
 
 설치가 하는 일은 많지 않습니다. OpenCode 설정에 플러그인을 등록하고, LitOpenCode의 명령과 스킬 파일을 OpenCode 설정 폴더에 복사합니다. 어떤 일에 어떤 모델을 쓸지 정한 route는 `~/.config/opencode/litopencode.json`에 저장됩니다. `XDG_CONFIG_HOME`을 지정하면 설정 폴더가 통째로 그쪽으로 옮겨 갑니다. 이미 손봐 둔 route는 건드리지 않습니다. 설정 폴더를 직접 정하는 방법, 모델 선택, 터미널 정책, 무인 설치는 [상세 안내](./docs/reference-Ko-KR.md#설치)에 있습니다.
 
-이 체크아웃의 패키지 버전은 `@litfamily/litopencode@1.0.11`입니다. registry의 `@latest`와 다를 수 있으니, 정확한 버전이 중요하면 `npm view @litfamily/litopencode version`으로 확인하세요.
+이 체크아웃의 패키지 버전은 `@litfamily/litopencode@1.0.12`입니다. registry의 `@latest`와 다를 수 있으니, 정확한 버전이 중요하면 `npm view @litfamily/litopencode version`으로 확인하세요.
 
 ## 첫 작업
 

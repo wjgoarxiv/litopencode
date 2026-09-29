@@ -57,12 +57,6 @@
       "why": "This package manifest is the source of truth used by the lockstep guard."
     },
     {
-      "path": "skills/lit-pptx/package-lock.json",
-      "kind": "derived",
-      "occurrences": 2,
-      "why": "The lit-pptx runtime lockfile has 2 occurrence(s) of an unrelated dependency version matching this package release by coincidence; it is not release metadata, and the count follows the current package version."
-    },
-    {
       "path": "test/docs.test.mjs",
       "kind": "pinned",
       "occurrences": 1,

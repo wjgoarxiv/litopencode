@@ -6,6 +6,11 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.12 Release Scope
+
+- The npm page is a short install card that links to the full guide on GitHub.
+- The English and Korean READMEs and the npm card were rewritten in plainer language, with the reason given before each switch.
+
 ## 1.0.11 Release Scope
 
 - The motion skill's runtime now installs `ws` 8.22.0 instead of 8.18.3, which fixes a memory-exhaustion denial of service and an uninitialized-memory disclosure in that package. After upgrading, run `litopencode motion-runtime install` again so the cache picks up the new version.
