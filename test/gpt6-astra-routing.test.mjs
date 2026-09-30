@@ -29,14 +29,42 @@ test("Given the OpenAI menu, when Astra is requested, then every host-supported 
 });
 
 test("Given the GPT-6 OpenAI catalog, when Sol and Luna are requested, then their effort contracts are enforced", () => {
-  const sol = modelMenuRows("openai").find((row) => row.model === "gpt-6-sol");
+  const sol = modelMenuRows("openai").find((row) => row.model === "gpt-6.1-sol");
   const luna = modelMenuRows("openai").find((row) => row.model === "gpt-6-luna");
   assert.ok(sol);
   assert.ok(luna);
+  assert.equal(sol.effort, "xhigh");
+  assert.equal(sol.hint, "coding lead (recommended alternative)");
   assert.deepEqual(sol.efforts, ["low", "medium", "high", "xhigh", "max", "ultra"]);
   assert.deepEqual(luna.efforts, ["low", "medium", "high", "xhigh", "max"]);
-  assert.deepEqual(resolveModelRoute("openai", "gpt-6-sol", "ultra", "--model"), route("openai", "gpt-6-sol", "ultra"));
+  assert.deepEqual(resolveModelRoute("openai", "gpt-6.1-sol", "ultra", "--model"), route("openai", "gpt-6.1-sol", "ultra"));
   assert.throws(() => resolveModelRoute("openai", "gpt-6-luna", "ultra", "--model"), /accepts effort|ultra/u);
+  assert.throws(() => resolveModelRoute("openai", "gpt-6.1-sol-fast", "xhigh", "--model"), /not offered|gpt-6\.1-sol-fast/u);
+});
+
+test("Given gpt-6-sol from an existing config, when it is requested or diagnosed, then it stays accepted as the previous generation", () => {
+  const previous = modelMenuRows("openai").find((row) => row.model === "gpt-6-sol");
+  assert.ok(previous);
+  assert.match(previous.hint, /previous generation/u);
+  assert.notEqual(previous.hint, "coding lead (recommended alternative)");
+  assert.deepEqual(previous.efforts, ["low", "medium", "high", "xhigh", "max", "ultra"]);
+  assert.deepEqual(resolveModelRoute("openai", "gpt-6-sol", "ultra", "--model"), route("openai", "gpt-6-sol", "ultra"));
+  assert.throws(() => resolveModelRoute("openai", "gpt-6-sol-fast", "xhigh", "--model"), /not offered|gpt-6-sol-fast/u);
+  for (const model of ["gpt-6-sol", "gpt-6.1-sol"]) {
+    assert.deepEqual(diagnoseModelRoutes({ ok: { provider: "openai", model, variant: "xhigh" } }), [], model);
+    assert.deepEqual(
+      diagnoseModelRoutes({ bad: { provider: "openai", model, variant: "none" } }).map((diagnostic) => diagnostic.code),
+      ["model_effort_unsupported"],
+      model
+    );
+  }
+});
+
+test("Given a fresh OpenAI provider, when the config hook registers, then both Sol ids carry native capability metadata", () => {
+  const target = {};
+  registerLitOpenCodeAgents(target);
+  assert.equal(target.provider.openai.models["gpt-6.1-sol"].name, "GPT-6.1 Sol");
+  assert.equal(target.provider.openai.models["gpt-6-sol"].name, "GPT-6 Sol");
 });
 
 test("Given fresh config, when defaults are materialized, then lead and helper defaults stay split", () => {

@@ -88,8 +88,9 @@ The interactive picker (`--model-prompt`, or a fresh TTY install) asks for a pro
 (the OpenAI GPT-6 family or the previous GPT-5.6 generation, or xAI Grok), a LEAD model for the
 planning/review categories, and a HELPER model for the execution/research categories; the helper
 may use a different provider. New installs default to GPT-6 Astra/xhigh for lead, planning, and
-review roles; GPT-6 Sol/xhigh is the coding-lead alternative, and GPT-6 Luna/max is the helper
-default for execution, research, and ordinary workers.
+review roles; GPT-6.1 Sol/xhigh (`gpt-6.1-sol`) is the coding-lead alternative, and GPT-6 Luna/max is the helper
+default for execution, research, and ordinary workers. `gpt-6-sol` stays selectable as the previous
+generation, so existing configs that name it keep working; it accepts the same efforts and has no `-fast` alias.
 GPT-6 Astra and Sol accept `low`, `medium`, `high`, `xhigh`, `max`, and `ultra`. GPT-6 Luna accepts
 `low`, `medium`, `high`, `xhigh`, and `max`, but not `ultra`. The previous-generation
 `gpt-5.6-sol`, `gpt-5.6-terra`, and `gpt-5.6-luna` remain selectable, and the current host catalog

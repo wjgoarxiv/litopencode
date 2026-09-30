@@ -180,13 +180,14 @@ test("openai menu lists Astra plus the legacy rows and the helper menu defaults 
       assert.equal(result.status, 0, result.stderr);
       const out = result.stdout;
       assert.match(out, /0\. gpt-6-astra\s+· xhigh\s+— frontier reasoning \(recommended lead\)/u);
-      assert.match(out, /1\. gpt-6-sol\s+· xhigh\s+— coding lead \(recommended alternative\)/u);
+      assert.match(out, /1\. gpt-6\.1-sol\s+· xhigh\s+— coding lead \(recommended alternative\)/u);
       assert.match(out, /2\. gpt-6-luna\s+· max\s+— balanced \(recommended helper\)/u);
-      assert.match(out, /3\. gpt-5\.6-sol\s+· xhigh\s+— deepest reasoning, previous generation/u);
-      assert.match(out, /4\. gpt-5\.6-luna\s+· max\s+— balanced, previous generation/u);
-      assert.match(out, /5\. gpt-5\.6\s+· high\s+— previous generation/u);
-      assert.match(out, /6\. gpt-5\.6-terra\s+· xhigh\s+— previous generation/u);
-      assert.match(out, /Choose the HELPER model[^\n]*\n[\s\S]*?Select 0-6 \[2\]:/u);
+      assert.match(out, /3\. gpt-6-sol\s+· xhigh\s+— coding lead, previous generation/u);
+      assert.match(out, /4\. gpt-5\.6-sol\s+· xhigh\s+— deepest reasoning, previous generation/u);
+      assert.match(out, /5\. gpt-5\.6-luna\s+· max\s+— balanced, previous generation/u);
+      assert.match(out, /6\. gpt-5\.6\s+· high\s+— previous generation/u);
+      assert.match(out, /7\. gpt-5\.6-terra\s+· xhigh\s+— previous generation/u);
+      assert.match(out, /Choose the HELPER model[^\n]*\n[\s\S]*?Select 0-7 \[2\]:/u);
       assert.doesNotMatch(out, /Warning/u);
       const routes = await readRoutes(dir);
       for (const id of leadCategories) {

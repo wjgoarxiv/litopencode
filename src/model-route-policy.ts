@@ -8,6 +8,7 @@ import {
   newGenerationOpenAiModels,
   openAiModelEfforts,
   previousGenerationOpenAiModels,
+  previousGpt6OpenAiModels,
   stripFastSuffix
 } from "./cli/model-catalog.ts";
 
@@ -95,7 +96,7 @@ export function diagnoseModelRoutes(
       }
       continue;
     }
-    if (modelId === newGenerationOpenAiModels.sol || modelId === newGenerationOpenAiModels.luna) {
+    if (modelId === newGenerationOpenAiModels.sol || modelId === previousGpt6OpenAiModels.sol || modelId === newGenerationOpenAiModels.luna) {
       const supported = new Set<string>(openAiModelEfforts(modelId));
       const variantUnsafe = route.variant !== undefined && !supported.has(route.variant);
       const reasoningUnsafe = route.reasoningEffort !== undefined && !supported.has(route.reasoningEffort);

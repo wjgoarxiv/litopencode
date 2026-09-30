@@ -87,8 +87,9 @@ CI와 비대화형 터미널에서는 자동 질문을 생략하며, 명시한 �
 `NO_COLOR`에서도 출력 스타일을 직접 선택할 수 있지만 색상·커서 이스케이프는 출력하지
 않습니다. `TERM=dumb`이나 UTF-8이 아닌 로케일에서는 ANSI 장식 없이 `LIT` 문자를 표시합니다.
 새로 설치하거나 초기화하면 계획·검토 및 `lit-loop`는 `openai/gpt-6-astra`/`xhigh`,
-실행·연구 helper는 새 기본값인 `openai/gpt-6-luna`/`max`를 사용합니다. `gpt-6-sol`/`xhigh`는
-코딩 리드 대안입니다. GPT-6 Astra와 GPT-6 Sol은 `low`, `medium`, `high`, `xhigh`, `max`, `ultra`를
+실행·연구 helper는 새 기본값인 `openai/gpt-6-luna`/`max`를 사용합니다. `gpt-6.1-sol`/`xhigh`는
+코딩 리드 대안입니다. `gpt-6-sol`은 이전 세대로 계속 선택할 수 있어 이 모델을 쓰는 기존 설정도 그대로 동작하며,
+같은 추론 수준을 지원하고 `-fast` 별칭은 없습니다. GPT-6 Astra와 GPT-6 Sol은 `low`, `medium`, `high`, `xhigh`, `max`, `ultra`를
 모두 지원합니다. GPT-6 Luna는 `low`, `medium`, `high`, `xhigh`, `max`를 지원하지만 `ultra`는
 지원하지 않습니다. 이전 세대 `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`는 계속 선택할 수 있고,
 현재 호스트 카탈로그에는 이 모델들의 지원 종료일이 등록되어 있지 않습니다. GPT-5.6 Luna는

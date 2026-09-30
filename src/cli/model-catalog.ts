@@ -34,8 +34,14 @@ export const defaultOpenAiRoutes = Object.freeze({
 });
 export const newGenerationOpenAiModels = Object.freeze({
   astra: defaultOpenAiRoutes.lead.model,
-  sol: "gpt-6-sol",
+  sol: "gpt-6.1-sol",
   luna: defaultOpenAiRoutes.helper.model
+} as const);
+
+// gpt-6-sol stays accepted for existing configs. Like the GPT-5.6 ids it is a
+// previous generation, but it keeps exact-id semantics: no inferred -fast alias.
+export const previousGpt6OpenAiModels = Object.freeze({
+  sol: "gpt-6-sol"
 } as const);
 
 export const previousGenerationOpenAiModels = Object.freeze({
@@ -64,6 +70,7 @@ export const openaiRows: readonly ModelMenuRow[] = [
   { provider: "openai", model: defaultOpenAiRoutes.lead.model, effort: defaultOpenAiRoutes.lead.effort, efforts: installModelEfforts, hint: "frontier reasoning (recommended lead)" },
   { provider: "openai", model: newGenerationOpenAiModels.sol, effort: "xhigh", efforts: installModelEfforts, hint: "coding lead (recommended alternative)" },
   { provider: "openai", model: defaultOpenAiRoutes.helper.model, effort: defaultOpenAiRoutes.helper.effort, efforts: installModelEfforts.slice(0, 5), hint: "balanced (recommended helper)" },
+  { provider: "openai", model: previousGpt6OpenAiModels.sol, effort: "xhigh", efforts: installModelEfforts, hint: "coding lead, previous generation" },
   { provider: "openai", model: previousGenerationOpenAiModels.sol, effort: "xhigh", efforts: ["high", "xhigh", "max"], hint: "deepest reasoning, previous generation" },
   { provider: "openai", model: previousGenerationOpenAiModels.luna, effort: "max", efforts: ["high", "max"], hint: "balanced, previous generation" },
   { provider: "openai", model: previousGenerationOpenAiModels.family, effort: "high", efforts: ["high", "xhigh", "max"], hint: "previous generation" },
@@ -72,7 +79,8 @@ export const openaiRows: readonly ModelMenuRow[] = [
 
 export const openaiProviderModels = Object.freeze({
   [newGenerationOpenAiModels.astra]: Object.freeze({ name: "GPT-6 Astra", reasoning: true, temperature: false, tool_call: true }),
-  [newGenerationOpenAiModels.sol]: Object.freeze({ name: "GPT-6 Sol", reasoning: true, temperature: false, tool_call: true }),
+  [newGenerationOpenAiModels.sol]: Object.freeze({ name: "GPT-6.1 Sol", reasoning: true, temperature: false, tool_call: true }),
+  [previousGpt6OpenAiModels.sol]: Object.freeze({ name: "GPT-6 Sol", reasoning: true, temperature: false, tool_call: true }),
   [newGenerationOpenAiModels.luna]: Object.freeze({ name: "GPT-6 Luna", reasoning: true, temperature: false, tool_call: true })
 });
 
