@@ -5,6 +5,13 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.14 - 2026-09-30
+
+- Add an optional automatic handoff. It is off until you turn it on, and you choose the context percent; LitOpenCode has no default percent. When the conversation reaches your percent and the turn ends, LitOpenCode asks the model to write a handoff, checks that the file was saved, compacts the conversation, and puts the start of the handoff back in front of the model once. On OpenCode every one of those steps runs by itself. If OpenCode cannot start the compaction, a toast says "Handoff saved. Run /compact now."
+- Turn automatic handoff on with `lit-handoff auto on 70` (use your own number), or with `LITOPENCODE_AUTO_HANDOFF=1` and `LITOPENCODE_AUTO_HANDOFF_PERCENT`. `lit-handoff auto status` shows where it stands, and `litopencode doctor` warns when your percent is at or above the point where OpenCode compacts on its own.
+- The README no longer shows the A/B comparison; one run per side was too little to support its verdicts. The same section is gone from the npm page.
+- The GitHub pages (English and Korean) now show terminal pictures of what LitOpenCode prints, and the motion film was remade in Pretendard with a Korean version.
+
 ## 1.0.13 - 2026-09-30
 
 - The GitHub pages (English and Korean) now show what Jev looks like: the `litopencode doctor` line and the toasts when Jev is off, on, or missing its key. Jev stays off unless you turn it on, and the reference lists what each toast says.

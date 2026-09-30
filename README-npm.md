@@ -1,6 +1,6 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/readme/ascii-readme.svg" width="480" alt="LIT ASCII B mark" /></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/assets/readme/ascii-readme.svg" width="480" alt="LIT ASCII B mark" /></p>
 
 <details>
 <summary>Copy ASCII logo</summary>
@@ -32,13 +32,13 @@
 
 # LitOpenCode
 
-[English](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/README.md) · [한국어](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/README-Ko-KR.md)
+[English](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/README.md) · [한국어](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/README-Ko-KR.md)
 
 **Keep the work lit.**
 
 <p align="center">
-<a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/readme/badge-version.svg" alt="1.0.13" /></a>
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
+<a href="#install"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/assets/readme/badge-version.svg" alt="1.0.14" /></a>
+<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 </p>
 
 LitOpenCode adds workflow agents, slash commands, and a local evidence ledger to OpenCode.
@@ -98,7 +98,7 @@ With the OpenAI provider, a fresh install uses GPT-6 Astra (`gpt-6-astra`) at `x
 - The planner only plans. `lit-plan` has `edit`, `bash` and `task` denied, and it stays that way even if you choose the looser `balanced` or `yolo` mode.
 - LitOpenCode can update itself when it starts interactively and after an install or doctor run succeeds. To turn that off, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`.
 - Skill learning has been removed. Learning records an earlier release left in a project's `.litopencode` folder are no longer used; keep or delete them as you like.
-- The Jev skill hint is optional and off by default. Turning it on sends eligible prompts to TypeSafe, so read the [Jev skill hint reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/reference.md#jev-skill-hint-optional) first. The GitHub page shows [what the toast and the doctor line look like](https://github.com/wjgoarxiv/litopencode#what-you-will-see).
+- The Jev skill hint is optional and off by default. Turning it on sends eligible prompts to TypeSafe, so read the [Jev skill hint reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/reference.md#jev-skill-hint-optional) first. The GitHub page shows [what the toast and the doctor line look like](https://github.com/wjgoarxiv/litopencode#what-you-will-see).
 - If something seems off, `npm exec --package @litfamily/litopencode@latest -- litopencode doctor` checks the package and your configuration.
 
 ## Uninstall
@@ -109,11 +109,11 @@ There's no uninstall command. Remove the `@litfamily/litopencode` entry from the
 npm uninstall -g @litfamily/litopencode
 ```
 
-The [removal reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/reference.md#remove) covers the installed files and records you may want to keep.
+The [removal reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/reference.md#remove) covers the installed files and records you may want to keep.
 
 ## More
 
 - [Full guide on GitHub](https://github.com/wjgoarxiv/litopencode#readme)
-- [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/reference.md) · [한국어 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/reference-Ko-KR.md)
-- [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/CHANGELOG.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/privacy.md)
-- [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/LICENSE) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.13/docs/assets/readme/JetBrainsMono-OFL.txt)
+- [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/reference.md) · [한국어 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/reference-Ko-KR.md)
+- [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/CHANGELOG.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/privacy.md)
+- [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/LICENSE) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.14/docs/assets/readme/JetBrainsMono-OFL.txt)
