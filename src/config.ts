@@ -23,6 +23,11 @@ export type KnowledgeConfig = {
   readonly capture: boolean;
 };
 
+export type AutoHandoffConfig = {
+  readonly enabled: boolean;
+  readonly percent: number | null;
+};
+
 export type JsonScalar = string | number | boolean | null;
 export type JsonObject = { readonly [key: string]: JsonValue };
 export type JsonValue = JsonScalar | readonly JsonValue[] | JsonObject;
@@ -57,6 +62,7 @@ export type LitOpenCodeConfig = {
   outputStyle: string;
   boundedAuthority: BoundedAuthorityConfig;
   knowledge: KnowledgeConfig;
+  autoHandoff: AutoHandoffConfig;
   agents: Record<string, LitOpenCodeAgentModelConfig>;
   categories: Record<string, LitOpenCodeCategoryConfig>;
 };
@@ -99,6 +105,7 @@ export const defaultConfig: LitOpenCodeConfig = Object.freeze({
     maxContextBytes: 65_536
   }),
   knowledge: Object.freeze({ capture: true }),
+  autoHandoff: Object.freeze({ enabled: false, percent: null }),
   categories: Object.freeze({
     planning: Object.freeze({
       provider: defaultOpenAiRoutes.lead.provider,
@@ -193,6 +200,10 @@ export function mergeConfigs(base: LitOpenCodeConfig, override: Partial<LitOpenC
     knowledge: {
       ...base.knowledge,
       ...(override.knowledge ?? {})
+    },
+    autoHandoff: {
+      ...base.autoHandoff,
+      ...(override.autoHandoff ?? {})
     },
     categories,
     agents

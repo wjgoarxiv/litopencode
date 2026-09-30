@@ -100,6 +100,23 @@ export function inspectHostLimits(config: Record<string, unknown> | null): HostL
   };
 }
 
+export type HostCompactionPoint = {
+  readonly autoCompaction: boolean;
+  readonly percent: number | null;
+};
+
+// Only the window LitOpenCode itself configures gives a known percent; for any other model the host
+// decides the window and the reserve, so no number is claimed.
+export function inspectHostCompactionPoint(config: Record<string, unknown> | null): HostCompactionPoint {
+  const compaction = config !== null && isRecord(config.compaction) ? config.compaction : {};
+  if (compaction.auto === false) return { autoCompaction: false, percent: null };
+  const configured = inspectHostLimits(config).status === "configured";
+  return {
+    autoCompaction: true,
+    percent: configured ? Math.floor((compactionTriggerTokens * 100) / contextCeilingTokens) : null
+  };
+}
+
 export async function ensureHostLimits(
   configPath: string,
   config: Record<string, unknown> | null,

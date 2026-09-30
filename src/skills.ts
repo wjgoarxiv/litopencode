@@ -426,10 +426,11 @@ export const litOpenCodeRuntimeSkills = Object.freeze([
     title: "Lit Handoff",
     summary: "Create a resumable project handoff from live evidence using the complete embedded Handoff contract and template.",
     featureIds: ["lit-handoff", "doctor-install"],
-    discovery: "Run /lit-handoff, type exact bare handoff, or inspect skills/lit-handoff/SKILL.md.",
+    discovery: "Run /lit-handoff, type exact bare handoff, or inspect skills/lit-handoff/SKILL.md. Run /lit-handoff auto on <percent> to have the handoff written automatically.",
     safety: [
       "Read the complete embedded original contract and template before choosing a destination.",
-      "Verify live workspace facts and preserve a non-managed installed skill collision."
+      "Verify live workspace facts and preserve a non-managed installed skill collision.",
+      "Automatic handoff is off until the user switches it on with a percent of their own; it never compacts without a verified handoff."
     ]
   },
   {

@@ -173,8 +173,8 @@ test("the GitHub-only README media never counts as a required package file", () 
   assert.ok(result.stdout.includes("GitHub-only README media"), result.stdout);
 });
 
-test("every README skill snapshot and A/B image must ship in the package", () => {
-  for (const image of ["docs/assets/skills/lit-pptx.webp", "docs/ab/S11/lit-desktop.webp"]) {
+test("every README skill snapshot must ship in the package", () => {
+  for (const image of ["docs/assets/skills/lit-pptx.webp"]) {
     assert.ok(readmeImagePaths.includes(image), `${image} should be a README image`);
     const result = runChecker(["--stdin"], JSON.stringify(packageReport([
       "package.json",

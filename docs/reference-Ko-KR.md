@@ -241,6 +241,42 @@ npm uninstall -g @litfamily/litopencode
 프로젝트의 `.litopencode/`는 별도 ledger와 receipt입니다. 나중에 재개할 계획이 없다면
 그 상태를 버려도 되는지 확인한 뒤 직접 정리합니다.
 
+## 자동 인수인계
+
+자동 인수인계는 직접 켜야 하며 기본은 꺼져 있습니다. 기본 퍼센트는 없습니다. 플러그인의 `event` 훅과 `experimental.chat.system.transform` 훅에서 동작하고, 대화 내용은 읽지 않으며 assistant 메시지의 토큰 수만 봅니다.
+
+### 한 번의 흐름
+
+1. 루트 세션에서 끝난 assistant 메시지에는 토큰 수가 들어 있습니다. 플러그인은 입력, 출력, 캐시 읽기, 캐시 쓰기를 더하고(호스트가 합계를 주면 그 값을 씁니다) `config.providers`에서 얻은 모델의 컨텍스트 창과 비교합니다. 압축 요약, 실패한 호출, 자식 세션의 메시지는 세지 않습니다.
+2. 합계가 정한 퍼센트에 닿으면 플러그인은 차례가 끝나기를 기다립니다. 차례나 도구 호출이 진행되는 중에는 아무것도 보내지 않습니다.
+3. 유휴 이벤트가 오면 같은 에이전트와 모델로 `promptAsync` 요청을 한 번 보냅니다. 요청 본문은 인수인계를 써 달라고 하면서 표식 줄 `Auto-handoff marker: <세션 id> <ISO 시각>`을 알려 줍니다. lit-handoff 계약 전체는 요청의 system 필드로 전달되므로 화면에 보이는 메시지는 짧게 유지됩니다.
+4. 모델은 lit-handoff 계약이 정하는 위치에 인수인계를 씁니다. 루트 `HANDOFF.md`가 있으면 그 파일에, 없으면 git 프로젝트에서 `.handoff/HANDOFF.md`에 씁니다. 표식 줄은 제목 바로 아래에 둡니다.
+5. 답이 끝나 세션이 다시 유휴가 되면 플러그인은 세션이 유휴인지(`session.status`) 확인하고 후보 파일 두 곳을 읽습니다. 이 세션의 표식이 들어 있고 요청 뒤에 쓰인 인수인계만 인정합니다. 없으면 압축하지 않고 알림을 띄웁니다.
+6. 그다음 마지막 assistant 메시지의 모델로 `session.summarize`를 백그라운드에서 호출하고 "Handoff saved. Compacting the conversation now."를 보여 줍니다. 호출이 실패하면 "Handoff saved. Run /compact now."를 한 번 보여 줍니다.
+7. `session.compacted` 뒤에는(플러그인이 시작했든, 사용자가 `/compact`를 직접 실행했든, OpenCode의 자동 압축이든) 다음 시스템 프롬프트에 `<auto-handoff-digest>`가 붙습니다. 파일 위치와 앞 6144바이트를 데이터로 표시해 담으며, 한 번만 붙습니다. 인수인계가 없거나 오래됐거나 다른 세션 것이면 아무것도 붙이지 않습니다.
+8. 세션이 다시 발동하려면 사용량이 퍼센트 아래로 내려가야 합니다. 그래서 한 번 닿을 때 요청은 한 번만 나가고, 요청 전에 압축이 일어나면 대기 중이던 발동은 취소됩니다.
+
+OpenCode는 세션이 바쁜 동안 들어온 `summarize` 호출을 줄 세웠다가 진행 중인 차례가 끝난 뒤에 응답합니다(OpenCode 1.18.33에서 확인했습니다. 6초짜리 차례 도중의 호출은 6.5초 뒤에 돌아왔고 그 뒤에 압축이 일어났습니다). 그래서 플러그인은 유휴일 때만 호출합니다.
+
+### 설정
+
+| 위치 | 내용 | 참고 |
+| --- | --- | --- |
+| 채팅 `lit-handoff auto on <percent>`, `lit-handoff auto off`, `lit-handoff auto status` | 저장된 설정 | 메시지 전체가 그 한 줄이어야 합니다. `/lit-handoff auto ...`도 같습니다. 숫자 없는 `on`은 마지막 퍼센트를 다시 쓰고, 없으면 물어봅니다 |
+| `.litopencode/auto-handoff.json` | `{"enabled": true, "percent": 70}` | 위 경로가 쓰고 사용할 때마다 읽습니다 |
+| `litopencode.json` 또는 `.litopencode/config.json`의 `autoHandoff` | `{"enabled": false, "percent": null}` | 알 수 없는 키와 잘못된 타입은 설정을 읽을 때 거부합니다 |
+| `LITOPENCODE_AUTO_HANDOFF`, `LITOPENCODE_AUTO_HANDOFF_PERCENT` | `1` 또는 `0`, 1~99 정수 | 우선순위가 가장 높습니다 |
+
+우선순위는 환경 변수, 저장된 설정, 설정 파일, 기본값(꺼짐, 퍼센트 없음) 순서입니다. 1~99 밖의 퍼센트, 1과 0이 아닌 스위치 값, 퍼센트 없이 켜진 스위치는 기능을 끄고, 이유가 상태 응답과 `litopencode doctor`에 나옵니다.
+
+### Doctor
+
+`litopencode doctor`의 출력에 `autoHandoff` 블록이 추가됩니다. 실제로 적용되는 스위치와 퍼센트, 각각의 출처, 상태 파일 경로, 두 변수 이름, 호스트의 압축 지점, `warnings`가 들어 있습니다. 호스트 지점은 LitOpenCode가 설치하는 창(372,000토큰, 압축은 334,800토큰, 곧 90%)에서만 알 수 있습니다. 그 지점과 같거나 높은 퍼센트는 OpenCode가 먼저 압축하므로 경고가 납니다. 다른 모델은 창과 여유분을 호스트가 정하므로 doctor가 숫자를 내놓지 않습니다.
+
+### 디스크에 남는 것
+
+경로는 `.litopencode/auto-handoff.json`(스위치와 퍼센트)을 씁니다. 인수인계 파일은 모델이 씁니다. 그 밖에는 저장하지 않습니다. 표식은 세션 동안 메모리에만 있으므로, 요청과 압축 사이에 OpenCode를 다시 시작하면 다시 불러오기는 일어나지 않습니다.
+
 ## 안전과 업데이트
 
 - `lit-plan`은 계획 전용입니다. `edit`, `bash`, `task` 권한을 허용하지 않습니다.

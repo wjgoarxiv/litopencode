@@ -46,7 +46,7 @@ LitOpenCode는 OpenCode에 워크플로 agent, 슬래시 명령, 로컬 근거 �
 
 프롬프트에 `lit`을 붙이면 계획하고, 만들고, 확인한 뒤 다음 할 일을 프로젝트에 적어 둡니다. 그래서 다음 세션이 멈춘 자리에서 바로 이어 갈 수 있습니다. 모델을 돌리고 권한을 묻는 일은 지금처럼 OpenCode가 합니다.
 
-**[전체 안내, 스킬 갤러리, A/B 결과는 GitHub에서 →](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md)**
+**[전체 안내와 스킬 갤러리는 GitHub에서 →](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md)**
 
 ## 설치
 
@@ -87,10 +87,6 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 | `/litresearch` | 출처 근거를 남기며 조사합니다. |
 
 이 밖에도 디버깅, 리팩터링, 코드 검토, 조사 스킬이 있고, 워드 보고서(`lit-docx`)와 파워포인트 발표자료(`lit-pptx`), 다이어그램, 과학 그림, 화면 구현, README, 글 다듬기(`/lit-humanizer`) 스킬도 함께 설치됩니다. 스킬마다 무엇을 만드는지는 그림과 함께 [GitHub 스킬 갤러리](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#스킬-한눈에-보기)에 있습니다.
-
-## 비교해 보니
-
-가볍게 던지는 한국어 프롬프트 열 개를 순정 OpenCode와 LitOpenCode에 똑같이 보내고, LitOpenCode 쪽 문장 끝에만 ` lit`을 붙였습니다. 최종 판정은 열 개 모두 LitOpenCode 승이었습니다. 아홉 개는 메인테이너가 두 결과를 나란히 보고 판정했고, 메인테이너가 눈으로 검토하지 않은 한 개는 블라인드 심사 결과를 그대로 썼습니다. 다만 제품 표식을 지우고 비교한 블라인드 심사만 따로 보면 LitOpenCode는 4승 3무 3패였습니다. 과제, 두 판정, 양쪽 화면은 [GitHub의 A/B 결과](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#ab-결과)에 있습니다.
 
 ## 설치하면 바뀌는 것
 

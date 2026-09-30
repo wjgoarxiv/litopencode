@@ -19,6 +19,7 @@ export type RuntimePaths = {
   lifecycleLockDir: string;
   knowledgeDir: string;
   knowledgeClaimsFile: string;
+  autoHandoffFile: string;
   opencodeConfigFile: string;
 };
 
@@ -59,6 +60,7 @@ export function createRuntimePaths(projectRoot: string): RuntimePaths {
     lifecycleLockDir: path.join(litLoopDir, ".work-schema-3.lock"),
     knowledgeDir: path.join(runtimeDir, "knowledge"),
     knowledgeClaimsFile: path.join(runtimeDir, "knowledge", "claims.jsonl"),
+    autoHandoffFile: path.join(runtimeDir, "auto-handoff.json"),
     opencodeConfigFile: path.join(root, "opencode.json")
   };
 }

@@ -4,6 +4,7 @@ import type { AgentPermission, AgentToolId } from "./agents/types.ts";
 import type {
   JsonObject,
   JsonValue,
+  AutoHandoffConfig,
   BoundedAuthorityConfig,
   KnowledgeConfig,
   LitOpenCodeAgentModelConfig,
@@ -112,6 +113,28 @@ function parseKnowledge(value: unknown, filePath: string): Partial<KnowledgeConf
   }
   const capture = optionalBoolean(value.capture, filePath, "knowledge.capture");
   return capture === undefined ? {} : { capture };
+}
+
+// The percent is checked for type here and for range where the setting is resolved, so a mistyped
+// number turns the feature OFF with a doctor warning instead of keeping the whole plugin from loading.
+function parseAutoHandoff(value: unknown, filePath: string): Partial<AutoHandoffConfig> | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!isRecord(value)) {
+    throw new LitOpenCodeConfigError(`Malformed LitOpenCode config at ${filePath}: autoHandoff must be an object.`);
+  }
+  for (const key of Object.keys(value)) {
+    if (key !== "enabled" && key !== "percent") {
+      throw new LitOpenCodeConfigError(
+        `Malformed LitOpenCode config at ${filePath}: autoHandoff.${key} is not a supported setting.`
+      );
+    }
+  }
+  const enabled = optionalBoolean(value.enabled, filePath, "autoHandoff.enabled");
+  const percent = value.percent === null ? null : optionalNumber(value.percent, filePath, "autoHandoff.percent");
+  return {
+    ...(enabled === undefined ? {} : { enabled }),
+    ...(percent === undefined ? {} : { percent })
+  };
 }
 
 function optionalReasoningEffort(value: unknown, filePath: string, field: string): ReasoningEffort | undefined {
@@ -294,6 +317,9 @@ function parseConfig(value: unknown, filePath: string): Partial<LitOpenCodeConfi
   }
   if ("knowledge" in value) {
     config.knowledge = parseKnowledge(value.knowledge, filePath) as KnowledgeConfig;
+  }
+  if ("autoHandoff" in value) {
+    config.autoHandoff = parseAutoHandoff(value.autoHandoff, filePath) as AutoHandoffConfig;
   }
   config.categories = parseNamedMap(value.categories, filePath, "categories", parseCategoryConfig);
   config.agents = parseNamedMap(value.agents, filePath, "agents", parseAgentModelConfig);

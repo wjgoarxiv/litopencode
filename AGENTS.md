@@ -17,6 +17,7 @@ TypeScript ESM, tests via `node --test`. Git root is this directory, branch `mas
 | Activation and routing | `src/activation.ts`, `src/activation-routing.ts`, `src/activation-prompt-utils.ts` |
 | Command and feature registries | `src/commands.ts`, `src/features.ts`, `src/skills.ts` |
 | Installer asset handling | `src/cli/managed-skill-assets.ts` |
+| Automatic handoff (opt-in) | `src/auto-handoff.ts` (settings, route, marker, digest), `src/auto-handoff-hooks.ts` (event and system-prompt hooks) |
 | Skills corpus | `skills/<id>/SKILL.md` |
 
 ## Verification

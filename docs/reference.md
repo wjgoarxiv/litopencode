@@ -341,6 +341,42 @@ OpenCode's managed `opencode.jsonc` (or the custom root's `opencode.json`). Remo
 Project `.litopencode/` state is separate; preserve it for later resume or remove it only
 when discarding that project's ledger and receipts is intentional.
 
+## Automatic handoff
+
+Automatic handoff is opt-in and OFF by default. There is no default percent. It works in the plugin's `event` hook and its `experimental.chat.system.transform` hook, and it reads nothing from the conversation except each assistant message's token counts.
+
+### How one cycle runs
+
+1. Each completed assistant message in a root session carries token counts. The plugin adds input, output, cache read and cache write (or uses the host's total when it is present) and compares the sum with the model's context window from `config.providers`. A compaction summary, a failed call, and a message from a child session are ignored.
+2. When the sum reaches the user's percent, the plugin waits for the turn to end. It never sends anything during a turn or a tool call.
+3. At the idle event it sends one `promptAsync` request to the same agent and model. The request text asks for a handoff and names a marker line, `Auto-handoff marker: <session id> <ISO time>`. The complete lit-handoff contract travels in the request's system field, so the visible message stays short.
+4. The model writes the handoff at the destination the lit-handoff contract resolves: root `HANDOFF.md` when it exists, otherwise `.handoff/HANDOFF.md` in a git project. It puts the marker line directly under the title.
+5. When the session is idle again after the reply, the plugin checks that the session is idle (`session.status`) and reads both candidate files. A handoff counts only if it contains this session's marker and was written after the request. Without one the plugin does not compact and shows a toast.
+6. The plugin then calls `session.summarize` with the model of the last assistant message, in the background, and shows "Handoff saved. Compacting the conversation now." If that call fails it shows "Handoff saved. Run /compact now." once.
+7. After `session.compacted` (from the plugin, from the user's own `/compact`, or from OpenCode's automatic compaction), the next system prompt carries `<auto-handoff-digest>`: a pointer to the file plus the first 6144 bytes, framed as data. It is added once. A missing, stale or foreign handoff adds nothing.
+8. Usage must fall below the percent before the session can fire again, so a crossing produces one request, and a compaction that happens before the request cancels a pending crossing.
+
+OpenCode queues a `summarize` call made while a session is busy and answers it only after the running turn ends (checked on OpenCode 1.18.33: a call made during a six-second turn returned after six and a half seconds and compacted afterwards). The plugin therefore calls it only at idle.
+
+### Settings
+
+| Where | What | Notes |
+| --- | --- | --- |
+| Chat `lit-handoff auto on <percent>`, `lit-handoff auto off`, `lit-handoff auto status` | Saved setting | The whole message must be that one line. `/lit-handoff auto ...` does the same. `on` without a number reuses the last percent and asks for one when none exists |
+| `.litopencode/auto-handoff.json` | `{"enabled": true, "percent": 70}` | Written by the route above, read on every use |
+| `autoHandoff` in `litopencode.json` or `.litopencode/config.json` | `{"enabled": false, "percent": null}` | Unknown keys and wrong types are rejected when the config loads |
+| `LITOPENCODE_AUTO_HANDOFF`, `LITOPENCODE_AUTO_HANDOFF_PERCENT` | `1` or `0`, and a whole number from 1 to 99 | Highest priority |
+
+The order is environment, then saved setting, then config file, then the default (OFF, no percent). A percent outside 1 to 99, a switch value other than 1 or 0, or an enabled switch without any percent turns the feature OFF, and the reason appears in the status reply and in `litopencode doctor`.
+
+### Doctor
+
+`litopencode doctor` adds an `autoHandoff` block: the effective switch and percent, where each came from, the state file path, the two variable names, the host compaction point, and `warnings`. The host point is known for the window LitOpenCode installs (372,000 tokens with compaction at 334,800, which is 90%). A percent at or above it produces a warning, because OpenCode would compact first. For other models the host decides the window and the reserve, so doctor reports no number.
+
+### What is written
+
+The route writes `.litopencode/auto-handoff.json` (the switch and the percent). The model writes the handoff file. Nothing else is stored: the marker lives in memory for the session, and a restart of OpenCode between the request and the compaction means no reload.
+
 ## Safety and updates
 
 - `lit-plan` remains planning-only: its `edit`, `bash`, and `task` permissions stay denied.

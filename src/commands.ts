@@ -36,6 +36,7 @@ import {
   parseStartWorkLifecycleDirective
 } from "./bounded-authority-hooks.ts";
 import type { BoundedAuthorityOptions } from "./bounded-authority.ts";
+import { autoHandoffSettingText, type AutoHandoffRouteMode } from "./auto-handoff.ts";
 import {
   formatResolvedPlanNotice,
   formatSavedPlanNotice,
@@ -130,6 +131,7 @@ export type CommandActivationOptions = {
   readonly commandAliasRoot?: string;
   readonly boundedAuthority?: BoundedAuthorityOptions;
   readonly knowledgeCaptureEnabled?: boolean;
+  readonly autoHandoffRoute?: (text: string, mode: AutoHandoffRouteMode) => Promise<string | undefined>;
   readonly onScientificVisualizationActivation?: (sessionID: string) => void;
   readonly onSkillActivation?: (sessionID: string, skillId: string) => void | Promise<void>;
 };
@@ -546,6 +548,27 @@ export function createCommandActivationHook(
     ) return;
 
     await applyWikifyKnowledgeCommand(projectRoot, input, output, command, options.knowledgeCaptureEnabled);
+
+    if (command.id === "lit-handoff" && options.autoHandoffRoute !== undefined) {
+      const reply = await options.autoHandoffRoute(input.arguments, "command");
+      if (reply !== undefined) {
+        // The installed command file carries the full handoff prompt; a settings change must not send it.
+        for (let index = output.parts.length - 1; index >= 0; index -= 1) {
+          const part = output.parts[index];
+          if (part?.type === "text" && part.text.startsWith(command.banner)) output.parts.splice(index, 1);
+        }
+        output.parts.push({
+          id: "prt_litopencode_lit_handoff_auto_setting",
+          sessionID: input.sessionID,
+          messageID: "msg_litopencode_lit_handoff_auto_setting",
+          type: "text",
+          text: autoHandoffSettingText(reply),
+          synthetic: true,
+          metadata: { litopencodeAutoHandoff: { surface: "command.execute.before" } }
+        });
+        return;
+      }
+    }
 
     if (command.id === "start-work") {
       if (/^save-plan(?:\s|$)/u.test(input.arguments.trim())) {

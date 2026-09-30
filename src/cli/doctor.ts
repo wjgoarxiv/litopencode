@@ -14,7 +14,12 @@ import { isRecord, readJsonObjectIfPresent, readPackageMetadata } from "./json.t
 import { inspectCommandAliases } from "./command-aliases.ts";
 import { inspectNativeSkills } from "./native-skills.ts";
 import { openCodeHostCapabilities } from "./host-capabilities.ts";
-import { inspectHostLimits } from "./host-limits.ts";
+import { inspectHostCompactionPoint, inspectHostLimits } from "./host-limits.ts";
+import {
+  autoHandoffEnvEnabled,
+  autoHandoffEnvPercent,
+  createAutoHandoffSettings
+} from "../auto-handoff.ts";
 import { inspectLspCapability } from "./lsp-capability.ts";
 import { probeMotionRuntime } from "./motion-runtime.ts";
 import { isLitOpenCodeEntry } from "./plugin-mutation.ts";
@@ -147,6 +152,17 @@ export async function doctor(root: string): Promise<CliResult> {
   const nativeSkills = await inspectNativeSkills(root, metadata);
   const hostConfig = await readOpenCodeConfig(root);
   const motion = probeMotionRuntime(metadata.packageRoot);
+  const autoHandoff = await createAutoHandoffSettings({
+    stateFile: loaded.paths.autoHandoffFile,
+    config: loaded.config.autoHandoff
+  }).resolve();
+  const hostCompaction = inspectHostCompactionPoint(hostConfig.config);
+  const autoHandoffWarnings = [...autoHandoff.warnings];
+  if (autoHandoff.enabled && autoHandoff.percent !== null && hostCompaction.percent !== null && autoHandoff.percent >= hostCompaction.percent) {
+    autoHandoffWarnings.push(
+      `OpenCode compacts on its own at about ${hostCompaction.percent}% of the context window. Your ${autoHandoff.percent}% is at or above that, so the host compacts first and the handoff has no time to run. Choose a percent below ${hostCompaction.percent}.`
+    );
+  }
 
   return {
     exitCode: 0,
@@ -156,6 +172,16 @@ export async function doctor(root: string): Promise<CliResult> {
         capabilities: openCodeHostCapabilities(),
         hostLimits: { path: hostConfig.path, ...inspectHostLimits(hostConfig.config) },
         lsp: inspectLspCapability(hostConfig.config),
+        autoHandoff: {
+          enabled: autoHandoff.enabled,
+          percent: autoHandoff.percent,
+          sources: autoHandoff.sources,
+          stateFile: loaded.paths.autoHandoffFile,
+          env: { enabled: autoHandoffEnvEnabled, percent: autoHandoffEnvPercent },
+          host: { autoCompaction: hostCompaction.autoCompaction, compactionPercent: hostCompaction.percent },
+          compaction: "The plugin starts compaction itself after the handoff is saved; the user does not need to run /compact.",
+          warnings: autoHandoffWarnings
+        },
         motion,
         jevSkillHint: jevSkillHintDoctorLine(process.env),
         config: {

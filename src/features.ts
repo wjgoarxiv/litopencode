@@ -1104,7 +1104,25 @@ export const litOpenCodeFeatures = Object.freeze([
         kind: "hook",
         id: "chat.message",
         surface: "OpenCode exact bare handoff route",
-        description: "Activates only when an entire non-code chat message is handoff."
+        description: "Activates only when an entire non-code chat message is handoff. The single line lit-handoff auto on <percent>, off or status changes the automatic-handoff setting instead."
+      },
+      {
+        kind: "hook",
+        id: "event",
+        surface: "OpenCode event hook",
+        description: "Reads assistant token counts, asks for a handoff once the user's percent is reached and the turn is over, starts compaction after a verified handoff, and notes the compaction."
+      },
+      {
+        kind: "hook",
+        id: "experimental.chat.system.transform",
+        surface: "OpenCode system prompt hook",
+        description: "Hands the verified handoff back once after the compaction; a stale or foreign handoff is refused."
+      },
+      {
+        kind: "config",
+        id: "autoHandoff",
+        surface: "litopencode.json and .litopencode/config.json",
+        description: "Holds the OFF-by-default switch and the user's percent; LITOPENCODE_AUTO_HANDOFF and LITOPENCODE_AUTO_HANDOFF_PERCENT override it and doctor reports it."
       },
       {
         kind: "config",
@@ -1113,7 +1131,12 @@ export const litOpenCodeFeatures = Object.freeze([
         description: "Preserves the adapter and package-vendored exact source, eval, example, and template with hash-aware doctor checks."
       }
     ],
-    verification: ["node --test test/lit-handoff.test.mjs", "node --test test/runtime-skills.test.mjs"]
+    verification: [
+      "node --test test/lit-handoff.test.mjs",
+      "node --test test/auto-handoff.test.mjs",
+      "node --test test/auto-handoff-wiring.test.mjs",
+      "node --test test/runtime-skills.test.mjs"
+    ]
   },
   {
     id: "lit-scientific-visualization",

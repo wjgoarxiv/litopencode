@@ -67,6 +67,7 @@ export {
   mergeAgentModelConfig,
   mergeConfigs,
   readLitOpenCodeConfigFile,
+  type AutoHandoffConfig,
   type LitOpenCodeAgentModelConfig,
   type BoundedAuthorityConfig,
   type KnowledgeConfig,

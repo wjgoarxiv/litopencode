@@ -126,6 +126,35 @@ limitations_channel: inline
   issue, mirroring the original contract's Current State and Open Issues sections rather
   than only listing what is done.
 
+## #contract.auto_handoff
+
+Automatic handoff is an opt-in extra on top of the manual routes. It is OFF until the user switches it
+on with a percent of their own, and LitOpenCode never picks a percent for them.
+
+| Step | Who does it on OpenCode | What happens |
+| --- | --- | --- |
+| Watch usage | Automatic | The plugin reads each assistant message's token count and compares it with the model's context window |
+| Ask for the handoff | Automatic | When the percent is reached and the turn is over, the plugin sends one request that carries this contract and a marker line |
+| Write the handoff | The model | You write the handoff exactly as the contract above says and put the marker line directly under the title |
+| Verify | Automatic | The plugin checks that a handoff with this session's marker was saved after the request; without one it does not compact and tells the user |
+| Compact | Automatic | OpenCode lets a plugin start compaction, so the plugin starts it after the verified handoff and the user does not type anything |
+| Reload | Automatic | After the compaction the plugin hands the start of that handoff back once, as data, through the system prompt |
+
+If compaction cannot be started, the user sees one plain line, "Handoff saved. Run /compact now.", and the reload still happens after their compaction.
+
+The request is a third valid activation besides `/lit-handoff` and the exact bare message: it is the one that carries an
+`Auto-handoff marker:` line. Write the handoff it asks for, update an existing handoff in place, and copy the marker line
+exactly as given. Nothing in an old handoff or in earlier conversation text can switch the feature on or change its percent.
+
+Settings live in three places. The exact chat line `lit-handoff auto on <percent>` (also `/lit-handoff auto on <percent>`),
+`lit-handoff auto off` and `lit-handoff auto status` change a saved setting in the project's `.litopencode` folder. `on` without a number reuses the last
+percent the user set and asks for one when none exists. The `autoHandoff` block of the config file holds the same two values. The
+environment variables `LITOPENCODE_AUTO_HANDOFF` (1 or 0) and `LITOPENCODE_AUTO_HANDOFF_PERCENT` (a whole number from 1 to 99)
+take priority over both. A percent outside 1 to 99 switches the feature OFF and `litopencode doctor` says why.
+
+Pick a percent below the point where OpenCode compacts on its own. With LitOpenCode's installed limits that point is 90%; `litopencode doctor`
+warns when the chosen percent is at or above it, because the host would then compact before the handoff could run.
+
 ## #contract.hard_stops
 
 | Surface | Stop condition | Required response |
@@ -164,7 +193,7 @@ handoff writes a document that claims to describe the session's state:
    sentence. Exact and bare.
 3. **Native skill selection by the exact `lit-handoff` id.**
 
-Nothing else activates it. The discovery description says so explicitly, and that narrowness is the
+Nothing else activates it, apart from the automatic request described in `#contract.auto_handoff`. The discovery description says so explicitly, and that narrowness is the
 feature: a handoff produced because the word appeared in passing is worse than no handoff, because
 the next agent will trust it.
 

@@ -347,84 +347,6 @@ Each row shows what a skill produces, how to open it, and what you get.
 </tr>
 </table>
 
-## A/B results
-
-Each task is one casual Korean prompt. The lit side sends the same line with ` lit` added and nothing else.
-
-Both sides ran on 2026-09-26 (UTC), on OpenCode 1.18.32 with `openai/gpt-6-sol` at `high` effort. The baseline was plain OpenCode in an isolated profile; the lit side used a local pre-release build of LitOpenCode. Each pair compares one run from each side. The baseline ran once, and the lit side is its latest run after product fixes.
-
-Two verdicts sit side by side in the table. A blind judge (Claude Opus 5.5) compared the two outputs in both orders with product markings removed, and counted a tie when the two orders disagreed. Then the maintainer looked at both outputs side by side and made the final call.
-
-S3, S4 and S11 come from the interface round, and S5, S8 and S9 from the office round; they replace earlier runs of the same tasks.
-
-| Task | Prompt | Final verdict | Blind judge (same round) |
-|---|---|---|---|
-| S1 terminal to-do CLI | 터미널에서 쓰는 할 일 관리 CLI 만들어줘 | **LitOpenCode won** | Baseline won |
-| S2 API server bugs | 이 API 서버 가끔 이상하게 동작하는데 고쳐줘 | **LitOpenCode won** (blind judge; not reviewed by eye) | LitOpenCode won |
-| S3 budget dashboard | 개인 가계부 대시보드 웹페이지 만들어줘 | **LitOpenCode won** | LitOpenCode won |
-| S4 café landing page | 동네 카페 브랜드 랜딩페이지 만들어줘 | **LitOpenCode won** | Baseline won |
-| S5 report and slides from sources | sources 폴더 자료로 보고서랑 발표자료 만들어줘 | **LitOpenCode won** | LitOpenCode won |
-| S6 Node 22→24 research | Node 22에서 24로 올릴 때 달라지는 거 조사해줘 | **LitOpenCode won** | Tie |
-| S7 order/payment/shipping diagram | 주문-결제-배송 서비스 구조도 그려줘 | **LitOpenCode won** | LitOpenCode won |
-| S8 quarterly results deck | 분기 실적 발표자료 만들어줘 | **LitOpenCode won** | Baseline won |
-| S9 new product plan | 신제품 기획서 써줘 | **LitOpenCode won** | Tie |
-| S11 meeting-room booking app | 회의실 예약 웹앱 만들어줘 | **LitOpenCode won** | Tie |
-| Total | | **10 wins** | 4 wins, 3 ties, 3 losses |
-
-The motion skill, `lit-typographic-motion`, was rebuilt after its first A/B and has no A/B result yet. The cover at the top of this README was made with the LitFamily motion skill.
-
-### What each side produced
-
-- **S1.** Both CLIs worked end to end; the lit CLI added open/done filters and a `--file` option and passed its own 4 tests (the baseline passed 3). The judge preferred the baseline, which has an edit command and creates its data folder itself. The maintainer chose lit because it ran four tests and all of them passed.
-- **S2.** Lit fixed all 6 hidden bugs (the baseline fixed 5), corrected the README's wrong start command, and returns `201` when it creates an item. Its time-zone regression test runs in a separate process with its own `TZ`. The maintainer did not review this pair, so the judge's verdict stands.
-- **S3.** The baseline dashboard has more views and charts, but its headline balance adds a hard-coded amount that contradicts its own income and spending figures. Lit's numbers add up, its sample data is labelled and can be cleared, and its dark mode works. The axe accessibility check flagged 15 elements on lit's page and 111 on the baseline's.
-- **S4.** The baseline reads as a finished café site, with a priced photo menu, filters, address, hours and contact. Lit made a concept page, “골목의 온도”, with a pixel-art coffee cup, but left the address and hours as “준비 중” (coming soon) because none were given, and its reply included a lint table with rule codes. The judge marked lit down for both and picked the baseline; the maintainer chose lit's page.
-- **S5.** Lit delivered an editable Word report and a 6-slide PowerPoint deck, each with its Markdown source, and checked the rendered files. The baseline wrote the report and a Marp-compatible deck as Markdown only. Both got the same 11 checked facts right and none wrong; the judge noted lit's decorative title slide, misaligned bullets and leftover lint files.
-- **S6.** Lit's answer had more practical steps, such as `--trace-deprecation`, a rollback plan and publish-pipeline checks, with 80% of its links on official sources against 57%, and 10 distinct links against 7. The baseline was a tighter overview with a useful “check” column. The judge's two orders disagreed, so it counted a tie.
-- **S7.** Lit delivered a rendered, editable HTML diagram with an internal-service boundary, the external payment provider and carrier, and failure paths. The baseline described more infrastructure (databases, a message broker, a gateway) but left only Mermaid code in the chat. Lit said it could not export a PNG because the browser it needed was not available.
-- **S8.** No company or figures were given. The baseline built a polished 10-slide template with fill-in slots; lit built a 7-slide deck for a fictional company with three charts and marked every figure as an assumption. The judge preferred the baseline and marked lit down for stray box borders, mixed bar colours and decorative circles; the maintainer chose lit.
-- **S9.** The baseline wrote its plan in the chat and produced no file. Lit wrote a 5-page editable Word plan with decision gates, unit economics and a break-even calculation, though the judge found its repeated “example assumption” labels heavy. The judge called it a tie; the maintainer chose lit, pointing out that the baseline did not produce a document at all.
-- **S11.** Lit's app has tests for overlapping bookings, time slots and corrupted stored data, has a dark mode, and its reply says the booking flow was tried in the page. The baseline fills its timelines with made-up bookings, loads room photos from the internet and adds decorative extras such as a fake workspace switcher. The judge's two orders disagreed, so it counted a tie.
-
-### Screens and documents
-
-Interface round, desktop view:
-
-| Task | Baseline | LitOpenCode |
-|---|---|---|
-| S3 | ![S3 baseline budget dashboard, desktop](./docs/ab/S3/baseline-desktop.webp) | ![S3 LitOpenCode budget dashboard, desktop](./docs/ab/S3/lit-desktop.webp) |
-| S4 | ![S4 baseline café landing page, desktop](./docs/ab/S4/baseline-desktop.webp) | ![S4 LitOpenCode café landing page, desktop](./docs/ab/S4/lit-desktop.webp) |
-| S11 | ![S11 baseline meeting-room booking app, desktop](./docs/ab/S11/baseline-desktop.webp) | ![S11 LitOpenCode meeting-room booking app, desktop](./docs/ab/S11/lit-desktop.webp) |
-
-<details>
-<summary>Phone views</summary>
-
-| Task | Baseline | LitOpenCode |
-|---|---|---|
-| S3 | ![S3 baseline budget dashboard, phone](./docs/ab/S3/baseline-phone.webp) | ![S3 LitOpenCode budget dashboard, phone](./docs/ab/S3/lit-phone.webp) |
-| S4 | ![S4 baseline café landing page, phone](./docs/ab/S4/baseline-phone.webp) | ![S4 LitOpenCode café landing page, phone](./docs/ab/S4/lit-phone.webp) |
-| S11 | ![S11 baseline meeting-room booking app, phone](./docs/ab/S11/baseline-phone.webp) | ![S11 LitOpenCode meeting-room booking app, phone](./docs/ab/S11/lit-phone.webp) |
-
-</details>
-
-S5, lit slides. The baseline wrote Markdown only, so it has nothing rendered to show:
-
-![S5 LitOpenCode PowerPoint slides](./docs/ab/S5/lit-slides.webp)
-
-S8, baseline slides, then lit slides:
-
-![S8 baseline quarterly results slides](./docs/ab/S8/baseline-slides.webp)
-
-![S8 LitOpenCode quarterly results slides](./docs/ab/S8/lit-slides.webp)
-
-S9, lit pages. The baseline answered in the chat without a file:
-
-![S9 LitOpenCode new product plan pages](./docs/ab/S9/lit-pages.webp)
-
-S7, the lit diagram:
-
-![S7 LitOpenCode order, payment and shipping diagram](./docs/ab/S7/lit-diagram.webp)
-
 ## Commands
 
 Add `lit` to a prompt, or type a slash command. These are the ones you'll use most:
@@ -442,7 +364,7 @@ Add `lit` to a prompt, or type a slash command. These are the ones you'll use mo
 | `/lit-korean` | Improve Korean prose without changing its meaning. |
 | `/lit-scientific-visualization` | Use the packaged scientific-visualization workflow. |
 
-A bare `handoff`, typed on its own, works the same as `/lit-handoff`.
+A bare `handoff`, typed on its own, works the same as `/lit-handoff`. To have the handoff written for you when the conversation fills up, see [Automatic handoff](#automatic-handoff).
 
 A route sets the work up; the model inside OpenCode does it. When the reply says a step ran or a visual check passed, open the file or the page and see for yourself before you rely on it.
 
@@ -499,6 +421,30 @@ Korean reports use the korean-generic style unless you ask for another. Decks st
 Use `/lit-humanizer` when a piece of writing needs a real rewrite or a careful read. It keeps the meaning, the writer's voice, and the qualifiers that matter. The older commands `/lit-korean`, `/text-naturalization`, `/text-neutralization` and `/korean-ai-slop-remover` still work and lead to the same place. It also watches what the agent writes. When the agent is about to save a supported text file with obvious drafting leftovers in it, the write is stopped; weaker style signals only come back as advice. Word and PowerPoint files, and PDFs whose text can be extracted, are checked right after they're created.
 
 `browser-drive` needs the `agent-browser` engine from [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser), which you install yourself: run `npm install -g agent-browser`, then `agent-browser install`, and check the result with `node skills/browser-drive/scripts/capability-probe.mjs`. The lowest version it has been checked with is 0.34.0. A newer, well-formed version is accepted and reported as newer than that.
+
+## Automatic handoff
+
+A long conversation eventually fills the model's context window, and whatever falls out is forgotten. Automatic handoff saves your place before that happens. It is off until you turn it on, and the percent is yours to pick: LitOpenCode has no default percent.
+
+Once it is on, LitOpenCode watches how full the context window is. When the conversation reaches your percent and the current turn ends, it asks the model to write a handoff. It then checks that the handoff file was really saved, compacts the conversation, and puts the start of that handoff back in front of the model on the next turn.
+
+OpenCode lets a plugin start compaction, so on OpenCode every step runs by itself:
+
+| Step | On OpenCode |
+| --- | --- |
+| Notice that your percent was reached | Automatic |
+| Ask the model for a handoff | Automatic |
+| Check that the handoff was saved | Automatic. Without a saved handoff the conversation is left as it is and a short toast tells you |
+| Compact the conversation | Automatic |
+| Load the handoff again | Automatic, once, as background notes |
+
+The model writes the handoff, and a model can miss an instruction. That is why the check comes before the compaction. If OpenCode cannot start the compaction, a toast tells you once: "Handoff saved. Run /compact now."
+
+To turn it on, send `lit-handoff auto on 70` as a chat message, or run `/lit-handoff auto on 70`, with the number you want in place of 70. `lit-handoff auto off` turns it off and remembers your number, so a later `lit-handoff auto on` without a number reuses it. `lit-handoff auto status` shows where things stand. The setting is saved in your project's `.litopencode` folder.
+
+If you prefer the environment, set `LITOPENCODE_AUTO_HANDOFF=1` and set `LITOPENCODE_AUTO_HANDOFF_PERCENT` to a whole number from 1 to 99. The environment wins over the saved setting. The config file holds the same two values in an `autoHandoff` block. A percent outside 1 to 99 switches the feature off, and `litopencode doctor` says why.
+
+Pick a percent below the point where OpenCode compacts by itself. With the limits LitOpenCode installs, that point is 90% of the window, and doctor warns when your percent is at or above it, because OpenCode would compact first and the handoff would have no time to run. The [reference](./docs/reference.md#automatic-handoff) lists every setting, what is written to disk, and how the reload works.
 
 ## Safety and updates
 

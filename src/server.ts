@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createChatMessageActivationHook, showActivationToast, showJevSkillHintToast } from "./activation.ts";
 import { registerLitOpenCodeAgents } from "./agents.ts";
+import { createAutoHandoff } from "./auto-handoff-hooks.ts";
 import { createBoundedAuthorityEventHook } from "./bounded-authority-hooks.ts";
 import { createCommandActivationHook } from "./commands.ts";
 import { loadConfig } from "./config.ts";
@@ -48,6 +49,13 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
     const logger = createLogger(loaded.paths);
     const getSession = createSessionLookup(input?.client);
     const ignitionState = createIgnitionState();
+    const autoHandoff = createAutoHandoff({
+      projectRoot: root,
+      paths: loaded.paths,
+      client: input?.client,
+      config: loaded.config.autoHandoff,
+      ...(getSession === undefined ? {} : { getSession })
+    });
     const deliverableHedgeGuard = createDeliverableHedgeGuard({ projectRoot: root });
     const recordSkillActivation = async (sessionID: string, skillId: string, appendedLit = false): Promise<void> => {
       showActivationToast(input?.client, skillId);
@@ -65,6 +73,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       commandAliasRoot: defaultOpenCodeConfigRoot(),
       boundedAuthority: loaded.config.boundedAuthority,
       knowledgeCaptureEnabled: loaded.config.knowledge.capture,
+      autoHandoffRoute: autoHandoff.route,
       onSkillActivation: recordSkillActivation
     });
 
@@ -80,12 +89,14 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           trustedCommandActivations.delete(eventInput.event.properties.info.id);
         }
         await boundedAuthorityEvent(eventInput);
+        await autoHandoff.event(eventInput);
       },
       tool: litOpenCodeTools,
       "chat.message": createChatMessageActivationHook(root, {
         getSession,
         boundedAuthority: loaded.config.boundedAuthority,
         knowledgeCaptureEnabled: loaded.config.knowledge.capture,
+        autoHandoffRoute: autoHandoff.route,
         onRootUserTurn: (sessionID) => {
           ignitionState.resetDiscipline(sessionID);
         },
@@ -123,6 +134,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           bundledRulesDir: fileURLToPath(new URL("../rules/bundled-rules", import.meta.url)),
           outputStyle: loaded.config.outputStyle
         }, transformInput, transformOutput);
+        await autoHandoff.systemTransform(transformInput, transformOutput);
       },
       "experimental.session.compacting": async (compactInput, compactOutput) => {
         await applyCompactionRuleReset(compactInput, compactOutput);

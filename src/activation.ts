@@ -16,6 +16,7 @@ import {
 } from "./bounded-authority-hooks.ts";
 import { startWorkPromptInjection } from "./activation-workflow-prompts.ts";
 import type { BoundedAuthorityOptions } from "./bounded-authority.ts";
+import { autoHandoffSettingText, type AutoHandoffRouteMode } from "./auto-handoff.ts";
 import { isReadOnlyWorkflowFamilyPlan } from "./workflow-families.ts";
 import { queryKnowledge } from "./knowledge.ts";
 import { activationDiscipline } from "./activation-probe.ts";
@@ -128,6 +129,7 @@ export type ChatMessageActivationOptions = {
   readonly hostArgv?: readonly string[];
   readonly boundedAuthority?: BoundedAuthorityOptions;
   readonly knowledgeCaptureEnabled?: boolean;
+  readonly autoHandoffRoute?: (text: string, mode: AutoHandoffRouteMode) => Promise<string | undefined>;
   readonly onScientificVisualizationActivation?: (sessionID: string) => void;
   readonly onRootUserTurn?: (sessionID: string) => void | Promise<void>;
   readonly onSkillActivation?: (sessionID: string, skillId: string, appendedLit?: boolean) => void | Promise<void>;
@@ -188,6 +190,27 @@ export function createChatMessageActivationHook(
       (part): part is typeof part & { readonly type: "text"; readonly text: string } =>
         part.type === "text" && part.text.trim().length > 0
     ).map((part) => ({ ...part, text: unwrapOpenCodeRunMessage(part.text, options.hostArgv ?? process.argv) }));
+    if (
+      !childSession &&
+      options.autoHandoffRoute !== undefined &&
+      nonEmptyTextParts.length === 1 &&
+      output.parts.every((part) => part.type === "text")
+    ) {
+      const reply = await options.autoHandoffRoute(nonEmptyTextParts[0].text, "chat");
+      if (reply !== undefined) {
+        output.parts.push({
+          id: `prt_litopencode_lit_handoff_auto_setting_${idSuffix(input.messageID ?? output.message.id)}`,
+          sessionID: input.sessionID,
+          messageID: input.messageID ?? output.message.id,
+          type: "text",
+          text: autoHandoffSettingText(reply),
+          // Sent to the model like any text part, but not shown or copied as the user's own words.
+          synthetic: true,
+          metadata: { litopencodeAutoHandoff: { surface: "chat.message" } }
+        });
+        return;
+      }
+    }
     const exactBareMode =
       output.parts.every((part) => part.type === "text") &&
       nonEmptyTextParts.length === 1 &&

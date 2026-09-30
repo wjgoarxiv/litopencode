@@ -45,7 +45,7 @@ LitOpenCode adds workflow agents, slash commands, and a local evidence ledger to
 
 Add `lit` to a prompt and it plans, builds, checks, and writes down the next step in your project, so a later session can pick up where this one stopped. OpenCode still runs the model and asks for permission the way it always has.
 
-**[Full guide, skills gallery and A/B results on GitHub →](https://github.com/wjgoarxiv/litopencode#readme)**
+**[Full guide and skills gallery on GitHub →](https://github.com/wjgoarxiv/litopencode#readme)**
 
 ## Install
 
@@ -86,10 +86,6 @@ You get an `index.html` to open and try. Next time, `/lit-recap` shows where you
 | `/litresearch` | Research with source evidence. |
 
 Beyond these, the package installs skills for debugging, refactoring, code review, research, Word reports (`lit-docx`), PowerPoint decks (`lit-pptx`), diagrams, scientific figures, interfaces, READMEs, and prose editing (`/lit-humanizer`). Each one, with a picture of what it produces, is in the [skills gallery on GitHub](https://github.com/wjgoarxiv/litopencode#skills-at-a-glance).
-
-## How it compared
-
-Ten casual Korean prompts went to plain OpenCode and to LitOpenCode; the LitOpenCode side only added ` lit` to the same line. The final verdict went to LitOpenCode on all ten. For nine of them that was the maintainer's call after comparing both outputs side by side; the one the maintainer didn't review by eye keeps the blind judge's verdict. The blind judge on its own, comparing outputs with product markings removed, scored LitOpenCode 4 wins, 3 ties, and 3 losses. The tasks, both verdicts, and screenshots of each side are in the [A/B results on GitHub](https://github.com/wjgoarxiv/litopencode#ab-results).
 
 ## What install changes
 
