@@ -5,6 +5,10 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.15 - 2026-09-30
+
+- `gpt-6.1-sol` is now the recommended coding-lead alternative, because OpenAI lists `gpt-6-sol` as the previous generation. The installer model menu offers it as the coding lead and keeps `gpt-6-sol` listed as the previous generation, and the reference describes both. Routes that already use `gpt-6-sol` keep working, and `litopencode doctor` still accepts them.
+
 ## 1.0.14 - 2026-09-30
 
 - Add an optional automatic handoff. It is off until you turn it on, and you choose the context percent; LitOpenCode has no default percent. When the conversation reaches your percent and the turn ends, LitOpenCode asks the model to write a handoff, checks that the file was saved, compacts the conversation, and puts the start of the handoff back in front of the model once. On OpenCode every one of those steps runs by itself. If OpenCode cannot start the compaction, a toast says "Handoff saved. Run /compact now."
