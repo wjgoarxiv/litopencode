@@ -63,7 +63,7 @@ test("Jev snapshot captions say whether a picture is a capture or a sample", asy
     const english = file === "README.md";
     assert.ok(content.includes(english ? "*Captured from the real `litopencode doctor`" : "*격리한 셸에서 실제 `litopencode doctor`를 실행해 캡처했고"), file);
     const samples = content.match(english ? /^\*Sample output/gmu : /^\*.*예시 화면입니다/gmu) ?? [];
-    assert.equal(samples.length, 3, `${file}: three toast pictures are labelled as samples`);
+    assert.equal(samples.length, 4, `${file}: the three Jev toast pictures and the ignition toast picture are labelled as samples`);
   }
   for (const file of npmReadmes) {
     const content = await fs.readFile(file, "utf8");

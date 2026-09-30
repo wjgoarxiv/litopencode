@@ -1,5 +1,5 @@
 {
-  "request": "Remake this product's README motion film in Pretendard with fewer words, larger type, more whitespace, one idea per beat and refined transitions.",
+  "request": "Make the Korean-copy variant of this product's README motion film, set in Pretendard, with the same treatment and the same drawn scenes.",
   "genre": "announcement",
   "path": "stage",
   "pathReason": "The film draws an OpenCode prompt, a toast, three locked permissions, a step chain and a recap, so it needs shapes and a drawn subject beyond type.",
@@ -16,7 +16,7 @@
       "t0": 0,
       "t1": 3.6,
       "purpose": "Distinctive hook: the smallest possible instruction, one word.",
-      "onScreen": "Ink background with generous empty space. A giant lowercase lit in cream fills the right half with the dot of the i drawn as a separate ember circle. On the left the large cream line Add one word. and the small LitOpenCode name at top left.",
+      "onScreen": "Ink background with generous empty space. A giant lowercase lit in cream fills the right half with the dot of the i drawn as a separate ember circle. On the left the large cream line 한 단어를 붙이세요. and the small LitOpenCode name at top left.",
       "motion": "The dot pulses once with a spring. The headline words rise from a mask. In the last second the giant lit scales down and glides toward the left end of a prompt line while the headline lifts away.",
       "sound": "a soft pad enters; a rise builds into the cut"
     },
@@ -24,7 +24,7 @@
       "t0": 3.6,
       "t1": 5.2,
       "purpose": "The word lands in a prompt.",
-      "onScreen": "A dark OpenCode pane fills the right side and the shrunken word settles as the ember lit at the start of a prompt line, then the rest of a to-do-list request types after it. Halfway through, the headline A workflow lights up. rises in on the left.",
+      "onScreen": "A dark OpenCode pane fills the right side and the shrunken word settles as the ember lit at the start of a prompt line, then the rest of a to-do-list request types after it. Halfway through, the headline 워크플로가 켜집니다. rises in on the left.",
       "motion": "Scale hand-off from the giant word into the prompt; the pane grows with a decelerating ease; the prompt types at a steady pace with a caret.",
       "sound": "hit on the cut as the pane arrives"
     },
@@ -32,7 +32,7 @@
       "t0": 5.2,
       "t1": 7.4,
       "purpose": "The word starts a workflow.",
-      "onScreen": "An ember-edged toast drops from the top of the pane with a flame mark and the words LIT IGNITED and lit-loop. Headline: A workflow lights up.",
+      "onScreen": "An ember-edged toast drops from the top of the pane with a flame mark and the words LIT IGNITED and lit-loop. Headline: 워크플로가 켜집니다.",
       "motion": "The toast lands with one overshoot and settles; headline words rise from a mask one beat before it.",
       "sound": "hit as the toast lands on the cut"
     },
@@ -40,7 +40,7 @@
       "t0": 7.4,
       "t1": 8.8,
       "purpose": "Trust: meet the planner.",
-      "onScreen": "An ember line sweeps across the pane and the contents change to the lit-plan name with three large rows, edit, bash and task, each with an open padlock. Headline: The planner only reads.",
+      "onScreen": "An ember line sweeps across the pane and the contents change to the lit-plan name with three large rows, edit, bash and task, each with an open padlock. Headline: 계획 에이전트는 읽기만 합니다.",
       "motion": "The sweep wipes the old contents to the right; rows rise in order; headline words rise from a mask.",
       "sound": "a rise toward the first lock"
     },
@@ -56,7 +56,7 @@
       "t0": 11.2,
       "t1": 15.0,
       "purpose": "Continuity: every step is written down.",
-      "onScreen": "Four large nodes on a line, Plan, Build, Verify and Next, fill in lime one by one as the line draws across. Under them the project folder name litgoal/ appears in lime. Headline: Every step leaves a record.",
+      "onScreen": "Four large nodes on a line, Plan, Build, Verify and Next, fill in lime one by one as the line draws across. Under them the project folder name litgoal/ appears in lime. Headline: 모든 단계가 기록으로 남습니다.",
       "motion": "An ember line sweeps the contents away; the line draws with easing; each node fills with a small overshoot; the last node stays an open ember play mark.",
       "sound": "hit on the cut; a rise toward the recap"
     },
@@ -64,7 +64,7 @@
       "t0": 15.0,
       "t1": 18.4,
       "purpose": "A new session picks the record up.",
-      "onScreen": "The pane is clean with a blinking caret. The recap command /lit-recap is typed, then three rows appear: Done and Checked with lime ticks and Next step with an ember play mark. Headline: Pick up where you stopped.",
+      "onScreen": "The pane is clean with a blinking caret. The recap command /lit-recap is typed, then three rows appear: Done and Checked with lime ticks and Next step with an ember play mark. Headline: 멈춘 곳에서 이어가세요.",
       "motion": "An ember line sweeps the contents away; typing; rows rise in order and hold.",
       "sound": "hit on the cut as the new session opens"
     },
@@ -161,7 +161,7 @@
       "Pretendard",
       "MesloLGS NF"
     ],
-    "hierarchy": "Pretendard 700 for the headline and the giant lit, size and colour carry the hierarchy, one ember accent word per line; Pretendard 400 for the small name; MesloLGS NF only inside the drawn terminal pane, where a real terminal is monospace.",
+    "hierarchy": "Pretendard 700 for the headline and the giant lit, size and colour carry the hierarchy, one ember accent word per line; Pretendard 400 for the small name; MesloLGS NF only inside the drawn terminal pane, where a real terminal is monospace. Korean lines are set at a smaller size than the English ones, with no tracking or width animation.",
     "maxWordsOnScreen": 8
   },
   "palette": [
@@ -203,11 +203,11 @@
   "copy": {
     "source": "invented",
     "lines": [
-      "Add one word.",
-      "A workflow lights up.",
-      "The planner only reads.",
-      "Every step leaves a record.",
-      "Pick up where you stopped.",
+      "한 단어를 붙이세요.",
+      "워크플로가 켜집니다.",
+      "계획 에이전트는 읽기만 합니다.",
+      "모든 단계가 기록으로 남습니다.",
+      "멈춘 곳에서 이어가세요.",
       "Keep the work lit.",
       "LitOpenCode"
     ]
@@ -216,7 +216,8 @@
     "The subject name, One prompt inside OpenCode, and its three specifics, taken from the README's documented behaviour.",
     "The whole subject, a single prompt session, and every copy line except the typed prompt and the product name are written for this film from the README's documented behaviour.",
     "The pane, toast, locks, step chain and recap rows are drawn illustrations of what the documentation describes, not screen captures.",
-    "The generated sound bed."
+    "The generated sound bed.",
+    "The Korean headline wording, written for this film."
   ],
   "ambition": "Type as the set: a giant word that shrinks into the prompt so the film never cuts, only hands off; one headline and one drawn idea per beat with generous empty space; slow deliberate eases with one overshoot on the ignition and lock events; a final ember dot that returns as the i of lit."
 }

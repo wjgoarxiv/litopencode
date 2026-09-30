@@ -16,8 +16,8 @@
   #brand { position:absolute; left:0; top:0; white-space:nowrap; font:700 28px/1 "Pretendard", sans-serif; letter-spacing:.14em; color:var(--cream); transform-origin:0 0; }
   #brand b { color:var(--ember); font-weight:700; }
 
-  .hl { position:absolute; left:140px; top:210px; width:840px; height:660px; margin:0; display:flex; align-items:center;
-        font:700 148px/1.04 "Pretendard", sans-serif; letter-spacing:-.028em; color:var(--cream); }
+  .hl { position:absolute; left:140px; top:210px; width:850px; height:660px; margin:0; display:flex; align-items:center;
+        font:700 108px/1.22 "Pretendard", sans-serif; letter-spacing:0; color:var(--cream); }
   .w { display:inline-block; overflow:hidden; vertical-align:top; padding:.08em 0 .16em; margin:-.08em 0 -.16em; }
   .wi { display:inline-block; will-change:transform; }
   .em { color:var(--ember); } .lm { color:var(--lime); }
@@ -109,11 +109,11 @@
   <script>
     const COPY = {
       giant: "lit",
-      h0: "Add one word.",
-      h1: "A workflow lights up.",
-      h2: "The planner only reads.",
-      h3: "Every step leaves a record.",
-      h4: "Pick up where you stopped.",
+      h0: "한 단어를 붙이세요.",
+      h1: "워크플로가 켜집니다.",
+      h2: "계획 에이전트는 읽기만 합니다.",
+      h3: "모든 단계가 기록으로 남습니다.",
+      h4: "멈춘 곳에서 이어가세요.",
       final: "Keep the work lit.",
       brand: "LitOpenCode"
     };
@@ -149,11 +149,11 @@
       return { el: h, words: inners };
     }
     const H = [
-      buildHeadline("h0", COPY.h0, { "word.": "em" }),
-      buildHeadline("h1", COPY.h1, { "lights": "em" }),
-      buildHeadline("h2", COPY.h2, { "reads.": "em" }),
-      buildHeadline("h3", COPY.h3, { "record.": "lm" }),
-      buildHeadline("h4", COPY.h4, { "stopped.": "lm" })
+      buildHeadline("h0", COPY.h0, { "단어를": "em" }),
+      buildHeadline("h1", COPY.h1, { "켜집니다.": "em" }),
+      buildHeadline("h2", COPY.h2, { "읽기만": "em" }),
+      buildHeadline("h3", COPY.h3, { "기록으로": "lm" }),
+      buildHeadline("h4", COPY.h4, { "이어가세요.": "lm" })
     ];
     function headline(ttl, t, tin, tout) {
       let any = 0;

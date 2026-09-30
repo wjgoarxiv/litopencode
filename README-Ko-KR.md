@@ -111,13 +111,41 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 진행 상황과 확인한 결과까지, 기록은 모두 프로젝트의 `.litopencode/litgoal/`에 쌓입니다. OpenCode에는 세션을 넘어 목표를 보관할 곳이 따로 없어서, 다음 세션은 이 폴더를 보고 어디까지 했는지 압니다. 작업 지침만 담긴 스킬도 있는데, 문서에 나온 경로로 그 스킬을 부르면 지침이 작업에 적용됩니다.
 
+## 설치 후 화면에서 보이는 것
+
+LitOpenCode가 화면에 무엇을 출력하는지 미리 볼 수 있도록 그림 네 장을 준비했습니다. 설치가 잘 끝났을 때 어떤 모습인지 낯설지 않게 해 줍니다. 각 그림에는 실제 캡처인지 예시 화면인지 밝혀 두었습니다. 그림마다 다크와 라이트 버전이 있고 내용은 같으며, 브라우저 테마에 맞는 쪽이 보입니다. Jev 힌트의 그림은 [화면에서 보이는 것](#화면에서-보이는-것)에 따로 있습니다.
+
+**설치.** `litopencode install`은 번호가 붙은 다섯 단계를 보여 주고, 끝난 단계마다 체크 표시를 붙인 뒤 초록색 상자로 마무리합니다. 상자에는 설치가 끝났다는 말과 다음에 할 일이 적혀 있습니다. OpenCode를 다시 시작하고 Tab을 눌러 lit-loop를 고르면 됩니다.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/install-output-dark.webp" /><img src="./docs/assets/readme/install-output-light.webp" width="694" alt="litopencode install --yes를 실행한 터미널 창. 번호가 붙은 다섯 단계(01 Resolve, 02 Read, 03 Write, 04 Register, 05 Verify)의 목록 뒤에 단계마다 체크 표시가 붙은 줄이 이어지고, INSTALL READY라는 제목의 초록색 상자에 다음 문구가 적혀 있다. Plugin, routes, commands, and skills are ready. Next Restart OpenCode · press Tab · choose lit-loop" /></picture></p>
+
+*빈 설정 폴더를 쓰는 격리한 셸에서 실제 `litopencode install --yes`를 실행해 캡처했습니다. 이 명령은 단계 위에 큰 로고 배너도 출력하지만 그림에서는 뺐습니다. 마지막 줄은 명령을 실행한 컴퓨터의 상태를 알려 줍니다.*
+
+**상태 점검.** `litopencode doctor`는 긴 JSON 보고서를 출력합니다. 설치가 제대로 연결됐는지는 그중 install 블록이 알려 주므로, 그림에서는 `jq`로 세 줄만 뽑았습니다. 세 값이 모두 true이면 플러그인과 스킬에 문제가 없다는 뜻입니다.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/doctor-output-dark.webp" /><img src="./docs/assets/readme/doctor-output-light.webp" width="694" alt="litopencode doctor의 오류 출력을 버리고 jq로 세 항목만 뽑아 보여 주는 터미널 창. 출력은 ok true, plugin true, skills true." /></picture></p>
+
+*같은 격리한 셸에서 실제 `litopencode doctor`를 실행해 캡처했고, 세 항목은 `jq`로 뽑았습니다.*
+
+**첫 프롬프트.** Lit 워크플로가 프롬프트를 받으면 OpenCode 오른쪽 위에 알림이 6초 동안 뜹니다. 다섯 줄짜리 작은 LIT 마크와 LIT IGNITED 문구, 시작된 워크플로 이름이 담겨 있습니다. 경로가 시작됐는지 가장 빨리 알 수 있는 표시입니다. 결과는 작업이 끝난 뒤 직접 확인하세요. 자세한 내용은 [경로가 시작될 때 보이는 것](#경로가-시작될-때-보이는-것)에 있습니다.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/ignition-toast-dark.webp" /><img src="./docs/assets/readme/ignition-toast-light.webp" width="694" alt="OpenCode 첫 화면 오른쪽 위에 주황색 테두리의 알림이 떠 있다. 제목은 🔥 LIT IGNITED이고 그 아래에 작은 LIT 마크가 있으며 마지막 줄은 🔥 LIT IGNITED · lit-loop 🔥이다. 아래 입력창에는 Lit-Loop가 표시돼 있다." /></picture></p>
+
+*예시 화면입니다. 알림 문구는 플러그인이 쓰는 점화 알림 함수에서 나왔고, 화면은 OpenCode가 그렸습니다. 모델은 실행하지 않았습니다. 여기서는 lit-loop이며, 다른 워크플로가 시작되면 그 이름이 들어갑니다.*
+
+**계획 에이전트.** `lit-plan`은 계획을 세우면서 프로젝트를 읽기만 합니다. 어떤 권한이 막혀 있는지는 OpenCode에 직접 물어볼 수 있습니다. `opencode debug agent lit-plan`이 OpenCode가 보는 에이전트 정보를 출력하고, `jq`로 거부된 권한만 남겼습니다. 목록에 edit, bash, task가 있으므로 계획 에이전트는 파일을 고치거나 셸 명령을 실행하거나 다른 에이전트에게 일을 넘길 수 없습니다. question, plan_enter, plan_exit도 같은 목록에 나옵니다.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/planner-permissions-dark.webp" /><img src="./docs/assets/readme/planner-permissions-light.webp" width="694" alt="opencode debug agent lit-plan의 출력을 jq에 넘긴 터미널 창. 거부된 권한이 한 줄에 하나씩 출력된다. question, plan_enter, plan_exit, edit, bash, task." /></picture></p>
+
+*같은 격리한 셸에서 빈 설정 폴더에 LitOpenCode를 설치한 뒤 실제 `opencode debug agent lit-plan`을 실행해 캡처했고, 거부된 권한은 `jq`로 남겼습니다.*
+
 ## 움직이는 화면으로 보기
 
-23초 동안 프롬프트 하나를 따라갑니다. 요청 앞에 `lit`을 붙이면 LitOpenCode가 워크플로를 고르고, 계획 에이전트는 읽기만 할 수 있다는 것을 보여 주고, 모든 단계가 기록에 남고, 새 세션이 그 기록을 이어받습니다. 영상 속 창은 이 문서가 설명하는 내용을 그린 그림입니다. 실제 세션을 캡처한 화면은 아닙니다.
+22초, 한 단어입니다. 영상은 커다란 `lit`으로 시작해 그 단어를 프롬프트 안으로 줄여 넣고, LitOpenCode가 그다음에 하는 일을 따라갑니다. 알림이 워크플로를 알리고, 계획 에이전트는 edit, bash, task가 잠긴 모습을 보여 주고, 각 단계가 기록에 남고, 새 세션이 그 기록을 읽고 이어갑니다. 영상 속 창은 이 문서가 설명하는 내용을 그린 그림이며, 실제 세션을 캡처한 화면은 아닙니다. 글꼴은 [Pretendard](./docs/assets/readme/promo-source/Pretendard-OFL.txt)이고, 공개 글꼴 라이선스(OFL)에 따라 썼습니다.
 
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/readme/promo-still.webp" /><img src="./docs/assets/readme/promo-preview.webp" width="100%" alt="LitOpenCode 홍보 영상: OpenCode 창에 lit으로 시작하는 프롬프트를 입력하면 lit-loop 워크플로를 알리는 알림이 뜬다. lit-plan 카드에서 edit, bash, task가 잠기고 거부된다. Plan, Build, Verify, Next 단계가 litgoal 폴더 옆에서 채워진다. 새 세션에서 /lit-recap이 다음 단계를 보여 준 뒤, LITOPENCODE 워드마크와 Keep the work lit. 문구로 끝난다." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/readme/promo-still.webp" /><img src="./docs/assets/readme/promo-ko-preview.webp" width="100%" alt="LitOpenCode 홍보 영상: 커다란 lit이 주황색 점과 함께 OpenCode 프롬프트 안으로 줄어들고, 알림이 lit-loop 워크플로를 알린다. lit-plan 카드에서 edit, bash, task가 잠기며 deny 표시가 붙는다. Plan, Build, Verify, Next 네 단계가 litgoal 폴더 옆에서 채워진다. 새 세션에서 /lit-recap을 실행하면 Done, Checked, Next step이 나온다. 마지막 문구는 Keep the work lit." /></picture></p>
 
-[영상을 MP4로 보기](./docs/assets/readme/promo.mp4)
+[영상을 MP4로 보기](./docs/assets/readme/promo-ko.mp4)
 
 ## 스킬 한눈에 보기
 
