@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.16 Release Scope
+
+- Automatic handoff now finds the handoff it asked for after compaction even when the model formats the marker line, for example as a bullet, in backticks or in bold. A handoff written by another session is still ignored.
+
 ## 1.0.15 Release Scope
 
 - `gpt-6.1-sol` is now the recommended coding-lead alternative, because OpenAI lists `gpt-6-sol` as the previous generation. The installer model menu offers it as the coding lead and keeps `gpt-6-sol` listed as the previous generation, and the reference describes both. Routes that already use `gpt-6-sol` keep working, and `litopencode doctor` still accepts them.

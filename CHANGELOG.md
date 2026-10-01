@@ -5,6 +5,10 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.16 - 2026-10-01
+
+- Automatic handoff now finds the handoff it asked for after compaction even when the model formats the marker line, for example as a bullet, in backticks or in bold. A handoff written by another session is still ignored.
+
 ## 1.0.15 - 2026-09-30
 
 - `gpt-6.1-sol` is now the recommended coding-lead alternative, because OpenAI lists `gpt-6-sol` as the previous generation. The installer model menu offers it as the coding lead and keeps `gpt-6-sol` listed as the previous generation, and the reference describes both. Routes that already use `gpt-6-sol` keep working, and `litopencode doctor` still accepts them.
