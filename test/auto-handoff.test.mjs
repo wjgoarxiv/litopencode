@@ -10,6 +10,7 @@ import {
   createAutoHandoffSettings,
   isValidAutoHandoffPercent,
   parseAutoHandoffRoute,
+  readFreshHandoff,
   resolveAutoHandoff
 } from "../src/auto-handoff.ts";
 import { createAutoHandoff } from "../src/auto-handoff-hooks.ts";
@@ -526,6 +527,145 @@ test("a stale or foreign handoff is refused on reload", async () => {
     const untouched = { system: [] };
     await autoHandoff.systemTransform({ sessionID: SESSION }, untouched);
     assert.deepEqual(untouched.system, []);
+  });
+});
+
+// ---- the reload matcher reads each line with its Markdown decoration removed ----
+
+const matrixSession = "ses_root";
+const matrixFiredAt = Date.parse("2026-10-01T09:00:00.000Z");
+const matrixValue = `${matrixSession} ${new Date(matrixFiredAt).toISOString()}`;
+const matrixMarker = `Auto-handoff marker: ${matrixValue}`;
+
+async function matrixFinds(body, { mtimeMs } = {}) {
+  let found;
+  await withProject(async (dir) => {
+    const file = path.join(dir, "HANDOFF.md");
+    await fs.writeFile(file, body);
+    const when = new Date(mtimeMs ?? matrixFiredAt + 60_000);
+    await fs.utimes(file, when, when);
+    found = await readFreshHandoff(dir, matrixMarker, matrixFiredAt);
+  });
+  return found !== undefined;
+}
+
+const decoratedLines = {
+  "bare line": matrixMarker,
+  "dash bullet": `- ${matrixMarker}`,
+  "star bullet": `* ${matrixMarker}`,
+  "plus bullet": `+ ${matrixMarker}`,
+  "numbered item": `1. ${matrixMarker}`,
+  "numbered item with paren": `2) ${matrixMarker}`,
+  "blockquote": `> ${matrixMarker}`,
+  "blockquote holding a bullet": `> - ${matrixMarker}`,
+  "indented bullet": `    - ${matrixMarker}`,
+  "bold label": `**Auto-handoff marker:** ${matrixValue}`,
+  "bold label with the colon outside": `**Auto-handoff marker**: ${matrixValue}`,
+  "underscore bold label": `__Auto-handoff marker:__ ${matrixValue}`,
+  "italic label": `*Auto-handoff marker:* ${matrixValue}`,
+  "underscore italic label": `_Auto-handoff marker:_ ${matrixValue}`,
+  "bold value": `Auto-handoff marker: **${matrixValue}**`,
+  "italic value": `Auto-handoff marker: *${matrixValue}*`,
+  "underscore italic value": `Auto-handoff marker: _${matrixValue}_`,
+  "underscore bold value": `Auto-handoff marker: __${matrixValue}__`,
+  "bold session id only": `Auto-handoff marker: **${matrixSession}** ${new Date(matrixFiredAt).toISOString()}`,
+  "backticked label": `\`Auto-handoff marker:\` ${matrixValue}`,
+  "backticked value": `Auto-handoff marker: \`${matrixValue}\``,
+  "backticked whole marker": `\`${matrixMarker}\``,
+  "bullet around a backticked marker": `- \`${matrixMarker}\``,
+  "bold whole marker": `**${matrixMarker}**`,
+  "bold label and backticked value in a bullet": `- **Auto-handoff marker:** \`${matrixValue}\``,
+  "leading label before the marker": `Marker: ${matrixMarker}`,
+  "bullet with a leading label and a backticked marker": `- Auto-handoff marker: \`${matrixMarker}\``,
+  "html comment": `<!-- ${matrixMarker} -->`,
+  "html comment without inner spaces": `<!--${matrixMarker}-->`,
+  "extra spaces": "Auto-handoff marker:   ses_root    2026-10-01T09:00:00.000Z",
+  "a tab between the parts": "Auto-handoff marker:\tses_root\t2026-10-01T09:00:00.000Z",
+  "trailing period": `${matrixMarker}.`,
+  "trailing prose": `${matrixMarker} (written by the model)`,
+  "trailing spaces": `${matrixMarker}   `
+};
+
+for (const [name, line] of Object.entries(decoratedLines)) {
+  test(`a decorated marker is found: ${name}`, async () => {
+    assert.equal(await matrixFinds(`# Handoff\n${line}\n\n## Task\nShip it.\n`), true);
+  });
+}
+
+test("a decorated marker is found with CRLF line endings", async () => {
+  assert.equal(await matrixFinds(`# Handoff\r\n- **Auto-handoff marker:** \`${matrixValue}\`\r\n\r\nBody\r\n`), true);
+});
+
+test("a marker inside a fenced code block is still accepted, as before", async () => {
+  assert.equal(await matrixFinds(`# Handoff\n\`\`\`\n${matrixMarker}\n\`\`\`\n`), true);
+});
+
+test("the live failure shape is found: a bullet label around a backticked marker", async () => {
+  const body = [
+    "# HANDOFF: Finish full-content display",
+    "",
+    "## What Was Done",
+    "",
+    "- Checked the workspace: git root is the current directory.",
+    `- Auto-handoff marker: \`${matrixMarker}\``,
+    "",
+    "### Dead Ends",
+    ""
+  ].join("\n");
+  assert.equal(await matrixFinds(body), true);
+});
+
+const refusedLines = {
+  "another session": "- **Auto-handoff marker:** `ses_other 2026-10-01T09:00:00.000Z`",
+  "a session id with this one as a prefix": "- Auto-handoff marker: `ses_rootx 2026-10-01T09:00:00.000Z`",
+  "this id glued behind other characters": "Auto-handoff marker: xses_root 2026-10-01T09:00:00.000Z",
+  "an id that differs only by its underscore": "Auto-handoff marker: sesroot 2026-10-01T09:00:00.000Z",
+  "another trigger time": "- Auto-handoff marker: `ses_root 2026-10-01T09:00:01.000Z`",
+  "a time with more characters glued on": "- Auto-handoff marker: `ses_root 2026-10-01T09:00:00.000Zx`",
+  "a bare marker with a letter glued behind the time": "Auto-handoff marker: ses_root 2026-10-01T09:00:00.000Zx",
+  "a bare marker with a digit glued behind the time": "Auto-handoff marker: ses_root 2026-10-01T09:00:00.000Z9",
+  "a bulleted marker with letters glued behind the time": "- Auto-handoff marker: ses_root 2026-10-01T09:00:00.000Zabc",
+  "a bare marker with a letter glued before the label": "xAuto-handoff marker: ses_root 2026-10-01T09:00:00.000Z",
+  "the label alone": "- **Auto-handoff marker:**",
+  "the value without its label": "- ses_root 2026-10-01T09:00:00.000Z",
+  "prose that merely mentions the session": "See ses_root, fired at 2026-10-01T09:00:00.000Z.",
+  "a marker with a different label": "Auto-handoff id: ses_root 2026-10-01T09:00:00.000Z"
+};
+
+for (const [name, line] of Object.entries(refusedLines)) {
+  test(`a look-alike marker is refused: ${name}`, async () => {
+    assert.equal(await matrixFinds(`# Handoff\n${line}\n`), false);
+  });
+}
+
+test("a decorated marker split across two lines is refused", async () => {
+  assert.equal(await matrixFinds(`# Handoff\n- **Auto-handoff marker:**\n\`${matrixValue}\`\n`), false);
+});
+
+test("a decorated marker in a file older than the trigger is refused", async () => {
+  const body = `# Handoff\n- Auto-handoff marker: \`${matrixMarker}\`\n`;
+  assert.equal(await matrixFinds(body, { mtimeMs: matrixFiredAt - 3_600_000 }), false);
+});
+
+test("a decorated marker reloads through the controller after a compaction", async () => {
+  await withProject(async (dir) => {
+    const { client, calls } = fakeClient();
+    const autoHandoff = build(dir, client, on50);
+    await cross(autoHandoff);
+    const marker = markerFrom(calls);
+    await fs.writeFile(
+      path.join(dir, "HANDOFF.md"),
+      `# Handoff\n\n## What Was Done\n\n- **Auto-handoff marker:** \`${marker.replace(/^Auto-handoff marker: /, "")}\`\n\nNext step: ship the parser.\n`
+    );
+    await autoHandoff.event({ event: busyEvent(SESSION) });
+    await autoHandoff.event({ event: idleEvent(SESSION) });
+    assert.equal(kinds(calls, "summarize").length, 1, "the decorated marker lets compaction go ahead");
+    await autoHandoff.event({ event: compactedEvent(SESSION) });
+
+    const output = { system: ["base"] };
+    await autoHandoff.systemTransform({ sessionID: SESSION }, output);
+    assert.equal(output.system.length, 2);
+    assert.match(output.system[1], /Next step: ship the parser\./);
   });
 });
 

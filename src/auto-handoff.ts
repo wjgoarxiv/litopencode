@@ -340,6 +340,39 @@ const handoffCandidates = Object.freeze(["HANDOFF.md", path.join(".handoff", "HA
 const handoffSizeLimitBytes = 1_048_576;
 const mtimeToleranceMs = 2000;
 
+/**
+ * One line with its Markdown decoration removed: list bullet, quote marker, emphasis, backticks and an
+ * HTML comment wrapper. Underscores are dropped only where they open or close a word, so the one inside
+ * a session id stays.
+ */
+function plainLine(line: string): string {
+  let text = line.replace(/<!--|-->/gu, " ").replace(/[*`]/gu, "");
+  text = text.replace(/(^|\s)_+/gu, "$1").replace(/_+(?=\s|$)/gu, "");
+  for (;;) {
+    const stripped = text.replace(/^\s*(?:>\s*|[-+]\s+|\d+[.)]\s+)/u, "");
+    if (stripped === text) break;
+    text = stripped;
+  }
+  return text.replace(/\s+/gu, " ").trim();
+}
+
+const markerWordCharacter = /[0-9A-Za-z_-]/u;
+
+/** The exact marker on some line, with no word character glued directly before or after it. */
+function carriesMarker(text: string, marker: string): boolean {
+  const wanted = plainLine(marker);
+  if (wanted === "") return false;
+  for (const line of text.split(/\r?\n/u)) {
+    const plain = plainLine(line);
+    for (let at = plain.indexOf(wanted); at !== -1; at = plain.indexOf(wanted, at + 1)) {
+      const before = at === 0 ? "" : plain[at - 1];
+      const after = plain.slice(at + wanted.length, at + wanted.length + 1);
+      if (!markerWordCharacter.test(before) && !markerWordCharacter.test(after)) return true;
+    }
+  }
+  return false;
+}
+
 export type FreshHandoff = { readonly relativePath: string; readonly text: string };
 
 /**
@@ -358,7 +391,7 @@ export async function readFreshHandoff(
       if (!stat.isFile() || stat.size > handoffSizeLimitBytes) continue;
       if (stat.mtimeMs < firedAt - mtimeToleranceMs) continue;
       const text = await fs.readFile(file, "utf8");
-      if (text.includes(marker)) return { relativePath, text };
+      if (carriesMarker(text, marker)) return { relativePath, text };
     } catch {
       continue;
     }
