@@ -440,7 +440,7 @@
         },
         {
           "path": "data/THIRD-PARTY-NOTICE.txt",
-          "sha256": "27b7c84b6669e60557b84bc041510a50df810035017c3a6b8e71058c88d5d1b2"
+          "sha256": "65d3d1f54fb131cd3a75be98e01ac98d3cfefe8fefd737e4c12a1d72169de694"
         },
         {
           "path": "data/design-intelligence.json",
@@ -3053,7 +3053,7 @@
         },
         {
           "path": "THIRD_PARTY_NOTICES",
-          "sha256": "32a831881ac3f8e829813c3a11cfb65fdcd5288f36096743c6e7c23ec136f2ce"
+          "sha256": "70024b117ba0651062ae4bcb67b0258333f14cb9039fd3bfc69cc7602a7a66e3"
         },
         {
           "path": "audio-analysis.py",
@@ -3125,7 +3125,7 @@
         },
         {
           "path": "engine/stage/capture.mjs",
-          "sha256": "b7c7c9853508e6510d5ed628d3408b4d02a6f270c03bc1769f405d5c81245d6a"
+          "sha256": "f010b403245c2021f21e8fc81a8d7c6469fbec74a0e88ec07440ae46d633efc8"
         },
         {
           "path": "engine/stage/clock.js",
@@ -3173,7 +3173,7 @@
         },
         {
           "path": "engine/treatment.mjs",
-          "sha256": "aadd267bd79d36a7a343f18432ce60af6e5f9213d5ad8cc9de5173a066cab272"
+          "sha256": "4d4b8bdeed65ed0b03e4c3d473ca1cc7dc149e2a11fde20b40b4b2b352784395"
         },
         {
           "path": "fonts/Archivo-100-400.ttf",
@@ -3237,7 +3237,7 @@
         },
         {
           "path": "fonts/pins.json",
-          "sha256": "68e2183ed714e2336fc86d47d8edb8d9f77491a128e4ffdec16a248b7f7a0a19"
+          "sha256": "39a6626118e261c7018a8331b860a46e2a54004fa311f967b688bf59f23abefc"
         },
         {
           "path": "fonts/stroke/CREDITS",
@@ -3269,7 +3269,7 @@
         },
         {
           "path": "gate.mjs",
-          "sha256": "b4eda1ac5685f677114d4dbbece5396063d8ffed3836e0f29ce6a311f2cc7c9d"
+          "sha256": "2fed447748f958300037240673feebb61a4bacaba9bed63252129453d2c39561"
         },
         {
           "path": "package-lock.json",
@@ -3297,19 +3297,19 @@
         },
         {
           "path": "references/stage.md",
-          "sha256": "78359705be7b9fd8d4695f9c77cff0fc5c0e6028542288eb3bac3d6d1b87ac66"
+          "sha256": "3f78d9076b8f4b7983b1bf77e719b85c5d8602a18b75c4939bb3316d6e9c7494"
         },
         {
           "path": "references/style-bibles.md",
-          "sha256": "b7b0319b5f8c25c04df380dbb79345c0ec225a00b072f9abc489895d38d4124b"
+          "sha256": "0ad0b64b812c069ba1d90d2576f304471e0896eb11997d02ba2f72fc44ec5642"
         },
         {
           "path": "references/treatment.md",
-          "sha256": "3da4736f15b5eebf99e1e6c1ed14293145f3ca69e6a63b3d4ad8c20a1ba3948d"
+          "sha256": "95873f17e937941d8377fc9838fa5ebcdcb61f31a9f4699f48bdb00804e4aae9"
         },
         {
           "path": "references/type-craft.md",
-          "sha256": "463b4934184b335cad772dd5ca93bc717cd82a59f63b80969b51ce5a7a38e2e6"
+          "sha256": "eb9b57b4a474cd2c9e023f1306b6cd7a9860b9145a2a9dbe0d94dd6d497d3182"
         },
         {
           "path": "render.mjs",
@@ -3344,7 +3344,7 @@
         },
         {
           "path": "NOTICE.md",
-          "sha256": "5a63c70759a5b433e54600bf94a6da77ef06d05ab18e9afd0e0921a8a828b04b"
+          "sha256": "bb7f5795f072a078a20ad94938bf6e044466e162181164c1a8094246d1514a91"
         },
         {
           "path": "agents/analyst.md",
@@ -3423,12 +3423,108 @@
           "sha256": "3b8ac478fa32708ecd929cd7eae8cc32aba1710ca8ec95386d0db9db89ce57dd"
         },
         {
-          "path": "pretendard-font/public/static/LitOpenCodeSans-Bold.otf",
-          "sha256": "87fcc1bc47ea1d7c2a000808c53e4b3f9b7ca4a434a607644e25209b09167d65"
+          "path": "pretendard-font/public/static/Pretendard-Bold.otf",
+          "sha256": "2e91915fab54df71cc9598ebf608b2bdb54c6fe3c066ac61dff0bc44fca71cc7"
         },
         {
-          "path": "pretendard-font/public/static/LitOpenCodeSans-Regular.otf",
-          "sha256": "c77d9a1b2941f4c30a9de454ff645753ddbd1a512cf56dca77377bba3b85d1ea"
+          "path": "pretendard-font/public/static/Pretendard-Regular.otf",
+          "sha256": "3ffbacde6ab8411f1d2db54bb9b1f0b3ee2a738932033722cf0388c06aed1c93"
+        },
+        {
+          "path": "references/density-and-fill.md",
+          "sha256": "ff1fc205b4cf02e1b31eaceca129a876d2def3ce5289a1da29958283bffb9ea8"
+        },
+        {
+          "path": "references/direction-step.md",
+          "sha256": "37c7d02416c5a47ef21e09a90febd78da0b3373a39bb877a74dae44848c142d3"
+        },
+        {
+          "path": "references/examples/01-ops-review-ledger-ko.md",
+          "sha256": "57dc6ded7ed19df3f3dfd5e998b3fa2f95fcef09a702f049f7877845ac69d7c7"
+        },
+        {
+          "path": "references/examples/02-launch-pitch-signal-en.md",
+          "sha256": "136fc88070a698119ac0f6543c11db1bcbe80243767f73a5c77e0a969461a24f"
+        },
+        {
+          "path": "references/examples/03-field-survey-atlas-ko.md",
+          "sha256": "8f2e475b2734eaa696c00363ba8c986e172efce760d2982d539f39ebf6fcc355"
+        },
+        {
+          "path": "references/examples/04-lecture-chalk-ko.md",
+          "sha256": "a4b3a95efd3b3bd36989cffe15d9cae84d73d72e80ba122d1319b35264e8ff91"
+        },
+        {
+          "path": "references/examples/05-research-talk-paper-en.md",
+          "sha256": "9ec9020e988608659a6ba63f6ddff9a2e3d844fbd8db6d028064f4397c70c7b1"
+        },
+        {
+          "path": "references/examples/06-policy-briefing-gazette-ko.md",
+          "sha256": "d323f1ba7e0bbecabedb71382ac971fb0c0c1ee2d3f7ba44f55695eaa00b8f25"
+        },
+        {
+          "path": "references/examples/07-annual-story-studio-en.md",
+          "sha256": "27d64b74ecca06ce3145a189227aac1b326a69045554b55d991ac6eea76557ab"
+        },
+        {
+          "path": "references/examples/08-reliability-keynote-night-en.md",
+          "sha256": "90d6d25d3612f80d30169bc6a564345ef97cb00105fb2e01247d079bf5a4247b"
+        },
+        {
+          "path": "references/examples/09-status-update-ledger-en.md",
+          "sha256": "a63926268ed188853ef915ef864125df0c4fd6417c360ce5490360c72b9e7327"
+        },
+        {
+          "path": "references/examples/10-investor-pitch-signal-ko.md",
+          "sha256": "beeaa62a3367f8cbca5b3c64c08759f4c7a5dd860f96cbd5097c113f0cc4d06c"
+        },
+        {
+          "path": "references/examples/11-forecast-review-night-ko.md",
+          "sha256": "c4d87bc60d6b067616a2e59d6ec69ba33d4b1992983f1efc3729244a542ac367"
+        },
+        {
+          "path": "references/examples/12-exhibition-proposal-studio-ko.md",
+          "sha256": "88f7893a773bad1cdfdb5eaad2473713f191b73c83d05f4d0baa2f717daedc29"
+        },
+        {
+          "path": "references/layout-families.md",
+          "sha256": "7bebbe355fe5fc737f7b2790aa4bca35530aad96a37d5efbeae0fe2b061d8555"
+        },
+        {
+          "path": "references/title-treatments.md",
+          "sha256": "103d4c495410ca9684d41429726542e0b6bcf7b9d006f9980a35694941f8d0bf"
+        },
+        {
+          "path": "references/tonalities/atlas.md",
+          "sha256": "6ffea9e214ba51eb8119b38280e88d892255baf546ce508e8807e2aaa025c7b1"
+        },
+        {
+          "path": "references/tonalities/chalk.md",
+          "sha256": "a563b5d7167144d8e2437f5a10b889c6a956b20743c9f804b1c6270b375a87e7"
+        },
+        {
+          "path": "references/tonalities/gazette.md",
+          "sha256": "3bff34e6fae94ccae96db13817483e5f27be166a00616f96f13653453e1d3f3d"
+        },
+        {
+          "path": "references/tonalities/ledger.md",
+          "sha256": "44aee4353bca00a06c163aa5e9b2cb9acba96fb03c09d4bf1cad34512f5e97ca"
+        },
+        {
+          "path": "references/tonalities/night.md",
+          "sha256": "c4d7f67bbc988a326eb992ad1e888729ed755fd1d282e4ed6da6cf4d9268f983"
+        },
+        {
+          "path": "references/tonalities/paper.md",
+          "sha256": "b3106e5cefd4e7d36ce3ee15d33ee5bd07e07cd297f30eb118d92a526d225882"
+        },
+        {
+          "path": "references/tonalities/signal.md",
+          "sha256": "d7b5a2e2ff0d66cb5562df5ec98b4418737a1d7e21199958c32500673e9223f2"
+        },
+        {
+          "path": "references/tonalities/studio.md",
+          "sha256": "848178f9666e857843be3c83e9fe21def4a1ec666c7854b6d6d6afabc53934c9"
         },
         {
           "path": "requirements.in",
@@ -3448,23 +3544,27 @@
         },
         {
           "path": "scripts/compile-deck.js",
-          "sha256": "3cfeef85db8a92a0d63546b564d08b0bc554d728eed1f6562bb2838558d34d37"
+          "sha256": "075d3061811edeefd691e83041b852a720868e73f8d2c913e178a79c4aae6865"
         },
         {
           "path": "scripts/craft-thresholds.json",
-          "sha256": "a304c802d19139f5a89cb7c842d9cd02079fda1255ae46350351555f6d6f2091"
+          "sha256": "c43fd493e31c60aea6d1bf2a76841688ce81525745fb89164850005f0ddd97af"
         },
         {
           "path": "scripts/craft_extras.py",
-          "sha256": "48bc36b0c52b3731121f59c1126a2b09a7be6c5005731bd5a10ee3f26c65c876"
+          "sha256": "f4675bef34f4c227151303a2740425e5a9674d1cacf5f4e768eccf042c7be205"
+        },
+        {
+          "path": "scripts/deck_output.py",
+          "sha256": "14deb8c9e403e640d50a21ced24699582b17ea8d89b5b169816dfc0b4db56839"
         },
         {
           "path": "scripts/embed_fonts.py",
-          "sha256": "86c8f0f989a86e3ec1a90250701ccf5018162c4cc4dddefc313bf31784d2f04a"
+          "sha256": "9334d2ddce86470c6b5de99b0416c88d941bba761d5c5524ec47c5541b7f9c52"
         },
         {
           "path": "scripts/layout_inventory.py",
-          "sha256": "360a75188e08d6a1ef486bf0909f6256916381988b7065c75bf2106c48721e78"
+          "sha256": "6a4ddcd9abbad1e53b1adf77f05ad9b6699523dd53727ab667c0b937a2d64656"
         },
         {
           "path": "scripts/learn_template.py",
@@ -3476,11 +3576,11 @@
         },
         {
           "path": "scripts/lib/directive-parser.js",
-          "sha256": "725a3e724185013e6c724d215d86d31eae617545ff43634245142ec1fa905d66"
+          "sha256": "65a1e610136200151ce3ad01381699a9ebf47af1373ee7271a818a157226e80f"
         },
         {
           "path": "scripts/lib/font-map.js",
-          "sha256": "32a62a05a0e1bd1713f89f973080f4bdaf8e13ff2a32952b2c3217d9adf4e913"
+          "sha256": "912ec98640331b0a4c750349c7c099f302e8fce74f728d6f2386219aa5a71317"
         },
         {
           "path": "scripts/lib/gen-bg.js",
@@ -3491,40 +3591,48 @@
           "sha256": "9c7c5023cc7b3ed8d4b7fa0d04ebf144b05414660c94c040bb756f3b2eedf486"
         },
         {
+          "path": "scripts/lib/grid-resolver.js",
+          "sha256": "0c065ba7ee674462695de1e5dd3bbf05635c3be135fc5c7750b5684bb797d4da"
+        },
+        {
           "path": "scripts/lib/layout-resolver.js",
-          "sha256": "a4db2b65fd158e913d6ac99d8ef0f184b4a0ed26b4bc367dab5573a8b0e64d3f"
+          "sha256": "8f3edac985e2cc02192c976f576c7de4f6c3f9fae2a77932a4e4f4b94985ecef"
         },
         {
           "path": "scripts/lib/markdown-loader.js",
-          "sha256": "141d3c866b0426e172581013d01868c3c620af174a9ce18f289f31008905a74d"
+          "sha256": "6142f2197c00cd25dff32ec29c17e9433a602f4232269cc6fdd5604ecc202661"
         },
         {
           "path": "scripts/lib/render-adapter-html.js",
-          "sha256": "4a16e1ff22a092ae9885edc4533e10007fd58f7bb67e9c2348b971dc231aa02a"
+          "sha256": "e981ade4c772d9c0ca4f5d8e9191db53c5d9193cb4f8dc9f3a3fb78213cbc858"
         },
         {
           "path": "scripts/lib/render-adapter-pptx.js",
-          "sha256": "6f27347154322f02ec64d94029fe1c566bd53667863bfbcf6c289357a6e6b9f8"
+          "sha256": "6508b44867a7567813d98eed841ef245a60fcc83372b9a9c8ac580d5ecc22799"
+        },
+        {
+          "path": "scripts/lib/render-pack.js",
+          "sha256": "30ab8abafcfaa04a33d3b0c80d560c53f30b19c86217137adaa05ec6b979b864"
         },
         {
           "path": "scripts/lib/slide-ast.js",
-          "sha256": "b5a82db2e46698eb5c478d3e8cd68f87b12108f4885a22419bf7472aa3633002"
+          "sha256": "a4fca91df696b43e5dcffa1b4f6116c8dfe7f8fc13de8c804dda8fbddf1ede9c"
         },
         {
           "path": "scripts/lib/spec-validator.js",
-          "sha256": "a6dc05f14044c96f7e83cf74b0918b580ac8ce6feb8ba078ec5f2e287944b0d6"
+          "sha256": "0869ff328654de5c8c6eb36a22e9865683ba667b11eba6a85bd3e5428a3fccf3"
         },
         {
           "path": "scripts/lib/template-registry.js",
-          "sha256": "67f8d4c190d48d6f8d24f80fc03ba43d7eaec7bb817e03abd85cf46bde274f09"
+          "sha256": "5c2a86e15a319afd8cc2635521802c508a400bc27390fedb6ec0a61f3f3498e9"
         },
         {
           "path": "scripts/qa_deck.py",
-          "sha256": "f27d4cf3c024b4fd560a155ac23ce954443c0c1a4eeb7dc050de7f2cd40b5ad5"
+          "sha256": "4cec617ef8df44ea798ab678e9c5997a7c5d9370e79bb299bc0cbba22fdf18f9"
         },
         {
           "path": "scripts/validate_pptx.py",
-          "sha256": "0e0644a6f7889945b2435f9e87fc6862b396ad0253619e76c48e289a97423a8f"
+          "sha256": "3a0830acf3a647878bacd599f4ade17462a83c0a24cbda378bb69a6a05b4d362"
         },
         {
           "path": "specs/markdown-slide-spec-v1.md",
@@ -3544,7 +3652,7 @@
         },
         {
           "path": "specs/template-enrollment-contract.md",
-          "sha256": "c6b77bb0e20cc27d21e68ebe588fe376bc78bb425f6d1d4fe8a0aec9ef29409d"
+          "sha256": "462540fd25fabb741fe42a61214a30b102cfe57429fce0ec890621c02c043718"
         },
         {
           "path": "templates/bauhaus_light.css",
@@ -3552,7 +3660,7 @@
         },
         {
           "path": "templates/boilerplate_professional.css",
-          "sha256": "c0f2ed817b75407783fd99beec79663d3cbc0c79cb80a89ad52f5ca5bfd054c0"
+          "sha256": "2217c252538dc3ce073b16f0532155395241c14bcde4be51b5696953b42a683a"
         },
         {
           "path": "templates/enrolled/AZURE-A2Z/capabilities.yaml",
@@ -3560,23 +3668,23 @@
         },
         {
           "path": "templates/enrolled/AZURE-A2Z/layout-mapping.yaml",
-          "sha256": "f32a3e1a9bd5a0a9899d818fa39e0985a4dd6ffd01f928ebb339bd888e454e32"
+          "sha256": "cddc168c691fd5ba0755ce6c395c1fc4ecaeca8ed2d509f9b79e227ee61a2b57"
         },
         {
           "path": "templates/enrolled/AZURE-A2Z/template.yaml",
-          "sha256": "c5f8ff2303cba0ef9d644545558c37005463ddf10af10f0dccc609cc19ca9a0a"
+          "sha256": "119c8f9a7b45394fcfb382fa2d9ef8558b4b03a115673cde87d880080a468730"
         },
         {
           "path": "templates/enrolled/AZURE-PRO/capabilities.yaml",
-          "sha256": "28a6f12b120f0a3af4df9c50cb2856c2fad9adc7537409eb67e0135fea24b72f"
+          "sha256": "309bdf7fa3e64db70236709a47b4e50e889519b5b7e3fe2cec0047fac697f790"
         },
         {
           "path": "templates/enrolled/AZURE-PRO/layout-mapping.yaml",
-          "sha256": "2d5e91efb1a946a2bfaf5f4f82a5325ac7e658d6c475083ba3d891ac87f683c6"
+          "sha256": "96b3d9485591a51218985835eb48063882fe5bb9c2c9a46434b4e7ea0eda59f0"
         },
         {
           "path": "templates/enrolled/AZURE-PRO/template.yaml",
-          "sha256": "5886e32caca60d406f3ae13e78f1f9b0bf0dcf9c03d6cbd9e37370639caabad2"
+          "sha256": "ff27cfe309e1ca00904a98f8f670256b0edf28a9304cfe8fc62b5d42fb2b957f"
         },
         {
           "path": "templates/enrolled/BOILERPLATE-A2Z/capabilities.yaml",
@@ -3592,7 +3700,7 @@
         },
         {
           "path": "templates/enrolled/BOILERPLATE-PRETENDARD/capabilities.yaml",
-          "sha256": "840d112f0f632ee3b7bcbc737da7b46ed1d8094392fe09afb890855b6bc93c56"
+          "sha256": "fa601f72a8561ffb56b8c006ffab200a86d56b7978b616542fd2d5a551a989b0"
         },
         {
           "path": "templates/enrolled/BOILERPLATE-PRETENDARD/layout-mapping.yaml",
@@ -3600,7 +3708,39 @@
         },
         {
           "path": "templates/enrolled/BOILERPLATE-PRETENDARD/template.yaml",
-          "sha256": "f62753df7f040ad656242c549cb6731d167af3add8dd80b64b665d2a76456f61"
+          "sha256": "92cb5ac639dde5208ed777954b2207752a85a676ea8f280b3db21ce9be537e57"
+        },
+        {
+          "path": "templates/tonalities/atlas/pack.yaml",
+          "sha256": "1a55367348e8304266e6038a34ec1c84060e3667c9f42c1707e2818c01b535da"
+        },
+        {
+          "path": "templates/tonalities/chalk/pack.yaml",
+          "sha256": "e386a50ad64fd12a8457af60379682892c3e41e2ff5a536afee0a2167ffa00a7"
+        },
+        {
+          "path": "templates/tonalities/gazette/pack.yaml",
+          "sha256": "b9f58d62e14bd18d004a928210e01678db923895c8d117f8f93d06286c31ce6c"
+        },
+        {
+          "path": "templates/tonalities/ledger/pack.yaml",
+          "sha256": "67a4a4fa8ecd9d98c0780d3a49610ccc83993d4f20ee7a875d1fe3c32f3da369"
+        },
+        {
+          "path": "templates/tonalities/night/pack.yaml",
+          "sha256": "631c84ee1388b8d69673bf392b704d4d4061433b12957a29c16c37dd5875eb33"
+        },
+        {
+          "path": "templates/tonalities/paper/pack.yaml",
+          "sha256": "f93ab4059ddfd2bcfff93e73112d158620b80f770a9b9fdac678ed4615e5b3e7"
+        },
+        {
+          "path": "templates/tonalities/signal/pack.yaml",
+          "sha256": "db5d0acb28b845ec3049afb84678f1d03d4670e0a607a1aeb9e7141e3fcbb9eb"
+        },
+        {
+          "path": "templates/tonalities/studio/pack.yaml",
+          "sha256": "4fb169a8c2cd4807fadfcbead64e3cf85927fb7d61da2796090ec31ad5c80a25"
         }
       ]
     },
@@ -3612,6 +3752,50 @@
         {
           "path": "LICENSE-MIT.txt",
           "sha256": "f45319681a9d53bdc08dcbac0770ce7597cc1edb844cbd5d79beb36540038590"
+        },
+        {
+          "path": "references/components.md",
+          "sha256": "b20477b490e6fe19947109cdcf5fe7987a79b9dea17ab17c7d123c95bdf8db23"
+        },
+        {
+          "path": "references/direction-step.md",
+          "sha256": "23c30c8d48d269fcea8c8851e2dd8c333a4aac4e498ffbdae4f0fb2e85eb9a1d"
+        },
+        {
+          "path": "references/examples/01-report-ko.md",
+          "sha256": "534dc46b2961fa244bcbe76853574e3e64931c91236c18de528bf251b1b8f36e"
+        },
+        {
+          "path": "references/examples/02-brief-ko.md",
+          "sha256": "52554c817290431bf49b08630371a89c592726e3781c708603a945aad2e40fee"
+        },
+        {
+          "path": "references/examples/03-manual-ko.md",
+          "sha256": "950c61668ecf8f114d9f674b2800b0a27319fdf1d7636105f746e414d71b4fba"
+        },
+        {
+          "path": "references/examples/04-proposal-ko.md",
+          "sha256": "51543c91d93421415a2eb13ed71d4c76b7c6226c141b654666ee5dada98a59c3"
+        },
+        {
+          "path": "references/examples/05-memo-ko.md",
+          "sha256": "73a0882ad5c030304f7c71537a1dbb991b88cd80c67348cf0cbafd75578e7dff"
+        },
+        {
+          "path": "references/examples/06-journal-en.md",
+          "sha256": "9f43e5e579844e315c50389dd051bfcbb8572af2a00cf2616ab25354c96adaf8"
+        },
+        {
+          "path": "references/examples/07-report-en.md",
+          "sha256": "27eff78e18d996b377f1bc5399becefe2dbe703b7a588aba891523567ed19fc7"
+        },
+        {
+          "path": "references/examples/08-journal-ko.md",
+          "sha256": "dd963209e87dfc3d84805705cd5ccb220c57d6d5fa673195f86a4e2a228daeb8"
+        },
+        {
+          "path": "references/examples/09-brief-en.md",
+          "sha256": "6c8387524e16d5008930fc78e55626bcf4db432519343704a3097257f96ed222"
         },
         {
           "path": "references/frontmatter_schema.md",
@@ -3626,12 +3810,40 @@
           "sha256": "3e1f9242927f16f7085824d6cd7082cc10662e6120ceb3e1f14ee29d6b7dbf26"
         },
         {
+          "path": "references/page-composition.md",
+          "sha256": "93e9cf33b6f48bde69e060dad593ec8b8c6ce3953258a7261f91884e4ce762b7"
+        },
+        {
           "path": "references/slop_phrase_list.yaml",
           "sha256": "b4cb5dc858b2ea44b5558e8be4cb51199af40de53b901fb563b53c5416c50bdc"
         },
         {
           "path": "references/slop_rules.md",
           "sha256": "3d182b85a5643e42411ab6552d23e76e963854ec9e88e8953c20bf8df8614a57"
+        },
+        {
+          "path": "references/tonalities/brief.md",
+          "sha256": "9123e5d5b2a1081708701bbb4a0e17b5f9e0ab9bee8557c731a8cc47db175f8d"
+        },
+        {
+          "path": "references/tonalities/journal.md",
+          "sha256": "9016e943a31f4cecf6c2690abb2f83c6d5a7311cd6407dfacf8cae944739b8cf"
+        },
+        {
+          "path": "references/tonalities/manual.md",
+          "sha256": "c065f438f98f105e25a512308727c9fda542ac4ab70e9f3f92979745bbb7838f"
+        },
+        {
+          "path": "references/tonalities/memo.md",
+          "sha256": "6635cffb3e7a2816164d67cb35a6e18942334463ba5ec7081f1d7b802d38e985"
+        },
+        {
+          "path": "references/tonalities/proposal.md",
+          "sha256": "52d79fdb8808908921decc45c3fe7f16cfd358d240851157fc1e00ccd28d597b"
+        },
+        {
+          "path": "references/tonalities/report.md",
+          "sha256": "eb8c787582a4f5592beb12d01486b14e00e346fec457732c650c6cd110d81e49"
         },
         {
           "path": "requirements.in",
@@ -3643,7 +3855,7 @@
         },
         {
           "path": "run.py",
-          "sha256": "a4e75d46bcbe9086305011f058668f5b18d4fddb3f01d352e19badeb4ad3b483"
+          "sha256": "a1bb659e7903001bcaa6accfcc365fb3e02af4b5c1cce4fbb6621462b731f898"
         },
         {
           "path": "scripts/clean_markdown.py",
@@ -3651,7 +3863,7 @@
         },
         {
           "path": "scripts/convert_md_to_docx.py",
-          "sha256": "927e2acffbf7e63f5c0a81d9809e734704fd05371bada6274217590c1fc36838"
+          "sha256": "66ca22c3dbde1037d8c67c6c81cb7269b542d365554eb551ea105683dce7429f"
         },
         {
           "path": "scripts/convert_md_to_pdf.py",
@@ -3667,7 +3879,15 @@
         },
         {
           "path": "scripts/craft_docx.py",
-          "sha256": "799e501f47eb64b2dfb8094ba18ffb363bc4f12f693bf22750218b33a7f42aa1"
+          "sha256": "270d0958c8de9f3924d61bbea6f7d053144ccf0fedbaa03f86d644ea9e3fa7b6"
+        },
+        {
+          "path": "scripts/docx_design.py",
+          "sha256": "26dcb3f4b98807dd6deb872a3623a5a8263492a61ef060453b420784c001d8ef"
+        },
+        {
+          "path": "scripts/docx_layout.py",
+          "sha256": "725cf3f171a3f766fc351aa005cafd78a808f931496dd1f94f457c4dda49f787"
         },
         {
           "path": "scripts/edit_docx.py",
@@ -3683,7 +3903,7 @@
         },
         {
           "path": "scripts/slop_lint.py",
-          "sha256": "dfeae2f0c38db7808910654a0da8984878de8107edccfc52bd702f5b9724c106"
+          "sha256": "af1a3075b574c3d69ca57083068a244c7a23a785782be34a1026988b788149ee"
         },
         {
           "path": "scripts/visual_audit.py",
@@ -3752,6 +3972,30 @@
         {
           "path": "templates/registry.yaml",
           "sha256": "950c0adf003f773c84756e73df352bc29c771a8399f91c8ee93c14c39b6b9c7d"
+        },
+        {
+          "path": "templates/tonalities/brief.yaml",
+          "sha256": "73a466263bad4f876671de0121b117223f0659f896d99cabde76e8d6a86385f5"
+        },
+        {
+          "path": "templates/tonalities/journal.yaml",
+          "sha256": "aae647c0d62e6b801923651df754933e92c3db8c07c0fe7e12977e1c8473e028"
+        },
+        {
+          "path": "templates/tonalities/manual.yaml",
+          "sha256": "de31b0bfa3dc46d172b84af6d60ade9ac1411ba0fb34bb2e402e3a0f80486c67"
+        },
+        {
+          "path": "templates/tonalities/memo.yaml",
+          "sha256": "70181fdc23f51b80c5584bd073c54db216a4a8601aa95f07507a9280e85d2f01"
+        },
+        {
+          "path": "templates/tonalities/proposal.yaml",
+          "sha256": "7cf710c09ae8d30a208f59167e9b47f0222a2184231a68047aa596f2c7e135d4"
+        },
+        {
+          "path": "templates/tonalities/report.yaml",
+          "sha256": "ad8312bba2752e142ef40b560c13339f5411be73acb0f01634a4e744b215e5d8"
         }
       ]
     }

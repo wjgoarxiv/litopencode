@@ -22,5 +22,49 @@
   "groupRatioMin": 2,
   "equalRowToleranceIn": 0.05,
   "emptyBandMedium": 0.25,
-  "emptyBandHigh": 0.35
+  "emptyBandHigh": 0.35,
+  "outputMinSlides": 8,
+  "outputMinTreatments": 3,
+  "outputVarietyShare": 0.6,
+  "outputVarietyCap": 5,
+  "outputMaxShare": 0.4,
+  "outputBandFloorPt": 486,
+  "outputFooterTopPt": 492,
+  "outputBandDeckMax": 0.2,
+  "outputBandCaps": [
+    [
+      2,
+      0.28
+    ],
+    [
+      4,
+      0.24
+    ],
+    [
+      6,
+      0.2
+    ],
+    [
+      8,
+      0.16
+    ],
+    [
+      10,
+      0.12
+    ]
+  ],
+  "outputGeometryTolPt": 2,
+  "outputSizeTolPt": 0.5,
+  "outputAnchorTolPt": 1,
+  "outputWideBlockShare": 0.7,
+  "outputEvenColumns": 0.85,
+  "outputRegionFloorGapPt": 12,
+  "outputRegionEmptyShare": 0.4,
+  "outputSiblingMinDiffer": 1,
+  "outputSiblingMinDifferLong": 2,
+  "outputSiblingLongDeck": 4,
+  "figureGroundLuminanceMax": 0.25,
+  "figureNearWhite": 235,
+  "figureLightShare": 0.5,
+  "figureMinArea": 0.03
 }

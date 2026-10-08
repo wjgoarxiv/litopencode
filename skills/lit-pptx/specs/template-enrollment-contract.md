@@ -31,9 +31,9 @@ label: "Azure Professional"      # Human-readable label
 description: "Azure 16:9 presentation template"
 
 fonts:
-  title: "LitOpenCode Sans"
-  body: "LitOpenCode Sans"
-  light: "LitOpenCode Sans"
+  title: "Pretendard"
+  body: "Pretendard"
+  light: "Pretendard"
 
 dimensions:
   width: 13.333                 # inches
@@ -221,7 +221,7 @@ Asset files are placed in `templates/enrolled/<TEMPLATE-NAME>/assets/` or a shar
 
 All fonts declared in `template.yaml` and `capabilities.yaml` must be installed on the rendering machine. The enrollment contract does not bundle fonts — it assumes they are available system-wide.
 
-For AZURE-PRO, the required font is `LitOpenCode Sans`, bundled with the skill.
+For AZURE-PRO, the required font is `Pretendard`, bundled with the skill.
 
 ### 3.3 Fixture decks
 

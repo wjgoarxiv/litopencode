@@ -2,34 +2,34 @@
 /* Source reference: BOILERPLATE/BOILERPLATE.pptx */
 
 @font-face {
-  font-family: "LitOpenCode Sans";
+  font-family: "Pretendard";
   font-weight: 300;
-  src: url("../pretendard-font/public/static/LitOpenCodeSans-Regular.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Regular.otf") format("opentype");
 }
 @font-face {
-  font-family: "LitOpenCode Sans";
+  font-family: "Pretendard";
   font-weight: 400;
-  src: url("../pretendard-font/public/static/LitOpenCodeSans-Regular.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Regular.otf") format("opentype");
 }
 @font-face {
-  font-family: "LitOpenCode Sans";
+  font-family: "Pretendard";
   font-weight: 500;
-  src: url("../pretendard-font/public/static/LitOpenCodeSans-Regular.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Regular.otf") format("opentype");
 }
 @font-face {
-  font-family: "LitOpenCode Sans";
+  font-family: "Pretendard";
   font-weight: 600;
-  src: url("../pretendard-font/public/static/LitOpenCodeSans-Regular.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Regular.otf") format("opentype");
 }
 @font-face {
-  font-family: "LitOpenCode Sans";
+  font-family: "Pretendard";
   font-weight: 700;
-  src: url("../pretendard-font/public/static/LitOpenCodeSans-Bold.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Bold.otf") format("opentype");
 }
 @font-face {
-  font-family: "LitOpenCode Sans";
+  font-family: "Pretendard";
   font-weight: 800;
-  src: url("../pretendard-font/public/static/LitOpenCodeSans-Bold.otf") format("opentype");
+  src: url("../pretendard-font/public/static/Pretendard-Bold.otf") format("opentype");
 }
 
 :root {
@@ -57,7 +57,7 @@ body {
   height: 720px;
   background: var(--bg-color);
   color: var(--ink);
-  font-family: "LitOpenCode Sans", Arial, sans-serif;
+  font-family: "Pretendard", Arial, sans-serif;
   /* PowerPoint target: Character Spacing > Narrow, 0.5pt */
   letter-spacing: -0.5pt;
   box-sizing: border-box;

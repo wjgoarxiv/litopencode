@@ -11,11 +11,15 @@ from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 from pptx.enum.text import PP_ALIGN
 
+from deck_output import check_figures, check_labels, check_output, check_run_ins
+
 T = json.loads(Path(__file__).with_name("craft-thresholds.json").read_text())
 EMU = 914400
 NUMERIC = re.compile(r"^[\d\s,.%+\-±()$€£¥₩▲▼]+$")
 HANGUL = re.compile(r"[가-힣]")
 EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2600-\u27BF]")
+# Families the tonality compiler draws as display pages; every other `family@` name is a content slide.
+DISPLAY_FAMILY = re.compile(r"(?:cover|section)(?:-|$)|(?:statement|quote|closing-statement|image-full)$")
 
 
 def _box(shape):
@@ -62,6 +66,9 @@ def _text_size(shape):
 
 
 def _display(slide):
+    family = next((shape.name.split("@", 1)[1] for shape in slide.shapes if shape.name.startswith("family@")), None)
+    if family is not None:
+        return bool(DISPLAY_FAMILY.match(family))
     text = [shape for shape in slide.shapes if getattr(shape, "has_text_frame", False) and shape.text.strip()]
     visual = [shape for shape in slide.shapes if getattr(shape, "has_table", False) or getattr(shape, "has_chart", False)]
     return bool(text) and max(map(_text_size, text)) >= T["displayPt"] and len(text) <= 2 and not visual
@@ -79,6 +86,12 @@ def _radius(shape):
         return None
 
 
+def _page_furniture(box, width, height, tolerance=0.03):
+    """A fill on two or more canvas edges (a band, a rail, a colour field) frames the page, not content."""
+    x, y, w, h = box
+    return sum([x <= tolerance, y <= tolerance, x + w >= width - tolerance, y + h >= height - tolerance]) >= 2
+
+
 def _vertical_gaps(top, bottom, boxes):
     cursor = top
     gaps = []
@@ -92,14 +105,16 @@ def _vertical_gaps(top, bottom, boxes):
 def analyse(path):
     deck = Presentation(str(path))
     canvas = deck.slide_width * deck.slide_height
-    findings = []
+    findings = check_output(deck) + check_labels(deck) + check_figures(deck) + check_run_ins(deck)
 
     def add(rule, severity, slide, value, threshold, tier="measured", shape=None):
         findings.append({"rule": rule, "severity": severity, "tier": tier, "slide": slide,
                          "shape": shape, "value": value, "threshold": threshold})
 
     for slide_no, slide in enumerate(deck.slides, 1):
-        shapes = [shape for shape in slide.shapes if isinstance(shape.width, int) and isinstance(shape.height, int)]
+        # The sample-data tag is a deliberate label on every slide, not part of the design.
+        shapes = [shape for shape in slide.shapes if isinstance(shape.width, int) and isinstance(shape.height, int)
+                  and not shape.name.startswith("lit-notice")]
         display = _display(slide)
         hues = []
         for index, shape in enumerate(shapes, 1):
@@ -185,10 +200,24 @@ def analyse(path):
                 add("OF-105", "MEDIUM", slide_no, round(inter / intra, 2), T["groupRatioMin"])
 
         if not display:
-            title = max((shape for shape in shapes if getattr(shape, "has_text_frame", False) and shape.text.strip() and _text_size(shape) >= T["displayPt"]), key=_text_size, default=None)
-            top = (title.top + title.height) / EMU + .1 if title else .8
-            bottom = deck.slide_height / EMU - .55
-            content = [_box(shape) for shape in shapes if shape is not title and (getattr(shape, "has_table", False) or getattr(shape, "has_chart", False) or shape.shape_type == MSO_SHAPE_TYPE.PICTURE or (getattr(shape, "has_text_frame", False) and shape.text.strip() and _text_size(shape) > T["captionPt"])) and top <= shape.top / EMU < bottom]
+            # The compiler names its title frame; a title in the lower half closes the body from below.
+            title = next((shape for shape in shapes if shape.name.startswith("title@")), None) or max(
+                (shape for shape in shapes if getattr(shape, "has_text_frame", False) and shape.text.strip() and _text_size(shape) >= T["displayPt"]), key=_text_size, default=None)
+            if title is not None and title.top > deck.slide_height / 2:
+                top, bottom = .8, title.top / EMU - .1
+            else:
+                top = (title.top + title.height) / EMU + .1 if title else .8
+                bottom = deck.slide_height / EMU - .55
+            held = [_box(shape) for shape in shapes if shape is not title and (getattr(shape, "has_table", False) or getattr(shape, "has_chart", False) or shape.shape_type == MSO_SHAPE_TYPE.PICTURE or (getattr(shape, "has_text_frame", False) and shape.text.strip() and _text_size(shape) > T["captionPt"]))]
+            # A title in a side rail: the body stands beside the rail from the title's top, and what stands
+            # in the rail under the title (criteria labels, takeaways, the source) belongs to the rail.
+            if title is not None and title.left < .1 * deck.slide_width and title.width < .35 * deck.slide_width and title.top < deck.slide_height / 4:
+                rx, ry, rw, rh = _box(title)
+                beside = [box for box in held if box[0] >= rx + rw - .05 and box[1] < bottom]
+                under = [box for box in held if box[0] + box[2] <= rx + rw + .05 and box[1] >= ry + rh - .05]
+                if beside and len(beside) + len(under) == len([box for box in held if box[1] < bottom]):
+                    top, held = ry, beside
+            content = [box for box in held if box[1] < bottom and box[1] + box[3] > top]
             if content and bottom > top:
                 gaps = _vertical_gaps(top, bottom, content)
                 fraction = max(gaps) / (bottom - top)
@@ -196,11 +225,11 @@ def analyse(path):
                     add("OF-109", "HIGH" if fraction > T["emptyBandHigh"] else "MEDIUM", slide_no, round(fraction, 3), {"medium": T["emptyBandMedium"], "high": T["emptyBandHigh"]})
 
         card_gaps = []
-        for index, card in enumerate(shapes, 1):
+        for index, card in enumerate([] if display else shapes, 1):
             if _fill(card) is None or card.width * card.height / canvas >= T["fullBleedFraction"]:
                 continue
             x, y, width, height = _box(card)
-            if width <= 0 or height <= 0:
+            if width <= 0 or height <= 0 or _page_furniture((x, y, width, height), deck.slide_width / EMU, deck.slide_height / EMU):
                 continue
             frame = getattr(card, "text_frame", None) if getattr(card, "has_text_frame", False) else None
             top = y + (frame.margin_top / EMU if frame else 0)

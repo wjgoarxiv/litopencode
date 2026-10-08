@@ -8,8 +8,8 @@ supported_layouts:
 
 supported_blocks:
   cover: [title]
-  content: [title, key-message, body, chart, image, notes, kpi-table, figure-caption, table-caption]
-  main: [title, key-message, body, chart, main-box, kpi-table, image, figure-caption, table-caption]
+  content: [title, key-message, body, image, notes, kpi-table, figure-caption, table-caption]
+  main: [title, key-message, body, main-box, kpi-table, image, figure-caption, table-caption]
   summary: [title, key-message, summary-group, image, kpi-table, figure-caption, table-caption]
   closing: [title]
   section: [title, notes]
@@ -21,7 +21,7 @@ supported_body_items:
 
 font_roles:
   cover_title:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 50
     char_spacing: -2.0
     line_spacing: 1.06
@@ -29,7 +29,7 @@ font_roles:
     bold: true
     color: "#0E1B2C"
   key_message:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 15
     char_spacing: -0.2
     line_spacing: 1.3
@@ -37,14 +37,14 @@ font_roles:
     bold: true
     color: "#1D4ED8"
   eyebrow:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 11
     char_spacing: 1.5
     align: left
     bold: true
     color: "#1D4ED8"
   subtitle:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 16
     char_spacing: -0.3
     line_spacing: 1.35
@@ -52,21 +52,21 @@ font_roles:
     bold: false
     color: "#51607A"
   cover_date:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 12
     char_spacing: 0.2
     align: center
     bold: true
     color: "#FFFFFF"
   section_title:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 27
     char_spacing: -1.0
     align: left
     bold: true
     color: "#0E1B2C"
   divider_title:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 42
     char_spacing: -1.5
     line_spacing: 1.05
@@ -74,14 +74,14 @@ font_roles:
     bold: true
     color: "#FFFFFF"
   closing_title:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 44
     char_spacing: -1.5
     align: center
     bold: true
     color: "#0E1B2C"
   body_text:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 13
     char_spacing: -0.3
     line_spacing: 1.4
@@ -89,60 +89,60 @@ font_roles:
     bold: false
     color: "#0E1B2C"
   section_header:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 15
     char_spacing: -0.3
     align: left
     bold: true
     color: "#0E1B2C"
   numbered_item:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 13
     char_spacing: -0.3
     align: left
     bold: false
     color: "#0E1B2C"
   table_header:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 12
     align: left
     bold: true
     color: "#0E1B2C"
     fill: "#EEF4FF"
   table_data:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 12
     align: left
     bold: false
     color: "#0E1B2C"
   kpi_value:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 34
     char_spacing: -1.0
     align: left
     bold: true
     color: "#1D4ED8"
   kpi_label:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 9.5
     char_spacing: 0.4
     align: left
     bold: false
     color: "#51607A"
   figure_caption:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 9
     align: center
     bold: false
     color: "#51607A"
   table_caption:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 9
     align: center
     bold: false
     color: "#51607A"
   disclaimer:
-    font: "LitOpenCode Sans"
+    font: "Pretendard"
     size: 8
     align: left
     bold: false

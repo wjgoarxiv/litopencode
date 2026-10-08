@@ -28,7 +28,7 @@ const DEFAULT_COLUMN_GAP = 0.25;
 
 /** Layout names v1 shipped with; anything else marks a deck as v2. */
 const V1_LAYOUTS = new Set(["cover", "content", "main", "summary", "closing", "section"]);
-const V2_BLOCK_TYPES = new Set(["columns", "box", "shape", "col", "region", "chart"]);
+const V2_BLOCK_TYPES = new Set(["columns", "box", "shape", "col", "region"]);
 
 /**
  * Build AST blocks for a slide.
@@ -139,12 +139,16 @@ function buildBlocks(layout, content) {
       continue;
     }
 
-    // Check for standalone image
-    const img = parseImage(remaining);
-    if (img && !remaining.split("\n").some((l) => l.trim() && !l.trim().startsWith("!["))) {
-      blocks.push({ type: "image", src: img.src, caption: img.alt || "" });
-      if (img.alt) {
-        blocks.push({ type: "figure-caption", caption: img.alt });
+    // Check for standalone images: a run of image lines keeps every image, each with its caption.
+    const imageLines = remaining.split("\n").filter((l) => l.trim());
+    if (imageLines.length && imageLines.every((l) => l.trim().startsWith("![")) && imageLines.some((l) => parseImage(l))) {
+      for (const line of imageLines) {
+        const img = parseImage(line);
+        if (!img) continue;
+        blocks.push({ type: "image", src: img.src, caption: img.alt || "" });
+        if (img.alt) {
+          blocks.push({ type: "figure-caption", caption: img.alt });
+        }
       }
       continue;
     }
@@ -394,23 +398,6 @@ function buildDirectiveBlocks(seg, layout) {
       }];
     }
 
-    case "chart": {
-      const table = parseTable(value);
-      const kind = String(attrs.type || "bar");
-      if (!table || table.headers.length < 2 || table.rows.length < 2 || !["bar", "line"].includes(kind)) {
-        throw new Error('"::: chart" requires type=bar|line and a pipe table with a category column and at least two data rows.');
-      }
-      const labels = table.rows.map((row) => row[0]);
-      const series = table.headers.slice(1).map((name, index) => ({
-        name,
-        values: table.rows.map((row) => Number(String(row[index + 1]).replace(/,/g, ""))),
-      }));
-      if (series.some((item) => item.values.some((number) => !Number.isFinite(number)))) {
-        throw new Error('"::: chart" data cells must contain finite numbers.');
-      }
-      return [{ type: "chart", chartType: kind, labels, series }];
-    }
-
     case "shape": {
       const kind = positional[0];
       if (!SHAPE_KINDS.has(kind)) {
@@ -449,9 +436,53 @@ function buildDirectiveBlocks(seg, layout) {
       return [block];
     }
 
+    case "chart":
+      return buildChartBlocks(value, attrs, positional);
+
     default:
       return [buildDirectiveBlock(directive, value)];
   }
+}
+
+const CHART_TYPES = new Set(["bar", "column", "line", "area", "pie", "doughnut", "stacked"]);
+
+/**
+ * A native, editable chart. The body is a pipe table: the first column holds the
+ * categories, every further column is one series. It travels as a kpi-table block
+ * with a `chart` field, so any layout that accepts a table accepts a chart, and a
+ * renderer that cannot draw charts still shows the numbers as a table.
+ *
+ *   ::: chart type=column unit="억 원"
+ *   | 분기 | 매출 | 영업이익 |
+ *   |---|---|---|
+ *   | 1Q | 1,120 | 101 |
+ *   > 분기별 매출과 영업이익 (예시 데이터)
+ *   :::
+ */
+function buildChartBlocks(value, attrs, positional) {
+  const table = parseTable(value);
+  if (!table || table.headers.length < 2 || table.rows.length === 0) {
+    throw new Error('"::: chart" needs a pipe table: categories in the first column, one column per series');
+  }
+  const type = String(attrs.type || positional[0] || "column").toLowerCase();
+  if (!CHART_TYPES.has(type)) {
+    throw new Error(`"::: chart" type must be one of ${[...CHART_TYPES].join(", ")}; got "${type}"`);
+  }
+  const captionLine = value.split("\n").map((l) => l.trim()).find((l) => l.startsWith("> "));
+  const caption = captionLine ? captionLine.replace(/^>\s*/, "") : null;
+  const chart = { type };
+  if (attrs.unit != null) chart.unit = String(attrs.unit);
+  if (attrs.title != null) chart.title = String(attrs.title);
+  if (attrs.labels != null) chart.labels = attrs.labels !== false && attrs.labels !== "false";
+  const blocks = [{
+    type: "kpi-table",
+    headers: table.headers,
+    rows: table.rows,
+    chart,
+    ...(caption ? { caption } : {}),
+  }];
+  if (caption) blocks.push({ type: "table-caption", caption, figure: true });
+  return blocks;
 }
 
 /**

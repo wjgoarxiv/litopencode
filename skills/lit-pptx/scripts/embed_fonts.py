@@ -33,7 +33,7 @@ A2Z_WEIGHTS = {
 
 
 def _pretendard(weight):
-    p = os.path.join(ROOT, "pretendard-font", "public", "static", f"LitOpenCodeSans-{weight}.otf")
+    p = os.path.join(ROOT, "pretendard-font", "public", "static", f"Pretendard-{weight}.otf")
     return p if os.path.exists(p) else None
 
 
@@ -48,7 +48,7 @@ def resolve_family(typeface):
     slot is one of regular/bold/italic/boldItalic (we only use regular/bold).
     """
     tf = typeface.strip()
-    if tf == "LitOpenCode Sans":
+    if tf == "Pretendard":
         slots = {}
         if _pretendard("Regular"):
             slots["regular"] = _pretendard("Regular")

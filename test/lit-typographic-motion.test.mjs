@@ -338,7 +338,7 @@ test("NOTICE is the verbatim MIT credit, and the one-line credit is on the help 
 
 test("THIRD_PARTY_NOTICES names every preset font with a licence path that exists or is pinned", () => {
   const notices = fs.readFileSync(path.join(skillRoot, "THIRD_PARTY_NOTICES"), "utf8");
-  for (const font of ["Archivo", "VT323", "Silkscreen", "EMSAllure", "LitOpenCode Sans", "Galmuri9", "MesloLGS NF"]) assert.match(notices, new RegExp(font, "u"), font);
+  for (const font of ["Archivo", "VT323", "Silkscreen", "EMSAllure", "Pretendard", "Galmuri9", "MesloLGS NF"]) assert.match(notices, new RegExp(font, "u"), font);
   for (const rel of ["fonts/Archivo-OFL.txt", "fonts/VT323-OFL.txt", "fonts/Silkscreen-OFL.txt", "fonts/stroke/OFL.txt", "fonts/stroke/CREDITS", "../lit-pptx/pretendard-font/LICENSE.txt"]) {
     assert.match(notices, new RegExp(rel.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"), "u"), rel);
     assert.ok(fs.existsSync(path.join(skillRoot, rel)), rel);

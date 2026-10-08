@@ -16,10 +16,10 @@ const A2Z_WEIGHTS = ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBo
 /** Map a font-family name to bundled OTF file(s): [{path, weight}]. */
 function bundledFontFiles(family) {
   const f = (family || "").trim();
-  if (f === "LitOpenCode Sans") {
+  if (f === "Pretendard") {
     return [
-      { file: "pretendard-font/public/static/LitOpenCodeSans-Regular.otf", weight: 400 },
-      { file: "pretendard-font/public/static/LitOpenCodeSans-Bold.otf", weight: 700 },
+      { file: "pretendard-font/public/static/Pretendard-Regular.otf", weight: 400 },
+      { file: "pretendard-font/public/static/Pretendard-Bold.otf", weight: 700 },
     ]
       .map((e) => ({ ...e, abs: path.join(REPO_ROOT, e.file) }))
       .filter((e) => fs.existsSync(e.abs));
@@ -146,12 +146,6 @@ function renderContent(content) {
       }
     }
     return html;
-  }
-
-  if (typeof content === "object" && content.type === "chart") {
-    const header = `<tr><th>Category</th>${content.series.map((s) => `<th>${esc(s.name)}</th>`).join("")}</tr>`;
-    const rows = content.labels.map((label, i) => `<tr><td>${esc(label)}</td>${content.series.map((s) => `<td style="text-align:right">${esc(s.values[i])}</td>`).join("")}</tr>`).join("");
-    return `<table aria-label="Chart data" style="width:100%;border-collapse:collapse">${header}${rows}</table>`;
   }
 
   // KPI Table content

@@ -283,7 +283,7 @@ export function checkRun(dir, options = {}) {
   const actionViolations = graphics.filter((g) => g.bbox && (g.bbox[0] < limits.actionSafeX - eps || g.bbox[1] < limits.actionSafeY - eps || g.bbox[2] > FRAME.width - limits.actionSafeX + eps || g.bbox[3] > FRAME.height - limits.actionSafeY + eps));
   checks["MO-C-05"] = actionViolations.length ? fail(`${actionViolations[0].elementId} at frame ${actionViolations[0].frame} crosses the 95% action-safe border`) : pass(`${new Set(graphics.map((g) => g.elementId)).size} graphic elements inside action-safe`);
   const trackingErrors = [], hangulErrors = [], outlineErrors = [], leadingErrors = [], measureErrors = [], measureNotes = [], breakErrors = [];
-  const pairFiles = ["LitOpenCodeSans-Regular.otf", "LitOpenCodeSans-Bold.otf", "Galmuri9.ttf", "Pretendard-Regular.otf"];
+  const pairFiles = ["Pretendard-Regular.otf", "Pretendard-Bold.otf", "Galmuri9.ttf"];
   for (const box of boxes) {
     for (const run of box.runs ?? []) {
       if (run.script === "latin" && box.voice === "display" && run.trackingEm < limits.displayTrackingFloorEm - eps) trackingErrors.push(`"${box.text}" display tracking ${run.trackingEm}em @${box.frame}`);

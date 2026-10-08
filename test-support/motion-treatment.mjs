@@ -27,7 +27,7 @@ export function stageTreatment(overrides = {}) {
       { kind: "diagram", role: "support", beats: [1, 2] },
       { kind: "gradient", role: "texture", beats: [0, 1, 2, 3] }
     ],
-    typePlan: { faces: ["LitOpenCode Sans", "Archivo"], hierarchy: "one short line per beat, low in the frame, under the drawing", maxWordsOnScreen: 6 },
+    typePlan: { faces: ["Pretendard", "Archivo"], hierarchy: "one short line per beat, low in the frame, under the drawing", maxWordsOnScreen: 6 },
     palette: [{ hex: "#10202A", role: "night sky" }, { hex: "#E8EEF0", role: "copy" }, { hex: "#4FA3A5", role: "water" }, { hex: "#C9A15A", role: "gravel" }],
     sound: { mode: "generated", plan: "a warm bed that thickens as the basin fills", palette: "warm", key: "D minor", tempo: 90 },
     copy: { source: "invented", lines: ["지붕의 비가 사흘을 버틴다", "자갈 턱이 넘침을 막는다"] },
@@ -55,7 +55,7 @@ export function typeTreatment(overrides = {}) {
     ],
     subject: { name: "두 문장", source: "user", specifics: ["two lines the user wrote", "one held pause between them"] },
     visualDevices: [],
-    typePlan: { faces: ["LitOpenCode Sans"], hierarchy: "one line at a time", maxWordsOnScreen: 4 },
+    typePlan: { faces: ["Pretendard"], hierarchy: "one line at a time", maxWordsOnScreen: 4 },
     palette: [{ hex: "#0C0E13", role: "ground" }, { hex: "#E9EBE4", role: "type" }, { hex: "#0F7A82", role: "signal" }],
     sound: { mode: "generated", plan: "a quiet glass bed with one hit per line", palette: "glass", key: "A minor", tempo: 80 },
     copy: { source: "user", lines: ["바람이 먼저 안다", "길은 늘 열려 있다"] },

@@ -30,8 +30,8 @@ export function stageFonts(skillRoot, state, pins) {
   const faces = [];
   for (const [stretch, width] of [[75, "75%"], [100, "100%"], [125, "125%"]]) for (const weight of [400, 700, 900]) faces.push({ family: "Archivo", weight, stretch: width, file: path.join(skillRoot, "fonts", `Archivo-${stretch}-${weight}.ttf`) });
   if (state.hangul === "lit-pptx") {
-    faces.push({ family: "LitOpenCode Sans", weight: 400, file: path.resolve(skillRoot, pins.litPptxPair.Regular.path) }, { family: "LitOpenCode Sans", weight: 700, file: path.resolve(skillRoot, pins.litPptxPair.Bold.path) });
-  } else faces.push({ family: "LitOpenCode Sans", weight: 400, file: path.join(state.fontDir, "Pretendard-Regular.otf") }, { family: "LitOpenCode Sans", weight: 700, file: path.join(state.fontDir, "Pretendard-Regular.otf") });
+    faces.push({ family: "Pretendard", weight: 400, file: path.resolve(skillRoot, pins.litPptxPair.Regular.path) }, { family: "Pretendard", weight: 700, file: path.resolve(skillRoot, pins.litPptxPair.Bold.path) });
+  } else faces.push({ family: "Pretendard", weight: 400, file: path.join(state.fontDir, "Pretendard-Regular.otf") }, { family: "Pretendard", weight: 700, file: path.join(state.fontDir, "Pretendard-Regular.otf") });
   faces.push({ family: "VT323", weight: 400, file: path.join(skillRoot, "fonts", "VT323-Regular.ttf") });
   faces.push({ family: "Silkscreen", weight: 400, file: path.join(skillRoot, "fonts", "Silkscreen-Regular.ttf") }, { family: "Silkscreen", weight: 700, file: path.join(skillRoot, "fonts", "Silkscreen-Bold.ttf") });
   faces.push({ family: "MesloLGS NF", weight: 400, file: path.join(state.fontDir, "MesloLGS-NF-Regular.ttf") });

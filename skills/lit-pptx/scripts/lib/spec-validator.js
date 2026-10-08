@@ -25,8 +25,8 @@ const PLACEMENT_BLOCKS = new Set(["box", "shape", "columns"]);
 
 const LAYOUT_BLOCKS = {
   cover: new Set(["title"]),
-  content: new Set(["title", "key-message", "body", "image", "notes", "kpi-table", "chart", "figure-caption", "table-caption"]),
-  main: new Set(["title", "key-message", "body", "main-box", "kpi-table", "chart", "image", "figure-caption", "table-caption"]),
+  content: new Set(["title", "key-message", "body", "image", "notes", "kpi-table", "figure-caption", "table-caption"]),
+  main: new Set(["title", "key-message", "body", "main-box", "kpi-table", "image", "figure-caption", "table-caption"]),
   summary: new Set(["title", "key-message", "summary-group", "image", "kpi-table", "figure-caption", "table-caption"]),
   closing: new Set(["title"]),
   section: new Set(["title", "notes"]),

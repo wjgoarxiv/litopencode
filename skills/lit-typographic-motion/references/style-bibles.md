@@ -41,7 +41,7 @@ about payment systems, design systems and workflows that want nothing terminal-l
 - Contrast facts: bone on ink is about 16:1. Teal on ink is about 3.8:1, so teal is a rule, a bar or
   large type (32 px and up, or 25 px bold) only, never body copy.
 - Voices: Archivo display (static width x weight instances; width steps are Latin-only), MesloLGS NF
-  for small machine annotations, the lit-pptx LitOpenCode Sans pair for Hangul running text.
+  for small machine annotations, the lit-pptx Pretendard pair for Hangul running text.
 - Motion: `slam` (180 ms on the proven deceleration curve) lands a title on a downbeat, `hold`
   keeps it still, `snap-cut` changes scene with no easing. Nothing bounces.
 - Passes: `swiss-grid` hairline rules, then a low-strength Bayer `dither` as a print texture, then
@@ -72,7 +72,7 @@ about payment systems, design systems and workflows that want nothing terminal-l
 - Palette: indigo `#0E1420` background, off-white `#E8ECEF` type, deep teal `#124559` and violet
   `#4C3B6E` gradient stops, coral `#E07856` for one punctuation moment.
 - Contrast facts: off-white clears 8:1 on every stop, so type sits directly on the flow.
-- Voices: Archivo display used calmly (little width or weight motion), LitOpenCode Sans for Hangul,
+- Voices: Archivo display used calmly (little width or weight motion), Pretendard for Hangul,
   MesloLGS NF for small timestamps.
 - Motion: `drift` (a slow in-out curve over seconds, matched to the flow speed) and a short
   `surge-punch` tied to a gradient surge. No hold-then-snap rhythm as the default.

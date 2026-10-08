@@ -5,7 +5,7 @@
  * which enrolled template was chosen. Lets a user pick AZURE design + any font.
  *
  * Three systems:
- *   pretendard — ONE weighted family "LitOpenCode Sans" (bold via weight; bold:true OK)
+ *   pretendard — ONE weighted family "Pretendard" (bold via weight; bold:true OK)
  *   a2z        — 에이투지체, one family PER weight (bold:false; weight by name)
  *
  * Each font_role is reassigned by its INTENDED weight class (derived from the
@@ -51,12 +51,12 @@ function applyFont(templateObj, key) {
   const caps = templateObj.capabilities || {};
 
   if (key === "pretendard") {
-    t.fonts = { title: "LitOpenCode Sans", body: "LitOpenCode Sans", light: "LitOpenCode Sans" };
-    t.global_typography = { ...(t.global_typography || {}), bullet_font: "LitOpenCode Sans" };
+    t.fonts = { title: "Pretendard", body: "Pretendard", light: "Pretendard" };
+    t.global_typography = { ...(t.global_typography || {}), bullet_font: "Pretendard" };
     const roles = caps.font_roles || {};
     for (const [name, r] of Object.entries(roles)) {
       const cls = weightClass(name);
-      r.font = "LitOpenCode Sans";
+      r.font = "Pretendard";
       r.bold = cls === "bold" || cls === "black";
     }
     if (caps.constraints) caps.constraints.no_bold_on_bold_fonts = false;

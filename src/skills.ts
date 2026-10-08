@@ -470,23 +470,25 @@ export const litOpenCodeRuntimeSkills = Object.freeze([
   {
     id: "lit-pptx",
     title: "Lit PowerPoint",
-    summary: "Compile a source-backed Markdown deck to an editable PPTX with enrolled templates, pinned first-use runtime, QA, and visual inspection.",
+    summary: "Compile a source-backed Markdown deck to an editable PPTX in one of eight tonalities chosen before building, with pinned first-use runtime, a deck-wide QA gate, and visual inspection.",
     featureIds: ["lit-pptx"],
     discovery: "Select the lit-pptx native skill; bounded lit slide requests direct OpenCode to load it before drafting.",
     safety: [
       "Keep the Markdown source with the PPTX and do not invent missing source facts.",
-      "Pass layout, anti-slop, contrast and OOXML checks, then inspect rendered slides when soffice is available."
+      "Name the chosen tonality and two alternatives; titles stay topic labels and no number is inflated.",
+      "Pass layout, anti-slop, contrast, OOXML and deck output checks, then inspect rendered slides when soffice is available."
     ]
   },
   {
     id: "lit-docx",
     title: "Lit Word Documents",
-    summary: "Create or edit styled DOCX reports from Markdown with publisher profiles, pinned first-use runtime, lint, and visual audit.",
+    summary: "Create or edit restrained DOCX reports in one of six tonalities chosen before writing, or publisher manuscripts, with pinned first-use runtime, a page-checking gate, and visual audit.",
     featureIds: ["lit-docx"],
     discovery: "Select the lit-docx native skill; bounded lit report requests direct OpenCode to load it before drafting.",
     safety: [
       "Preserve factual source claims and keep the Markdown beside the DOCX.",
-      "Use publisher profiles when requested; render and inspect pages before a visual-quality claim."
+      "Name the chosen tonality and two alternatives, or use the publisher profile the user requested.",
+      "Pass the document gate with its page checks, then render and inspect pages before a visual-quality claim."
     ]
   },
   {

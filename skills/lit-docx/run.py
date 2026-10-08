@@ -20,6 +20,7 @@ COMMANDS = {
     "pdf-to-md": "convert_pdf.py",
     "edit": "edit_docx.py",
     "lint": "slop_lint.py",
+    "qa": "craft_docx.py",
     "audit": "visual_audit.py",
     "clean-md": "clean_markdown.py",
     "embed-images": "embed_images.py",
@@ -48,7 +49,7 @@ def prepare():
 
 def main():
     if len(sys.argv) < 2:
-        raise SystemExit("Usage: python3 run.py <md-to-docx|md-to-pdf|pdf-to-md|edit|lint|audit|clean-md|embed-images|templates|doctor> [arguments]")
+        raise SystemExit("Usage: python3 run.py <md-to-docx|md-to-pdf|pdf-to-md|edit|lint|qa|audit|clean-md|embed-images|templates|doctor> [arguments]")
     command, *args = sys.argv[1:]
     if command == "doctor":
         print(json.dumps({"pythonReady": ready()}))

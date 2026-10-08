@@ -430,4 +430,4 @@ OpenCode 네이티브 스킬 `frontend-ui-ux`는 충분한 구현 요청을 받�
 
 개념·편집·기술 다이어그램은 `lit-diagram-drawer` 네이티브 스킬 선택기에서 제작하고 검증합니다. 제품 인터페이스는 `frontend-ui-ux`, 측정된 과학 데이터 그림은 `lit-scientific-visualization`을 사용합니다.
 
-`lit-docx`는 워드 보고서, `lit-pptx`는 파워포인트 발표자료를 만듭니다. `lit`과 함께 쓰면 요청한 형식의 네이티브 스킬을 선택하고, 마크다운 원본·품질 검사·렌더 확인을 유지합니다.
+`lit-docx`는 워드 보고서, `lit-pptx`는 파워포인트 발표자료를 만듭니다. `lit`과 함께 쓰면 요청한 형식의 네이티브 스킬을 선택하고, 마크다운 원본·품질 검사·렌더 확인을 유지합니다. 두 스킬은 만들기 전에 디자인 방향을 정하고 다른 후보 두 개와 함께 알려 줍니다. 발표자료는 Ledger, Signal, Atlas, Chalk, Paper, Gazette, Studio, Night 여덟 가지, 보고서는 Report, Brief, Manual, Proposal, Memo, Journal 여섯 가지 방향 중에서 고릅니다.

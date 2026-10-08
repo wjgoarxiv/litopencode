@@ -296,14 +296,14 @@ Each row shows what a skill produces, how to open it, and what you get.
 <td>A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and get an editable PowerPoint deck from a Markdown source, AZURE-PRO by default. A QA gate and a rendered check follow. It is also in the skill picker." /></td>
+<td><img src="./docs/assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and get an editable PowerPoint deck from a Markdown source, drawn in one of eight design directions that the skill picks and names before building. A deck-wide QA gate and a rendered check follow. It is also in the skill picker." /></td>
 <td><code>lit-pptx</code><br /><sub><code>skill picker</code></sub></td>
-<td>Ask for slides with <code>lit</code> and get an editable PowerPoint deck from a Markdown source, AZURE-PRO by default. A QA gate and a rendered check follow. It is also in the skill picker.</td>
+<td>Ask for slides with <code>lit</code> and get an editable PowerPoint deck from a Markdown source, drawn in one of eight design directions that the skill picks and names before building. A deck-wide QA gate and a rendered check follow. It is also in the skill picker.</td>
 </tr>
 <tr>
-<td><img src="./docs/assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and get a styled Word file with its Markdown source; Korean text uses korean-generic. Lint and a rendered page check follow. It is also in the skill picker." /></td>
+<td><img src="./docs/assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and get a quiet, print-ready Word file with its Markdown source, set in one of six document styles that the skill names before writing. Journal profiles stay available. A gate checks the rendered pages. It is also in the skill picker." /></td>
 <td><code>lit-docx</code><br /><sub><code>skill picker</code></sub></td>
-<td>Ask for a report with <code>lit</code> and get a styled Word file with its Markdown source; Korean text uses korean-generic. Lint and a rendered page check follow. It is also in the skill picker.</td>
+<td>Ask for a report with <code>lit</code> and get a quiet, print-ready Word file with its Markdown source, set in one of six document styles that the skill names before writing. Journal profiles stay available. A gate checks the rendered pages. It is also in the skill picker.</td>
 </tr>
 <tr>
 <td><img src="./docs/assets/skills/autoresearch.webp" width="240" alt="An approved, budgeted experiment loop. Each round changes one thing and keeps or reverts it." /></td>
@@ -414,7 +414,13 @@ The poster opens the optional film, so the video only plays when you choose it.
 
 `lit-docx` turns a Markdown source into an editable Word report. `lit-pptx` compiles slides into an editable PowerPoint deck. Ask for a report or slides with `lit`, and OpenCode is told to load the matching skill; ask for both and it loads both.
 
-Korean reports use the korean-generic style unless you ask for another. Decks start from the AZURE-PRO design and the Pretendard font. The first time you use either skill, it installs the exact tool versions it needs into a cache of LitOpenCode's own. Both keep the Markdown source as well as the finished file, and both run their structure and quality checks. If LibreOffice is installed, they also ask for a look at the rendered pages. Publisher styles, editing an existing DOCX, PDF conversion, learning a template and embedding fonts are covered in the installed skills. To see whether everything is ready, run `litopencode doctor`; it only reports and installs nothing.
+Until this release every deck began from the same blue template and every Korean report from the same style sheet, so a funding pitch and a quarterly review came out looking alike. Both skills now start by deciding how the file should look, the way a designer would before touching the first page, and they tell you what they decided.
+
+For slides, `lit-pptx` reads what the deck is for and who will see it, then picks one of eight design directions. There is one for dense reviews that are read closely, one for pitches, one for decks led by pictures, one for teaching, one for research talks, one for Korean briefing pages, one for editorial portfolios and one for data talks on a dark screen. Each direction is a pack of colours, type sizes, title positions and page layouts that the compiler reads as data, so one source looks different under two of them. The reply names the direction and two alternatives, and a bare request gets no style questions. Slides are dense, with a source line on every data slide. Titles name the topic and leave the claim to the body, no number is blown up past the title size, and everything is set in the bundled Pretendard. The gate reads each slide and the whole deck, including how many title styles and layouts it mixes, how much of each page stays empty and whether any title reads as a sentence.
+
+For documents, `lit-docx` chooses among six styles: Report, Brief, Manual, Proposal, Memo and Journal. Each is built its own way, from what stands on the first page to how the summary is set, how sections are numbered and what the running head carries. All six share one restrained page: near-black headings, tables with three thin rules and no shading, at most one accent colour, A4 with 25 mm margins and leading measured on the rendered page. Korean documents follow Korean conventions such as `2026. 10. 1.` dates, `<표 1>` captions above tables and 단위 and 자료 lines around them. The gate renders the pages and looks for headings stranded at a page foot, tables split without need, colour creeping in and too many boxes. Journal manuscripts keep the Elsevier, ACS, IEEE, Nature and korean-generic profiles.
+
+The first time you use either skill, it installs the exact tool versions it needs into a cache of LitOpenCode's own. Both keep the Markdown source as well as the finished file, and both run their structure and quality checks. If LibreOffice is installed, they also ask for a look at the rendered pages. Publisher styles, editing an existing DOCX, PDF conversion, learning a template and embedding fonts are covered in the installed skills. To see whether everything is ready, run `litopencode doctor`; it only reports and installs nothing.
 
 ### Writing and the browser
 

@@ -14,7 +14,7 @@ export const textureKinds = Object.freeze(["grid", "gradient", "particles", "pho
 export const soundModes = Object.freeze(["generated", "supplied", "authored", "none"]);
 export const soundPalettes = Object.freeze(["glass", "warm", "pulse", "air"]);
 // The product's own verified faces: the families `/lit/fonts.css` serves and the type engine draws.
-export const productFaces = Object.freeze(["Archivo", "LitOpenCode Sans", "VT323", "Silkscreen", "MesloLGS NF", "Galmuri9"]);
+export const productFaces = Object.freeze(["Archivo", "Pretendard", "VT323", "Silkscreen", "MesloLGS NF", "Galmuri9"]);
 const floorTenGenres = new Set(["announcement", "event", "explainer", "motion-graphics"]);
 
 // NFC, lowercase, then no whitespace and no punctuation.

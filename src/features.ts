@@ -1218,7 +1218,7 @@ export const litOpenCodeFeatures = Object.freeze([
   {
     id: "lit-pptx",
     title: "Lit PowerPoint",
-    summary: "Native OpenCode deck skill with source, compile, QA, fonts, and first-use dependency cache.",
+    summary: "Native OpenCode deck skill: eight tonality packs chosen before building, source, compile, deck-wide QA, Pretendard fonts, and first-use dependency cache.",
     bindings: [
       { kind: "config", id: "skills/lit-pptx/SKILL.md", surface: "OpenCode native skill picker", description: "Loads the slide workflow from the installed managed tree." },
       { kind: "hook", id: "lit-task slide intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit slide requests to the native skill." },
@@ -1229,7 +1229,7 @@ export const litOpenCodeFeatures = Object.freeze([
   {
     id: "lit-docx",
     title: "Lit Word Documents",
-    summary: "Native OpenCode document skill with publisher profiles, conversion, editing, lint, and first-use dependency cache.",
+    summary: "Native OpenCode document skill: six restrained tonalities chosen before writing, publisher profiles, conversion, editing, a page-checking gate, and first-use dependency cache.",
     bindings: [
       { kind: "config", id: "skills/lit-docx/SKILL.md", surface: "OpenCode native skill picker", description: "Loads the document workflow from the installed managed tree." },
       { kind: "hook", id: "lit-task report intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit report requests to the native skill." },

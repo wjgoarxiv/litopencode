@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """Honest, renderer-agnostic QA gate for generated PPTX decks.
 
-Brand-neutral: works for any enrolled template. Combines three checks and
+Brand-neutral: works for any enrolled template. Combines these checks and
 exits non-zero if ANY real defect is found:
 
   1. Layout issues  — inventory.py --issues-only (overflow / overlap / off-slide)
   2. Anti-slop      — validate_pptx.py (forbidden/placeholder terms, default fonts)
   3. WCAG contrast  — text colour vs its fill (body < 4.5:1, large < 3:1)
+  4. Craft floor    — craft_extras.py (OF-101..OF-109 per slide) and deck_output.py
+                      (OF-110..OF-117 over the deck: title-treatment count, composition
+                      variety, empty body band, one frame per treatment, label titles,
+                      no empty region, no light figure card on a dark ground; with
+                      --sibling, OF-116: another tonality of the same source must draw
+                      a different skeleton)
 
 No LibreOffice / rendering engine required: everything is read from the OOXML
 via python-pptx. (A renderer is only ever needed for *visual* preview, which is
@@ -29,6 +35,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 from pptx.opc.constants import RELATIONSHIP_TYPE as RT
 from craft_extras import analyse as analyse_craft
+from deck_output import compare_skeletons
 
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATE = ROOT / "scripts" / "validate_pptx.py"
@@ -94,10 +101,22 @@ def _bbox(shape):
         return None
 
 
-def _resolve_bg(shape, idx, filled):
+def _slide_ground(slide) -> tuple[int, int, int]:
+    """The slide's own solid background, white when it has none (or inherits one)."""
+    try:
+        fill = slide.background.fill
+        if fill.type == 1:  # solid
+            return _hex_to_rgb(fill.fore_color.rgb) or (255, 255, 255)
+    except (AttributeError, TypeError, ValueError):
+        pass
+    return (255, 255, 255)
+
+
+def _resolve_bg(shape, idx, filled, ground=(255, 255, 255)):
     """Effective background for a text shape: its own fill, else the topmost
     filled shape drawn *behind* it (lower z-order) that contains its centre,
-    else white. Prevents false positives like white text over a charcoal band."""
+    else the slide background. Prevents false positives like white text over a
+    charcoal band, or light text on a dark slide."""
     own = _shape_fill_rgb(shape)
     if own is not None:
         return own
@@ -112,7 +131,7 @@ def _resolve_bg(shape, idx, filled):
                 best = f_rgb  # later (higher idx) wins -> topmost behind text
         if best is not None:
             return best
-    return (255, 255, 255)
+    return ground
 
 
 def check_contrast(path: Path) -> dict[str, Any]:
@@ -123,10 +142,11 @@ def check_contrast(path: Path) -> dict[str, Any]:
     for s_idx, slide in enumerate(prs.slides, start=1):
         shapes = list(slide.shapes)
         filled = [(i, rgb, _bbox(sh)) for i, sh in enumerate(shapes) if (rgb := _shape_fill_rgb(sh)) is not None]
+        ground = _slide_ground(slide)
         for idx, shape in enumerate(shapes):
             if not getattr(shape, "has_text_frame", False):
                 continue
-            bg = _resolve_bg(shape, idx, filled)
+            bg = _resolve_bg(shape, idx, filled, ground)
             for para in shape.text_frame.paragraphs:
                 for run in para.runs:
                     if not run.text.strip():
@@ -444,7 +464,11 @@ def check_evidence_binding(path: Path) -> dict[str, Any]:
             checked += 1
             figure_box = _bbox_in(shape)
             nearby: list[str] = []
-            if figure_box is not None:
+            page_area = (prs.slide_width / 914400.0) * (prs.slide_height / 914400.0)
+            if figure_box is not None and _is_full_bleed(figure_box, page_area):
+                # A full-bleed picture carries its caption on the panel laid over it.
+                nearby = [text for other in shapes if other is not shape and (text := _shape_text(other))]
+            elif figure_box is not None:
                 figure_width = figure_box[2] - figure_box[0]
                 for other in shapes:
                     text = _shape_text(other)
@@ -593,6 +617,12 @@ def check_composition(path: Path) -> dict[str, Any]:
     for slide_no, slide in enumerate(prs.slides, 1):
         content = []
         table_count = chart_count = 0
+        # The content area runs under a top title; a bottom title closes it from below, so it starts at the top margin.
+        title = next((shape for shape in slide.shapes if shape.name == "title@bottom-anchor" and shape.top is not None), None)
+        top, floor = (0.45, title.top / 914400) if title is not None else (1.7, 6.7)
+        held = [box for shape in slide.shapes if (box := _bbox_in(shape)) is not None and (
+            getattr(shape, "has_table", False) or getattr(shape, "has_chart", False)
+            or shape.shape_type == MSO_SHAPE_TYPE.PICTURE or _shape_text(shape))]
         for shape_no, shape in enumerate(slide.shapes, 1):
             box = _bbox_in(shape)
             if box is None:
@@ -607,13 +637,14 @@ def check_composition(path: Path) -> dict[str, Any]:
             chart_count += has_chart
             if (has_table or has_chart or shape.shape_type == MSO_SHAPE_TYPE.PICTURE or
                     (getattr(shape, "has_text_frame", False) and shape.text_frame.text.strip())):
-                if y0 >= 1.7 and y0 < 6.7:
-                    content.append((max(0.7, x0), max(1.7, y0), min(width - 0.7, x1), min(6.7, y1)))
+                if top <= y0 < floor:
+                    content.append((max(0.7, x0), max(top, y0), min(width - 0.7, x1), min(floor, y1)))
             if (not _shape_text(shape) and not has_table and not has_chart and
                     shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE and
                     (x1 - x0) * (y1 - y0) > 0.3 and
-                    _shape_fill_rgb(shape) is None):
-                # A large empty outlined rectangle is usually a leftover box.
+                    _shape_fill_rgb(shape) is None and
+                    not any(x0 <= a + 0.03 and y0 <= b + 0.03 and c <= x1 + 0.03 and d <= y1 + 0.03 for a, b, c, d in held)):
+                # A large empty outlined rectangle is usually a leftover box; one around text is its frame.
                 try:
                     line_rgb = _hex_to_rgb(shape.line.color.rgb)
                 except (TypeError, AttributeError):
@@ -622,7 +653,7 @@ def check_composition(path: Path) -> dict[str, Any]:
                     issues.append({"slide": slide_no, "shape": shape_no, "kind": "empty_outline",
                                    "hint": "Remove the unused outlined box or put its intended content inside it."})
         if 1 < slide_no < len(prs.slides):
-            area = (width - 1.4) * 5.0
+            area = (width - 1.4) * (floor - top)
             occupied = sum(max(0, x1 - x0) * max(0, y1 - y0) for x0, y0, x1, y1 in content)
             ratio = round(min(1, occupied / area), 3)
             fill_ratios.append({"slide": slide_no, "ratio": ratio})
@@ -692,7 +723,7 @@ def run_validate(pptx: Path) -> dict[str, Any]:
 
 
 # ── gate ───────────────────────────────────────────────────────────────────
-def qa(pptx: Path) -> dict[str, Any]:
+def qa(pptx: Path, sibling: Path | None = None) -> dict[str, Any]:
     validate_report = run_validate(pptx)
     inv_summary = summarize_inventory(load_inventory_issues(pptx))
     contrast = check_contrast(pptx)
@@ -701,6 +732,9 @@ def qa(pptx: Path) -> dict[str, Any]:
     objective = check_objective_quality(pptx)
     composition = check_composition(pptx)
     craft = analyse_craft(pptx)
+    if sibling is not None:
+        craft["findings"] += compare_skeletons(pptx, sibling)
+        craft["pass"] = not any(item["severity"] == "HIGH" for item in craft["findings"])
 
     reasons: list[str] = []
     if not validate_report.get("pass", False):
@@ -763,8 +797,9 @@ def qa(pptx: Path) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Honest renderer-agnostic QA gate for PPTX decks.")
     parser.add_argument("pptx", type=Path)
+    parser.add_argument("--sibling", type=Path, help="the same source compiled under another tonality (OF-116)")
     args = parser.parse_args(argv)
-    report = qa(args.pptx.resolve())
+    report = qa(args.pptx.resolve(), args.sibling.resolve() if args.sibling else None)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["pass"] else 1
 

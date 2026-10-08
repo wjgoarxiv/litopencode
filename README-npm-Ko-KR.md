@@ -86,7 +86,7 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 | `/lit-recap` | 로컬 기록을 짧게 요약해 보여 줍니다. |
 | `/litresearch` | 출처 근거를 남기며 조사합니다. |
 
-이 밖에도 디버깅, 리팩터링, 코드 검토, 조사 스킬이 있고, 워드 보고서(`lit-docx`)와 파워포인트 발표자료(`lit-pptx`), 다이어그램, 과학 그림, 화면 구현, README, 글 다듬기(`/lit-humanizer`) 스킬도 함께 설치됩니다. 스킬마다 무엇을 만드는지는 그림과 함께 [GitHub 스킬 갤러리](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#스킬-한눈에-보기)에 있습니다.
+이 밖에도 디버깅, 리팩터링, 코드 검토, 조사 스킬이 있고, 만들기 전에 디자인 방향을 골라 알려 주는 워드 보고서(`lit-docx`)와 파워포인트 발표자료(`lit-pptx`), 다이어그램, 과학 그림, 화면 구현, README, 글 다듬기(`/lit-humanizer`) 스킬도 함께 설치됩니다. 스킬마다 무엇을 만드는지는 그림과 함께 [GitHub 스킬 갤러리](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#스킬-한눈에-보기)에 있습니다.
 
 ## 설치하면 바뀌는 것
 

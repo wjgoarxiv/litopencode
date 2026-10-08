@@ -23,7 +23,7 @@ comparison with `request`, every quoted span (`"…"`, `“…”`, `'…'`, `�
 | `beats[]` | `{t0, t1, purpose, onScreen, motion, sound}` in order, each at least 1.2 s, covering 0 to `durationSec` with no gap over 0.25 s. At least as many beats as the genre's arc has stages; `type-led` has one beat per supplied line. |
 | `subject` | `{name, source: user or invented, specifics[]}` with at least 2 concrete specifics: what it is or does, for whom, one distinctive detail. `source: user` only when the request names it. |
 | `visualDevices[]` | `{kind, role: subject, support or texture, beats[]}`; `beats` lists beat indices (from 0). Kinds: `illustration`, `diagram`, `chart`, `icon`, `shape`, `path`, `mask`, `depth3d`, `particles`, `grid`, `gradient`, `photo-texture`. |
-| `typePlan` | `{faces[], hierarchy, maxWordsOnScreen}`; faces come from `Archivo`, `LitOpenCode Sans`, `VT323`, `Silkscreen`, `MesloLGS NF`, `Galmuri9`. Optional `showIndex: true` prints a shot index on the type path. |
+| `typePlan` | `{faces[], hierarchy, maxWordsOnScreen}`; faces come from `Archivo`, `Pretendard`, `VT323`, `Silkscreen`, `MesloLGS NF`, `Galmuri9`. Optional `showIndex: true` prints a shot index on the type path. |
 | `palette[]` | 3-6 entries `{hex: "#rrggbb", role}`. |
 | `sound` | `{mode, plan, ...}`. `mode` is `generated`, `supplied`, `authored` or `none`. |
 | `copy` | `{source: user or invented, lines[]}`. |

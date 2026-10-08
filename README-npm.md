@@ -85,7 +85,7 @@ You get an `index.html` to open and try. Next time, `/lit-recap` shows where you
 | `/lit-recap` | Read a short recap from local state. |
 | `/litresearch` | Research with source evidence. |
 
-Beyond these, the package installs skills for debugging, refactoring, code review, research, Word reports (`lit-docx`), PowerPoint decks (`lit-pptx`), diagrams, scientific figures, interfaces, READMEs, and prose editing (`/lit-humanizer`). Each one, with a picture of what it produces, is in the [skills gallery on GitHub](https://github.com/wjgoarxiv/litopencode#skills-at-a-glance).
+Beyond these, the package installs skills for debugging, refactoring, code review, research, Word reports (`lit-docx`) and PowerPoint decks (`lit-pptx`) that pick and name a design direction before building, diagrams, scientific figures, interfaces, READMEs, and prose editing (`/lit-humanizer`). Each one, with a picture of what it produces, is in the [skills gallery on GitHub](https://github.com/wjgoarxiv/litopencode#skills-at-a-glance).
 
 ## What install changes
 

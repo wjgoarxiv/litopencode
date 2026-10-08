@@ -4,9 +4,9 @@
 
 | Voice | Latin | Hangul | Source |
 | --- | --- | --- | --- |
-| display | Archivo, static instances at widths 75/100/125 x weights 400/700/900 | LitOpenCode Sans Regular/Bold | Archivo instanced at development time from the pinned variable font (OFL); Hangul pair reused by path from `../lit-pptx` |
-| body | Archivo 400/700 | LitOpenCode Sans Regular/Bold | as above |
-| machine | MesloLGS NF | LitOpenCode Sans | Meslo fetched at pre-warm with its Apache-2.0 notice, the Apache text and the Vera/Arev notices |
+| display | Archivo, static instances at widths 75/100/125 x weights 400/700/900 | Pretendard Regular/Bold | Archivo instanced at development time from the pinned variable font (OFL); Hangul pair reused by path from `../lit-pptx` |
+| body | Archivo 400/700 | Pretendard Regular/Bold | as above |
+| machine | MesloLGS NF | Pretendard | Meslo fetched at pre-warm with its Apache-2.0 notice, the Apache text and the Vera/Arev notices |
 | pixel | VT323 | Galmuri9 (outline build) | VT323 bundled; Galmuri9 fetched at pre-warm with its OFL text, unmodified |
 | chrome | Silkscreen Regular/Bold (labels only) | none | bundled |
 | stroke | EMS Allure, Felix, Osmotron, Readability, Tech (single-stroke SVG) | none | bundled with the OFL 1.1 text and a CREDITS file |

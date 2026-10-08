@@ -7,10 +7,37 @@ layering are not counted as defects; semantic overlap is checked by that gate.
 
 import argparse
 import json
+from functools import lru_cache
 from pathlib import Path
 
+from PIL import ImageFont
 from pptx import Presentation
 from pptx.util import Inches
+
+FACES = Path(__file__).resolve().parents[1] / "pretendard-font" / "public" / "static"
+
+
+@lru_cache(maxsize=8)
+def _face(bold):
+    return ImageFont.truetype(str(FACES / f"Pretendard-{'Bold' if bold else 'Regular'}.otf"), 100)
+
+
+def _measured_lines(line, size, bold, usable_points):
+    """Lines a run of the bundled face takes at this width, wrapped between words like the renderer."""
+    face = _face(bold)
+    width = lambda text: face.getlength(text) * size / 100
+    lines, current = 1, ""
+    for word in line.split(" "):
+        candidate = f"{current} {word}" if current else word
+        if current and width(candidate) > usable_points:
+            lines += 1
+            current = word
+        else:
+            current = candidate
+        while width(current) > usable_points and len(current) > 1:
+            lines += 1
+            current = current[max(1, int(len(current) * usable_points / width(current))):]
+    return lines
 
 
 def inspect(path):
@@ -45,8 +72,14 @@ def inspect(path):
                         continue
                     sizes = [run.font.size.pt for run in paragraph.runs if run.font.size]
                     size = max(sizes, default=16)
-                    approximate_chars = max(1, usable_width / Inches(size / 72 * 0.52))
-                    line_count = max(1, sum(max(1, -(-len(line) // approximate_chars)) for line in paragraph.text.splitlines()))
+                    runs = [run for run in paragraph.runs if run.text.strip()]
+                    if runs and all("Pretendard" in (run.font.name or "") for run in runs):
+                        # The bundled face is measured, not estimated; its bold is wider than its regular.
+                        bold = sum(len(run.text) for run in runs if run.font.bold) * 2 > sum(len(run.text) for run in runs)
+                        line_count = max(1, sum(_measured_lines(line, size, bold, usable_width / 12700) for line in paragraph.text.splitlines() if line.strip()))
+                    else:
+                        approximate_chars = max(1, usable_width / Inches(size / 72 * 0.52))
+                        line_count = max(1, sum(max(1, -(-len(line) // approximate_chars)) for line in paragraph.text.splitlines()))
                     estimated += line_count * Inches(size / 72 * 1.15)
                 if estimated > usable_height + Inches(0.08):
                     overflow["frame"] = "estimated text height exceeds frame"

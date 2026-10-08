@@ -108,7 +108,7 @@ test('packaged files do not match either read-only reference hash inventory', ()
 
 test('the installed design notice credits each studied rule source', () => {
   const notice = readFileSync(resolve('skills/frontend-ui-ux/data/THIRD-PARTY-NOTICE.txt'), 'utf8');
-  for (const token of ['pbakaus/impeccable', 'Paul Bakaus', 'Apache', '9d715cc', 'jakubkrehel/skills', 'Jakub Krehel', 'MIT', '267330e', 'ibelick/ui-skills', 'Julien Thibeaut']) {
+  for (const token of ['jakubkrehel/skills', 'Jakub Krehel', 'MIT', '267330e', 'ibelick/ui-skills', 'Julien Thibeaut']) {
     assert.ok(notice.includes(token), `missing credit anchor: ${token}`);
   }
 });

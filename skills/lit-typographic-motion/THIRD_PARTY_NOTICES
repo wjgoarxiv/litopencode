@@ -10,7 +10,7 @@ Fonts bundled in this skill (paths relative to this file):
 - EMS single-stroke SVG fonts (EMSAllure, EMSFelix, EMSOsmotron, EMSReadability, EMSTech), fonts/stroke/*.svg: SIL OFL 1.1, licence at fonts/stroke/OFL.txt, credits at fonts/stroke/CREDITS
 
 Fonts reused by path from the sibling lit-pptx skill:
-- LitOpenCode Sans Regular and Bold, ../lit-pptx/pretendard-font/public/static/LitOpenCodeSans-{Regular,Bold}.otf: SIL OFL 1.1, licence at ../lit-pptx/pretendard-font/LICENSE.txt
+- Pretendard Regular and Bold, ../lit-pptx/pretendard-font/public/static/Pretendard-{Regular,Bold}.otf: SIL OFL 1.1, licence at ../lit-pptx/pretendard-font/LICENSE.txt
 
 Fonts fetched at pre-warm (litopencode motion-runtime install) into the motion runtime cache,
 ${XDG_CACHE_HOME:-~/.cache}/litopencode/motion-runtime/fonts-<pin hash>/, each verified against fonts/pins.json:

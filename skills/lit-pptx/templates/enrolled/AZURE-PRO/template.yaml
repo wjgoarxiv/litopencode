@@ -1,13 +1,12 @@
 name: AZURE-PRO
 version: "1.0.0"
 label: "Azure Professional"
-render_style: azure
-description: "Flagship SOTA blue-and-white deck — 16:9 widescreen, LitOpenCode Sans, geometric gradient accents, rounded tint cards, numbered chips, KPI cards. Pro-designer aesthetic."
+description: "Flagship SOTA blue-and-white deck — 16:9 widescreen, Pretendard, geometric gradient accents, rounded tint cards, numbered chips, KPI cards. Pro-designer aesthetic."
 
 fonts:
-  title: "LitOpenCode Sans"
-  body: "LitOpenCode Sans"
-  light: "LitOpenCode Sans"
+  title: "Pretendard"
+  body: "Pretendard"
+  light: "Pretendard"
 
 dimensions:
   width: 13.333
@@ -30,8 +29,12 @@ palette:
 
 global_typography:
   char_spacing: -0.3
-  bold_rule: "LitOpenCode Sans is a weighted family — bold:true allowed."
-  bullet_font: "LitOpenCode Sans"
+  bold_rule: "Pretendard is a weighted family — bold:true allowed."
+  bullet_font: "Pretendard"
   bullet_char: "•"
   bullet_color: "1D4ED8"
   section_accent: "1D4ED8"
+
+# Read as a legacy pack: what this template can draw beyond plain text regions.
+pack:
+  capabilities: [rich-blocks, recolor, font-swap, mesh-background]
