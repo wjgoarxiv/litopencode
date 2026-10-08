@@ -5,6 +5,13 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.17 - 2026-10-08
+
+- `lit-pptx` now decides how a deck should look before it builds anything. It reads what the deck is for and who will see it, then picks one of eight looks: one for dense reviews that are read closely, one for pitches, one for decks led by pictures, one for teaching, one for research talks, one for Korean briefing pages, one for editorial portfolios and one for data talks on a dark screen. The reply names the look, says why it fits and offers two alternatives. A bare request gets no style questions.
+- `lit-docx` does the same for documents with six looks: Report, Brief, Manual, Proposal, Memo and Journal. Each is built its own way, from what stands on the first page to how sections are numbered, and all six share one quiet page with near-black headings and thin-ruled tables. The reply names the look, the reason and two alternatives. Journal manuscripts keep their publisher profiles.
+- New checks read every slide and every page and fail the build until the layout is fixed. They catch an empty area beside a full one, a column much shorter than the one next to it, a heading left alone at the foot of a column or page, a short list split across pages, and a last page whose columns end at different depths. The page checks for documents need LibreOffice to render the pages.
+- Decks now ship the official Pretendard Regular and Bold files, unchanged; earlier releases carried a renamed subset. Word documents are set in Pretendard too, so install it on the computer that opens them to see the intended look.
+
 ## 1.0.16 - 2026-10-01
 
 - Automatic handoff now finds the handoff it asked for after compaction even when the model formats the marker line, for example as a bullet, in backticks or in bold. A handoff written by another session is still ignored.
