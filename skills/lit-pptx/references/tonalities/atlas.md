@@ -34,7 +34,7 @@ colour; the pack's own accent is a quiet navy. Pack file: `templates/tonalities/
 ## Type
 
 Pretendard throughout. Compact ramp at density 10. Titles at normal tracking, display slightly
-tight; figures proportional.
+tight.
 
 ## Dials
 
@@ -73,9 +73,8 @@ Display devices: cover `plate`, statement `drench`, big number on a tint, closin
 
 - Tables `light-grid`: no header fill, row rules, no banding, numbers right-aligned, totals bold.
   A table can only appear inside a family that holds one (kpi-row, a closing).
-- Charts: hairline gridlines, direct labels, annotation off.
-- Images: bleed allowed, crop allowed, no frame; pictures are cropped to their box with their own
-  proportions, never stretched.
+- Charts: hairline gridlines, direct labels.
+- Images: no frame; pictures are cropped to their box with their own proportions, never stretched.
 
 ## Decoration vocabulary
 

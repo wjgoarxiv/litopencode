@@ -31,8 +31,7 @@ method". Pack file: `templates/tonalities/paper/pack.yaml`.
 
 ## Type
 
-Pretendard throughout. Compact ramp at density 10; titles at normal tracking; figures tabular so
-result columns align.
+Pretendard throughout. Compact ramp at density 10; titles at normal tracking.
 
 ## Dials
 
@@ -71,10 +70,10 @@ Display devices: cover `rules`, statement `rules`, big number in an `outline`, c
 ## Tables and charts
 
 - Tables in `booktabs` style: no header fill, horizontal rules over and under the header and at
-  the foot only, no vertical rules, no banding, numbers right-aligned in tabular figures, totals bold.
+  the foot only, no vertical rules, no banding, numbers right-aligned, totals bold.
 - Charts: hairline gridlines, direct labels, series in order (the first series takes the crimson,
-  so put the proposed method first), annotation off.
-- Images: no bleed, no crop, no frame; every figure has a numbered caption from its alt text.
+  so put the proposed method first).
+- Images: no frame; every figure has a numbered caption from its alt text.
 
 ## Decoration vocabulary
 

@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { childNodeExecutable } from "./cli/auto-update.ts";
 import { mutatedFilePaths, type ToolGuardAfterOutput, type ToolGuardRequest } from "./tool-guards.ts";
 
 export type HumanizerFinding = {
@@ -140,7 +141,8 @@ function runJsonProcess(command: string, args: readonly string[], input: string,
 }
 
 async function defaultScan(request: HumanizerScanRequest, timeoutMs: number): Promise<readonly HumanizerFinding[]> {
-  const raw = await runJsonProcess(process.execPath, [detectorWorker], JSON.stringify(request), timeoutMs);
+  // Inside OpenCode, process.execPath is the Bun host binary, which cannot run the worker script.
+  const raw = await runJsonProcess(childNodeExecutable(), [detectorWorker], JSON.stringify(request), timeoutMs);
   const parsed = JSON.parse(raw) as WorkerOutput;
   if (!Array.isArray(parsed.findings)) throw new Error("detector returned an invalid response");
   return parsed.findings;

@@ -1,6 +1,6 @@
 # Ledger
 
-Ledger sets a deck like a set of accounts made readable: small exact type, tabular figures, and
+Ledger sets a deck like a set of accounts made readable: small exact type, with
 tables and figure rows doing most of the talking. Colour is rationed to two jobs, marking the
 current period and the one number that matters. Pack file: `templates/tonalities/ledger/pack.yaml`.
 
@@ -36,8 +36,7 @@ current period and the one number that matters. Pack file: `templates/tonalities
 
 Pretendard Regular and Bold throughout (A2Z display and numerals only with `faces: a2z`). At
 density 10 the compact ramp applies: body 13 pt, labels and table cells 11 pt, sources 9 pt, titles
-26 pt. Figures are tabular (`type-voice.figures: tabular`), so columns of numbers align digit for
-digit. Titles track slightly tight; Latin text is sentence case.
+26 pt. Titles track slightly tight.
 
 ## Dials
 
@@ -78,10 +77,10 @@ with the current part marked.
 ## Tables and charts
 
 - Tables in the `ledger` style: the header row is the deck's one dark mass (dark teal field, white
-  labels); rules under the header and above the totals only; no banding; numbers right-aligned in
-  tabular figures; totals bold.
-- Charts: hairline gridlines, direct labels, one accent on muted series, annotation on.
-- Images (rare here): side bleed only, no crop, hairline frame.
+  labels); rules under the header and above the totals only; no banding; numbers right-aligned;
+  totals bold.
+- Charts: hairline gridlines, direct labels, one accent on muted series.
+- Images (rare here): hairline frame.
 
 ## Decoration vocabulary
 

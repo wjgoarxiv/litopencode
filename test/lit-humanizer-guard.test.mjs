@@ -75,3 +75,24 @@ test("scanner crashes fail open and are reported in one visible line", async () 
     await fs.rm(root, { recursive: true, force: true });
   }
 });
+
+test("inside a Bun host the detector still runs under Node, not under the host binary", { skip: process.platform === "win32" ? "POSIX shell stand-in" : false }, async () => {
+  // OpenCode runs plugins in a Bun-compiled binary, so process.execPath names that binary. The stand-in
+  // behaves like it: it treats the worker path as an unknown subcommand and exits non-zero.
+  const host = await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-humanizer-bun-host-"));
+  const hostBinary = path.join(host, "opencode");
+  await fs.writeFile(hostBinary, "#!/bin/sh\necho \"unknown command: $1\" >&2\nexit 1\n", { mode: 0o755 });
+  const realExecPath = process.execPath;
+  process.execPath = hostBinary;
+  try {
+    await temporary(async (_root, guard) => {
+      await assert.rejects(
+        guard.before(request("write", "deliverable.md", { content: "Source: unrequested report\n" })),
+        /LIT_HUMANIZER_BLOCKED.*en-plain-meta-label/u
+      );
+    });
+  } finally {
+    process.execPath = realExecPath;
+    await fs.rm(host, { recursive: true, force: true });
+  }
+});

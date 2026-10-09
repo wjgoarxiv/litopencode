@@ -33,7 +33,7 @@ is dark from cover to closing. Pack file: `templates/tonalities/night/pack.yaml`
 
 ## Type
 
-Pretendard throughout. Compact ramp at density 10; display tracks tight (−2); figures tabular. On a
+Pretendard throughout. Compact ramp at density 10; display tracks tight (−2). On a
 dark ground thin light type below 18 pt is avoided, which is why Night never uses a light weight.
 
 ## Dials
@@ -72,11 +72,11 @@ Display devices: cover `numeral`, statement `open`, big number on a tint, closin
 
 - Tables `header-fill`: dark slate header with off-white labels, row rules, no banding, numbers
   right-aligned, totals bold, the protagonist row tinted umber.
-- Charts: hairline gridlines, direct labels, amber on one series with the rest muted, annotation on.
+- Charts: hairline gridlines, direct labels, amber on one series with the rest muted.
   Charts are drawn native and editable, with the pack's body face named for Hangul axis labels.
   The amber goes to the current series: the latest period, else the measured series over its plan
   or target, else the last.
-- Images: side bleed only, crop allowed, no frame.
+- Images: no frame.
 - Figures brought in as pictures: a chart or diagram exported on white stands here as a white card
   with small grey labels. Put its dark variant beside it, named with `.dark` before the extension
   (`assets/flow.png` and `assets/flow.dark.png`); Night draws the variant at full size, and the gate

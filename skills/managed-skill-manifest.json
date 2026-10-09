@@ -3496,35 +3496,35 @@
         },
         {
           "path": "references/tonalities/atlas.md",
-          "sha256": "6ffea9e214ba51eb8119b38280e88d892255baf546ce508e8807e2aaa025c7b1"
+          "sha256": "d14b91f16d0806fbc0b10c47a3ed7e70da1ceb15554233eb2f7d98fe4142e533"
         },
         {
           "path": "references/tonalities/chalk.md",
-          "sha256": "a563b5d7167144d8e2437f5a10b889c6a956b20743c9f804b1c6270b375a87e7"
+          "sha256": "64820aa7af08a8055bc8fba13be4b9931c2d7c89e9e24c010c820827d5adecba"
         },
         {
           "path": "references/tonalities/gazette.md",
-          "sha256": "3bff34e6fae94ccae96db13817483e5f27be166a00616f96f13653453e1d3f3d"
+          "sha256": "c2d0a132216b3e90a24f5f4b3077e9a96d7b380c72a14f3dbea638679e617a63"
         },
         {
           "path": "references/tonalities/ledger.md",
-          "sha256": "44aee4353bca00a06c163aa5e9b2cb9acba96fb03c09d4bf1cad34512f5e97ca"
+          "sha256": "f65609d7597b7401da8e36e4dae641545f1b1defefc7fc7c3951ff671b7ae954"
         },
         {
           "path": "references/tonalities/night.md",
-          "sha256": "c4d7f67bbc988a326eb992ad1e888729ed755fd1d282e4ed6da6cf4d9268f983"
+          "sha256": "de252baa2378ad4b1322633a84499292a98d6ad87c5bef3266b19e862d48ff50"
         },
         {
           "path": "references/tonalities/paper.md",
-          "sha256": "b3106e5cefd4e7d36ce3ee15d33ee5bd07e07cd297f30eb118d92a526d225882"
+          "sha256": "309078f91112dd8b38618688b3cf3a3f3907b1223bfc17c5897c0f9af21ddcb6"
         },
         {
           "path": "references/tonalities/signal.md",
-          "sha256": "d7b5a2e2ff0d66cb5562df5ec98b4418737a1d7e21199958c32500673e9223f2"
+          "sha256": "4db11121ed61483a9c9ff42d1a6810eaed91c163a5a53b29d0a2b2cff4345de5"
         },
         {
           "path": "references/tonalities/studio.md",
-          "sha256": "848178f9666e857843be3c83e9fe21def4a1ec666c7854b6d6d6afabc53934c9"
+          "sha256": "4ea17f436916dfb514a4f41e7e77c34b948147d304c57572766b9cc9ccb48d51"
         },
         {
           "path": "requirements.in",
@@ -3632,7 +3632,7 @@
         },
         {
           "path": "scripts/validate_pptx.py",
-          "sha256": "3a0830acf3a647878bacd599f4ade17462a83c0a24cbda378bb69a6a05b4d362"
+          "sha256": "5309464302eaf8c2984818fa96703c8bb06da7f10ae1e633b056ab23c587dbce"
         },
         {
           "path": "specs/markdown-slide-spec-v1.md",
@@ -3712,35 +3712,35 @@
         },
         {
           "path": "templates/tonalities/atlas/pack.yaml",
-          "sha256": "1a55367348e8304266e6038a34ec1c84060e3667c9f42c1707e2818c01b535da"
+          "sha256": "9ab2b4ee7ff517bb2102e4d5621ca061d7963bb10d699ff1c312dc7be4aa7f4f"
         },
         {
           "path": "templates/tonalities/chalk/pack.yaml",
-          "sha256": "e386a50ad64fd12a8457af60379682892c3e41e2ff5a536afee0a2167ffa00a7"
+          "sha256": "5aed521353fca689ffc82d7749d611e87fa1cd63735e364bdb1bf60645120281"
         },
         {
           "path": "templates/tonalities/gazette/pack.yaml",
-          "sha256": "b9f58d62e14bd18d004a928210e01678db923895c8d117f8f93d06286c31ce6c"
+          "sha256": "8711484cd457829afa60990922611d9b2efd3930a0138345e389b15fa8115c1b"
         },
         {
           "path": "templates/tonalities/ledger/pack.yaml",
-          "sha256": "67a4a4fa8ecd9d98c0780d3a49610ccc83993d4f20ee7a875d1fe3c32f3da369"
+          "sha256": "28d874b3512ace3e726d03021a128e72c6966b91fbaa72d6b63d9c1761c786fb"
         },
         {
           "path": "templates/tonalities/night/pack.yaml",
-          "sha256": "631c84ee1388b8d69673bf392b704d4d4061433b12957a29c16c37dd5875eb33"
+          "sha256": "f151a840cc2253d4132891ed6135ed4c6e597379434fcee34540ee566590b1cc"
         },
         {
           "path": "templates/tonalities/paper/pack.yaml",
-          "sha256": "f93ab4059ddfd2bcfff93e73112d158620b80f770a9b9fdac678ed4615e5b3e7"
+          "sha256": "4b386272a7ed9e420777bb48daf55caf591cf4e443adb11c5e621b1e3626d0f3"
         },
         {
           "path": "templates/tonalities/signal/pack.yaml",
-          "sha256": "db5d0acb28b845ec3049afb84678f1d03d4670e0a607a1aeb9e7141e3fcbb9eb"
+          "sha256": "784ba047d0e993b7e7d8ebb6c0d354ad0666468801f0ccb3008ff370f0a1acf9"
         },
         {
           "path": "templates/tonalities/studio/pack.yaml",
-          "sha256": "4fb169a8c2cd4807fadfcbead64e3cf85927fb7d61da2796090ec31ad5c80a25"
+          "sha256": "3e6778f16c846220b4f4e66ab3e8149d6c382fe01b007a57d59f03bbcc73363b"
         }
       ]
     },
@@ -3883,7 +3883,7 @@
         },
         {
           "path": "scripts/docx_design.py",
-          "sha256": "26dcb3f4b98807dd6deb872a3623a5a8263492a61ef060453b420784c001d8ef"
+          "sha256": "c50193501d2326f381ed0c2b3f295592ca0d53eac764aa32233e3f2ebb19002d"
         },
         {
           "path": "scripts/docx_layout.py",
@@ -3975,27 +3975,27 @@
         },
         {
           "path": "templates/tonalities/brief.yaml",
-          "sha256": "73a466263bad4f876671de0121b117223f0659f896d99cabde76e8d6a86385f5"
+          "sha256": "41bf481cd799b28ee53538a3cf88a58c4b2f9db365d1ca1ee10b3adfcad1ab8e"
         },
         {
           "path": "templates/tonalities/journal.yaml",
-          "sha256": "aae647c0d62e6b801923651df754933e92c3db8c07c0fe7e12977e1c8473e028"
+          "sha256": "0a7ae34ccd6e91f289c472bfeb8bcfd6736005f15c55a63dd4cc43e55606ec57"
         },
         {
           "path": "templates/tonalities/manual.yaml",
-          "sha256": "de31b0bfa3dc46d172b84af6d60ade9ac1411ba0fb34bb2e402e3a0f80486c67"
+          "sha256": "cc965f5523c7cbaa4c1d0bc06e5260641dfc8113b77f2c252862a397eb97ce84"
         },
         {
           "path": "templates/tonalities/memo.yaml",
-          "sha256": "70181fdc23f51b80c5584bd073c54db216a4a8601aa95f07507a9280e85d2f01"
+          "sha256": "a78c339a193470e6762ffa03b948f44943eb25a5221c12ccbc06a1b2e7cb9e74"
         },
         {
           "path": "templates/tonalities/proposal.yaml",
-          "sha256": "7cf710c09ae8d30a208f59167e9b47f0222a2184231a68047aa596f2c7e135d4"
+          "sha256": "b1b7f4875a89208939ca82d69e6cfb30c35b64ea91d67d5aecc98fe04bde3bfc"
         },
         {
           "path": "templates/tonalities/report.yaml",
-          "sha256": "ad8312bba2752e142ef40b560c13339f5411be73acb0f01634a4e744b215e5d8"
+          "sha256": "23ac1d24f8936c6d522e19354d5948f0d00dce6d60c34fa42e37adafcc68cb8c"
         }
       ]
     }

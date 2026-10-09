@@ -103,3 +103,22 @@ test("Office text is checked after creation and tells the model to fix and rebui
     assert.match(output.output, /fix the source and rebuild/iu);
   });
 });
+
+test("host-shaped calls: the pre-write hook reads the write from output.args, as OpenCode sends it", async () => {
+  // OpenCode passes { tool, sessionID, callID } as the before input and the tool arguments only in output.args;
+  // the after input carries args itself.
+  await withPlugin(async (_root, hooks) => {
+    const blocked = { tool: "write", sessionID: "humanizer-host-session", callID: "humanizer-host-block" };
+    await assert.rejects(
+      hooks["tool.execute.before"](blocked, { args: { filePath: "reports/final.md", content: "Source: draft report\n" } }),
+      /LIT_HUMANIZER_BLOCKED.*en-plain-meta-label/u
+    );
+
+    const warningArgs = { filePath: "reports/another.md", content: "We delve into the measured results.\n" };
+    const warning = { tool: "write", sessionID: "humanizer-host-session", callID: "humanizer-host-warn" };
+    await hooks["tool.execute.before"](warning, { args: warningArgs });
+    const output = { title: "Write", output: "Wrote file successfully.", metadata: {} };
+    await hooks["tool.execute.after"]({ ...warning, args: warningArgs }, output);
+    assert.match(output.output, /LIT_HUMANIZER_WARN/u);
+  });
+});

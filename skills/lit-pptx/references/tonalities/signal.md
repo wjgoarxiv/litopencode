@@ -37,8 +37,7 @@ Because the accent is red, a loss is never red here; write the sign (`▼ 4%`, `
 ## Type
 
 Pretendard throughout; A2Z only on request. Compact ramp at density 10 (body 13, title 26,
-display 36). Display text tracks tighter (−2) than titles (−1); figures are proportional, which
-suits large single numbers more than columns.
+display 36). Display text tracks tighter (−2) than titles (−1).
 
 ## Dials
 
@@ -78,8 +77,8 @@ Display devices: cover `drench`, statement `open`, big number on a `field` panel
 
 - Tables `open`: no header fill, rules at top and bottom only, no banding, numbers right-aligned,
   totals bold, and the protagonist row tinted pale coral.
-- Charts: no gridlines, direct labels, the accent on one series and the rest muted, annotation on.
-- Images may bleed and crop; no frame.
+- Charts: no gridlines, direct labels, the accent on one series and the rest muted.
+- Images: no frame.
 
 ## Decoration vocabulary
 

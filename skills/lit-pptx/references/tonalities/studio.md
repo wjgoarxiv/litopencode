@@ -32,7 +32,7 @@ tinted panels, and a dark ochre accent marks the one thing to look at. Pack file
 
 ## Type
 
-Pretendard throughout. Compact ramp at density 10; display tracks tight (−2). Figures proportional.
+Pretendard throughout. Compact ramp at density 10; display tracks tight (−2).
 
 ## Dials
 
@@ -76,9 +76,9 @@ big number on a tint, closing step in a `band`.
 
 - Tables `open`: no header fill, one rule under the header, no banding, numbers right-aligned,
   totals bold. Studio lists no table family, so tables appear only as KPI rows and closing asks.
-- Charts: no gridlines, direct labels, the accent on one series, annotation on. Column hairlines run
+- Charts: no gridlines, direct labels, the accent on one series. Column hairlines run
   in the gutter beside a chart's takeaways.
-- Images may bleed and crop; no frame.
+- Images: no frame.
 
 ## Decoration vocabulary
 

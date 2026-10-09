@@ -47,8 +47,6 @@ hero: false
 type-voice:
   title-tracking: -1
   display-tracking: -1
-  latin-case: sentence
-  figures: proportional
 
 density: 10
 variance: 6
@@ -91,16 +89,12 @@ table:
   header-ink: accent-deep
   rules: rows
   banding: none
-  numbers: right-tabular
   totals: bold
 chart:
   gridlines: hairline
   labels: direct
   highlight: accent-on-muted
-  annotation: on
 image:
-  bleed: side-only
-  crop: none
   frame: none
 
 fill-order: [distribute, step-up, change-family, anchor-visual]

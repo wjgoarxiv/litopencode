@@ -52,18 +52,24 @@ def _load_terms() -> tuple[list[str], list[str], bool, bool]:
     )
 
 
-def _build_regex(terms: list[str], case_insensitive: bool, whole_word: bool) -> re.Pattern[str] | None:
+def _build_regex(terms: list[str], case_insensitive: bool, whole_word: bool, latin_words: bool = False) -> re.Pattern[str] | None:
     if not terms:
         return None
     # An acronym (RAM, FTO) is a word in capitals: matched as that word, so "diagram" or "program"
-    # does not contain it. Every other term keeps the file's case and word settings.
+    # does not contain it. With latin_words, a one-word Latin term (todo, tbd) is matched as a word or
+    # its plain plural ("TODOs") in any case, so "Mastodon" does not contain it. Every other term keeps
+    # the file's case and word settings.
     acronyms = [term for term in terms if re.fullmatch(r"[A-Z]{2,5}", term)]
-    escaped = [re.escape(term) for term in terms if term not in acronyms]
+    words = [term for term in terms if latin_words and term not in acronyms and re.fullmatch(r"[A-Za-z]+", term)]
+    escaped = [re.escape(term) for term in terms if term not in acronyms and term not in words]
     pattern = "|".join(escaped)
     if whole_word and pattern:
         pattern = rf"(?:(?<=\W)|^)(?:{pattern})(?:(?=\W)|$)"
     if case_insensitive and pattern:
         pattern = f"(?i:{pattern})"
+    if words:
+        word_pattern = rf"(?<![A-Za-z])(?:{'|'.join(map(re.escape, words))})s?(?![A-Za-z])"
+        pattern = "|".join(filter(None, [pattern, f"(?i:{word_pattern})" if case_insensitive else word_pattern]))
     if acronyms:
         pattern = "|".join(filter(None, [pattern, rf"(?<![A-Za-z])(?:{'|'.join(map(re.escape, acronyms))})(?![A-Za-z])"]))
     return re.compile(pattern)
@@ -138,7 +144,7 @@ def _slide_has_title(slide, slide_height: int | None) -> bool:
 def lint(path: str | Path) -> dict[str, Any]:
     prs = Presentation(str(path))
     hard_terms, soft_terms, case_insensitive, whole_word = _load_terms()
-    hard_re = _build_regex(hard_terms, case_insensitive, whole_word)
+    hard_re = _build_regex(hard_terms, case_insensitive, whole_word, latin_words=True)
     soft_re = _build_regex(soft_terms, case_insensitive, whole_word)
 
     missing_titles: list[int] = []

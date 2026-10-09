@@ -74,8 +74,8 @@ Display devices: cover `rail`, statement `drench`, big number on a tint, closing
 
 - Tables `header-fill`: a pale apricot header with dark rust labels, row rules, no banding, numbers
   right-aligned, totals bold.
-- Charts (if a chart appears in a table-insight): hairline gridlines, direct labels, annotation on.
-- Images bleed on one side only, no crop, no frame.
+- Charts (if a chart appears in a table-insight): hairline gridlines, direct labels.
+- Images: no frame.
 
 ## Decoration vocabulary
 

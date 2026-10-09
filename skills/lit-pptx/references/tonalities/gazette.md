@@ -33,7 +33,7 @@ Pack file: `templates/tonalities/gazette/pack.yaml`.
 
 ## Type
 
-Pretendard throughout. Compact ramp at density 10 (body 13 pt, tables 11 pt). Figures tabular.
+Pretendard throughout. Compact ramp at density 10 (body 13 pt, tables 11 pt).
 
 ## Dials
 
@@ -71,8 +71,8 @@ outline, and `index: true`: a section page repeats the agenda with the current p
 
 - Tables `header-fill`: slate blue header with white labels, a full grid of rules, pale slate
   banding, numbers right-aligned, totals bold. The densest table style of the eight.
-- Charts: hairline gridlines, direct labels, annotation off.
-- Images: no bleed, no crop, hairline frame.
+- Charts: hairline gridlines, direct labels.
+- Images: hairline frame.
 
 ## Decoration vocabulary
 

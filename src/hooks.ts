@@ -25,7 +25,8 @@ export function createToolExecuteBeforeHook(options: ToolExecuteHookOptions = {}
   return async (input, output) => {
     await applyTaskRecursionGuard(input, options.getSession);
     applyLitOpenCodeToolBeforeHook(input, output);
-    await options.deliverableHedgeGuard?.before(input);
+    // OpenCode sends the tool arguments only in output.args before a call.
+    await options.deliverableHedgeGuard?.before({ ...input, args: output.args ?? (input as { args?: unknown }).args });
   };
 }
 
