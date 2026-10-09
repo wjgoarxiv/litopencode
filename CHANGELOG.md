@@ -5,6 +5,12 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.18 - 2026-10-09
+
+- The prose check that runs before a file is written now works inside OpenCode. It used to start under OpenCode's own program instead of Node and to look for the new text in the wrong place, so it never saw a write. It now stops an added line such as an unrequested source label before the file is saved, adds a short note after the write when the wording only needs a second look, and checks the text of the Word, PowerPoint and PDF files a session creates.
+- The eight deck looks and six document looks no longer list settings the engines never applied, such as tabular figures, chart annotation, picture bleed and crop, and page-fill targets, and their reference pages no longer promise them. Decks and documents come out exactly as before.
+- The deck check treats a one-word placeholder term such as "todo", "tbd", "fixme" or "placeholder" as a word. A word like "Mastodon" no longer fails a deck, while "TODO:", "TODOs" and "(TBD)" still do.
+
 ## 1.0.17 - 2026-10-08
 
 - `lit-pptx` now decides how a deck should look before it builds anything. It reads what the deck is for and who will see it, then picks one of eight looks: one for dense reviews that are read closely, one for pitches, one for decks led by pictures, one for teaching, one for research talks, one for Korean briefing pages, one for editorial portfolios and one for data talks on a dark screen. The reply names the look, says why it fits and offers two alternatives. A bare request gets no style questions.
