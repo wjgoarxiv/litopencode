@@ -15,6 +15,18 @@ HANDOFF.md
 generate_cover.py
 cover.png
 docs/assets/cover.svg
+# GitHub-only pages: the social preview card, the README demo film and the docs pages that hold what moved off the
+# landing README. They show GitHub-only media by relative path; the npm pages link them on GitHub.
+docs/assets/social-preview.png
+docs/assets/demo.webp
+docs/guide.md
+docs/guide-Ko-KR.md
+docs/skills.md
+docs/skills-Ko-KR.md
+docs/screens.md
+docs/screens-Ko-KR.md
+docs/brand.md
+docs/brand-Ko-KR.md
 # README media and linked licenses are pinned to this package version.
 # The Jev snapshots, the on-screen pictures (jev-*.webp, install-output-*, doctor-output-*, ignition-toast-*,
 # planner-permissions-*) and the promo film (promo-*, promo-source/) are shown only by the GitHub pages,

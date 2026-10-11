@@ -273,15 +273,20 @@ test("rules docs, catalogs, and /rules output describe the shipped two-lane engi
     const runtimeSkill = JSON.stringify(findLitOpenCodeRuntimeSkill("rules"));
     const feature = JSON.stringify(litOpenCodeFeatures.find((entry) => entry.id === "rules"));
     const readme = await fs.readFile("README.md", "utf8");
+    // The landing README names /rules in plain words; the skills page carries the engine's description.
+    const skillsPage = await fs.readFile(path.join("docs", "skills.md"), "utf8");
     const releaseChecklist = await fs.readFile(path.join("docs", "release-checklist.md"), "utf8");
     const surfaces = new Map([
       ["skills/rules/SKILL.md", skill],
       ["runtime skill catalog", runtimeSkill],
       ["feature catalog", feature],
-      ["README.md", readme],
+      ["docs/skills.md", skillsPage],
       ["docs/release-checklist.md", releaseChecklist]
     ]);
     const staleNoEngine = /(?:ships|has) no rules (?:discovery |injection )?engine|no discovery pass|no per-edit injection/i;
+    assert.doesNotMatch(readme, staleNoEngine, "README.md must not deny the shipped rules engine");
+    assert.match(readme, /`\/rules`/u, "README.md should name the /rules route");
+    assert.match(readme, /once per session and again for files you edit/u, "README.md should say when repository rules load");
 
     await hook({ command: "/rules", sessionID: "session-rules-engine", arguments: "show active rule lanes" }, output);
     surfaces.set("/rules hook output", output.parts[0].text);

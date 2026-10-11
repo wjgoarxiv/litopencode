@@ -11,6 +11,10 @@ const githubReadmes = ["README.md", "README-Ko-KR.md"];
 const npmReadmes = ["README-npm.md", "README-npm-Ko-KR.md"];
 const readmes = [...githubReadmes, ...npmReadmes];
 const isEnglish = (file) => file === "README.md" || file === "README-npm.md";
+// The landing README opens with one cover. The artwork that used to be stacked around it (ASCII mark,
+// wordmark, clay mark, family illustration, Ignition film) lives on the GitHub brand pages, which load
+// it by paths relative to docs/.
+const brandPages = { "README.md": "docs/brand.md", "README-Ko-KR.md": "docs/brand-Ko-KR.md" };
 const COVER = "docs/assets/cover-motion.webp";
 const STATIC_COVER = "docs/assets/cover.webp";
 const STILL_COVER = "docs/assets/cover-motion-still.webp";
@@ -77,20 +81,25 @@ test("README motion keeps centered outlined ASCII and the exact copyable native 
     assert.ok(content.includes('src="' + assets + '/cover-motion.webp'), file);
     assert.doesNotMatch(content, /View the static (?:family )?cover|정지 (?:패밀리 )?표지 보기/u, file + ": the hidden hyperlink to the cover is gone");
     const heroClose = content.indexOf("</picture></p>");
-    const asciiIndex = content.indexOf(assetRoot + "/ascii-readme.svg");
+    assert.ok(content.startsWith('<p align="center"><picture>'), file + ": the motion cover is the first thing on the page");
     assert.equal(content.slice(0, heroClose).split("<img ").length - 1, 1, file + ": the motion cover is the README's single leading picture");
-    assert.equal(content.indexOf("<img ", heroClose), content.lastIndexOf("<img ", asciiIndex), file + ": the ASCII decoration is the next image after the motion cover");
+    assert.ok(content.indexOf("# LitOpenCode\n", heroClose) > heroClose, file + ": the title follows the cover");
+    for (const stacked of ["ascii-readme.svg", "litopencode-wordmark.svg", "litopencode-clay-icon.png", "litfamily-machines.png"]) {
+      assert.ok(!content.includes(`/readme/${stacked}`), `${file}: ${stacked} no longer stacks on the landing page`);
+    }
     if (githubReadmes.includes(file)) {
-      const linksHeading = file === "README.md" ? "## Links" : "## 링크";
-      const linksStart = content.indexOf(linksHeading);
-      const familyStart = content.indexOf("### LITFAMILY", linksStart);
-      const motionStart = content.indexOf("### Ignition motion", familyStart);
-      assert.ok(linksStart >= 0 && familyStart > linksStart && motionStart > familyStart, file + ": family art is in Links near the end");
-      const familyImages = [...content.slice(familyStart, motionStart).matchAll(/!\[[^\]]+\]\(([^)]+cover\.webp)\)/gu)];
-      assert.equal(familyImages.length, 0, file + ": the duplicate robot cover no longer repeats in Links");
+      const brand = await text(brandPages[file]);
+      assert.ok(content.includes(`](./${brandPages[file]})`), `${file} links its brand page`);
+      assert.ok(brand.includes('<p align="center"><img src="./assets/readme/ascii-readme.svg" width="480"'), `${brandPages[file]} shows the outlined ASCII mark`);
+      const familyStart = brand.indexOf("## LITFAMILY");
+      const motionStart = brand.indexOf("## Ignition motion", familyStart);
+      assert.ok(familyStart >= 0 && motionStart > familyStart, brandPages[file] + ": family art, then the Ignition film");
+      assert.match(brand.slice(familyStart, motionStart), /!\[[^\]]+\]\(\.\/assets\/readme\/litfamily-machines\.png\)/u, brandPages[file] + ": shows the family illustration");
+      const familyImages = [...brand.slice(familyStart, motionStart).matchAll(/!\[[^\]]+\]\(([^)]+cover\.webp)\)/gu)];
+      assert.equal(familyImages.length, 0, brandPages[file] + ": the robot cover does not repeat beside the family art");
+      assert.equal(brand.split("assets/cover.webp").length - 1, 0, brandPages[file] + ": the static robot cover image does not appear");
     }
     assert.equal(content.split("docs/assets/cover.webp").length - 1, 0, file + ": the static robot cover image no longer appears");
-    assert.ok(content.includes(`<p align="center"><img src="${assets}/readme/ascii-readme.svg" width="480"`), file);
     const copy = content.match(/<details>\n<summary>[^<]+<\/summary>\n\n```text\n([\s\S]*?)\n```\n\n<\/details>/u)?.[1];
     assert.equal(copy, rows.join("\n"), `${file} copyable ASCII changed`);
     assert.ok(content.includes(`${assets}/readme/JetBrainsMono-OFL.txt`), file + ": the ASCII font license is linked");
@@ -109,9 +118,16 @@ test("README motion and MIT badges stay local and identify the scoped release", 
   const license = await text(`${assetRoot}/badge-license.svg`);
   assert.match(license, /aria-label="license: MIT"/u);
   assert.match(license, />MIT<\/text>/u);
+  const liveBadges = [
+    "https://img.shields.io/npm/dm/@litfamily/litopencode?label=downloads&color=D7F75B",
+    "https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social"
+  ];
   for (const file of readmes) {
     const content = await text(file);
     for (const name of ["badge-version.svg", "badge-license.svg"]) assert.ok(content.includes(`${assetRoot}/${name}`), `${file} shows ${name}`);
+    // Download and star counts change daily, so those two badges come from shields.io; nothing else is remote.
+    for (const badge of liveBadges) assert.ok(content.includes(`<img src="${badge}" alt="`), `${file} shows ${badge}`);
+    assert.deepEqual([...new Set([...content.matchAll(/<img src="(https:\/\/img\.shields\.io\/[^"]+)"/gu)].map((match) => match[1]))].sort(), [...liveBadges].sort(), `${file}: only the download and star badges are remote`);
     assert.doesNotMatch(content, /unpublished local candidate|아직 공개되지 않은 로컬 후보|availability has not been established|현재 registry에서 설치할 수 있다는 뜻은 아닙니다/u);
     assert.match(content, /npm exec --package @litfamily\/litopencode@latest -- litopencode install/u);
   }
@@ -128,9 +144,10 @@ test("README motion uses all three licensed Lucide icons for meaningful local de
   assert.equal(digest(await fs.readFile(`${assetRoot}/Lucide-LICENSE.txt`)), "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57");
   for (const file of githubReadmes) {
     const content = await text(file);
-    const reference = file === "README.md" ? "docs/reference.md" : "docs/reference-Ko-KR.md";
-    assert.ok(content.includes(`<a href="./${reference}"><img src="./${assetRoot}/lucide-book-open.svg"`), file);
-    assert.ok(content.includes(`<a href="#ignition-motion"><img src="./${assetRoot}/lucide-play.svg"`), file);
+    const guide = file === "README.md" ? "docs/guide.md" : "docs/guide-Ko-KR.md";
+    const screensPage = file === "README.md" ? "docs/screens.md" : "docs/screens-Ko-KR.md";
+    assert.ok(content.includes(`<a href="./${guide}"><img src="./${assetRoot}/lucide-book-open.svg"`), file);
+    assert.ok(content.includes(`<a href="./${screensPage}"><img src="./${assetRoot}/lucide-play.svg"`), file);
     assert.ok(content.includes(`<a href="./LICENSE"><img src="./${assetRoot}/lucide-shield-check.svg"`), file);
     assert.ok(content.includes(`./${assetRoot}/Lucide-LICENSE.txt`), file);
   }
@@ -145,7 +162,22 @@ test("README motion resources have exact approved bytes and are reachable from b
   assert.equal(digest(motionCover), "9997081327cf54ae4a8e2a1dce308ea572f7895095f8542b0304e4327d7afa9f");
   for (const [name, expected] of Object.entries(motionPins)) {
     assert.equal(digest(await fs.readFile(`${assetRoot}/${name}`)), expected, name);
-    for (const file of githubReadmes) assert.ok((await text(file)).includes(`./${assetRoot}/${name}`), `${file} links ${name}`);
+    for (const file of githubReadmes) assert.ok((await text(brandPages[file])).includes(`./assets/readme/${name}`), `${brandPages[file]} links ${name}`);
+  }
+  const githubDocs = ["docs/guide.md", "docs/guide-Ko-KR.md", "docs/skills.md", "docs/skills-Ko-KR.md", "docs/screens.md", "docs/screens-Ko-KR.md", "docs/brand.md", "docs/brand-Ko-KR.md"];
+  for (const file of githubDocs) {
+    const content = await text(file);
+    const targets = [
+      ...[...content.matchAll(/\]\(([^)\s]+)\)/gu)].map((match) => match[1]),
+      ...[...content.matchAll(/\b(?:href|src|srcset)="([^"]+)"/gu)].map((match) => match[1])
+    ];
+    for (const target of targets) {
+      if (target.startsWith("#") || target.startsWith("https://")) continue;
+      assert.ok(target.startsWith("./") || target.startsWith("../"), `${file} relative target must start with ./ or ../: ${target}`);
+      const local = decodeURI(path.posix.join("docs", target).split("#")[0]);
+      assert.equal((await fs.stat(path.resolve(local))).isFile(), true, `${file} -> ${target}`);
+    }
+    assert.doesNotMatch(content, /cdn\.jsdelivr\.net/u, `${file} renders from the repository, not the package CDN`);
   }
   for (const file of readmes) {
     const content = await text(file);
@@ -166,6 +198,7 @@ test("README motion resources have exact approved bytes and are reachable from b
       ...[...content.matchAll(/\b(?:src|srcset)="([^"]+)"/giu)].map((match) => match[1].split(/[\s,]/u)[0])
     ];
     for (const target of imageTargets) {
+      if (target.startsWith("https://img.shields.io/")) continue;
       if (github) {
         assert.ok(target.startsWith("./"), `${file} image must use a relative path: ${target}`);
         continue;
@@ -179,36 +212,36 @@ test("README motion resources have exact approved bytes and are reachable from b
 });
 
 
-test("README places the cover and decoration before its intro, then install and a first task", async () => {
+test("README places one cover, then the title, one-sentence pitch, quick start and a first task", async () => {
   for (const file of readmes) {
     const content = await text(file);
     const intro = content.indexOf(isEnglish(file)
-      ? "LitOpenCode adds workflow agents, slash commands, and a local evidence ledger to OpenCode."
-      : "LitOpenCode는 OpenCode에 워크플로 agent, 슬래시 명령, 로컬 근거 기록을 더합니다.");
-    const install = content.indexOf(isEnglish(file) ? "## Install" : "## 설치");
+      ? "**LitOpenCode is a workflow plugin for OpenCode. Add `lit` to a prompt and the work gets planned, built, checked and written down, so the next session knows where you stopped.**"
+      : "**LitOpenCode는 OpenCode용 워크플로 플러그인입니다. 프롬프트에 `lit`만 붙이면 계획하고, 만들고, 확인하고, 기록까지 남겨서 다음 세션이 어디서 멈췄는지 바로 압니다.**");
+    const quickStart = content.indexOf(isEnglish(file) ? "## Quick start" : "## 빠르게 시작하기");
+    const install = content.indexOf("npm exec --package @litfamily/litopencode@latest -- litopencode install\n", quickStart);
     const firstTask = content.indexOf(String.fromCharCode(96).repeat(3) + "text\nlit ");
     const cover = content.indexOf(COVER);
-    const ascii = content.indexOf(assetRoot + "/ascii-readme.svg");
     const title = content.indexOf("# LitOpenCode\n");
-    assert.ok(cover >= 0 && cover < ascii && ascii < title, file + ": motion cover and ASCII decoration lead");
-    assert.ok(intro > title && install > intro && firstTask > install, file + ": intro, install, and first task follow in order");
+    assert.ok(cover >= 0 && cover < title, file + ": the motion cover leads, then the title");
+    assert.ok(intro > title && quickStart > intro && install > quickStart && firstTask > install, file + ": pitch, quick start, install command and first task follow in order");
+    assert.equal(content.slice(title, intro).trim(), "# LitOpenCode", file + ": the pitch sentence sits right under the title");
     if (githubReadmes.includes(file)) {
-      const wordmark = content.indexOf("docs/assets/readme/litopencode-wordmark.svg");
-      const clay = content.indexOf("docs/assets/readme/litopencode-clay-icon.png");
-      assert.ok(wordmark > title && wordmark < intro, file + ": product wordmark follows the title");
-      assert.ok(clay > wordmark && clay < intro, file + ": clay mark follows the wordmark");
-      assert.match(content, /litfamily-machines\.png/u);
+      const demo = content.indexOf("<!-- demo-gif -->");
+      assert.ok(demo > intro && demo < quickStart, file + ": the demo slot sits between the pitch and the quick start");
+      const lines = content.split("\n").length;
+      assert.ok(lines <= 300, `${file} stays a short landing page (${lines} lines)`);
     }
   }
 });
 
 test("README promo film is embedded once per GitHub page with capped files and a reduced-motion still", async () => {
   const promo = {
-    "README.md": { mp4: "promo.mp4", preview: "promo-preview.webp", still: "promo-still.webp", poster: "promo-poster.webp", treatment: "treatment.json", page: "index.html", other: "promo-ko" },
-    "README-Ko-KR.md": { mp4: "promo-ko.mp4", preview: "promo-ko-preview.webp", still: "promo-still.webp", poster: "promo-ko-poster.webp", treatment: "treatment-ko.json", page: "index-ko.html", other: "promo-preview" }
+    "docs/screens.md": { mp4: "promo.mp4", preview: "promo-preview.webp", still: "promo-still.webp", poster: "promo-poster.webp", treatment: "treatment.json", page: "index.html", other: "promo-ko" },
+    "docs/screens-Ko-KR.md": { mp4: "promo-ko.mp4", preview: "promo-ko-preview.webp", still: "promo-still.webp", poster: "promo-ko-poster.webp", treatment: "treatment-ko.json", page: "index-ko.html", other: "promo-preview" }
   };
   for (const [name, expected] of Object.entries(promoPins)) assert.equal(digest(await fs.readFile(`${assetRoot}/${name}`)), expected, name);
-  for (const file of githubReadmes) {
+  for (const file of Object.keys(promo)) {
     const film = promo[file];
     assert.ok((await fs.stat(`${assetRoot}/${film.mp4}`)).size <= 8 * 1024 * 1024, `${film.mp4} must stay under 8 MiB`);
     assert.ok((await fs.stat(`${assetRoot}/${film.preview}`)).size <= 2_621_440, `${film.preview} must stay under 2.5 MiB`);
@@ -231,21 +264,20 @@ test("README promo film is embedded once per GitHub page with capped files and a
     assert.doesNotMatch(source, /font-weight:\s*(?!400|700)\d+|font:\s*(?!400|700)\d+/u, `${film.page} asks only for Pretendard weights 400 and 700`);
     assert.doesNotMatch(source, /Archivo/u, `${film.page} does not name Archivo`);
     const content = await text(file);
-    const english = isEnglish(file);
+    const english = file === "docs/screens.md";
     const heading = english ? "## Watch it in motion" : "## 움직이는 화면으로 보기";
     const start = content.indexOf(heading);
-    assert.ok(start > content.indexOf(english ? "## Your first task" : "## 첫 작업"), `${file}: the promo follows the first task`);
-    assert.ok(start < content.indexOf(english ? "## Skills at a glance" : "## 스킬 한눈에 보기"), `${file}: the promo sits before the skills tour`);
+    assert.ok(start > content.indexOf(english ? "## What you will see on screen" : "## 설치 후 화면에서 보이는 것"), `${file}: the promo follows the on-screen pictures`);
     const section = content.slice(start, content.indexOf("\n## ", start + 4));
-    const picture = section.match(new RegExp(`<picture><source media="\\(prefers-reduced-motion: reduce\\)" srcset="\\./docs/assets/readme/${film.still.replace(".", "\\.")}" /><img src="\\./docs/assets/readme/${film.preview.replace(".", "\\.")}" width="100%" alt="([^"]+)" /></picture>`, "u"));
+    const picture = section.match(new RegExp(`<picture><source media="\\(prefers-reduced-motion: reduce\\)" srcset="\\./assets/readme/${film.still.replace(".", "\\.")}" /><img src="\\./assets/readme/${film.preview.replace(".", "\\.")}" width="100%" alt="([^"]+)" /></picture>`, "u"));
     assert.ok(picture, `${file}: promo uses the reduced-motion picture pattern`);
     for (const word of ["lit-loop", "lit-plan", "/lit-recap", "Keep the work lit."]) assert.ok(picture[1].includes(word), `${file}: alt text names ${word}`);
-    assert.ok(section.includes(`](./docs/assets/readme/${film.mp4})`), `${file}: the MP4 is linked separately`);
-    assert.ok(section.includes("./docs/assets/readme/promo-source/Pretendard-OFL.txt"), `${file}: the Pretendard license is linked`);
+    assert.ok(section.includes(`](./assets/readme/${film.mp4})`), `${file}: the MP4 is linked separately`);
+    assert.ok(section.includes("./assets/readme/promo-source/Pretendard-OFL.txt"), `${file}: the Pretendard license is linked`);
     assert.equal(content.split(film.preview).length - 1, 1, `${file}: the animated preview appears once`);
     assert.ok(!content.includes(`readme/${film.other}`), `${file}: shows its own film only`);
-    assert.ok(content.indexOf(COVER) < start, `${file}: the cover stays the first screen`);
   }
+  for (const file of githubReadmes) assert.doesNotMatch(await text(file), /promo/u, `${file}: the landing page links the screens page instead of embedding the promo`);
   assert.match(await fs.readFile(`${assetRoot}/promo-source/Pretendard-OFL.txt`, "utf8"), /SIL OPEN FONT LICENSE Version 1\.1/u);
   for (const file of npmReadmes) assert.doesNotMatch(await text(file), /promo/u, `${file}: the npm card does not embed the promo`);
   const ignore = await text(".npmignore");

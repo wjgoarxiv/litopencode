@@ -6,14 +6,18 @@ import { litOpenCodeAgents, toOpenCodeAgentConfig } from "../src/agents/registry
 import { renderInstallTuiCompletion } from "../src/cli/install-tui.ts";
 
 const assetRoot = "docs/assets/readme";
+// The four on-screen pictures moved off the landing README into the GitHub screens pages, which load
+// them by paths relative to docs/. The landing README's demo slot shows a recorded session GIF.
+const pageAssetRoot = "assets/readme";
 const githubReadmes = ["README.md", "README-Ko-KR.md"];
+const screenPages = ["docs/screens.md", "docs/screens-Ko-KR.md"];
 const npmReadmes = ["README-npm.md", "README-npm-Ko-KR.md"];
 const MAX_SCREEN_BYTES = 70 * 1024;
 const plain = (value) => value.replace(/\u001b\[[0-9;]*m/gu, "");
 
-function activationToast() {
+function activationToast(skillId = "lit-loop") {
   let body;
-  showActivationToast({ tui: { showToast: (options) => { body = options.body; return Promise.resolve(); } } }, "lit-loop", { LANG: "en_US.UTF-8" });
+  showActivationToast({ tui: { showToast: (options) => { body = options.body; return Promise.resolve(); } } }, skillId, { LANG: "en_US.UTF-8" });
   return body;
 }
 
@@ -34,10 +38,11 @@ test("the on-screen pictures quote text the product prints", async () => {
   assert.equal(toast.duration, 6000);
   assert.equal(toastLabel, "🔥 LIT IGNITED · lit-loop 🔥");
   assert.deepEqual({ edit: planner.edit, bash: planner.bash, task: planner.task }, { edit: "deny", bash: "deny", task: "deny" });
-  for (const file of githubReadmes) {
+  const pictureTag = (root, name) => new RegExp(`<picture><source media="\\(prefers-color-scheme: dark\\)" srcset="\\./${root}/${name}-dark\\.webp" /><img src="\\./${root}/${name}-light\\.webp" width="694" alt="([^"]+)" /></picture>`, "u");
+  for (const file of screenPages) {
     const content = await fs.readFile(file, "utf8");
     for (const { name, strings, code } of screens) {
-      const tag = content.match(new RegExp(`<picture><source media="\\(prefers-color-scheme: dark\\)" srcset="\\./${assetRoot}/${name}-dark\\.webp" /><img src="\\./${assetRoot}/${name}-light\\.webp" width="694" alt="([^"]+)" /></picture>`, "u"));
+      const tag = content.match(pictureTag(pageAssetRoot, name));
       assert.ok(tag, `${file} embeds ${name} as a dark/light picture with alt text`);
       for (const text of strings) {
         assert.ok(tag[1].includes(text), `${file}: ${name} alt names "${text}"`);
@@ -45,6 +50,27 @@ test("the on-screen pictures quote text the product prints", async () => {
       }
     }
   }
+  // The recorded session routed the small task to lit-task; its toast label comes from the product.
+  const demoToast = activationToast("lit-task").message.split("\n").at(-1);
+  assert.equal(demoToast, "🔥 LIT IGNITED · lit-task 🔥");
+  const film = await fs.readFile("docs/assets/demo.webp");
+  assert.equal(film.subarray(0, 4).toString("ascii"), "RIFF", "demo.webp is a RIFF container");
+  assert.equal(film.subarray(8, 12).toString("ascii"), "WEBP", "demo.webp is a WebP");
+  assert.ok(film.length <= 8 * 1024 * 1024, `demo.webp is ${film.length} bytes, over 8 MiB`);
+  await assert.rejects(fs.access("docs/assets/demo.gif"), { code: "ENOENT" }, "the old demo GIF is gone");
+  assert.ok((await fs.readFile(".npmignore", "utf8")).split("\n").includes("docs/assets/demo.webp"), "demo.webp stays out of the npm package");
+  for (const file of githubReadmes) {
+    const content = await fs.readFile(file, "utf8");
+    const line = content.split("\n").find((row) => row.includes("<!-- demo-gif -->"));
+    assert.ok(line, `${file} marks its demo slot`);
+    const tag = line.match(/<img src="\.\/docs\/assets\/demo\.webp" width="960" alt="([^"]{80,})" \/>/u);
+    assert.ok(tag, `${file}: the demo slot shows the session film with a full alt text`);
+    for (const text of [demoToast, "lit add a --shout flag that prints the greeting in capitals, with a test", "HELLO, ADA!"]) {
+      assert.ok(tag[1].includes(text), `${file}: demo alt names "${text}"`);
+    }
+    assert.ok(content.indexOf("<!-- demo-gif -->") < content.indexOf("\n## "), `${file}: the demo slot sits above the first section`);
+  }
+  for (const file of npmReadmes) assert.doesNotMatch(await fs.readFile(file, "utf8"), /demo\.(?:gif|webp)/u, `${file} does not embed the demo film`);
 });
 
 test("on-screen pictures are small WebP files that stay out of the package", async () => {
@@ -63,16 +89,21 @@ test("on-screen pictures are small WebP files that stay out of the package", asy
 });
 
 test("on-screen captions say whether a picture is a capture or a sample", async () => {
-  for (const file of githubReadmes) {
+  for (const file of screenPages) {
     const content = await fs.readFile(file, "utf8");
-    const english = file === "README.md";
+    const english = file === "docs/screens.md";
     const section = content.slice(content.indexOf(english ? "## What you will see on screen" : "## 설치 후 화면에서 보이는 것"), content.indexOf(english ? "## Watch it in motion" : "## 움직이는 화면으로 보기"));
     assert.ok(section.length > 0, `${file}: the on-screen section exists`);
     const captured = section.match(english ? /^\*Captured from the real/gmu : /^\*.*캡처했/gmu) ?? [];
     const samples = section.match(english ? /^\*Sample output/gmu : /^\*예시 화면입니다/gmu) ?? [];
     assert.equal(captured.length, 3, `${file}: install, doctor and planner pictures are captures`);
     assert.equal(samples.length, 1, `${file}: the toast picture is a sample`);
-    assert.ok(section.includes(english ? "[What you will see](#what-you-will-see)" : "[화면에서 보이는 것](#화면에서-보이는-것)"), `${file}: links to the Jev pictures instead of repeating them`);
+    assert.ok(section.includes(english ? "[What you will see](./guide.md#what-you-will-see)" : "[화면에서 보이는 것](./guide-Ko-KR.md#화면에서-보이는-것)"), `${file}: links to the Jev pictures instead of repeating them`);
+  }
+  for (const file of githubReadmes) {
+    const content = await fs.readFile(file, "utf8");
+    assert.match(content, file === "README.md" ? /^\*A real OpenCode [\d.]+ session with LitOpenCode installed, recorded in a terminal and replayed on a drawn terminal window with camera moves\./mu : /^\*LitOpenCode를 설치한 실제 OpenCode [\d.]+ 세션을 터미널에서 녹화한 뒤, 그린 터미널 창 위에서 카메라를 움직이며 다시 재생했습니다\./mu, `${file}: the demo caption says it is a recording replayed as a film`);
+    assert.doesNotMatch(content, /(?:doctor-output|ignition-toast|planner-permissions)-(?:dark|light)/u, `${file}: the other on-screen pictures live on the screens page`);
   }
   for (const file of npmReadmes) {
     const content = await fs.readFile(file, "utf8");

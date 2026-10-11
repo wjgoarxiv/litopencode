@@ -37,9 +37,9 @@ const defaultTimeoutMs = 1500;
 const maxTextBytes = 4 * 1024 * 1024;
 const maxOutputBytes = 16 * 1024 * 1024;
 const maxPendingCalls = 512;
+// Prose formats only: in config and data files (YAML, JSON, XML, CSV, TSV) a line such as `source:` is a key.
 const readerFacingExtensions = new Set([
-  ".adoc", ".csv", ".html", ".htm", ".md", ".mdx", ".org", ".rst", ".svg", ".tex", ".txt", ".tsv",
-  ".xhtml", ".xml", ".json", ".jsonc", ".yaml", ".yml"
+  ".adoc", ".html", ".htm", ".md", ".mdx", ".org", ".rst", ".svg", ".tex", ".txt", ".xhtml"
 ]);
 const officeExtensions = new Set([".docx", ".pptx", ".pdf"]);
 const packageSkillRoot = fileURLToPath(new URL("../skills/lit-humanizer", import.meta.url));

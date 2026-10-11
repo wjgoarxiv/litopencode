@@ -4,7 +4,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
-import { promptForChatActivationMode } from "../src/activation-routing.ts";
+import { detectChatActivationMode, promptForChatActivationMode } from "../src/activation-routing.ts";
 import { litOpenCodeFeatures, litOpenCodeRuntimeSkills } from "../src/index.ts";
 
 const require = createRequire(import.meta.url);
@@ -41,6 +41,28 @@ test("bare lit routes report, slide, and joint Office requests through native sk
   assert.match(both, /load lit-docx and lit-pptx before drafting/u);
   for (const unrelated of ["Investigate the failing API test lit", "Translate this sentence lit", "Report the bug in the issue tracker lit"]) {
     assert.doesNotMatch(route(unrelated), /native skill tool to load lit-(?:docx|pptx)/u);
+  }
+});
+
+test("lit routes the 'turn X into a deck or report' shape to the Office skills, file-name dots included", () => {
+  const routed = (prompt) => {
+    const mode = detectChatActivationMode(prompt);
+    assert.equal(mode, "lit-task", prompt);
+    return promptForChatActivationMode(mode, prompt);
+  };
+  const deck = routed("lit turn notes.md into a 10-slide deck for Monday");
+  assert.match(deck, /load lit-pptx before drafting/u);
+  assert.doesNotMatch(deck, /load lit-docx/u);
+  const report = routed("lit turn my notes into a Word report");
+  assert.match(report, /load lit-docx before drafting/u);
+  assert.doesNotMatch(report, /load lit-pptx/u);
+  for (const prompt of ["lit turn notes.md into slides", "lit turn q3.v2.csv into a presentation", "lit turn the draft into a Word document"]) {
+    assert.match(routed(prompt), /native skill tool to load lit-(?:docx|pptx) before drafting/u, prompt);
+  }
+  assert.match(routed("lit notes.md 메모 파일로 월요일 팀 회의용 슬라이드 10장 만들어줘"), /load lit-pptx before drafting/u);
+  // "turn" without "into <office noun>" is not an authoring request, even beside an office word.
+  for (const prompt of ["lit turn on dark mode", "lit turn on dark mode in the settings page", "lit turn the deck lights on, then report back", "lit turn the report filter into a dropdown"]) {
+    assert.doesNotMatch(promptForChatActivationMode("lit-task", prompt), /native skill tool to load lit-(?:docx|pptx)/u, prompt);
   }
 });
 

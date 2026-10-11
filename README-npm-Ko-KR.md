@@ -1,6 +1,65 @@
 <p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
 
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/assets/readme/ascii-readme.svg" width="480" alt="LIT ASCII B 마크" /></p>
+# LitOpenCode
+
+**LitOpenCode는 OpenCode용 워크플로 플러그인입니다. 프롬프트에 `lit`만 붙이면 계획하고, 만들고, 확인하고, 기록까지 남겨서 다음 세션이 어디서 멈췄는지 바로 압니다.**
+
+<p align="center">
+<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/assets/readme/badge-version.svg" alt="1.0.18" /></a>
+<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://img.shields.io/npm/dm/@litfamily/litopencode?label=downloads&color=D7F75B" alt="월간 npm 다운로드 수" /></a>
+<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/assets/readme/badge-license.svg" alt="MIT 라이선스" /></a>
+<a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub 스타" /></a>
+</p>
+
+LitOpenCode는 목표와 계획, 확인한 내용, 다음 할 일을 프로젝트 안의 `.litopencode/litgoal/`에 남겨 두기 때문에, 긴 작업도 다음 날 멈춘 자리에서 이어 갈 수 있습니다.
+
+**[전체 안내, 화면, 스킬 갤러리는 GitHub에서 →](https://github.com/wjgoarxiv/litopencode/blob/main/README-Ko-KR.md)**
+
+## 빠르게 시작하기
+
+Node.js와 npm, 그리고 모델 제공자를 설정해 둔 OpenCode가 있으면 됩니다.
+
+```sh
+npm exec --package @litfamily/litopencode@latest -- litopencode install
+```
+
+기본값으로 바로 설치하려면 `--yes`를, 아무것도 쓰지 않고 무엇이 바뀔지만 보려면 `--dry-run`을 붙이세요. OpenCode를 다시 시작하고 **Tab** 키로 **lit-loop**를 고른 뒤, 빈 폴더를 열고 이렇게 보냅니다.
+
+```text
+lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, 추가와 완료 표시를 확인한 뒤 다음 할 일을 남겨줘.
+```
+
+직접 열어 볼 수 있는 `index.html`이 생기고, 다음에 돌아오면 `/lit-recap`이 어디까지 했는지 알려 줍니다.
+
+## 할 수 있는 일
+
+| 입력 | 하는 일 |
+| --- | --- |
+| `lit` 또는 `/lit` | 일을 정리하고, 계획하고, 만들고, 확인하고, 요약하며 단계마다 기록을 남깁니다. |
+| `lit-plan` → `/start-work` → `/review-work` | 계획하고, 승인하고, 실행하고, 검토합니다. 계획 에이전트는 파일을 고치거나 셸 명령을 실행할 수 없습니다. |
+| `handoff` · `/lit-recap` | 다음 세션이 이어 갈 인수인계 파일을 남기고, 끝낸 일과 다음 할 일을 다시 읽어 줍니다. |
+| `/litresearch` | 여러 차례 조사하며 주장마다 출처를 남깁니다. |
+| `lit` + 보고서·발표자료 | 마크다운 원고와 함께 편집할 수 있는 워드 보고서나 파워포인트 덱을 만듭니다. |
+| `/lit-humanizer` | 딱딱한 영어나 한국어 문장을 사실은 그대로 두고 다시 씁니다. |
+
+스킬마다 만들어 내는 결과의 그림은 [GitHub의 스킬 갤러리](https://github.com/wjgoarxiv/litopencode/blob/main/docs/skills-Ko-KR.md)에서 볼 수 있습니다.
+
+## 업데이트와 제거
+
+LitOpenCode는 대화형으로 시작할 때와 install·doctor가 성공한 뒤 새 버전을 확인합니다. 끄려면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요. `npm exec --package @litfamily/litopencode@latest -- litopencode doctor`는 설치 상태를 확인할 뿐 아무것도 바꾸지 않습니다.
+
+제거하려면 OpenCode의 `opencode.jsonc`에서 `plugin` 배열의 `@litfamily/litopencode` 항목을 지우고 OpenCode를 다시 시작하세요. 전역으로 설치했다면 다음 명령도 실행합니다.
+
+```sh
+npm uninstall -g @litfamily/litopencode
+```
+
+## 더 보기
+
+- [GitHub의 사용 안내](https://github.com/wjgoarxiv/litopencode/blob/main/docs/guide-Ko-KR.md): 설치 옵션, 자동 인수인계, 문제 해결, 제거
+- [워크플로 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/reference-Ko-KR.md) · [English reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/reference.md)
+- [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/CHANGELOG.md) · [개인정보와 네트워크 동작](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/privacy.md)
+- [LitFamily 허브](https://github.com/wjgoarxiv/litfamily) · [MIT 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/LICENSE) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/assets/readme/JetBrainsMono-OFL.txt)
 
 <details>
 <summary>ASCII 로고 복사</summary>
@@ -29,92 +88,3 @@
 ```
 
 </details>
-
-# LitOpenCode
-
-[English](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/README.md) · [한국어](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/README-Ko-KR.md)
-
-> **불씨를 건네받았다.**<br>
-> **이제, 당신의 작업에 옮길 차례다.**
-
-<p align="center">
-<a href="#설치"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/assets/readme/badge-version.svg" alt="1.0.18" /></a>
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/assets/readme/badge-license.svg" alt="MIT 라이선스" /></a>
-</p>
-
-LitOpenCode는 OpenCode에 워크플로 agent, 슬래시 명령, 로컬 근거 기록을 더합니다.
-
-프롬프트에 `lit`을 붙이면 계획하고, 만들고, 확인한 뒤 다음 할 일을 프로젝트에 적어 둡니다. 그래서 다음 세션이 멈춘 자리에서 바로 이어 갈 수 있습니다. 모델을 돌리고 권한을 묻는 일은 지금처럼 OpenCode가 합니다.
-
-**[전체 안내와 스킬 갤러리는 GitHub에서 →](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md)**
-
-## 설치
-
-Node.js와 npm, 그리고 OpenCode가 있으면 됩니다.
-
-```sh
-LIT_PACKAGE='@litfamily/litopencode@latest'
-npm exec --package "$LIT_PACKAGE" -- litopencode install
-```
-
-OpenCode를 다시 시작하고 `Tab` 키를 눌러 `lit-loop`를 고르세요. 권한은 `safe`에서 시작하는데, 무언가 하기 전에 OpenCode가 먼저 물어보는 설정입니다. 로그인과 API 키는 OpenCode에 이미 설정해 둔 모델 제공자(provider) 쪽 것을 그대로 씁니다.
-
-바뀔 내용을 먼저 보려면 `--dry-run`을 붙이세요. 아무것도 쓰지 않습니다. 질문 없이 설치하려면 `--yes`를 붙이세요. 기본값으로 설치하되 예전에 저장해 둔 선택은 그대로 둡니다.
-
-```sh
-npm exec --package @litfamily/litopencode@latest -- litopencode install --dry-run  # 변경 사항 미리 보기
-npm exec --package @litfamily/litopencode@latest -- litopencode install --yes     # 기본값 사용, 저장된 선택 유지
-```
-
-## 첫 작업
-
-빈 폴더를 OpenCode에서 열고 `lit-loop`를 고른 다음 이렇게 보내 보세요.
-
-```text
-lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, 추가와 완료 표시를 확인한 뒤 다음 할 일을 남겨줘.
-```
-
-`index.html`이 만들어지면 열어서 직접 써 보세요. 다음에 돌아왔을 때는 `/lit-recap`이 어디까지 했는지 알려 줍니다.
-
-## 자주 쓰는 경로
-
-| 입력 | 하는 일 |
-| --- | --- |
-| `lit` 또는 `/lit` | 범위가 분명한 작업을 시작하고, 확인한 내용을 기록합니다. |
-| `lit-plan` → `/start-work` → `/review-work` | 계획, 승인, 실행, 검토. planner는 파일을 고치거나 shell을 실행할 수 없습니다. |
-| `handoff` 또는 `/lit-handoff` | 현재 결과와 다음 할 일을 다음 세션에 넘깁니다. |
-| `/lit-recap` | 로컬 기록을 짧게 요약해 보여 줍니다. |
-| `/litresearch` | 출처 근거를 남기며 조사합니다. |
-
-이 밖에도 디버깅, 리팩터링, 코드 검토, 조사 스킬이 있고, 만들기 전에 디자인 방향을 골라 알려 주는 워드 보고서(`lit-docx`)와 파워포인트 발표자료(`lit-pptx`), 다이어그램, 과학 그림, 화면 구현, README, 글 다듬기(`/lit-humanizer`) 스킬도 함께 설치됩니다. 스킬마다 무엇을 만드는지는 그림과 함께 [GitHub 스킬 갤러리](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#스킬-한눈에-보기)에 있습니다.
-
-## 설치하면 바뀌는 것
-
-많지 않습니다. OpenCode 설정에 플러그인을 등록하고, LitOpenCode의 명령과 스킬 파일을 OpenCode 설정 폴더에 복사합니다. 어떤 일에 어떤 모델을 쓸지 정한 route는 `~/.config/opencode/litopencode.json`에 저장됩니다. `XDG_CONFIG_HOME`을 지정하면 설정 폴더가 그쪽으로 옮겨 가고, 이미 손봐 둔 route는 건드리지 않습니다. 작업 기록은 프로젝트마다 `.litopencode/litgoal/`에 쌓이고, 다음 세션은 이 기록을 읽고 이어 갑니다.
-
-OpenAI 제공자를 쓰면 새로 설치했을 때 계획과 검토는 GPT-6 Astra(`gpt-6-astra`)가 `xhigh`로, 만들기와 조사는 GPT-6 Luna(`gpt-6-luna`)가 `max`로 맡습니다.
-
-## 안전과 업데이트
-
-- planner는 계획만 세웁니다. `lit-plan`은 `edit`, `bash`, `task` 권한이 거부되어 있고, 더 느슨한 `balanced`나 `yolo` 모드를 직접 골라도 그대로입니다.
-- LitOpenCode는 대화형으로 시작할 때와 install이나 doctor가 성공한 뒤에 스스로 업데이트할 수 있습니다. 끄려면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요.
-- 스킬 학습 기능은 제거되었습니다. 이전 릴리스가 프로젝트의 `.litopencode` 폴더에 남긴 학습 기록은 더 이상 쓰이지 않으니, 남겨 두든 지우든 편한 대로 하면 됩니다.
-- Jev 스킬 힌트는 선택 기능이고 기본값은 꺼짐입니다. 켜면 조건에 맞는 프롬프트가 TypeSafe로 전송되니, 먼저 [Jev 스킬 힌트 참조 문서](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/reference-Ko-KR.md#jev-스킬-힌트-선택)를 읽어 보세요. 알림과 doctor 줄이 어떻게 보이는지는 [GitHub 페이지](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#화면에서-보이는-것)에서 볼 수 있습니다.
-- 뭔가 이상하면 `npm exec --package @litfamily/litopencode@latest -- litopencode doctor`로 패키지와 설정 상태를 확인하세요.
-
-## 제거
-
-별도의 제거 명령은 없습니다. OpenCode의 `opencode.jsonc`(custom root라면 `opencode.json`)에서 `plugin` 배열의 `@litfamily/litopencode` 항목을 지우고 OpenCode를 다시 시작하세요. 전역으로 설치했다면 다음도 실행합니다.
-
-```sh
-npm uninstall -g @litfamily/litopencode
-```
-
-남겨 둘 만한 설치 파일과 기록은 [제거 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/reference-Ko-KR.md#제거)에 정리되어 있습니다.
-
-## 더 보기
-
-- [GitHub 전체 안내](https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md)
-- [워크플로 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/reference-Ko-KR.md) · [English reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/reference.md)
-- [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/CHANGELOG.md) · [개인정보와 네트워크 동작](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/privacy.md)
-- [MIT 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/LICENSE) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.18/docs/assets/readme/JetBrainsMono-OFL.txt)

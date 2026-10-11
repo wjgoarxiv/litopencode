@@ -342,6 +342,87 @@ OpenCode's managed `opencode.jsonc` (or the custom root's `opencode.json`). Remo
 Project `.litopencode/` state is separate; preserve it for later resume or remove it only
 when discarding that project's ledger and receipts is intentional.
 
+The TUI panel entry lives in `tui.json` or `tui.jsonc`. `litopencode tui remove [--root <dir>]`
+deletes LitOpenCode's own entry from both files, keeps every other plugin and every comment, and
+copies each changed file to `<file>.litopencode-backup` first. `--dry-run` prints the same receipt
+and writes nothing.
+
+## TUI mission panel
+
+OpenCode 1.18 loads TUI plugins listed in the `plugin` array of `tui.json` or `tui.jsonc`. The
+package exports its TUI module as `@litfamily/litopencode/tui` (`dist/tui.js`, plugin id
+`litopencode`), separate from the server plugin, as OpenCode requires.
+
+What it draws:
+
+- A phase chip on the right of the prompt's agent/model row: a `🔥 LIT` pill, then `PLAN` ›
+  `WORK n/m` › `REVIEW` pills and a five-segment `▰▱` bar. When the row is narrower it drops the
+  labels first: `🔥` with the current and next phase, then `🔥` with only the count. The room comes
+  from OpenCode's stored sidebar setting and the session kind (a child session has no sidebar); when
+  the setting cannot be read yet, the chip assumes the sidebar is open and stays narrower.
+- A mission panel at the top of the session sidebar, in a 36-cell rounded box titled
+  `🔥 LIT ▸ <PHASE>` with `n/m criteria` in the bottom border. The border carries the state: the
+  theme accent while working, the warning colour on a warning, the success colour when complete.
+  Inside: a two-row `LIT` with the discipline and a status beside it, the goal title in bold, the
+  phase line, a gradient bar drawn in eighth-cell blocks over a thin rule, the next todo or open
+  criterion, the criteria, warnings, and the last four evidence events.
+- A band: one full-width ribbon row at the bottom of the screen (OpenCode's `app_bottom` slot), under
+  the session and the sidebar alike. It shows the pills, an eighth-block bar, the next task and the
+  time since the first lit turn (`⟳ 7m`). While a warning is open, `⚑ <text>` takes the place of
+  `▸ next`. The row appears at the session's first lit turn and stays for the whole lit session, so
+  the prompt moves only once. A subagent session shows its parent's mission with `· in lane`; the
+  home screen has no band. When the row is narrow it drops, in order, the step labels, the next-task
+  text, bar width and then the time; it never wraps. The completion moment plays here too.
+- A line under the home prompt, after OpenCode's tips: `🔥 lit ready · last: <goal> ✓ n/m`. It
+  appears only when the project ledger holds a goal.
+- Warnings always carry `⚑` and words, not colour alone, because some themes use one colour for
+  both accent and warning. Theme surfaces with alpha 0 (the system and lucent-orng themes) are left
+  unfilled rather than painted black.
+- One toast per refresh for a gate event: plan saved or not saved, goal set, criterion passed,
+  review blocker opened or resolved, and completion. Several events at once collapse into the most
+  urgent one.
+- A completion moment of at most 1.2 seconds when the goal completes or every todo is done: the
+  border turns green, the bar fills, `WORK` then `REVIEW` turn done, a light sweep crosses the brand,
+  embers rise through the panel and `COMPLETE` pops in with a small overshoot before it settles.
+
+Where the data comes from, with nothing new written for the TUI:
+
+- The `metadata.litopencode` marks this plugin already attaches to user-message parts when `lit`
+  activates a mode or a command runs (`save-plan` included). A session with no mark is idle and the
+  chip and panel stay hidden, even on the default `lit-loop` agent.
+- OpenCode's todo list for the session (progress and next item), its status (retry), pending
+  permissions and questions, and context use from the last assistant message (amber at 75%).
+- `.litopencode/litgoal/lit-loop/goals.json` under the project root. Symbolic links and files over
+  1 MiB are ignored. A goal last updated before the session's first lit turn is treated as earlier
+  work and left out.
+
+Motion runs on a short frame timer only while a transition plays and stops afterwards: new rows
+and pills slide in with ease-out-back, 160 ms each and 60 ms apart; the bar fills in 300 ms; a
+warning row slides in over 220 ms and colours cross-fade in 140 ms; the light sweep takes 400 ms. While a
+lit session is open the panel re-reads the goal ledger every two seconds; an idle session does not.
+Colours come from the active OpenCode theme. Set `["@litfamily/litopencode@<version>", { "motion": false }]`
+in `tui.json` to keep it static, or turn the plugin off by id `litopencode` in OpenCode's plugin
+manager or with `plugin_enabled`.
+
+Band options go in the same options object:
+
+- `{ "band": false }` removes the band and leaves the chip, the panel and the home line.
+- `{ "band": { "card": true } }` adds a rounded card under the ribbon with the warnings, the next
+  task and the goal. While a goal exists the card keeps a fixed four rows, so a warning arriving or
+  clearing never moves the prompt. The card is off by default.
+
+A ledger written from another terminal (for example `litopencode record-evidence`) raises no
+OpenCode event, so the shared two-second ledger check picks it up; the chip, the panel and the band
+then change on the same frame clock.
+
+Install writes the entry. On the default root `opencode plugin` adds it from the `./tui` export and
+LitOpenCode then removes duplicates and stale versions; on a custom root LitOpenCode writes it. The
+file that already holds a LitOpenCode entry is edited, otherwise the first of `tui.json` and
+`tui.jsonc` that exists, otherwise a new `tui.json`, matching OpenCode's own choice. Other entries
+such as `./herdr-tui-session.js` and all comments stay; an edit that would delete a comment inside
+the `plugin` list stops the install before anything is written. `doctor` reports the entry under
+`install.tui` without changing `install.ok`.
+
 ## Automatic handoff
 
 Automatic handoff is opt-in and OFF by default. There is no default percent. It works in the plugin's `event` hook and its `experimental.chat.system.transform` hook, and it reads nothing from the conversation except each assistant message's token counts.
@@ -453,7 +534,7 @@ only. It is sent only in the `Authorization` header and is never written, logged
 
 - Package and plugin id: `litopencode`
 - CLI binary: `litopencode`
-- Public exports: `litopencode` and `litopencode/server`
+- Public exports: `litopencode`, `litopencode/server` and `litopencode/tui`
 - Global route file: `~/.config/opencode/litopencode.json`
 - Project overrides: `.litopencode/config.json`
 - Durable state: `.litopencode/litgoal/`

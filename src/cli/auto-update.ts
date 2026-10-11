@@ -352,7 +352,7 @@ async function captureSnapshot(configRoot: string, homeDir: string): Promise<Sna
   const snapshotPath = path.join(stateRoot(homeDir), `.auto-update-backup-${randomUUID()}`);
   await fs.mkdir(snapshotPath, { recursive: true, mode: 0o700 });
   const entries: SnapshotEntry[] = [];
-  for (const relativePath of ["opencode.json", "opencode.jsonc", "litopencode.json", "command", "skills"]) {
+  for (const relativePath of ["opencode.json", "opencode.jsonc", "tui.json", "tui.jsonc", "litopencode.json", "command", "skills"]) {
     const source = path.join(configRoot, relativePath);
     const kind = await lstatKind(source);
     if (kind === undefined) {

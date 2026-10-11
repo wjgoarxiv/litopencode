@@ -242,6 +242,77 @@ npm uninstall -g @litfamily/litopencode
 프로젝트의 `.litopencode/`는 별도 ledger와 receipt입니다. 나중에 재개할 계획이 없다면
 그 상태를 버려도 되는지 확인한 뒤 직접 정리합니다.
 
+TUI 패널 항목은 `tui.json`이나 `tui.jsonc`에 있습니다. `litopencode tui remove [--root <dir>]`는
+두 파일에서 LitOpenCode 항목만 지우고, 다른 플러그인과 주석은 그대로 둡니다. 바뀌는 파일은 먼저
+`<file>.litopencode-backup`으로 복사합니다. `--dry-run`은 같은 결과를 보여 주기만 하고 아무것도 쓰지 않습니다.
+
+## TUI 미션 패널
+
+OpenCode 1.18은 `tui.json`이나 `tui.jsonc`의 `plugin` 배열에 적힌 TUI 플러그인을 불러옵니다.
+이 패키지는 TUI 모듈을 서버 플러그인과 따로 `@litfamily/litopencode/tui`(`dist/tui.js`, 플러그인 id
+`litopencode`)로 내보냅니다. OpenCode가 두 대상을 한 모듈에 섞는 것을 허용하지 않기 때문입니다.
+
+화면에 그리는 것:
+
+- 입력창 아래 agent/model 줄 오른쪽의 단계 칩: `🔥 LIT` 알약 뒤에 `PLAN` › `WORK n/m` › `REVIEW`
+  알약과 다섯 칸 `▰▱` 막대가 붙습니다. 자리가 좁으면 이름부터 덜어 내서, `🔥`와 지금·다음 단계만,
+  더 좁으면 `🔥`와 개수만 남깁니다. 자리는 OpenCode에 저장된 사이드바 설정과 세션 종류(하위 세션에는
+  사이드바가 없음)로 계산합니다. 설정을 아직 읽을 수 없으면 사이드바가 열려 있다고 보고 좁게 잡습니다.
+- 세션 사이드바 맨 위의 미션 패널: 36칸짜리 둥근 상자이고, 위 테두리에 `🔥 LIT ▸ <단계>`, 아래
+  테두리에 `n/m criteria`가 붙습니다. 테두리 색이 상태를 보여 줍니다. 일하는 중에는 테마 accent,
+  경고가 있으면 warning, 끝나면 success 색입니다. 안에는 두 줄짜리 `LIT`과 그 옆의 작업 이름·상태,
+  굵은 목표 제목, 단계 줄, 1/8칸 블록으로 칠하고 빈 곳은 가는 선으로 둔 그라데이션 막대, 다음 할 일이나
+  아직 통과하지 못한 기준, 기준 목록, 경고, 최근 증거 네 개가 들어갑니다.
+- 띠(band): 화면 맨 아래 전체 폭에 붙는 리본 한 줄입니다(OpenCode의 `app_bottom` 자리). 세션과
+  사이드바 아래를 모두 가로지릅니다. 알약, 1/8칸 막대, 다음 할 일, 첫 lit 턴부터 지난 시간(`⟳ 7m`)을
+  보여 줍니다. 경고가 열려 있는 동안에는 `▸ 다음 일` 자리에 `⚑ <내용>`이 들어갑니다. 세션의 첫 lit
+  턴에 나타나 lit 세션 내내 남으므로, 입력창은 한 번만 움직입니다. 하위(subagent) 세션에서는 부모
+  세션의 미션을 `· in lane`과 함께 보여 주고, 홈 화면에는 띠가 없습니다. 폭이 좁으면 단계 이름,
+  다음 할 일 글자, 막대 길이, 시간 순서로 덜어 내며 줄을 넘기지 않습니다. 완료 순간도 여기서 함께 보입니다.
+- 홈 화면 입력창 아래, OpenCode 팁 다음 줄: `🔥 lit ready · last: <목표> ✓ n/m`. 프로젝트 ledger에
+  목표가 있을 때만 보입니다.
+- 경고는 색만 바꾸지 않고 늘 `⚑`와 글자를 함께 붙입니다. accent와 warning이 같은 색인 테마가 있기
+  때문입니다. 알파가 0인 테마 바탕(system, lucent-orng)은 검게 칠하지 않고 비워 둡니다.
+- 관문 사건마다 토스트 하나: 계획 저장 또는 저장 실패, 목표 설정, 기준 통과, 리뷰 막힘과 해결, 완료.
+  한 번에 여러 사건이 생기면 가장 급한 것 하나로 합칩니다.
+- 목표가 끝나거나 할 일이 모두 끝나면 1.2초 안에 끝나는 완료 순간을 보여 줍니다. 테두리가 초록으로
+  바뀌고 막대가 끝까지 차며, `WORK`와 `REVIEW`가 차례로 완료로 바뀝니다. 브랜드에 빛이 한 번 지나가고,
+  패널 안으로 불씨가 올라가며, `COMPLETE`가 살짝 넘쳤다가 제자리로 옵니다.
+
+데이터는 이미 있는 것만 읽고, TUI를 위해 새로 쓰는 파일은 없습니다.
+
+- `lit`이 모드를 켜거나 명령이 실행될 때(`save-plan` 포함) 이 플러그인이 사용자 메시지 part에 붙이는
+  `metadata.litopencode` 표시. 표시가 없는 세션은 쉬는 상태로 보고, 기본 `lit-loop` agent여도 칩과
+  패널을 숨깁니다.
+- 세션의 OpenCode 할 일 목록(진행도와 다음 항목), 상태(재시도), 대기 중인 권한 요청과 질문, 마지막
+  assistant 메시지 기준 context 사용량(75%부터 주황).
+- 프로젝트 루트의 `.litopencode/litgoal/lit-loop/goals.json`. 심볼릭 링크와 1 MiB가 넘는 파일은 읽지
+  않습니다. 세션의 첫 lit 턴보다 먼저 마지막으로 바뀐 목표는 이전 작업으로 보고 빼 둡니다.
+
+움직임은 전환이 일어나는 동안에만 짧은 프레임 타이머로 돌고 끝나면 멈춥니다. 새 줄과 알약은
+ease-out-back으로 160ms씩, 60ms 간격으로 들어오고, 막대는 300ms에 차오릅니다. 경고 줄은 220ms에
+걸쳐 들어오고 색은 140ms 동안 넘어가며, 빛이 지나가는 데는 400ms가 걸립니다. lit 세션이
+열려 있는 동안만 2초마다 목표 ledger를 다시 읽고, 쉬는 세션은 읽지 않습니다. 색은 지금 OpenCode
+테마에서 가져옵니다. 움직임을 끄려면 `tui.json`에 `["@litfamily/litopencode@<version>", { "motion": false }]`
+처럼 적고, 플러그인 자체를 끄려면 OpenCode 플러그인 관리자나 `plugin_enabled`에서 id `litopencode`를 끕니다.
+
+띠 설정도 같은 옵션 객체에 적습니다.
+
+- `{ "band": false }`는 띠만 없애고 칩, 패널, 홈 줄은 그대로 둡니다.
+- `{ "band": { "card": true } }`는 리본 아래에 경고, 다음 할 일, 목표를 담은 둥근 카드를 붙입니다.
+  목표가 있는 동안 카드는 네 줄로 고정되어, 경고가 생기거나 사라져도 입력창이 움직이지 않습니다.
+  카드는 기본으로 꺼져 있습니다.
+
+다른 터미널에서 쓴 ledger(예: `litopencode record-evidence`)는 OpenCode 이벤트를 만들지 않습니다.
+그래서 2초마다 도는 공용 ledger 확인이 이를 잡고, 칩·패널·띠가 같은 프레임 시계로 함께 바뀝니다.
+
+항목은 install이 씁니다. 기본 root에서는 `opencode plugin`이 `./tui` export를 보고 직접 항목을 넣고,
+LitOpenCode가 중복과 옛 버전을 정리합니다. custom root에서는 LitOpenCode가 직접 씁니다. 이미
+LitOpenCode 항목이 있는 파일을 고치고, 없으면 `tui.json`과 `tui.jsonc` 중 먼저 있는 파일을, 둘 다 없으면
+새 `tui.json`을 씁니다. OpenCode가 고르는 방식과 같습니다. `./herdr-tui-session.js` 같은 다른 항목과
+모든 주석은 그대로 남습니다. `plugin` 목록 안의 주석을 지워야 하는 경우에는 아무것도 쓰기 전에 install을
+멈춥니다. `doctor`는 이 항목을 `install.tui`에 보고하고, `install.ok` 값은 바꾸지 않습니다.
+
 ## 자동 인수인계
 
 자동 인수인계는 직접 켜야 하며 기본은 꺼져 있습니다. 기본 퍼센트는 없습니다. 플러그인의 `event` 훅과 `experimental.chat.system.transform` 훅에서 동작하고, 대화 내용은 읽지 않으며 assistant 메시지의 토큰 수만 봅니다.
@@ -338,7 +409,7 @@ OpenCode는 세션이 바쁜 동안 들어온 `summarize` 호출을 줄 세웠�
 
 - 패키지와 plugin id: `litopencode`
 - CLI binary: `litopencode`
-- 공개 export: `litopencode`, `litopencode/server`
+- 공개 export: `litopencode`, `litopencode/server`, `litopencode/tui`
 - 전역 route 파일: `~/.config/opencode/litopencode.json`
 - 프로젝트 override: `.litopencode/config.json`
 - Durable 상태: `.litopencode/litgoal/`

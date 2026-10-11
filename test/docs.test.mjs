@@ -236,7 +236,7 @@ test("README links resolve to local docs", async () => {
 test("bilingual entry paths and operational references keep local document links reachable", async () => {
   const version = JSON.parse(await readText("package.json")).version;
   const npmPackage = `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/`;
-  for (const file of ["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md", "docs/reference.md", "docs/reference-Ko-KR.md"]) {
+  for (const file of ["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md", "docs/reference.md", "docs/reference-Ko-KR.md", "docs/guide.md", "docs/guide-Ko-KR.md", "docs/skills.md", "docs/skills-Ko-KR.md", "docs/screens.md", "docs/screens-Ko-KR.md", "docs/brand.md", "docs/brand-Ko-KR.md"]) {
     const content = await readText(file);
     for (const [, target] of content.matchAll(/\[[^\]]+\]\(([^)]+\.md)(?:#[^)]+)?\)/gu)) {
       if (target.startsWith(npmPackage)) {
@@ -304,23 +304,29 @@ test("bilingual quick starts preserve executable package names and resolve the r
     assert.doesNotMatch(content, /docs\/assets\/cover\.webp/u, file + ": the motion cover replaces the separate static robot cover");
     assert.doesNotMatch(content, /View the static (?:family )?cover|정지 (?:패밀리 )?표지 보기/u);
     if (github) {
-      const linksHeading = english ? "## Links" : "## 링크";
-      const linksStart = content.indexOf(linksHeading);
-      const familyStart = content.indexOf("### LITFAMILY", linksStart);
-      const motionStart = content.indexOf("### Ignition motion", familyStart);
-      assert.ok(linksStart >= 0 && familyStart > linksStart && motionStart > familyStart, file + ": family art sits in Links");
-      const familyImages = [...content.slice(familyStart, motionStart).matchAll(/!\[[^\]]+\]\(([^)]+cover\.webp)\)/gu)];
-      assert.equal(familyImages.length, 0, file + ": the robot cover no longer repeats near the end");
+      // The family art moved off the landing page to the brand page, which the landing page links.
+      const brandPage = english ? "docs/brand.md" : "docs/brand-Ko-KR.md";
+      const brand = await readText(brandPage);
+      assert.ok(content.includes(`](./${brandPage})`), file + ": links the brand page");
+      const familyStart = brand.indexOf("## LITFAMILY");
+      const motionStart = brand.indexOf("## Ignition motion", familyStart);
+      assert.ok(familyStart >= 0 && motionStart > familyStart, brandPage + ": family art, then the Ignition film");
+      const familyImages = [...brand.slice(familyStart, motionStart).matchAll(/!\[[^\]]+\]\(([^)]+cover\.webp)\)/gu)];
+      assert.equal(familyImages.length, 0, brandPage + ": the robot cover does not repeat beside the family art");
     }
     assert.doesNotMatch(content, /raw\.githubusercontent/u);
     assert.match(content, /npm exec --package @litfamily\/litopencode@latest -- litopencode install/u);
     assert.match(content, /```text\nlit [^\n]+\n```/u);
     assert.match(content, /npm uninstall -g @litfamily\/litopencode/u);
     assert.match(content, /LITOPENCODE_NO_AUTO_UPDATE=1/u);
-    // Skill learning is retired (see docs/reference.md "Skill learning state"); the pages say so
-    // instead of describing its old apply command and POSIX/Windows boundaries.
-    assert.match(content, english ? /Skill learning has been removed\./u : /스킬 학습 기능은 제거되었습니다\./u, file);
     assert.doesNotMatch(content, /explicit apply command|명시적인 apply 명령/u, file);
+  }
+  // Skill learning is retired (see docs/reference.md "Skill learning state"). The landing pages stay
+  // short, so the user guides say so instead of describing its old apply command and POSIX/Windows boundaries.
+  for (const [guide, english] of [["docs/guide.md", true], ["docs/guide-Ko-KR.md", false]]) {
+    const content = await readText(guide);
+    assert.match(content, english ? /Skill learning has been removed\./u : /스킬 학습 기능은 제거되었습니다\./u, guide);
+    assert.doesNotMatch(content, /explicit apply command|명시적인 apply 명령/u, guide);
   }
 });
 

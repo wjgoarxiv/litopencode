@@ -12,7 +12,7 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 export const BACKUP_DIR = ".readme-npm-backup";
 export const PAIRS = [
   { npm: "README-npm.md", target: "README.md", guide: "https://github.com/wjgoarxiv/litopencode#readme" },
-  { npm: "README-npm-Ko-KR.md", target: "README-Ko-KR.md", guide: "https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md" }
+  { npm: "README-npm-Ko-KR.md", target: "README-Ko-KR.md", guide: "https://github.com/wjgoarxiv/litopencode/blob/main/README-Ko-KR.md" }
 ];
 // An npm page stays a short card: at most half of its GitHub page and 32 KiB.
 export const MAX_NPM_README_BYTES = 32 * 1024;

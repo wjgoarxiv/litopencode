@@ -15,12 +15,6 @@ faces:
   body: Pretendard Regular
   label: Pretendard Regular
   numeral: Pretendard Bold
-faces-pretendard-only:
-  display: Pretendard Bold
-  title: Pretendard Bold
-  body: Pretendard Regular
-  label: Pretendard Regular
-  numeral: Pretendard Bold
 faces-a2z:
   display: A2Z Bold
   title: Pretendard Bold

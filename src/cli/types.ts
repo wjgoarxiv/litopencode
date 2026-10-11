@@ -1,4 +1,5 @@
 import type { OpenCodeHostCapabilities } from "./host-capabilities.ts";
+import type { TuiInstallReport } from "./tui-config.ts";
 
 export type CliResult = {
   readonly exitCode: number;
@@ -28,6 +29,7 @@ export type ParsedArgs = {
   readonly modelPrompt: ModelPromptMode;
   readonly outputStylePrompt: PermissionPromptMode;
   readonly loop: LoopArgs;
+  readonly tuiAction?: string;
 };
 
 // Arguments for the evidence-ledger verbs. They address a project workspace, not the OpenCode
@@ -216,8 +218,11 @@ export type InstallReport = {
     readonly compactionTriggerTokens: number;
     readonly compactionReserveTokens: number;
   };
+  readonly tui: TuiInstallReport;
   readonly patch: readonly JsonPatchOperation[];
   readonly changed: boolean;
+  // Set when the install would have to delete a comment in the OpenCode config; it then writes nothing.
+  readonly blocked?: string;
   readonly routes?: InstallRouteReport;
   readonly capabilities: OpenCodeHostCapabilities;
   readonly package: Pick<PackageMetadata, "name" | "version">;

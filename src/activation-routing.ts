@@ -128,7 +128,9 @@ const uiHardenCue = /\b(?:harden|stress.test|hold up under|robust to)\b|튼튼�
 const uiReadOnlyCue = /\b(?:read.only|don't (?:touch|change|fix)|just (?:check|tell))\b|수정은 하지|건드리지 말|고치지는 말|목록만/u;
 const uiBuildCue = /\b(?:redesign|new layout|brand.new|add|implement|build|create|make|wire up)\b|새로|추가|구현|다시 짜|재구성/u;
 const diagramCreationIntent = /^\s*(?:lit[,:]?\s+)?(?:please\s+)?(?:create|draw|make|design|render|build)\b[^.!?\n]*\b(?:diagrams?|flowcharts?|architecture maps?)\b|^\s*(?:lit\s+)?[^.!?\n]*(?:다이어그램|흐름도|구성도|구조도)[^.!?\n]*(?:그려|만들어|제작해)/mu;
-const officeAuthoringVerb = /(?<![a-z])(?:make|create|write|draft|prepare|produce|generate|convert|edit|build)(?![a-z])|만들|작성|써줘|제작|변환|편집/u;
+// "turn X into a deck/report" also authors an Office file. Within the clause, a dot followed by a
+// non-space (notes.md, q3.v2.csv) is part of a file name and does not end the sentence.
+const officeAuthoringVerb = /(?<![a-z])(?:make|create|write|draft|prepare|produce|generate|convert|edit|build)(?![a-z])|(?<![a-z])turn(?=(?:[^.!?\n]|\.(?=\S))*?(?<![a-z])into(?![a-z])(?:[^.!?\n]|\.(?=\S))*?(?<![a-z])(?:slides?|decks?|presentations?|pptx?|reports?|documents?|docx|word)(?![a-z]))|만들|작성|써줘|제작|변환|편집/u;
 const reportNoun = /(?<![a-z])(?:reports?|documents?|docx|word)(?![a-z])|보고서|리포트|기획서|제안서|문서|워드/u;
 const slidesNoun = /(?<![a-z])(?:slides?|decks?|presentations?|pptx?)(?![a-z])|발표자료|발표|슬라이드|피피티|덱/u;
 // lit-typographic-motion (MO-C-18..24). The trigger is a creation verb plus a compound motion-video

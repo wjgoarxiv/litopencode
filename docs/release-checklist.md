@@ -464,7 +464,7 @@ Any benchmark-backed superiority statement against the REFERENCE must be checked
 
 ## GitHub and npm README Pages
 
-The repository's `README.md` and `README-Ko-KR.md` are the GitHub pages: the full guide and skills gallery, with assets loaded by relative `./docs/...` paths. The npm package page is a shorter card kept in `README-npm.md` and `README-npm-Ko-KR.md`, with every asset and link pinned to `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@<version>/`. Those pinned URLs return 404 until the version is published. The npm sources use a hyphen, not `README.npm.md`, because npm always packs root files named `README.*`.
+The repository's `README.md` and `README-Ko-KR.md` are the short GitHub landing pages, with assets loaded by relative `./docs/...` paths. The guide, skills gallery, screens and artwork that moved off them live in `docs/guide.md`, `docs/skills.md`, `docs/screens.md` and `docs/brand.md`, each with a `-Ko-KR` twin. Those pages and `docs/assets/social-preview.png` are GitHub-only: `.npmignore` and `check:pack-payload` keep them out of the tarball, and the npm pages link them on GitHub. The npm package page is a shorter card kept in `README-npm.md` and `README-npm-Ko-KR.md`, with every asset and link pinned to `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@<version>/`. Those pinned URLs return 404 until the version is published. The npm sources use a hyphen, not `README.npm.md`, because npm always packs root files named `README.*`.
 
 `tools/readme-for-npm.mjs` swaps the pages:
 

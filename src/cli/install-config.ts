@@ -5,7 +5,8 @@ import { litOpenCodeAgents, registerLitOpenCodeAgents } from "../agents.ts";
 import { defaultGlobalConfigFile, defaultGlobalConfigJson, mergeConfigs, readLitOpenCodeConfigFile, type LitOpenCodeConfig } from "../config.ts";
 import { diagnoseModelRoutes, effectiveAuthoredAgentRoutes, UnsafeModelRouteError } from "../model-route-policy.ts";
 import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
-import { isRecord, readJsonObjectIfPresent } from "./json.ts";
+import { isRecord, readJsonObjectIfPresent, readTextIfPresent } from "./json.ts";
+import { editJsoncObject, formatJsoncMember, hasJsoncComments, lineEnding } from "./jsonc.ts";
 import { installModelEfforts, isModelProvider, modelMenuRows, stripFastSuffix } from "./model-catalog.ts";
 import { classifyModelConfig, selectedLitConfig } from "./model-policy.ts";
 import type { AgentConfigTarget } from "../agents/types.ts";
@@ -28,6 +29,33 @@ export async function writeTextAtomically(
     await fs.rm(tempPath, { force: true });
     throw error;
   }
+}
+
+export class OpenCodeConfigCommentError extends Error {}
+
+// A commented OpenCode config is edited in place; when an edit would delete a comment, the user is
+// shown the exact entry to write instead.
+export function renderOpenCodeConfig(filePath: string, currentText: string | null, next: Record<string, unknown>): string {
+  if (currentText === null) return JSON.stringify(next, null, 2) + "\n";
+  if (!hasJsoncComments(currentText)) {
+    const eol = lineEnding(currentText);
+    return (currentText.startsWith("\uFEFF") ? "\uFEFF" : "") + (JSON.stringify(next, null, 2) + "\n").replace(/\n/gu, eol);
+  }
+  const edit = editJsoncObject(currentText, next);
+  if (edit.ok) return edit.text;
+  const action = edit.key in next
+    ? `set this entry yourself:\n${formatJsoncMember(edit.key, next[edit.key])}`
+    : `remove the "${edit.key}" entry yourself`;
+  throw new OpenCodeConfigCommentError(
+    `Refusing to rewrite ${filePath}: changing its "${edit.key}" entry would delete a comment in it. ` +
+      `Nothing was written. To continue, ${action}\nthen run the command again.`
+  );
+}
+
+export async function writeOpenCodeConfig(filePath: string, next: Record<string, unknown>): Promise<void> {
+  const text = renderOpenCodeConfig(filePath, await readTextIfPresent(filePath), next);
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await writeTextAtomically(filePath, text);
 }
 
 async function readValidatedConfig(root: string): Promise<Record<string, unknown> | null> {

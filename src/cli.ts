@@ -11,6 +11,7 @@ import { defaultOpenAiRoutes, legacyFastAliasHelp, modelEffortHelp, openaiModelH
 import { fetchPublicSource } from "./lit-fetch.ts";
 import { readPackageMetadata } from "./cli/json.ts";
 import { runMotionRuntime } from "./cli/motion-runtime.ts";
+import { removeTuiPlugin } from "./cli/tui-config.ts";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -40,7 +41,8 @@ function helpText(): string {
     "  litopencode install [--permission-prompt | --no-permission-prompt] [--permission-mode <safe|balanced|yolo>]",
     "  litopencode install|doctor [--no-auto-update]",
     "  litopencode doctor [--json] [--root <dir>]",
-    "  litopencode motion-runtime install|status [--audio] [--word-timing]",
+    "  litopencode tui remove [--dry-run] [--root <dir>]",
+    "  litopencode motion-runtime install|status [--audio] [--word-timing] [--dry-run] (install) [--json] (status)",
     "  litopencode fetch-public <url> [--json] [--timeout <ms>] [--max-bytes <n>]",
     "  litopencode fetch-public <local-url> --json --allow-private-network  # trusted fixtures only",
     "  OpenCode /start-work init|resume|cancel|complete|status <schema-3 JSON>",
@@ -58,6 +60,7 @@ function helpText(): string {
     "Commands:",
     "  install       Register litopencode with OpenCode using a branded installer UI.",
     "  doctor        Report package, config, and runtime path status without writing files.",
+    "  tui remove    Remove only LitOpenCode's TUI panel entry from tui.json/tui.jsonc (backed up first).",
     "  fetch-public  Fetch a public URL with SSRF guards, verdicts, and trace output.",
     "                --allow-private-network is opt-in for reviewed local fixtures or trusted internal tests.",
     "",
@@ -125,7 +128,7 @@ function helpText(): string {
 export async function runCli(argv: readonly string[] = process.argv.slice(2), options: RunCliOptions = {}): Promise<CliResult> {
   if (argv[0] === "motion-runtime") {
     const metadata = await readPackageMetadata();
-    return runMotionRuntime(metadata.packageRoot, argv.slice(1));
+    return await runMotionRuntime(metadata.packageRoot, argv.slice(1));
   }
   let parsed: ParsedArgs;
   try {
@@ -139,8 +142,9 @@ export async function runCli(argv: readonly string[] = process.argv.slice(2), op
     if (!parsed.command || parsed.command === "help") {
       return { exitCode: 0, stdout: helpText() };
     }
-    if (isLoopCommand(parsed.command)) return await runLoopCommand(parsed.command, parsed.loop);
+    if (isLoopCommand(parsed.command)) return await runLoopCommand(parsed.command, parsed.loop, parsed.dryRun);
     if (parsed.command === "doctor") return await doctor(parsed.root);
+    if (parsed.command === "tui") return { exitCode: 0, stdout: JSON.stringify(await removeTuiPlugin(parsed.root, parsed.dryRun), null, 2) };
     if (parsed.command === "fetch-public") {
       if (!parsed.fetchPublicUrl) return { exitCode: 2, stderr: "fetch-public requires a URL" };
       const output = await fetchPublicSource(parsed.fetchPublicUrl, {

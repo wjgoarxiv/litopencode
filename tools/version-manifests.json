@@ -11,32 +11,44 @@
     {
       "path": "README-Ko-KR.md",
       "kind": "pinned",
-      "occurrences": 2,
-      "why": "The GitHub landing pages load assets by relative path; the release badge alt text and the checkout-version note repeat the package version."
+      "occurrences": 1,
+      "why": "The GitHub landing pages load assets by relative path; the release badge alt text repeats the package version."
     },
     {
       "path": "README-npm-Ko-KR.md",
       "kind": "pinned",
-      "occurrences": 18,
+      "occurrences": 13,
       "why": "The npm package pages pin artwork and package links to the current package version; tools/readme-for-npm.mjs copies them over README.md and README-Ko-KR.md at pack time."
     },
     {
       "path": "README-npm.md",
       "kind": "pinned",
-      "occurrences": 18,
+      "occurrences": 12,
       "why": "The npm package pages pin artwork and package links to the current package version; tools/readme-for-npm.mjs copies them over README.md and README-Ko-KR.md at pack time."
     },
     {
       "path": "README.md",
       "kind": "pinned",
-      "occurrences": 2,
-      "why": "The GitHub landing pages load assets by relative path; the release badge alt text and the checkout-version note repeat the package version."
+      "occurrences": 1,
+      "why": "The GitHub landing pages load assets by relative path; the release badge alt text repeats the package version."
     },
     {
       "path": "docs/assets/readme/badge-version.svg",
       "kind": "pinned",
       "occurrences": 3,
       "why": "The local candidate badge repeats the checkout version in its accessible label, title, and visible text; it does not claim registry availability."
+    },
+    {
+      "path": "docs/guide-Ko-KR.md",
+      "kind": "pinned",
+      "occurrences": 1,
+      "why": "The user guide's install section names the checkout version, which moved there from the landing README."
+    },
+    {
+      "path": "docs/guide.md",
+      "kind": "pinned",
+      "occurrences": 1,
+      "why": "The user guide's install section names the checkout version, which moved there from the landing README."
     },
     {
       "path": "docs/release-checklist.md",

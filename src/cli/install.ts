@@ -13,22 +13,25 @@ import type {
   InstallStageLabel,
   ModelPromptMode,
   PackageMetadata,
+  PluginMutation,
   PermissionPromptMode
 } from "./types.ts";
 import { describeCommandAliasMutation, ensureCommandAliases, inspectCommandAliases } from "./command-aliases.ts";
 import { openCodeHostCapabilities } from "./host-capabilities.ts";
-import { describeHostLimitMutation, ensureHostLimits } from "./host-limits.ts";
+import { applyHostLimits, describeHostLimitMutation, ensureHostLimits } from "./host-limits.ts";
 import {
   assertExistingModelRoutesSafe,
   describeInstallRoutes,
   describeLitConfigMutation,
   ensureLitConfig,
+  OpenCodeConfigCommentError,
   readExistingOutputStyle,
   readInstallModelClassification,
   readInstallModelSelection,
-  writeTextAtomically
+  renderOpenCodeConfig,
+  writeOpenCodeConfig
 } from "./install-config.ts";
-import { readJsonObjectIfPresent, readPackageMetadata } from "./json.ts";
+import { readJsonObjectIfPresent, readPackageMetadata, readTextIfPresent } from "./json.ts";
 import { renderInstallReport, wrapReceiptLine } from "./install-report.ts";
 import { renderLitOpenCodeWordmark } from "./install-tui.ts";
 import { promptModelSelection, promptOutputStyle, promptPermissionMode } from "./model-routing.ts";
@@ -36,6 +39,7 @@ import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } from "./native-skills.ts";
 import { applyPluginMutation, describePluginMutation, isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { prewarmMotionRuntime } from "./motion-runtime.ts";
+import { applyTuiWrites, backupTuiFiles, inspectTuiPlugin, planTuiInstall } from "./tui-config.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -155,26 +159,77 @@ async function installWithOpenCode(target: OpenCodeInstallTarget): Promise<void>
   }
 }
 
+async function normalizedPluginEntries(
+  root: string,
+  target: OpenCodeInstallTarget,
+  pluginValue: readonly unknown[]
+): Promise<unknown[]> {
+  const nextPlugin: unknown[] = [];
+  let registered = false;
+  for (const entry of pluginValue) {
+    const id = Array.isArray(entry) ? entry[0] : entry;
+    if (id === target.value || isLitOpenCodeEntry(entry) || (await isLitOpenCodePathEntry(root, id))) {
+      if (!registered) nextPlugin.push(Array.isArray(entry) ? [target.value, ...entry.slice(1)] : target.value);
+      registered = true;
+    } else {
+      nextPlugin.push(entry);
+    }
+  }
+  return nextPlugin;
+}
+
 async function normalizeOpenCodeEntries(root: string, target: OpenCodeInstallTarget): Promise<void> {
   for (const configFile of openCodeConfigCandidates(root)) {
     const config = await readJsonObjectIfPresent(configFile);
     const pluginValue = config?.plugin;
     if (!Array.isArray(pluginValue)) continue;
-
-    const nextPlugin: unknown[] = [];
-    let registered = false;
-    for (const entry of pluginValue) {
-      const id = Array.isArray(entry) ? entry[0] : entry;
-      if (id === target.value || isLitOpenCodeEntry(entry) || (await isLitOpenCodePathEntry(root, id))) {
-        if (!registered) nextPlugin.push(Array.isArray(entry) ? [target.value, ...entry.slice(1)] : target.value);
-        registered = true;
-      } else {
-        nextPlugin.push(entry);
-      }
-    }
+    const nextPlugin = await normalizedPluginEntries(root, target, pluginValue);
     if (JSON.stringify(nextPlugin) === JSON.stringify(pluginValue)) continue;
-    await writeTextAtomically(configFile, JSON.stringify({ ...config, plugin: nextPlugin }, null, 2) + "\n");
+    await writeOpenCodeConfig(configFile, { ...config, plugin: nextPlugin });
   }
+}
+
+// Works out every OpenCode config edit the install will make before anything is written, and returns
+// the refusal when one of them would delete a user comment. On the default root OpenCode registers the
+// plugin itself; LitOpenCode then only cleans up stale entries and sets host limits.
+async function commentLossRefusal(
+  root: string,
+  configFile: string,
+  target: OpenCodeInstallTarget,
+  before: Record<string, unknown> | null,
+  mutation: PluginMutation,
+  reconfigureHostLimits: boolean,
+  useOpenCodeInstaller: boolean
+): Promise<string | undefined> {
+  const planned: { readonly file: string; readonly next: Record<string, unknown> | null }[] = [];
+  if (!useOpenCodeInstaller) {
+    const next = applyPluginMutation(before, mutation, target.value);
+    planned.push({ file: configFile, next: reconfigureHostLimits ? applyHostLimits(next) : next });
+  } else {
+    for (const file of openCodeConfigCandidates(root)) {
+      const config = file === configFile ? before : await readJsonObjectIfPresent(file);
+      let next = config;
+      const pluginValue = config?.plugin;
+      if (config !== null && Array.isArray(pluginValue)) {
+        const registered = file === configFile &&
+          !pluginValue.some((entry) => (Array.isArray(entry) ? entry[0] : entry) === target.value)
+          ? [...pluginValue, target.value]
+          : pluginValue;
+        const normalized = await normalizedPluginEntries(root, target, registered);
+        if (JSON.stringify(normalized) !== JSON.stringify(registered)) next = { ...config, plugin: normalized };
+      }
+      planned.push({ file, next: file === configFile && reconfigureHostLimits ? applyHostLimits(next) : next });
+    }
+  }
+  try {
+    for (const { file, next } of planned) {
+      if (next !== null) renderOpenCodeConfig(file, await readTextIfPresent(file), next);
+    }
+  } catch (error) {
+    if (error instanceof OpenCodeConfigCommentError) return error.message;
+    throw error;
+  }
+  return undefined;
 }
 
 async function verifyInstalledSurfaces(
@@ -197,8 +252,10 @@ async function verifyInstalledSurfaces(
   const litConfig = await describeLitConfigMutation(root, selectedModel, selectedPermissionMode, selectedPermissionExplicit, selectedOutputStyle);
   const commandAliases = await inspectCommandAliases(root);
   const nativeSkills = await inspectNativeSkills(root, metadata);
+  const tui = await inspectTuiPlugin(root, target.value);
   const failures: string[] = [];
   if (targetCount !== 1 || staleLitEntries.length > 0) failures.push("plugin registration");
+  if (!tui.ok) failures.push("TUI plugin registration in " + tui.path);
   if (litConfig.changed) failures.push("LitOpenCode routes");
   if (!commandAliases.ok) failures.push("command aliases: " + commandAliases.missing.join(", "));
   if (!nativeSkills.ok) {
@@ -267,6 +324,7 @@ export async function install(
       commandAliases: await describeCommandAliasMutation(root),
       nativeSkills: await describeNativeSkillMutation(root, metadata),
       hostLimits: describeHostLimitMutation(before, selectedModel !== undefined),
+      tui: await planTuiInstall(root, resolved.target.value),
       routes: dryRun
         ? await describeInstallRoutes(
             root,
@@ -279,7 +337,16 @@ export async function install(
         : undefined
     };
   });
-  const { configFile, before, mutation, litopencodeConfig, commandAliases, nativeSkills, hostLimits, routes } = inspected;
+  const { configFile, before, mutation, litopencodeConfig, commandAliases, nativeSkills, hostLimits, routes, tui } = inspected;
+  const blocked = (await commentLossRefusal(
+    root,
+    configFile,
+    resolved.target,
+    before,
+    mutation,
+    hostLimits.reconfigure,
+    resolved.useOpenCodeInstaller
+  )) ?? tui.blocked;
   const report: InstallReport = {
     dryRun,
     path: configFile,
@@ -287,8 +354,10 @@ export async function install(
     plugin: mutation.plugin,
     commandAliases,
     nativeSkills,
+    tui: tui.report,
     patch: mutation.patch,
-    changed: mutation.changed || litopencodeConfig.changed || commandAliases.changed || nativeSkills.changed || hostLimits.changed,
+    changed: mutation.changed || litopencodeConfig.changed || commandAliases.changed || nativeSkills.changed || hostLimits.changed || tui.report.changed,
+    ...(blocked === undefined ? {} : { blocked }),
     routes,
     hostLimits: { path: configFile, ...hostLimits },
     capabilities: openCodeHostCapabilities(),
@@ -296,7 +365,11 @@ export async function install(
   };
 
   if (dryRun) {
-    return { exitCode: 0, stdout: JSON.stringify(report, null, 2) };
+    return {
+      exitCode: blocked === undefined ? 0 : 1,
+      stdout: JSON.stringify(report, null, 2),
+      ...(blocked === undefined ? {} : { stderr: "ERROR: " + blocked })
+    };
   }
 
   if (nativeSkills.collisions.length > 0) {
@@ -306,6 +379,8 @@ export async function install(
     );
   }
 
+  if (blocked !== undefined) throw new OpenCodeConfigCommentError(blocked);
+
   await withProgress(activeProgress, "Write litopencode.json", async () => {
     await ensureLitConfig(root, selectedModel, selectedPermissionMode, selectedPermissionExplicit, selectedOutputStyle);
     await ensureNativeSkills(root, metadata);
@@ -314,6 +389,9 @@ export async function install(
 
   await withProgress(activeProgress, "Register plugin", async () => {
     if (resolved.useOpenCodeInstaller) {
+      // The package's `./tui` export makes `opencode plugin` add the TUI entry itself, so back up
+      // first, then normalize whatever it wrote without a second backup.
+      await backupTuiFiles(tui);
       await installWithOpenCode(resolved.target);
       const installed = await readJsonObjectIfPresent(configFile);
       if (!Array.isArray(installed?.plugin) || !installed.plugin.some((entry) =>
@@ -321,16 +399,16 @@ export async function install(
       )) throw new Error("OpenCode did not register the requested package target");
       await normalizeOpenCodeEntries(root, resolved.target);
       await ensureHostLimits(configFile, await readJsonObjectIfPresent(configFile), hostLimits.reconfigure);
+      const settled = await planTuiInstall(root, resolved.target.value);
+      if (settled.blocked !== undefined) throw new OpenCodeConfigCommentError(settled.blocked);
+      await applyTuiWrites(settled.writes, { backup: false });
       return;
     }
-    const next = applyPluginMutation(before, mutation, resolved.target.value);
-    if (hostLimits.reconfigure) {
-      await ensureHostLimits(configFile, next, true);
-      return;
-    }
-    if (!mutation.changed) return;
-    await fs.mkdir(path.dirname(configFile), { recursive: true });
-    await writeTextAtomically(configFile, JSON.stringify(next, null, 2) + "\n");
+    await applyTuiWrites(tui.writes);
+    const withPlugin = applyPluginMutation(before, mutation, resolved.target.value);
+    const next = hostLimits.reconfigure ? applyHostLimits(withPlugin) : withPlugin;
+    if (JSON.stringify(next) === JSON.stringify(before)) return;
+    await writeOpenCodeConfig(configFile, next);
   });
   await withProgress(activeProgress, "Verify install", async () =>
     verifyInstalledSurfaces(

@@ -3624,7 +3624,7 @@
         },
         {
           "path": "scripts/lib/template-registry.js",
-          "sha256": "5c2a86e15a319afd8cc2635521802c508a400bc27390fedb6ec0a61f3f3498e9"
+          "sha256": "a90ef33bc2ff0821bc62a49ac6724a6ebee0761de7d95b764c42b73bf82b740f"
         },
         {
           "path": "scripts/qa_deck.py",
@@ -3712,35 +3712,35 @@
         },
         {
           "path": "templates/tonalities/atlas/pack.yaml",
-          "sha256": "9ab2b4ee7ff517bb2102e4d5621ca061d7963bb10d699ff1c312dc7be4aa7f4f"
+          "sha256": "1d9d862dc084190ab933a21945fa970da1ccebadf914659ffbd6266c955e7e7f"
         },
         {
           "path": "templates/tonalities/chalk/pack.yaml",
-          "sha256": "5aed521353fca689ffc82d7749d611e87fa1cd63735e364bdb1bf60645120281"
+          "sha256": "61a562e019f7b2ef467cc1a675bc33cf44c5a2e48bb636ace629c7e6499a31cb"
         },
         {
           "path": "templates/tonalities/gazette/pack.yaml",
-          "sha256": "8711484cd457829afa60990922611d9b2efd3930a0138345e389b15fa8115c1b"
+          "sha256": "c3ec0d7a5c3c1053f224a0722c7a7e7736d3c9ee9b73b85a5b7578f9cba48f8d"
         },
         {
           "path": "templates/tonalities/ledger/pack.yaml",
-          "sha256": "28d874b3512ace3e726d03021a128e72c6966b91fbaa72d6b63d9c1761c786fb"
+          "sha256": "46f6902354f8785094740ae3cea4150cb13dcd89797ab8902ba4801ec8c1bf15"
         },
         {
           "path": "templates/tonalities/night/pack.yaml",
-          "sha256": "f151a840cc2253d4132891ed6135ed4c6e597379434fcee34540ee566590b1cc"
+          "sha256": "5929fae4e70bc01a4c3e2d16636b01c85238c4f853d817e614f0b62f19d0101b"
         },
         {
           "path": "templates/tonalities/paper/pack.yaml",
-          "sha256": "4b386272a7ed9e420777bb48daf55caf591cf4e443adb11c5e621b1e3626d0f3"
+          "sha256": "112d3727e306e9ea4c4a3fb95e54e03530a2166a1d1bc9b88e12ba105987876d"
         },
         {
           "path": "templates/tonalities/signal/pack.yaml",
-          "sha256": "784ba047d0e993b7e7d8ebb6c0d354ad0666468801f0ccb3008ff370f0a1acf9"
+          "sha256": "8dfde0527de309bcc2e41d9cfa63ec89a7c51c3c617d0d1085bf33070543350a"
         },
         {
           "path": "templates/tonalities/studio/pack.yaml",
-          "sha256": "3e6778f16c846220b4f4e66ab3e8149d6c382fe01b007a57d59f03bbcc73363b"
+          "sha256": "f364bbe34bd042136fd91eaa157d8bdc7d2b30a1490776d5d04c665f66a56c31"
         }
       ]
     },

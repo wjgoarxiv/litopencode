@@ -73,7 +73,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     return cleaned;
   };
 
-  const firstOptionIndex = command === "fetch-public" ? 2 : 1;
+  const tuiAction = command === "tui" ? argv[1] : undefined;
+  if (command === "tui" && tuiAction !== "remove") throw new Error("tui requires an action: remove");
+  const firstOptionIndex = command === "fetch-public" || command === "tui" ? 2 : 1;
   if (command === "fetch-public") {
     fetchPublicUrl = cleanOption(argv[1], "fetch-public URL");
     if (!fetchPublicUrl) throw new Error("fetch-public requires a URL");
@@ -289,6 +291,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     modelSelection: resolveModelSelection(provider, model, effort, subagentModel, subagentEffort),
     modelPrompt: yes ? "never" : modelPrompt,
     outputStylePrompt: yes ? "never" : "auto",
+    ...(tuiAction === undefined ? {} : { tuiAction }),
     loop: {
       projectRoot,
       json: loopJson,

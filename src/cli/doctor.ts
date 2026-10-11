@@ -11,6 +11,7 @@ import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import type { CliResult } from "./types.ts";
 import type { AgentConfigTarget } from "../agents/types.ts";
 import { isRecord, readJsonObjectIfPresent, readPackageMetadata } from "./json.ts";
+import { parseJsonc } from "./jsonc.ts";
 import { inspectCommandAliases } from "./command-aliases.ts";
 import { inspectNativeSkills } from "./native-skills.ts";
 import { openCodeHostCapabilities } from "./host-capabilities.ts";
@@ -23,6 +24,7 @@ import {
 import { inspectLspCapability } from "./lsp-capability.ts";
 import { probeMotionRuntime } from "./motion-runtime.ts";
 import { isLitOpenCodeEntry } from "./plugin-mutation.ts";
+import { inspectTuiPlugin } from "./tui-config.ts";
 import { jevSkillHintDoctorLine } from "../jev-skill-hint.ts";
 import {
   autoUpdateInstallLockPath,
@@ -42,10 +44,6 @@ function pluginEntryId(value: unknown): string {
   return "";
 }
 
-function stripJsonComments(value: string): string {
-  return value.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-}
-
 async function readOpenCodeConfig(root: string): Promise<{
   readonly path: string;
   readonly config: Record<string, unknown> | null;
@@ -63,7 +61,7 @@ async function readOpenCodeConfig(root: string): Promise<{
     }
 
     try {
-      const parsed: unknown = JSON.parse(candidate.endsWith(".jsonc") ? stripJsonComments(raw) : raw);
+      const parsed: unknown = parseJsonc(raw);
       return { path: candidate, config: isRecord(parsed) ? parsed : null, ...(isRecord(parsed) ? {} : { error: "expected object" }) };
     } catch (error) {
       return { path: candidate, config: null, error: error instanceof Error ? error.message : String(error) };
@@ -150,6 +148,8 @@ export async function doctor(root: string): Promise<CliResult> {
   const installPlugin = await inspectPlugin(root, metadata);
   const commandAliases = await inspectCommandAliases(root);
   const nativeSkills = await inspectNativeSkills(root, metadata);
+  // The TUI panel is optional, so a missing entry is reported here without failing install.ok.
+  const tui = await inspectTuiPlugin(root, installPlugin.present && installPlugin.configured !== null ? installPlugin.configured : installPlugin.expected);
   const hostConfig = await readOpenCodeConfig(root);
   const motion = probeMotionRuntime(metadata.packageRoot);
   const autoHandoff = await createAutoHandoffSettings({
@@ -233,7 +233,8 @@ export async function doctor(root: string): Promise<CliResult> {
           ok: installPlugin.ok && commandAliases.ok && nativeSkills.ok,
           plugin: installPlugin,
           commandAliases,
-          nativeSkills
+          nativeSkills,
+          tui
         }
       },
       null,

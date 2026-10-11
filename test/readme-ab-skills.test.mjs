@@ -4,22 +4,25 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
 
-// The skills gallery lives on the GitHub pages and loads by relative path. The A/B comparison was
-// removed, so this file also guards its absence from the pages, the pictures and the package.
+// The skills gallery moved off the landing README into GitHub docs pages that load the snapshots by
+// paths relative to docs/. The A/B comparison was removed, so this file also guards its absence from
+// the pages, the pictures and the package.
 const local = "./";
 const readmes = {
-  "README.md": {
-    install: "## Install",
+  "docs/skills.md": {
+    landing: "README.md",
+    commands: "## Commands",
     skills: "## Skills at a glance",
-    next: "## Commands",
-    nav: '<a href="#skills-at-a-glance">Skills</a>',
+    next: "## How the plugin works",
+    nav: '<a href="./docs/skills.md">Skills</a>',
     sevenViews: "seven views"
   },
-  "README-Ko-KR.md": {
-    install: "## 설치",
+  "docs/skills-Ko-KR.md": {
+    landing: "README-Ko-KR.md",
+    commands: "## 명령어",
     skills: "## 스킬 한눈에 보기",
-    next: "## 명령어",
-    nav: '<a href="#스킬-한눈에-보기">스킬</a>',
+    next: "## 플러그인이 동작하는 방식",
+    nav: '<a href="./docs/skills-Ko-KR.md">스킬</a>',
     sevenViews: "일곱 가지 보기"
   }
 };
@@ -56,11 +59,11 @@ function referenced(content, prefix) {
 const removedComparison = /A\/B|blind judge|final verdict|docs\/ab\b|ab-results|ab-결과|블라인드|최종 판정|How it compared|비교해 보니/iu;
 
 test("the pages carry no A/B comparison, blind-judge result or final verdict", async () => {
-  for (const file of [...Object.keys(readmes), "README-npm.md", "README-npm-Ko-KR.md"]) {
+  for (const file of [...Object.keys(readmes), "README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md"]) {
     const content = await text(file);
     const hit = content.split("\n").find((line) => removedComparison.test(line));
     assert.equal(hit, undefined, `${file} still shows comparison text: ${hit}`);
-    assert.equal(referenced(content, "docs/ab/").length, 0, `${file} shows no A/B picture`);
+    assert.equal(referenced(content, "docs/ab/").length + referenced(content, "ab/").length, 0, `${file} shows no A/B picture`);
   }
 });
 
@@ -80,15 +83,15 @@ test("Skills at a glance lists every snapshot once, in the same order in both la
   const orders = [];
   for (const [file, labels] of Object.entries(readmes)) {
     const content = await text(file);
-    assert.ok(content.includes(labels.nav), `${file}: top nav links the skill section`);
-    const install = content.indexOf(labels.install);
+    assert.ok((await text(labels.landing)).includes(labels.nav), `${labels.landing}: top nav links the skills gallery`);
+    const commands = content.indexOf(labels.commands);
     const skills = content.indexOf(labels.skills);
     const next = content.indexOf(labels.next);
-    assert.ok(install >= 0 && skills > install && next > skills, `${file}: install, skills, then commands`);
+    assert.ok(commands >= 0 && skills > commands && next > skills, `${file}: commands, skills, then how the plugin works`);
     const table = section(content, labels.skills, labels.next);
     const images = [...table.matchAll(/<img src="([^"]+)" width="240" alt="([^"]*)" \/>/gu)];
-    const order = images.map((match) => match[1].slice(`${local}docs/assets/skills/`.length));
-    assert.ok(images.every((match) => match[1].startsWith(`${local}docs/assets/skills/`)), `${file}: snapshots load from the repository by relative path`);
+    const order = images.map((match) => match[1].slice(`${local}assets/skills/`.length));
+    assert.ok(images.every((match) => match[1].startsWith(`${local}assets/skills/`)), `${file}: snapshots load from the repository by paths relative to docs/`);
     assert.deepEqual([...order].sort(), snapshots, `${file}: rows match the snapshot files`);
     assert.equal(table.split("\n<tr>\n").length - 1, snapshots.length, `${file}: one row per snapshot`);
     assert.ok(images.every((match) => match[2].trim().length > 0), `${file}: snapshots carry alt text`);
@@ -109,10 +112,10 @@ test("the npm package carries every README skill picture and no A/B picture", ()
 test("the npm pages send readers to the GitHub skills gallery", async () => {
   const pages = {
     "README-npm.md": {
-      gallery: "https://github.com/wjgoarxiv/litopencode#skills-at-a-glance"
+      gallery: "https://github.com/wjgoarxiv/litopencode/blob/main/docs/skills.md"
     },
     "README-npm-Ko-KR.md": {
-      gallery: "https://github.com/wjgoarxiv/litopencode/blob/master/README-Ko-KR.md#스킬-한눈에-보기"
+      gallery: "https://github.com/wjgoarxiv/litopencode/blob/main/docs/skills-Ko-KR.md"
     }
   };
   for (const [file, expected] of Object.entries(pages)) {

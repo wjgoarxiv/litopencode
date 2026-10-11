@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseJsonc } from "./jsonc.ts";
 import type { PackageMetadata } from "./types.ts";
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -17,16 +18,21 @@ export async function readPackageMetadata(): Promise<PackageMetadata> {
   return { name: parsed.name, version: parsed.version, packageRoot };
 }
 
-export async function readJsonObjectIfPresent(filePath: string): Promise<Record<string, unknown> | null> {
-  let raw: string;
+export async function readTextIfPresent(filePath: string): Promise<string | null> {
   try {
-    raw = await fs.readFile(filePath, "utf8");
+    return await fs.readFile(filePath, "utf8");
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") return null;
     throw error;
   }
+}
 
-  const parsed: unknown = JSON.parse(raw);
+// OpenCode configs are JSONC, so every reader here accepts comments and trailing commas.
+export async function readJsonObjectIfPresent(filePath: string): Promise<Record<string, unknown> | null> {
+  const raw = await readTextIfPresent(filePath);
+  if (raw === null) return null;
+
+  const parsed: unknown = parseJsonc(raw);
   if (!isRecord(parsed)) {
     throw new Error(`Malformed JSON at ${filePath}: expected an object.`);
   }

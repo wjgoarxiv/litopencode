@@ -6,6 +6,10 @@ import { readStableRegularFile } from "../skills/frontend-ui-ux/scripts/stable-f
 
 // Shown by the GitHub pages only; the npm cards never reference them, so they stay out of the package.
 const GITHUB_ONLY_README_MEDIA = /^docs\/assets\/readme\/(?:jev-[^/]+\.webp|(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
+// The landing README links these GitHub pages for what moved off it (guide, skills gallery, screens,
+// artwork). They load images by paths relative to docs/, and they stay out of the package with the social preview.
+const GITHUB_DOC_PAGES = ["docs/guide.md", "docs/guide-Ko-KR.md", "docs/skills.md", "docs/skills-Ko-KR.md", "docs/screens.md", "docs/screens-Ko-KR.md", "docs/brand.md", "docs/brand-Ko-KR.md"];
+const GITHUB_ONLY_DOCS = /^docs\/(?:(?:guide|skills|screens|brand)(?:-Ko-KR)?\.md|assets\/(?:social-preview\.png|demo\.(?:gif|webp)))$/u;
 
 const FORBIDDEN_PATH_RULES = [
   { label: "original prompt provenance", pattern: /^INITIAL_PROMPT\.md$/u },
@@ -17,6 +21,7 @@ const FORBIDDEN_PATH_RULES = [
   { label: "GitHub-only README media (Jev snapshots, on-screen pictures, promo film)", pattern: GITHUB_ONLY_README_MEDIA },
   { label: "unapproved README presentation asset", pattern: /^docs\/assets\/readme\/(?!(?:ascii-readme|badge-version|badge-license|lucide-book-open|lucide-play|lucide-shield-check)\.svg$|litopencode-wordmark\.svg$|litopencode-clay-icon\.png$|(?:litfamily-machines|poster)\.png$|ignition-film\.mp4$|ignition-readme\.gif$|(?:Lucide-LICENSE|JetBrainsMono-OFL)\.txt$)/u },
   { label: "maintainer release checklist", pattern: /^docs\/release-checklist\.md$/u },
+  { label: "GitHub-only docs page, social preview or demo film", pattern: GITHUB_ONLY_DOCS },
   { label: "npm README source (packed as README.md / README-Ko-KR.md)", pattern: /^README-npm(?:-Ko-KR)?\.md$/u },
   { label: "GitHub README backup from the npm README swap", pattern: /^\.readme-npm-backup(?:\/|$)/u },
   { label: "npm README swap script", pattern: /^tools\/readme-for-npm\.mjs$/u },
@@ -77,9 +82,10 @@ const REQUIRED_README_PATHS = [
   "docs/assets/readme/poster.png"
 ];
 
-// Every image the READMEs show must ship, except the GitHub-only media above: the npm pages load
-// pinned package-CDN copies, and the GitHub pages load the same files by relative path. Inside a
-// packed artifact the npm sources are absent and README.md / README-Ko-KR.md already hold the npm pages.
+// Every image the READMEs and the GitHub docs pages show must ship, except the GitHub-only media above:
+// the npm pages load pinned package-CDN copies, and the GitHub pages load the same files by relative path.
+// Inside a packed artifact the npm sources and the GitHub docs pages are absent, and README.md /
+// README-Ko-KR.md already hold the npm pages.
 async function readmeImagePaths() {
   const { version } = JSON.parse(await fs.readFile("package.json", "utf8"));
   const prefix = `https://cdn.jsdelivr.net/npm/@litfamily/litopencode@${version}/`;
@@ -94,18 +100,27 @@ async function readmeImagePaths() {
       // Packed artifact: the target already is the npm page.
     }
   }
+  for (const page of GITHUB_DOC_PAGES) {
+    try {
+      await fs.access(page);
+      sources.push(page);
+    } catch {
+      // Packed artifact: the GitHub docs pages stay in the repository.
+    }
+  }
   for (const file of sources) {
     const text = await fs.readFile(file, "utf8");
+    const base = path.posix.dirname(file);
     const targets = [
       ...[...text.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/gu)].map((match) => match[1]),
       ...[...text.matchAll(/\b(?:src|srcset)="([^"\s]+)"/gu)].map((match) => match[1])
     ];
     for (const target of targets) {
       if (target.startsWith(prefix)) paths.add(target.slice(prefix.length));
-      else if (target.startsWith("./")) paths.add(target.slice(2));
+      else if (target.startsWith("./")) paths.add(path.posix.join(base, target.slice(2)));
     }
   }
-  return [...paths].filter((imagePath) => !GITHUB_ONLY_README_MEDIA.test(imagePath));
+  return [...paths].filter((imagePath) => !GITHUB_ONLY_README_MEDIA.test(imagePath) && !GITHUB_ONLY_DOCS.test(imagePath));
 }
 
 async function readManagedManifest() {

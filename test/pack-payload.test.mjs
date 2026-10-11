@@ -90,12 +90,16 @@ const readmeCdn = `https://cdn.jsdelivr.net/npm/${packageId}/`;
 // The npm pages pin package-CDN images; the GitHub pages load the same shipped files by relative path.
 // The Jev snapshots, the on-screen pictures and the promo film are shown by the GitHub pages only and stay out of the package.
 const githubOnlyReadmeMedia = /^docs\/assets\/readme\/(?:jev-[^/]+\.webp|(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
-const readmeImagePaths = [...new Set(["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md"].flatMap((file) =>
+// The landing README's demo film is GitHub-only as well.
+const githubOnlyDemoFilm = "docs/assets/demo.webp";
+// The GitHub docs pages hold what moved off the landing README; their images resolve relative to docs/.
+const githubDocPages = ["docs/guide.md", "docs/guide-Ko-KR.md", "docs/skills.md", "docs/skills-Ko-KR.md", "docs/screens.md", "docs/screens-Ko-KR.md", "docs/brand.md", "docs/brand-Ko-KR.md"];
+const readmeImagePaths = [...new Set(["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md", ...githubDocPages].flatMap((file) =>
   [...fsSync.readFileSync(file, "utf8").matchAll(/(?:!\[[^\]]*\]\(|\b(?:src|srcset)=")([^)"\s]+)/gu)]
     .map((match) => match[1])
     .filter((target) => target.startsWith(readmeCdn) || target.startsWith("./"))
-    .map((target) => target.startsWith("./") ? target.slice(2) : target.slice(readmeCdn.length))
-    .filter((imagePath) => !githubOnlyReadmeMedia.test(imagePath))
+    .map((target) => target.startsWith("./") ? path.posix.join(path.posix.dirname(file), target.slice(2)) : target.slice(readmeCdn.length))
+    .filter((imagePath) => !githubOnlyReadmeMedia.test(imagePath) && imagePath !== githubOnlyDemoFilm)
 ))];
 const requiredPackagePaths = [
   ...new Set([...requiredReadmePaths, ...readmeImagePaths]),
@@ -149,7 +153,7 @@ function runChecker(args, input) {
 
 test("README assets and linked files ship while unrelated presentation files stay excluded", () => {
   const required = ["package.json", "dist/index.js", ...requiredPackagePaths];
-  for (const unwanted of ["cover.png", "docs/assets/cover.svg", "docs/release-checklist.md", "generate_cover.py", "docs/assets/readme/unapproved-source.psd", "docs/assets/readme/jev-doctor.webp", "docs/assets/readme/jev-toast-first-hint.webp", "docs/assets/readme/jev-toast-hint.webp", "docs/assets/readme/jev-toast-notice.webp", "docs/assets/readme/install-output-dark.webp", "docs/assets/readme/install-output-light.webp", "docs/assets/readme/doctor-output-dark.webp", "docs/assets/readme/doctor-output-light.webp", "docs/assets/readme/ignition-toast-dark.webp", "docs/assets/readme/ignition-toast-light.webp", "docs/assets/readme/planner-permissions-dark.webp", "docs/assets/readme/planner-permissions-light.webp", "docs/assets/readme/promo-preview.webp", "docs/assets/readme/promo-still.webp", "docs/assets/readme/promo.mp4", "docs/assets/readme/promo-source/index.html", "docs/assets/readme/promo-source/treatment.json", "README-npm.md", "README-npm-Ko-KR.md", ".readme-npm-backup/README.md", "tools/readme-for-npm.mjs"]) {
+  for (const unwanted of ["cover.png", "docs/assets/cover.svg", "docs/release-checklist.md", "generate_cover.py", "docs/assets/readme/unapproved-source.psd", "docs/assets/readme/jev-doctor.webp", "docs/assets/readme/jev-toast-first-hint.webp", "docs/assets/readme/jev-toast-hint.webp", "docs/assets/readme/jev-toast-notice.webp", "docs/assets/readme/install-output-dark.webp", "docs/assets/readme/install-output-light.webp", "docs/assets/readme/doctor-output-dark.webp", "docs/assets/readme/doctor-output-light.webp", "docs/assets/readme/ignition-toast-dark.webp", "docs/assets/readme/ignition-toast-light.webp", "docs/assets/readme/planner-permissions-dark.webp", "docs/assets/readme/planner-permissions-light.webp", "docs/assets/readme/promo-preview.webp", "docs/assets/readme/promo-still.webp", "docs/assets/readme/promo.mp4", "docs/assets/readme/promo-source/index.html", "docs/assets/readme/promo-source/treatment.json", "README-npm.md", "README-npm-Ko-KR.md", ".readme-npm-backup/README.md", "tools/readme-for-npm.mjs", ...githubDocPages, "docs/assets/social-preview.png", "docs/assets/demo.gif", "docs/assets/demo.webp"]) {
     const result = runChecker(["--stdin"], JSON.stringify(packageReport([...required, unwanted])));
     assert.equal(result.status, 1, `${unwanted} must stay out of npm: ${result.stdout}`);
     assert.ok(result.stdout.includes(unwanted));
@@ -173,9 +177,9 @@ test("the GitHub-only README media never counts as a required package file", () 
   assert.ok(result.stdout.includes("GitHub-only README media"), result.stdout);
 });
 
-test("every README skill snapshot must ship in the package", () => {
+test("every skills-gallery snapshot must ship in the package", () => {
   for (const image of ["docs/assets/skills/lit-pptx.webp"]) {
-    assert.ok(readmeImagePaths.includes(image), `${image} should be a README image`);
+    assert.ok(readmeImagePaths.includes(image), `${image} should be a skills-gallery image`);
     const result = runChecker(["--stdin"], JSON.stringify(packageReport([
       "package.json",
       "dist/index.js",

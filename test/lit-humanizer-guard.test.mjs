@@ -34,6 +34,26 @@ test("tool.execute.before blocks new high-precision reader-facing text before a 
   });
 });
 
+test("block rules apply to prose formats only, never to structured config or data files", async () => {
+  await temporary(async (_root, guard) => {
+    const prose = [".adoc", ".htm", ".html", ".md", ".mdx", ".org", ".rst", ".svg", ".tex", ".txt", ".xhtml"];
+    for (const extension of prose) {
+      await assert.rejects(
+        guard.before(request("write", `deliverable${extension}`, { content: "Source: unrequested report\n" })),
+        /LIT_HUMANIZER_BLOCKED/u,
+        extension
+      );
+    }
+    const structured = [".csv", ".json", ".jsonc", ".tsv", ".xml", ".yaml", ".yml"];
+    for (const extension of structured) {
+      await guard.before(request("write", `config${extension}`, { content: "Source: generated\nprovenance: true\nevidence: none\n" }));
+    }
+    await guard.before(request("write", "argocd/application.yaml", {
+      content: "spec:\n  source:\n    repoURL: https://example.invalid/repo.git\n"
+    }));
+  });
+});
+
 test("pre-existing hits, fenced code, quoted source text, and internal paths do not block", async () => {
   await temporary(async (root, guard) => {
     await fs.mkdir(path.join(root, "reports"), { recursive: true });

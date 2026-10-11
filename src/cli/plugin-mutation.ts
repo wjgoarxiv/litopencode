@@ -11,18 +11,24 @@ function pluginEntryId(value: unknown): string {
   return "";
 }
 
+// The install target counts as a LitOpenCode entry even when it is a local checkout path, which the
+// package-name match cannot recognize; otherwise a re-install would append the same path again.
+function isRegistrationEntry(value: unknown, target: string): boolean {
+  return isLitOpenCodeEntry(value) || pluginEntryId(value) === target;
+}
+
 function replaceLitOpenCodeEntry(value: unknown, target: string): unknown {
-  if (Array.isArray(value) && isLitOpenCodeEntry(value)) return [target, ...value.slice(1)];
+  if (Array.isArray(value)) return [target, ...value.slice(1)];
   return target;
 }
 
 function normalizedPluginArray(pluginValue: readonly unknown[], target: string): readonly unknown[] {
-  const firstLitEntry = pluginValue.find(isLitOpenCodeEntry);
+  const firstLitEntry = pluginValue.find((value) => isRegistrationEntry(value, target));
   const replacement = firstLitEntry === undefined ? target : replaceLitOpenCodeEntry(firstLitEntry, target);
   let replaced = false;
   const next: unknown[] = [];
   for (const value of pluginValue) {
-    if (!isLitOpenCodeEntry(value)) {
+    if (!isRegistrationEntry(value, target)) {
       next.push(value);
       continue;
     }
@@ -36,9 +42,9 @@ function normalizedPluginArray(pluginValue: readonly unknown[], target: string):
 export function describePluginMutation(config: Record<string, unknown> | null, target: string): PluginMutation {
   const pluginValue = config?.plugin;
   const pluginIsArray = Array.isArray(pluginValue);
-  const existingIndex = pluginIsArray ? pluginValue.findIndex(isLitOpenCodeEntry) : -1;
+  const existingIndex = pluginIsArray ? pluginValue.findIndex((value) => isRegistrationEntry(value, target)) : -1;
   const targetIndex = pluginIsArray ? pluginValue.findIndex((value) => pluginEntryId(value) === target) : -1;
-  const litEntryCount = pluginIsArray ? pluginValue.filter(isLitOpenCodeEntry).length : 0;
+  const litEntryCount = pluginIsArray ? pluginValue.filter((value) => isRegistrationEntry(value, target)).length : 0;
   const alreadyPresent = targetIndex >= 0 && litEntryCount === 1;
   const currentCount = pluginIsArray ? pluginValue.length : 0;
 
@@ -92,7 +98,7 @@ export function applyPluginMutation(
 
   const pluginValue = next.plugin;
   if (Array.isArray(pluginValue)) {
-    next.plugin = pluginValue.some(isLitOpenCodeEntry) ? normalizedPluginArray(pluginValue, target) : [...pluginValue, target];
+    next.plugin = pluginValue.some((value) => isRegistrationEntry(value, target)) ? normalizedPluginArray(pluginValue, target) : [...pluginValue, target];
     return next;
   }
 

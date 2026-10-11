@@ -27,6 +27,30 @@ test("package matching preserves foreign names, paths and malformed entries", ()
   }
 });
 
+test("re-installing from a local checkout path reports no change and keeps one entry", () => {
+  const checkout = "/work/litopencode-checkout";
+  const options = { enabled: true };
+  for (const before of [{ plugin: [checkout] }, { plugin: ["foreign", checkout] }, { plugin: [[checkout, options], "foreign"] }]) {
+    const mutation = describePluginMutation(before, checkout);
+    assert.equal(mutation.changed, false, JSON.stringify(before));
+    assert.equal(mutation.plugin.alreadyPresent, true, JSON.stringify(before));
+    assert.equal(mutation.plugin.resultCount, before.plugin.length, JSON.stringify(before));
+    assert.deepEqual(mutation.patch, []);
+    assert.deepEqual(applyPluginMutation(before, mutation, checkout).plugin, before.plugin);
+  }
+  // A duplicated checkout entry collapses to one, keeping the first entry's options.
+  const doubled = { plugin: [[checkout, options], "foreign", checkout] };
+  const mutation = describePluginMutation(doubled, checkout);
+  assert.equal(mutation.changed, true);
+  assert.equal(mutation.plugin.resultCount, 2);
+  assert.deepEqual(applyPluginMutation(doubled, mutation, checkout).plugin, [[checkout, options], "foreign"]);
+  // A published entry beside the checkout is replaced by the checkout target, not kept twice.
+  const mixed = { plugin: [target, "foreign", checkout] };
+  const mixedMutation = describePluginMutation(mixed, checkout);
+  assert.equal(mixedMutation.plugin.resultCount, 2);
+  assert.deepEqual(applyPluginMutation(mixed, mixedMutation, checkout).plugin, [checkout, "foreign"]);
+});
+
 test("scoped updates use encoded registry identity and discard old-package cache authority", () => {
   assert.equal(autoUpdatePackageName, "@litfamily/litopencode");
   assert.equal(npmLatestUrl, "https://registry.npmjs.org/%40litfamily%2Flitopencode/latest");

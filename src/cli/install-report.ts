@@ -133,7 +133,8 @@ function actionLines(report: InstallReport): readonly string[] {
         : "OpenCode context and compaction limits already ready"
       : "OpenCode context and compaction limits preserved; select LUNA to reconfigure",
     report.commandAliases.changed ? "command aliases written" : "command aliases preserved",
-    report.nativeSkills.changed ? "native skills written" : "native skills preserved"
+    report.nativeSkills.changed ? "native skills written" : "native skills preserved",
+    report.tui.changed ? "TUI mission panel registered" : "TUI mission panel already ready"
   ];
 }
 
@@ -183,6 +184,7 @@ export function renderInstallReport(report: InstallReport): string {
     line("", actions[2]),
     line("", actions[3]),
     line("", actions[4]),
+    line("", actions[5]),
     ...section("Routes"),
     line("Model", modelRoute(report)),
     line("Effort", report.litopencodeConfig.model.effort ?? "preserve existing"),
@@ -206,6 +208,7 @@ export function renderInstallReport(report: InstallReport): string {
     line("Native skills", report.nativeSkills.write.length + " managed / " + report.nativeSkills.preserve.length + " preserved"),
     ...nativeSkillsLinkLines(report),
     line("Plugin entries", report.plugin.currentCount + " -> " + report.plugin.resultCount),
+    line("TUI config", report.tui.path),
     ...section("Progress"),
     progressLine("Resolve package"),
     progressLine("Read OpenCode config"),

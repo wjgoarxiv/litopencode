@@ -233,6 +233,47 @@ test("failed post-install doctor rolls the config transaction back and leaves a 
   });
 });
 
+test("failed post-install doctor restores tui.json byte-for-byte and removes a tui.jsonc the install created", async () => {
+  await withFixture(async ({ home, root }) => {
+    const tuiPath = path.join(root, "tui.json");
+    const tuiBefore = Buffer.from('{\n  // user comment kept as written\n  "plugin": ["other-tui-plugin"],\t"theme": "x"\n}\n', "utf8");
+    await fs.writeFile(path.join(root, "opencode.json"), '{"plugin":["@litfamily/litopencode@0.1.63"]}\n');
+    await fs.writeFile(tuiPath, tuiBefore);
+    const runCommand = async (command, args) => {
+      if (command === "npm") {
+        const prefix = args[args.indexOf("--prefix") + 1];
+        const packageRoot = path.join(prefix, "node_modules", "@litfamily/litopencode");
+        await fs.mkdir(path.join(packageRoot, "bin"), { recursive: true });
+        await fs.writeFile(path.join(packageRoot, "package.json"), JSON.stringify({ name: "@litfamily/litopencode", version: "0.1.64" }));
+        await fs.writeFile(path.join(packageRoot, "bin", "litopencode.cjs"), "#!/usr/bin/env node\n");
+        return { stdout: "installed", stderr: "" };
+      }
+      if (args.includes("install")) {
+        await fs.writeFile(tuiPath, '{"plugin":["other-tui-plugin","@litfamily/litopencode@0.1.64"]}\n');
+        await fs.writeFile(path.join(root, "tui.jsonc"), '{"plugin":["@litfamily/litopencode@0.1.64"]}\n');
+        return { stdout: "installed plugin", stderr: "" };
+      }
+      return { stdout: JSON.stringify({ package: { name: "@litfamily/litopencode", version: "0.1.64" }, install: { ok: false } }), stderr: "" };
+    };
+
+    const result = await autoUpdate.runAutoUpdate({
+      reason: "plugin",
+      homeDir: home,
+      configRoot: root,
+      currentVersion: "0.1.63",
+      env: { HOME: home, PATH: process.env.PATH },
+      fetchLatestVersion: async () => "0.1.64",
+      runCommand
+    });
+
+    assert.equal(result.status, "rolled-back");
+    assert.equal(result.rollback.ok, true);
+    assert.equal(result.priorStateVerified, true);
+    assert.ok((await fs.readFile(tuiPath)).equals(tuiBefore), "tui.json must be restored byte-for-byte");
+    await assert.rejects(fs.access(path.join(root, "tui.jsonc")), { code: "ENOENT" });
+  });
+});
+
 test("unknown staged state fails closed even after a verified rollback", async () => {
   await withFixture(async ({ home, root }) => {
     const before = { $schema: "https://opencode.ai/config.json", plugin: ["litopencode@0.1.63"] };

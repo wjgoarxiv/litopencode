@@ -11,6 +11,10 @@ import {
   resolveReviewBlocker,
   type Goal
 } from "../ledger.ts";
+import { createHash } from "node:crypto";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { createRuntimePaths } from "../state.ts";
 import type { CliResult, LoopArgs } from "./types.ts";
 import type { LoopCommand } from "./args.ts";
@@ -55,7 +59,76 @@ function describeGoal(goal: Goal): string {
   return lines.join("\n");
 }
 
-export async function runLoopCommand(command: LoopCommand, loop: LoopArgs): Promise<CliResult> {
+type PlannedWrite = { readonly path: string; readonly change: "create" | "update" | "delete" };
+
+async function snapshotTree(dir: string): Promise<Map<string, string>> {
+  const files = new Map<string, string>();
+  const walk = async (current: string): Promise<void> => {
+    let entries;
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true });
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT") return;
+      throw error;
+    }
+    for (const entry of entries) {
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else files.set(path.relative(dir, full), createHash("sha256").update(await fs.readFile(full)).digest("hex"));
+    }
+  };
+  await walk(dir);
+  return files;
+}
+
+// A dry run executes the verb against a private copy of the project's .litopencode state, so the
+// same validation, refusals and gates apply, then reports which files the real run would change.
+// The copy dereferences symlinks, so a write in the copy can never reach a linked target.
+async function dryRunLoopCommand(command: LoopCommand, loop: LoopArgs): Promise<CliResult> {
+  const realRuntimeDir = createRuntimePaths(loop.projectRoot).runtimeDir;
+  const shadowRoot = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-dry-run-shadow-")));
+  try {
+    const shadowRuntimeDir = createRuntimePaths(shadowRoot).runtimeDir;
+    try {
+      await fs.cp(realRuntimeDir, shadowRuntimeDir, { recursive: true, dereference: true });
+    } catch (error) {
+      if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+    }
+    const before = await snapshotTree(shadowRuntimeDir);
+    const result = await runLoopCommandAt(command, { ...loop, projectRoot: shadowRoot });
+    const after = await snapshotTree(shadowRuntimeDir);
+    const writes: PlannedWrite[] = [];
+    for (const [file, hash] of after) {
+      const previous = before.get(file);
+      if (previous === undefined) writes.push({ path: path.join(realRuntimeDir, file), change: "create" });
+      else if (previous !== hash) writes.push({ path: path.join(realRuntimeDir, file), change: "update" });
+    }
+    for (const file of before.keys()) if (!after.has(file)) writes.push({ path: path.join(realRuntimeDir, file), change: "delete" });
+    writes.sort((left, right) => left.path.localeCompare(right.path));
+    const realProjectRoot = path.resolve(loop.projectRoot);
+    const relabel = (text: string | undefined): string | undefined => text?.split(shadowRoot).join(realProjectRoot);
+    if (loop.json && result.stdout !== undefined) {
+      const payload = { dryRun: true, command, wouldWrite: writes, result: JSON.parse(relabel(result.stdout) ?? "null") as unknown };
+      return { exitCode: result.exitCode, stdout: JSON.stringify(payload, null, 2), stderr: relabel(result.stderr) };
+    }
+    const plan = writes.length === 0
+      ? `DRY RUN: nothing was written. ${command} would change no files.`
+      : [`DRY RUN: nothing was written. ${command} would change:`, ...writes.map((entry) => `  ${entry.change} ${entry.path}`)].join("\n");
+    const preview = relabel(result.stdout);
+    const stdout = preview === undefined || preview === "" ? plan : `${plan}\nThe real run would report:\n${preview}`;
+    return { exitCode: result.exitCode, stdout, stderr: relabel(result.stderr) };
+  } finally {
+    await fs.rm(shadowRoot, { recursive: true, force: true });
+  }
+}
+
+// status only reads, so --dry-run changes nothing about it; every other verb writes the ledger.
+export async function runLoopCommand(command: LoopCommand, loop: LoopArgs, dryRun = false): Promise<CliResult> {
+  if (dryRun && command !== "status") return await dryRunLoopCommand(command, loop);
+  return await runLoopCommandAt(command, loop);
+}
+
+async function runLoopCommandAt(command: LoopCommand, loop: LoopArgs): Promise<CliResult> {
   const root = loop.projectRoot;
   try {
     if (command === "create-goals") {

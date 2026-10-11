@@ -1,8 +1,6 @@
 import { isRecord } from "./json.ts";
-import { writeTextAtomically } from "./install-config.ts";
+import { writeOpenCodeConfig } from "./install-config.ts";
 import { hostLimitModelIds } from "./model-catalog.ts";
-import fs from "node:fs/promises";
-import path from "node:path";
 
 export const contextCeilingTokens = 372000;
 export const compactionTriggerTokens = 334800;
@@ -125,6 +123,5 @@ export async function ensureHostLimits(
   if (!reconfigure) return;
   const next = applyHostLimits(config);
   if (JSON.stringify(config) === JSON.stringify(next)) return;
-  await fs.mkdir(path.dirname(configPath), { recursive: true });
-  await writeTextAtomically(configPath, JSON.stringify(next, null, 2) + "\n");
+  await writeOpenCodeConfig(configPath, next);
 }

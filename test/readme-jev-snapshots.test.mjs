@@ -5,7 +5,11 @@ import { showJevSkillHintToast } from "../src/activation.ts";
 import { jevSkillHintDoctorLine } from "../src/jev-skill-hint.ts";
 
 const assetRoot = "docs/assets/readme";
+// The Jev section and its pictures moved off the landing README into the GitHub guide pages, which load
+// the snapshots by paths relative to docs/.
+const pageAssetRoot = "assets/readme";
 const githubReadmes = ["README.md", "README-Ko-KR.md"];
+const guidePages = ["docs/guide.md", "docs/guide-Ko-KR.md"];
 const npmReadmes = ["README-npm.md", "README-npm-Ko-KR.md"];
 const MAX_SNAPSHOT_BYTES = 128 * 1024;
 
@@ -35,10 +39,10 @@ test("Jev snapshot alt text quotes the strings the plugin prints", async () => {
   assert.equal(toastBody(hint, true).variant, "warning");
   assert.equal(toastBody(hint, false).variant, "info");
   assert.equal(toastBody(undefined, false), undefined, "a silent turn shows no toast");
-  for (const file of githubReadmes) {
+  for (const file of guidePages) {
     const content = await fs.readFile(file, "utf8");
     for (const { file: image, strings } of snapshots) {
-      const tag = content.match(new RegExp(`<img src="\\./${assetRoot}/${image}"[^>]*alt="([^"]+)"`, "u"));
+      const tag = content.match(new RegExp(`<img src="\\./${pageAssetRoot}/${image}"[^>]*alt="([^"]+)"`, "u"));
       assert.ok(tag, `${file} embeds ${image} with alt text`);
       for (const text of strings) assert.ok(tag[1].includes(text), `${file}: ${image} alt names "${text}"`);
     }
@@ -58,14 +62,14 @@ test("Jev snapshots are small WebP files that stay out of the package", async ()
 });
 
 test("Jev snapshot captions say whether a picture is a capture or a sample", async () => {
-  for (const file of githubReadmes) {
+  for (const file of guidePages) {
     const content = await fs.readFile(file, "utf8");
-    const english = file === "README.md";
+    const english = file === "docs/guide.md";
     assert.ok(content.includes(english ? "*Captured from the real `litopencode doctor`" : "*격리한 셸에서 실제 `litopencode doctor`를 실행해 캡처했고"), file);
     const samples = content.match(english ? /^\*Sample output/gmu : /^\*.*예시 화면입니다/gmu) ?? [];
-    assert.equal(samples.length, 4, `${file}: the three Jev toast pictures and the ignition toast picture are labelled as samples`);
+    assert.equal(samples.length, 3, `${file}: the three Jev toast pictures are labelled as samples`);
   }
-  for (const file of npmReadmes) {
+  for (const file of [...githubReadmes, ...npmReadmes]) {
     const content = await fs.readFile(file, "utf8");
     assert.doesNotMatch(content, /jev-(?:doctor|toast)/u, `${file} does not embed the snapshots`);
   }
