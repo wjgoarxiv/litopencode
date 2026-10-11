@@ -5,6 +5,16 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.19 - 2026-10-11
+
+- The README is shorter for first-time readers. It says what LitOpenCode does, how to install it and what to type first, and the detail now lives in docs pages (guide, skills, screens and brand) in English and Korean. The GitHub page also plays a short film of a real session.
+- A lit mission now shows in OpenCode's TUI. A pill chip sits by the prompt, a rounded sidebar panel carries the phase and a smooth progress bar, a band runs along the bottom of the main screen, the home screen shows a line for the last mission, and a finished mission gets a short completion moment. In the plugin's `tui.json` options, `band: false` turns the band off and `band: { card: true }` adds a card under it with the warnings, the next task and the goal.
+- Install adds the TUI plugin to `tui.json` or `tui.jsonc` and backs the file up first, and `litopencode tui remove` takes it out again. Auto-update backs up these files with the rest of the install and puts them back when an update fails.
+- Install and doctor read a commented `opencode.jsonc` safely. They accept comments, trailing commas, a BOM and CRLF line endings, and an edit keeps every comment. When a comment sits inside an entry that has to change, install stops before writing anything and prints the entry to add by hand. A second install from a local checkout no longer adds a duplicate plugin entry.
+- A prompt such as "lit turn notes.md into a 10-slide deck" now loads the office skills: lit-pptx for a deck and lit-docx for a Word report. The dot in a file name no longer breaks the match.
+- The prose check that runs before a write now skips YAML, JSON and CSV files, so a line such as `source:` in a config file no longer blocks the write.
+- `--dry-run` writes nothing. Loop commands that change the ledger list the files they would touch, and `motion-runtime` refuses an unknown option before it downloads anything.
+
 ## 1.0.18 - 2026-10-09
 
 - The prose check that runs before a file is written now works inside OpenCode. It used to start under OpenCode's own program instead of Node and to look for the new text in the wrong place, so it never saw a write. It now stops an added line such as an unrequested source label before the file is saved, adds a short note after the write when the wording only needs a second look, and checks the text of the Word, PowerPoint and PDF files a session creates.
