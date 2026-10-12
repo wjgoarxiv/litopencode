@@ -366,13 +366,26 @@ What it draws:
   Inside: a two-row `LIT` with the discipline and a status beside it, the goal title in bold, the
   phase line, a gradient bar drawn in eighth-cell blocks over a thin rule, the next todo or open
   criterion, the criteria, warnings, and the last four evidence events.
-- A band: one full-width ribbon row at the bottom of the screen (OpenCode's `app_bottom` slot), under
-  the session and the sidebar alike. It shows the pills, an eighth-block bar, the next task and the
-  time since the first lit turn (`⟳ 7m`). While a warning is open, `⚑ <text>` takes the place of
-  `▸ next`. The row appears at the session's first lit turn and stays for the whole lit session, so
-  the prompt moves only once. A subagent session shows its parent's mission with `· in lane`; the
-  home screen has no band. When the row is narrow it drops, in order, the step labels, the next-task
-  text, bar width and then the time; it never wraps. The completion moment plays here too.
+- A band: a status card along the bottom of the screen (OpenCode's `app_bottom` slot), under the
+  session and the sidebar alike. It is on screen for the whole session, lit or not, and keeps the
+  same four rows idle or working, so the prompt never moves:
+  - the top border carries `🔥 LIT · <discipline>` on the left and the phase on the right
+    (`● WORK`, `⚑ review blocked`, `✓ COMPLETE`, or `○ IDLE` before any lit turn);
+  - row one is the phase track `PLAN ━ WORK ━ REVIEW` in the chip's pills, an eighth-block bar,
+    `n/m criteria` for the goal and the next task. While a warning is open, `⚑ <text>` takes the
+    place of `▸ next`. An idle session shows the dim track with the project's last goal, or
+    `add lit to a prompt to start`;
+  - row two holds the skill chips: every LitOpenCode skill that fired in the session, several at
+    once. Skills fired by the current request are bright accent pills while it runs, and a new one
+    gets a short light sweep as it arrives; when the turn ends they dim and stay as the recent list,
+    newest first, and firing one again brightens it. Chips that do not fit collapse into `+N`;
+  - the bottom border holds the context use (amber from 75%), the time since the first lit turn
+    (`⟳ 7m`) and the git branch.
+
+  A subagent session shows its parent's card with `· in lane`; the home screen has no band. When the
+  card is narrow each row drops its own low-priority parts: the track drops the next-task text, bar
+  width, the bar, the criteria count and then the step labels; the bottom border drops the branch,
+  then the time, then the context use. It never wraps. The completion moment plays here too.
 - A line under the home prompt, after OpenCode's tips: `🔥 lit ready · last: <goal> ✓ n/m`. It
   appears only when the project ledger holds a goal.
 - Warnings always carry `⚑` and words, not colour alone, because some themes use one colour for
@@ -387,6 +400,11 @@ What it draws:
 
 Where the data comes from, with nothing new written for the TUI:
 
+- The skill chips come from three places OpenCode already stores: the built-in `skill` tool's calls
+  whose name is a skill LitOpenCode ships (other skills are left out, and a failed load or a status
+  read is not a firing), this plugin's own `lit`, `litwork`, `start-work`, `review-work` and `wikify`
+  tool calls, and the `metadata.litopencode` marks below for bare `lit` routing and slash commands.
+  "Current" means fired since the latest user message while the session is busy.
 - The `metadata.litopencode` marks this plugin already attaches to user-message parts when `lit`
   activates a mode or a command runs (`save-plan` included). A session with no mark is idle and the
   chip and panel stay hidden, even on the default `lit-loop` agent.
@@ -407,8 +425,8 @@ manager or with `plugin_enabled`.
 Band options go in the same options object:
 
 - `{ "band": false }` removes the band and leaves the chip, the panel and the home line.
-- `{ "band": { "card": true } }` adds a rounded card under the ribbon with the warnings, the next
-  task and the goal. While a goal exists the card keeps a fixed four rows, so a warning arriving or
+- `{ "band": { "card": true } }` adds a rounded detail card under the status card with the warnings,
+  the next task and the goal. While a goal exists the card keeps a fixed four rows, so a warning arriving or
   clearing never moves the prompt. The card is off by default.
 
 A ledger written from another terminal (for example `litopencode record-evidence`) raises no

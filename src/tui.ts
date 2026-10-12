@@ -1,5 +1,5 @@
 // LitOpenCode's TUI plugin: a phase chip beside the prompt, a mission panel in the session sidebar,
-// toasts for gate events and a short completion moment. OpenCode loads it from the package's `./tui`
+// a status card with skill chips along the bottom, toasts for gate events and a short completion moment. OpenCode loads it from the package's `./tui`
 // export through the `plugin` list in tui.json. It only reads state; the server plugin owns writes.
 import type { TuiPlugin, TuiPluginApi, TuiPluginModule } from "@opencode-ai/plugin/tui";
 import { createEffect, createMemo, createSignal } from "solid-js";
@@ -8,8 +8,9 @@ import { jsx } from "@opentui/solid/jsx-runtime";
 import { buildMissionView, lastMission, leadingNotice, missionNotices, type MissionView } from "./tui/mission-model.ts";
 import { idleMotion, motionTiming, planMotion, sampleMotion, type MotionState } from "./tui/mission-motion.ts";
 import { chipBudget, chipLine, homeLine, missionPanel, paletteFromTheme, panelWidth, type Line, type MissionPalette } from "./tui/mission-text.ts";
-import { createLedgerReader, missionProjectRoot, readMissionInput, type MissionStateSource } from "./tui/mission-source.ts";
-import { bandCard, bandRibbon, readBandOptions } from "./tui/mission-band.ts";
+import { createLedgerReader, missionProjectRoot, readCardInput, readMissionInput, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
+import { chipShimmer, idleChipMotion, planChipMotion, type ChipMotion } from "./tui/mission-skills.ts";
+import { bandCard, readBandOptions, statusCard } from "./tui/mission-band.ts";
 
 export const litOpenCodeTuiPluginId = "litopencode";
 
@@ -32,7 +33,7 @@ const refreshEvents = [
   "question.rejected"
 ] as const;
 
-type SessionEntry = { view: MissionView; motion: MotionState };
+type SessionEntry = { view: MissionView; card: CardInput; motion: MotionState; chipMotion: ChipMotion };
 
 function spanFor(segment: Line[number]): unknown {
   return jsx("span", {
@@ -74,7 +75,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   }
 
   function anyMoving(now: number): boolean {
-    for (const entry of sessions.values()) if (sampleMotion(entry.motion, now).moving) return true;
+    for (const entry of sessions.values()) if (sampleMotion(entry.motion, now).moving || chipShimmer(entry.chipMotion, now) !== undefined) return true;
     return false;
   }
 
@@ -96,13 +97,20 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     const source = state();
     const ledger = readLedger(missionProjectRoot(source.path));
     const next = buildMissionView(readMissionInput(source, sessionID, ledger, now));
+    const card = readCardInput(source, sessionID);
     const entry = sessions.get(sessionID);
-    if (entry !== undefined && JSON.stringify(entry.view) === JSON.stringify(next)) return;
-    if (entry !== undefined) {
+    const viewChanged = entry === undefined || JSON.stringify(entry.view) !== JSON.stringify(next);
+    if (!viewChanged && JSON.stringify(entry.card) === JSON.stringify(card)) return;
+    if (entry !== undefined && viewChanged) {
       const notice = leadingNotice(missionNotices(entry.view, next));
       if (notice !== undefined) api.ui.toast({ variant: notice.variant, title: notice.title, message: notice.message, duration: toastMs });
     }
-    sessions.set(sessionID, { view: next, motion: planMotion(entry?.view, next, now, entry?.motion ?? idleMotion, motionEnabled) });
+    sessions.set(sessionID, {
+      view: next,
+      card,
+      motion: viewChanged ? planMotion(entry?.view, next, now, entry?.motion ?? idleMotion, motionEnabled) : entry.motion,
+      chipMotion: planChipMotion(entry?.card.chips, card.chips, now, entry?.chipMotion ?? idleChipMotion, motionEnabled)
+    });
     setClock(now);
     setRevision(revision() + 1);
     ensureFrames();
@@ -140,13 +148,12 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   }
 
   // Opening a session loads its messages and parts over HTTP, which fires no bus event. Reading the
-  // reactive store here re-runs this effect as they arrive, so a resumed session lights up too.
+  // reactive store here re-runs this effect as they arrive, so a resumed session lights up too and its
+  // skill calls come back as chips.
   function watchSession(sessionID: string): void {
     createEffect(() => {
       const source = state();
-      for (const message of source.session.messages(sessionID)) {
-        if (message.role === "user") void source.part(message.id).length;
-      }
+      for (const message of source.session.messages(sessionID)) void source.part(message.id).length;
       void source.session.todo(sessionID).length;
       void source.session.status(sessionID)?.type;
       scheduleRefresh();
@@ -159,6 +166,16 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
       const entry = sessions.get(sessionID);
       if (entry === undefined || !entry.view.active) return undefined;
       return { view: entry.view, frame: sampleMotion(entry.motion, clock()) };
+    };
+  }
+
+  // The band shows every session, lit or not, so it reads the entry whether or not the mission is active.
+  function cardView(sessionID: string): () => (SessionEntry & { readonly frame: ReturnType<typeof sampleMotion>; readonly now: number }) | undefined {
+    return () => {
+      revision();
+      const entry = sessions.get(sessionID);
+      const now = clock();
+      return entry === undefined ? undefined : { ...entry, frame: sampleMotion(entry.motion, now), now };
     };
   }
 
@@ -230,8 +247,9 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     }
   });
 
-  // The band: one full-width ribbon row under every route in app_bottom. It follows the session on
-  // screen; a child (subagent) session shows its parent's mission as a lane. Home shows no band.
+  // The band: a four-row status card under every session route in app_bottom, idle or working. It
+  // follows the session on screen; a child (subagent) session shows its parent's mission as a lane.
+  // Home shows no band.
   if (band.enabled) {
     api.slots.register({
       order: 50,
@@ -253,7 +271,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
           });
           const current = createMemo(() => {
             const place = target();
-            const snapshot = place === undefined ? undefined : sessionView(place.sessionID)();
+            const snapshot = place === undefined ? undefined : cardView(place.sessionID)();
             return snapshot === undefined || place === undefined ? undefined : { ...snapshot, inLane: place.inLane };
           });
           const visible = createMemo(() => current() !== undefined);
@@ -262,16 +280,26 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
             return jsx("box", {
               flexDirection: "column",
               flexShrink: 0,
+              paddingLeft: 1,
+              paddingRight: 1,
               get backgroundColor() { return palette().panel ?? "transparent"; },
               children: () => {
                 const snapshot = current();
                 if (snapshot === undefined) return null;
                 const colors = palette();
-                const width = dimensions().width;
-                const rows: unknown[] = [
-                  jsx("box", { paddingLeft: 2, paddingRight: 2, flexShrink: 0, children: lineElement(bandRibbon(snapshot.view, snapshot.frame, colors, width - 4, { inLane: snapshot.inLane })) })
-                ];
-                const card = band.card ? bandCard(snapshot.view, snapshot.frame, colors, width - 2) : undefined;
+                const width = dimensions().width - 2;
+                const last = snapshot.view.active ? undefined : lastMission(readLedger(missionProjectRoot(state().path)));
+                const shimmer = chipShimmer(snapshot.chipMotion, snapshot.now);
+                const lines = statusCard({
+                  view: snapshot.view,
+                  frame: snapshot.frame,
+                  chips: snapshot.card.chips,
+                  ...(shimmer === undefined ? {} : { shimmer }),
+                  figures: { contextPercent: snapshot.card.contextPercent, ...(snapshot.card.branch === undefined ? {} : { branch: snapshot.card.branch }), inLane: snapshot.inLane },
+                  ...(last === undefined ? {} : { last })
+                }, colors, width);
+                const rows: unknown[] = lines.map(lineElement);
+                const card = band.card ? bandCard(snapshot.view, snapshot.frame, colors, width) : undefined;
                 if (card !== undefined) {
                   rows.push(jsx("box", {
                     border: true,
@@ -279,8 +307,6 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
                     borderColor: card.border,
                     title: card.title,
                     titleColor: colors.text,
-                    marginLeft: 1,
-                    marginRight: 1,
                     paddingLeft: 1,
                     paddingRight: 1,
                     flexShrink: 0,

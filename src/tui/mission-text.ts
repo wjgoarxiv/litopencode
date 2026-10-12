@@ -168,7 +168,7 @@ export function gradientAt(stops: readonly string[], position: number): string {
 }
 
 /** A light pass along a row: `sweep` is its centre in 0..1 of the row, or negative when off. */
-function shine(color: string, palette: MissionPalette, position: number, sweep: number, reach: number): string {
+export function shine(color: string, palette: MissionPalette, position: number, sweep: number, reach: number): string {
   if (sweep < 0) return color;
   const distance = Math.abs(position - sweep);
   return distance < reach ? mixHex(color, palette.text, (1 - distance / reach) * 0.75) : color;
@@ -260,7 +260,7 @@ function stepLabel(step: MissionStep, state: StepState, view: MissionView): stri
   return [name, state === "now" ? count : ""].filter((part) => part !== "").join(" ");
 }
 
-function stepPill(step: MissionStep, view: MissionView, frame: MotionFrame, palette: MissionPalette): Segment {
+export function stepPill(step: MissionStep, view: MissionView, frame: MotionFrame, palette: MissionPalette): Segment {
   const { state, doneMix } = shownState(step, view, frame);
   const before = pillStyle(step.id === "work" ? "now" : "todo", palette, frame.warn);
   const style = state === "done" && doneMix < 1 ? blendStyle(before, pillStyle("done", palette, frame.warn), doneMix, palette) : pillStyle(state, palette, frame.warn);

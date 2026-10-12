@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { buildMissionView } from "../src/tui/mission-model.ts";
-import { idleMotion, motionTiming, planMotion, restingFrameFor, sampleMotion } from "../src/tui/mission-motion.ts";
+import { restingFrameFor } from "../src/tui/mission-motion.ts";
 import { lineWidth, paletteFromTheme } from "../src/tui/mission-text.ts";
-import { bandCard, bandRibbon, readBandOptions } from "../src/tui/mission-band.ts";
+import { bandCard, readBandOptions } from "../src/tui/mission-band.ts";
 
-// The band is LitOpenCode's one-row ribbon in OpenCode's full-width app_bottom slot: the mission on
-// the main screen, warnings inline, an opt-in card, and the shared completion moment.
+// The band's switches and its opt-in detail card. The status card itself is covered in
+// tui-card.test.mjs.
 const now = Date.parse("2026-10-11T12:00:00.000Z");
 const palette = paletteFromTheme(undefined);
 const text = (line) => line.map((segment) => segment.text).join("");
@@ -26,61 +26,6 @@ test("band options: on by default with the card off; band:false turns it off; ba
   assert.deepEqual(readBandOptions({ band: true }), { enabled: true, card: false });
   assert.deepEqual(readBandOptions({ band: { card: true } }), { enabled: true, card: true });
   assert.deepEqual(readBandOptions({ band: { card: "yes" } }), { enabled: true, card: false });
-});
-
-test("the ribbon fills one row exactly: pills, bar, next task and elapsed time; idle sessions draw nothing", () => {
-  assert.equal(working.elapsedMinutes, 7);
-  const line = bandRibbon(working, restingFrameFor(working), palette, 166, { inLane: false });
-  assert.equal(lineWidth(line), 166);
-  assert.match(text(line), /^ 🔥 LIT   PLAN –  ›  WORK 1\/3  ›  REVIEW  +█+─+  ▸ C2 C2 README links hello\.txt +⟳ 7m$/u);
-  const idle = buildMissionView({ marks: [], todos: [], now });
-  assert.deepEqual(bandRibbon(idle, restingFrameFor(idle), palette, 166, { inLane: false }), []);
-});
-
-test("a warning takes the place of the next task inside the ribbon, with ⚑ and words", () => {
-  const line = text(bandRibbon(blocked, restingFrameFor(blocked), palette, 166, { inLane: false }));
-  assert.match(line, /⚑ B1 README 링크가 깨졌어요/u);
-  assert.doesNotMatch(line, /▸/u);
-});
-
-test("narrow widths shed labels, then the next text, then bar width, then the time, and never wrap", () => {
-  const frame = restingFrameFor(working);
-  const at = (width) => text(bandRibbon(working, frame, palette, width, { inLane: false }));
-  const lastWidthWith = (pattern) => {
-    for (let width = 12; width <= 166; width += 1) if (pattern.test(at(width))) return width;
-    return Number.POSITIVE_INFINITY;
-  };
-  for (let width = 12; width <= 166; width += 1) {
-    assert.ok(lineWidth(bandRibbon(working, frame, palette, width, { inLane: false })) <= width, `width ${width}: ${at(width)}`);
-  }
-  const labels = lastWidthWith(/PLAN/u);
-  const next = lastWidthWith(/▸/u);
-  const wideBar = lastWidthWith(/[█─]{18}/u);
-  const anyBar = lastWidthWith(/[█─]/u);
-  const time = lastWidthWith(/⟳/u);
-  assert.ok(labels > next && next > wideBar && wideBar > anyBar && anyBar > time, JSON.stringify({ labels, next, wideBar, anyBar, time }));
-  assert.match(at(100), /▸ C2/u);
-  assert.match(at(40), /⟳ 7m$/u);
-});
-
-test("a child session shows the parent mission marked as a lane", () => {
-  assert.match(text(bandRibbon(working, restingFrameFor(working), palette, 166, { inLane: true })), /⟳ 7m · in lane$/u);
-});
-
-test("the completion moment plays in the band on the shared clock: sparks and COMPLETE within 1.2 s, then still", () => {
-  const before = buildMissionView({ marks, todos: [], ledger: ledger({ criteria: [criterion("C1", "pass"), criterion("C2", "pass")] }), now });
-  const done = buildMissionView({ marks, todos: [], ledger: ledger({ status: "complete", criteria: [criterion("C1", "pass"), criterion("C2", "pass")] }), now });
-  const motion = planMotion(before, done, 0, planMotion(undefined, before, -10_000, idleMotion));
-  assert.doesNotMatch(text(bandRibbon(done, sampleMotion(motion, 100), palette, 166, { inLane: false })), /active/u);
-  const mid = text(bandRibbon(done, sampleMotion(motion, 500), palette, 166, { inLane: false }));
-  assert.match(mid, /✓ COMPLETE/u);
-  assert.match(mid, /✓ COMPLETE +[ ·✦✧˚]*[✦✧˚·]/u, "sparks show after COMPLETE while it celebrates");
-  assert.match(mid, /^ 🔥 LIT /u, "the pills do not move while the sparks play");
-  const rest = sampleMotion(motion, motionTiming.complete);
-  assert.equal(rest.moving, false);
-  const settled = text(bandRibbon(done, rest, palette, 166, { inLane: false }));
-  assert.match(settled, /✓ COMPLETE/u);
-  assert.doesNotMatch(settled, /[✦✧˚]/u);
 });
 
 test("the opt-in card keeps a fixed four rows while a goal exists, warnings first, so the prompt never jumps", () => {

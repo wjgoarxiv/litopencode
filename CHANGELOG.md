@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- The band along the bottom of OpenCode's main screen is now a status card that stays on screen for the whole session. Its border carries the LIT mark, the discipline and the phase; one row shows the PLAN ━ WORK ━ REVIEW track with the goal and the next task, the other shows chips for the LitOpenCode skills that fired. Skills from the current request are bright and get a short light sweep as they arrive, then dim to a recent list when the turn ends; extra chips fold into `+N`. The bottom border shows context use, elapsed time and the git branch. Before any lit turn the card shows the project's last goal. `band: false` still hides it and `band: { card: true }` still adds the detail card.
+
 ## 1.0.19 - 2026-10-11
 
 - The README is shorter for first-time readers. It says what LitOpenCode does, how to install it and what to type first, and the detail now lives in docs pages (guide, skills, screens and brand) in English and Korean. The GitHub page also plays a short film of a real session.

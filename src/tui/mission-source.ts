@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { readLitMark, type LitMark, type MissionInput, type TodoInput } from "./mission-model.ts";
+import { readSkillUse, skillChips, type SkillChip, type SkillUse } from "./mission-skills.ts";
 
 const ledgerByteLimit = 1024 * 1024;
 
@@ -18,6 +19,7 @@ type MessageLike = {
 
 export type MissionStateSource = {
   readonly path: { readonly worktree?: string; readonly directory?: string };
+  readonly vcs?: { readonly branch?: string };
   readonly provider: ReadonlyArray<{ readonly id: string; readonly models: Readonly<Record<string, { readonly limit?: { readonly context?: number } }>> }>;
   readonly session: {
     messages(sessionID: string): ReadonlyArray<MessageLike>;
@@ -26,7 +28,7 @@ export type MissionStateSource = {
     permission(sessionID: string): ReadonlyArray<unknown>;
     question(sessionID: string): ReadonlyArray<unknown>;
   };
-  part(messageID: string): ReadonlyArray<{ readonly metadata?: unknown }>;
+  part(messageID: string): ReadonlyArray<{ readonly type?: string; readonly metadata?: unknown }>;
 };
 
 /** The same root the server plugin uses: the worktree unless it is the filesystem root, else the directory. */
@@ -105,5 +107,29 @@ export function readMissionInput(state: MissionStateSource, sessionID: string, l
     pendingQuestions: state.session.question(sessionID).length,
     contextPercent: contextPercent(state, messages),
     now
+  };
+}
+
+export type CardInput = { readonly chips: readonly SkillChip[]; readonly contextPercent: number | null; readonly branch?: string };
+
+/** What the band card shows beside the mission: the session's skill chips, context use and git branch. */
+export function readCardInput(state: MissionStateSource, sessionID: string): CardInput {
+  const messages = state.session.messages(sessionID);
+  const uses: SkillUse[] = [];
+  let since: number | undefined;
+  for (const message of messages) {
+    const at = num(message.time?.created);
+    if (message.role === "user") since = at;
+    for (const part of state.part(message.id)) {
+      const use = readSkillUse(part, at);
+      if (use !== undefined) uses.push(use);
+    }
+  }
+  const status = state.session.status(sessionID)?.type;
+  const branch = state.vcs?.branch?.trim();
+  return {
+    chips: skillChips(uses, { since, busy: status === "busy" || status === "retry" }),
+    contextPercent: contextPercent(state, messages),
+    ...(branch === undefined || branch === "" ? {} : { branch })
   };
 }
