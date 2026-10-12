@@ -202,3 +202,51 @@ test("a child session marks the card as a lane, and the completion moment plays 
   const settled = statusCard({ view: done, frame: sampleMotion(motion, motionTiming.complete), chips, figures }, palette, 160).map(text);
   assert.doesNotMatch(settled[1], /[✦✧˚]/u);
 });
+
+test("the card settles to idle when the root session's turn ends, ignores a finished child, and lights WORK again on the next prompt", () => {
+  // OpenCode 1.18 keeps `session_status[sessionID]` from each `session.status` event: { type: "busy" }
+  // while a turn runs, { type: "idle" } once it ends, and nothing for a session it has not seen run.
+  const statuses = { root: { type: "busy" }, child: { type: "idle" } };
+  const state = {
+    path: { worktree: "/repo", directory: "/repo" },
+    vcs: { branch: "main" },
+    provider: [],
+    session: {
+      messages: () => [{ id: "u1", role: "user", time: { created: 10 } }, { id: "a1", role: "assistant", time: { created: 11 } }],
+      todo: () => [],
+      status: (id) => statuses[id],
+      permission: () => [],
+      question: () => []
+    },
+    part: (id) => id === "u1"
+      ? [{ type: "text", metadata: { litopencode: { mode: "lit-task" } } }]
+      : [{ type: "tool", tool: "skill", state: { status: "completed", input: { name: "debugging" }, time: { start: 12 } } }]
+  };
+  const draw = () => {
+    const input = readCardInput(state, "root");
+    return { input, rows: statusCard({ view: working, frame: restingFrameFor(working), chips: input.chips, busy: input.busy, figures }, palette, 120) };
+  };
+  const workPill = (rows) => rows[1].find((segment) => segment.text.includes("WORK"));
+
+  let { input, rows } = draw();
+  assert.equal(input.busy, true, "a finished child leaves the root card working");
+  assert.match(text(rows[0]), /● WORK ─╮$/u);
+  assert.equal(workPill(rows).bg, palette.info, "the running step is lit");
+
+  statuses.root = { type: "idle" };
+  ({ input, rows } = draw());
+  assert.equal(input.busy, false);
+  assert.match(text(rows[0]), /^╭─ 🔥 LIT · lit-task ─+ ○ IDLE ─╮$/u, "the title settles to idle");
+  assert.notEqual(workPill(rows).bg, palette.info, "no step stays lit after the turn");
+  assert.ok(input.chips.every((chip) => !chip.current), "chips dim to recent");
+  assert.equal(rows[0][0].fg, palette.borderActive, "the border returns to its resting colour");
+
+  delete statuses.root;
+  assert.equal(draw().input.busy, false, "a session with no status yet is not running");
+
+  statuses.root = { type: "busy" };
+  ({ rows } = draw());
+  assert.match(text(rows[0]), /● WORK ─╮$/u, "the next prompt brings WORK back");
+  statuses.root = { type: "retry", attempt: 1, message: "rate limited", next: 20 };
+  assert.equal(draw().input.busy, true, "a retry is still a running turn");
+});

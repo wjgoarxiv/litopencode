@@ -108,7 +108,8 @@ test("an unknown model id or forbidden pair is refused before any write", async 
         [["--provider", "xai", "--model", "grok-99"], /grok-99/u],
         [["--provider", "openai", "--model", "gpt-5.5"], /gpt-5\.5/u],
         [["--provider", "anthropic", "--model", "claude"], /anthropic/u],
-        [["--provider", "openai", "--model", "gpt-5.6-luna", "--effort", "xhigh"], /Luna.*high.*max/iu],
+        [["--provider", "openai", "--model", "gpt-6-astra", "--effort", "none"], /gpt-6-astra.*none/iu],
+        [["--provider", "openai", "--model", "gpt-6-astra", "--effort", "ultra"], /--effort must be one of none, low, medium, high, xhigh, max/u],
         [["--provider", "openai", "--model", "gpt-6-astra-fast"], /gpt-6-astra-fast|not offered/iu],
         [["--provider", "xai", "--model", "grok-4.6", "--effort", "max"], /grok-4\.6.*max/iu],
         [["--provider", "openai", "--model", "gpt-5.6-sol", "--subagent-model", "xai/grok-99"], /grok-99/u]
@@ -252,9 +253,10 @@ test("--yes keeps today's split shipped route and never prompts", async () => {
 test("route policy normalises a -fast id before every guard", async () => {
   const { diagnoseModelRoutes } = await import("../dist/model-route-policy.js");
   const codes = (route) => diagnoseModelRoutes({ agent: route }).map((diagnostic) => diagnostic.code);
-  assert.deepEqual(codes({ provider: "openai", model: "gpt-5.6-luna-fast", variant: "xhigh" }), ["luna_xhigh_forbidden"]);
-  assert.deepEqual(codes({ model: "openai/gpt-5.6-luna-fast", variant: "medium" }), ["luna_effort_below_high"]);
-  assert.deepEqual(codes({ model: "openai/gpt-5.6-terra-fast", variant: "low" }), ["terra_effort_below_high"]);
+  assert.deepEqual(codes({ provider: "openai", model: "gpt-5.6-luna-fast", variant: "ultra" }), ["model_effort_unsupported"]);
+  assert.deepEqual(codes({ model: "openai/gpt-5.6-luna-fast", variant: "minimal" }), ["model_effort_unsupported"]);
+  assert.deepEqual(codes({ model: "openai/gpt-5.6-terra-fast", variant: "ultra" }), ["model_effort_unsupported"]);
+  assert.deepEqual(codes({ provider: "openai", model: "gpt-5.6-luna-fast", variant: "xhigh" }), []);
   assert.deepEqual(codes({ provider: "openai", model: "gpt-5.6-luna-fast", variant: "max" }), []);
   assert.deepEqual(codes({ provider: "openai", model: "gpt-6-astra-fast", variant: "xhigh" }), []);
 });
@@ -264,13 +266,13 @@ test("installer refuses a -fast id whose effort breaks the policy before any wri
     await withHostEnv(dir, async (env) => {
       const filePath = path.join(dir, "litopencode.json");
       const unsafe = {
-        categories: Object.fromEntries(categories.map((id) => [id, { provider: "openai", model: "gpt-5.6-luna-fast", variant: "xhigh" }]))
+        categories: Object.fromEntries(categories.map((id) => [id, { provider: "openai", model: "gpt-5.6-luna-fast", variant: "minimal" }]))
       };
       const before = JSON.stringify(unsafe, null, 2) + "\n";
       await fs.writeFile(filePath, before);
       const result = runCli(["install", "--root", dir], { env });
       assert.equal(result.status, 1);
-      assert.match(result.stderr, /Luna plus xhigh is forbidden/u);
+      assert.match(result.stderr, /gpt-5\.6-luna-fast accepts none, low, medium, high, xhigh, max \(openai\/gpt-5\.6-luna-fast, minimal\)/u);
       assert.equal(await fs.readFile(filePath, "utf8"), before);
     });
   });

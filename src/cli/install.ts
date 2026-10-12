@@ -21,6 +21,7 @@ import { openCodeHostCapabilities } from "./host-capabilities.ts";
 import { applyHostLimits, describeHostLimitMutation, ensureHostLimits } from "./host-limits.ts";
 import {
   assertExistingModelRoutesSafe,
+  migrateRetiredEfforts,
   describeInstallRoutes,
   describeLitConfigMutation,
   ensureLitConfig,
@@ -277,6 +278,8 @@ export async function install(
   progress?: InstallProgress,
   outputStylePrompt: PermissionPromptMode = "auto"
 ): Promise<CliResult> {
+  const retiredNotice = await migrateRetiredEfforts(root, dryRun);
+  if (retiredNotice !== undefined) process.stdout.write(retiredNotice + "\n");
   await assertExistingModelRoutesSafe(root);
   const classification = await readInstallModelClassification(root);
   const currentModel = await readInstallModelSelection(root);

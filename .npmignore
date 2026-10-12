@@ -29,8 +29,9 @@ docs/brand.md
 docs/brand-Ko-KR.md
 # README media and linked licenses are pinned to this package version.
 # The Jev snapshots, the on-screen pictures (jev-*.webp, install-output-*, doctor-output-*, ignition-toast-*,
-# planner-permissions-*) and the promo film (promo-*, promo-source/) are shown only by the GitHub pages,
-# so the docs/assets/readme/* rule below keeps them out of the package.
+# planner-permissions-*), the status card and automatic handoff pictures (status-card-*, auto-handoff-*) and the
+# promo film (promo-*, promo-source/) are shown only by the GitHub pages, so the docs/assets/readme/* rule below
+# keeps them out of the package.
 docs/assets/readme/*
 !docs/assets/readme/ascii-readme.svg
 !docs/assets/readme/badge-version.svg

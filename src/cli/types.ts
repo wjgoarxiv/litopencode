@@ -65,7 +65,7 @@ export type InstallModelSelection = InstallModelRoute & {
   readonly helper?: InstallModelRoute;
 };
 
-export type InstallModelEffort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
+export type InstallModelEffort = "none" | "low" | "medium" | "high" | "xhigh" | "max";
 export type ModelConfigClass =
   | "fresh"
   | "managed_legacy"

@@ -4,6 +4,14 @@ import { test } from "node:test";
 import { showActivationToast } from "../src/activation.ts";
 import { litOpenCodeAgents, toOpenCodeAgentConfig } from "../src/agents/registry.ts";
 import { renderInstallTuiCompletion } from "../src/cli/install-tui.ts";
+import { buildMissionView } from "../src/tui/mission-model.ts";
+import { restingFrameFor } from "../src/tui/mission-motion.ts";
+import { paletteFromTheme } from "../src/tui/mission-text.ts";
+import { statusCard } from "../src/tui/mission-band.ts";
+import { autoHandoffDirective, autoHandoffMarker, createAutoHandoffSettings } from "../src/auto-handoff.ts";
+import { compactReminder } from "../src/auto-handoff-hooks.ts";
+import os from "node:os";
+import path from "node:path";
 
 const assetRoot = "docs/assets/readme";
 // The four on-screen pictures moved off the landing README into the GitHub screens pages, which load
@@ -102,11 +110,97 @@ test("on-screen captions say whether a picture is a capture or a sample", async 
   }
   for (const file of githubReadmes) {
     const content = await fs.readFile(file, "utf8");
-    assert.match(content, file === "README.md" ? /^\*A real OpenCode [\d.]+ session with LitOpenCode installed, recorded in a terminal and replayed on a drawn terminal window with camera moves\./mu : /^\*LitOpenCode를 설치한 실제 OpenCode [\d.]+ 세션을 터미널에서 녹화한 뒤, 그린 터미널 창 위에서 카메라를 움직이며 다시 재생했습니다\./mu, `${file}: the demo caption says it is a recording replayed as a film`);
+    assert.doesNotMatch(content, /camera|카메라|replayed|다시 재생/u, `${file}: the demo film carries no notes on how it was made`);
+    assert.ok(content.includes(file === "README.md" ? "[Screens](./docs/screens.md)" : "[화면 미리 보기](./docs/screens-Ko-KR.md)"), `${file}: the quick start still points to the screens page`);
     assert.doesNotMatch(content, /(?:doctor-output|ignition-toast|planner-permissions)-(?:dark|light)/u, `${file}: the other on-screen pictures live on the screens page`);
   }
   for (const file of npmReadmes) {
     const content = await fs.readFile(file, "utf8");
     assert.doesNotMatch(content, /(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)/u, `${file} does not embed the on-screen pictures`);
+  }
+});
+
+test("the README status card pictures show what the shipped card draws, and stay out of the package", async () => {
+  const now = Date.parse("2026-10-12T07:05:00.000Z");
+  const working = buildMissionView({ marks: [{ at: now - 20_000, mode: "lit-humanizer" }], todos: [], ledger: undefined, now, agent: "lit-loop" });
+  const idle = buildMissionView({ marks: [], todos: [], ledger: undefined, now });
+  const draw = (view, chips, contextPercent, busy) => statusCard({ view, frame: restingFrameFor(view), chips, ...(busy === undefined ? {} : { busy }), figures: { contextPercent, branch: "main", inLane: false } }, paletteFromTheme(undefined), 80)
+    .map((row) => row.map((segment) => segment.text).join("").replace(/[─│╭╮╰╯]/gu, " ").replace(/ +/gu, " "));
+  const cards = {
+    idle: { rows: draw(idle, [], 4), strings: ["🔥 LIT · ready", "○ IDLE", "add lit to a prompt to start", "skills none yet", "ctx 4% · ⎇ main"] },
+    working: { rows: draw(working, [{ name: "lit-humanizer", current: true }, { name: "lit-diagram-drawer", current: true }, { name: "debugging", current: false }], 6, true), strings: ["🔥 LIT · lit-humanizer", "● WORK", "lit-humanizer", "lit-diagram-drawer", "debugging", "ctx 6% · ⟳ 0m · ⎇ main"] },
+    recent: { rows: draw(working, [{ name: "lit-diagram-drawer", current: false }, { name: "lit-humanizer", current: false }, { name: "debugging", current: false }], 7, false), strings: ["🔥 LIT · lit-humanizer", "○ IDLE", "lit-diagram-drawer, lit-humanizer, debugging", "ctx 7% · ⟳ 0m · ⎇ main"] }
+  };
+  const ignore = await fs.readFile(".npmignore", "utf8");
+  for (const [state, { rows, strings }] of Object.entries(cards)) {
+    const file = `status-card-${state}.webp`;
+    const bytes = await fs.readFile(`${assetRoot}/${file}`);
+    assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", file);
+    assert.ok(bytes.length <= MAX_SCREEN_BYTES, `${file} is ${bytes.length} bytes`);
+    assert.ok(!ignore.includes(`!${assetRoot}/${file}`), `${file} is shown only by the GitHub README, so .npmignore keeps it out`);
+    for (const readme of githubReadmes) {
+      const content = await fs.readFile(readme, "utf8");
+      const tag = content.match(new RegExp(`<img src="\\./docs/assets/readme/${file.replace(".", "\\.")}" width="760" alt="([^"]+)" />`, "u"));
+      assert.ok(tag, `${readme} shows the ${state} card with alt text`);
+      for (const text of strings) {
+        if (readme === "README.md") assert.ok(tag[1].includes(text), `${readme}: ${state} alt names "${text}"`);
+        assert.ok(rows.join(" ").includes(text.split(", ")[0]), `${state}: "${text}" comes from the shipped card`);
+      }
+    }
+  }
+  for (const file of npmReadmes) assert.doesNotMatch(await fs.readFile(file, "utf8"), /status-card-/u, `${file} does not embed the card pictures`);
+});
+
+test("the README automatic handoff pictures quote what LitOpenCode says and stay out of the package", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-readme-handoff-"));
+  try {
+    const settings = createAutoHandoffSettings({ stateFile: path.join(dir, "auto-handoff.json"), config: { enabled: false, percent: null }, env: {} });
+    const on = await settings.route("lit-handoff auto on 70", "chat");
+    const status = await settings.route("lit-handoff auto status", "chat");
+    const off = await settings.route("lit-handoff auto off", "chat");
+    assert.ok(status.startsWith(on) && status.includes("The switch comes from the saved setting and the percent from the saved setting."));
+    const directive = autoHandoffDirective(70, autoHandoffMarker("ses_2b9f1c7a4e", Date.parse("2026-10-12T17:05:00.000Z")));
+    const hooks = await fs.readFile("src/auto-handoff-hooks.ts", "utf8");
+    const doctor = await fs.readFile("src/cli/doctor.ts", "utf8");
+    assert.ok(hooks.includes('title: "LitOpenCode auto-handoff"') && hooks.includes('"Handoff saved. Compacting the conversation now."'), "the toast text comes from the hooks");
+    assert.equal(compactReminder, "Handoff saved. Run /compact now.");
+    const pictures = {
+      "auto-handoff-settings": { width: 760, strings: ["lit-handoff auto on 70", on, "lit-handoff auto status", "The switch comes from the saved setting and the percent from the saved setting", "lit-handoff auto off", off] },
+      "auto-handoff-compact": { width: 760, strings: [directive.split("\n\n")[0], directive.split("\n\n")[2], "LitOpenCode auto-handoff", "Handoff saved. Compacting the conversation now."] },
+      "auto-handoff-doctor": { width: 694, strings: ["LITOPENCODE_AUTO_HANDOFF=1 LITOPENCODE_AUTO_HANDOFF_PERCENT=70 litopencode doctor", "autoHandoff", "compactionPercent 90"] }
+    };
+    for (const key of ["autoHandoff:", "sources:", "compactionPercent:", "warnings:"]) assert.ok(doctor.includes(key), `doctor prints ${key}`);
+    const ignore = await fs.readFile(".npmignore", "utf8");
+    for (const [name, { width, strings }] of Object.entries(pictures)) {
+      for (const theme of ["dark", "light"]) {
+        const bytes = await fs.readFile(`${assetRoot}/${name}-${theme}.webp`);
+        assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", `${name}-${theme}`);
+        assert.ok(bytes.length <= MAX_SCREEN_BYTES, `${name}-${theme}.webp is ${bytes.length} bytes`);
+        assert.ok(!ignore.includes(`!${assetRoot}/${name}-${theme}.webp`), `${name}-${theme}.webp stays out of the package`);
+      }
+      for (const readme of githubReadmes) {
+        const content = await fs.readFile(readme, "utf8");
+        const tag = content.match(new RegExp(`<picture><source media="\\(prefers-color-scheme: dark\\)" srcset="\\./docs/assets/readme/${name}-dark\\.webp" /><img src="\\./docs/assets/readme/${name}-light\\.webp" width="${width}" alt="([^"]+)" /></picture>`, "u"));
+        assert.ok(tag, `${readme} shows ${name} as a dark/light picture`);
+        if (readme === "README.md") for (const text of strings) assert.ok(tag[1].includes(text), `${readme}: ${name} alt names "${text}"`);
+      }
+    }
+    for (const file of npmReadmes) assert.doesNotMatch(await fs.readFile(file, "utf8"), /auto-handoff-(?:settings|compact|doctor)/u, `${file} does not embed the handoff pictures`);
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("the quick start carries a copyable install prompt for a coding agent", async () => {
+  for (const file of githubReadmes) {
+    const content = await fs.readFile(file, "utf8");
+    const quickStart = content.slice(content.indexOf(file === "README.md" ? "## Quick start" : "## 빠르게 시작하기"), content.indexOf(file === "README.md" ? "## What you get" : "## 할 수 있는 일"));
+    const prompt = quickStart.match(/```text\n((?:(?!```)[\s\S])*?litopencode doctor[\s\S]*?)```/u)?.[1];
+    assert.ok(prompt, `${file}: the quick start has an agent install prompt`);
+    for (const text of ["@litfamily/litopencode", "npm exec --package @litfamily/litopencode@latest -- litopencode install --dry-run", "npm exec --package @litfamily/litopencode@latest -- litopencode install --yes", "npm exec --package @litfamily/litopencode@latest -- litopencode doctor", "install.ok", "lit-loop"]) {
+      assert.ok(prompt.includes(text), `${file}: the agent prompt includes "${text}"`);
+    }
+    assert.match(prompt, file === "README.md" ? /ask me whether to go ahead/u : /나한테 물어봐/u, `${file}: the agent asks before installing`);
+    assert.match(prompt, file === "README.md" ? /restart OpenCode/u : /OpenCode를 다시 시작/u, `${file}: the agent reminds the user to restart OpenCode`);
   }
 });

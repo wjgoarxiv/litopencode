@@ -91,11 +91,15 @@ may use a different provider. New installs default to GPT-6 Astra/xhigh for lead
 review roles; GPT-6.1 Sol/xhigh (`gpt-6.1-sol`) is the coding-lead alternative, and GPT-6 Luna/max is the helper
 default for execution, research, and ordinary workers. `gpt-6-sol` stays selectable as the previous
 generation, so existing configs that name it keep working; it accepts the same efforts and has no `-fast` alias.
-GPT-6 Astra and Sol accept `low`, `medium`, `high`, `xhigh`, `max`, and `ultra`. GPT-6 Luna accepts
-`low`, `medium`, `high`, `xhigh`, and `max`, but not `ultra`. The previous-generation
+Each model offers exactly the reasoning efforts OpenCode lists for it (the model's `variants` in
+`opencode models openai --verbose`, checked on OpenCode 1.18.35). GPT-6 Astra and GPT-6.1 Sol accept
+`low`, `medium`, `high`, `xhigh`, and `max`. GPT-6 Luna, GPT-6 Sol, and the GPT-5.6 rows accept `none`,
+`low`, `medium`, `high`, `xhigh`, and `max`. No model accepts `ultra`; a saved `ultra` route runs as `max`,
+doctor lists it under `retiredEfforts`, and the next install rewrites it to `max` after a backup. After each model the picker
+asks for that role's effort, lists every effort the model accepts, marks the recommended one, and
+defaults to it, or to the current route's effort when that is still offered. The previous-generation
 `gpt-5.6-sol`, `gpt-5.6-terra`, and `gpt-5.6-luna` remain selectable, and the current host catalog
-has no retirement metadata for them. GPT-5.6 Luna accepts only `high` and `max`; `xhigh` remains
-unsupported for that model. This previous-generation restriction does not apply to GPT-6 Luna.
+has no retirement metadata for them.
 xAI rows are the reasoning-capable Grok models from the host catalog, `grok-4.6` first.
 `--subagent-model <provider/id>` and `--subagent-effort <e>` set the helper route from flags.
 Legacy OpenAI `<id>-fast` aliases remain accepted and policy-checked as their base ids;
@@ -370,7 +374,8 @@ What it draws:
   session and the sidebar alike. It is on screen for the whole session, lit or not, and keeps the
   same four rows idle or working, so the prompt never moves:
   - the top border carries `🔥 LIT · <discipline>` on the left and the phase on the right
-    (`● WORK`, `⚑ review blocked`, `✓ COMPLETE`, or `○ IDLE` before any lit turn);
+    (`● WORK`, `⚑ review blocked`, `✓ COMPLETE`, or `○ IDLE` before any lit turn and whenever the
+    session is not running a turn, read from OpenCode's own `session.status`; at rest no step is lit);
   - row one is the phase track `PLAN ━ WORK ━ REVIEW` in the chip's pills, an eighth-block bar,
     `n/m criteria` for the goal and the next task. While a warning is open, `⚑ <text>` takes the
     place of `▸ next`. An idle session shows the dim track with the project's last goal, or
@@ -471,7 +476,7 @@ The order is environment, then saved setting, then config file, then the default
 
 ### Doctor
 
-`litopencode doctor` adds an `autoHandoff` block: the effective switch and percent, where each came from, the state file path, the two variable names, the host compaction point, and `warnings`. The host point is known for the window LitOpenCode installs (372,000 tokens with compaction at 334,800, which is 90%). A percent at or above it produces a warning, because OpenCode would compact first. For other models the host decides the window and the reserve, so doctor reports no number.
+`litopencode doctor` adds an `autoHandoff` block, read from the same project the plugin uses (the git root above the working directory, or the directory itself): the effective switch and percent, where each came from, the project, the state file path, the two variable names, the host compaction point, and `warnings`. The host point is known for the window LitOpenCode installs (372,000 tokens with compaction at 334,800, which is 90%). A percent at or above it produces a warning, because OpenCode would compact first. For other models the host decides the window and the reserve, so doctor reports no number.
 
 ### What is written
 

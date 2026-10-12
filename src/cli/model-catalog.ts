@@ -25,8 +25,14 @@ export const providerMenu: readonly ProviderMenuRow[] = [
   { provider: "xai", label: "xAI Grok", credentialEnv: "XAI_API_KEY" }
 ];
 
-export const installModelEfforts = Object.freeze(["low", "medium", "high", "xhigh", "max", "ultra"] as const);
-export const nativeReasoningEfforts = Object.freeze(["none", "minimal", ...installModelEfforts] as const);
+export const installModelEfforts = Object.freeze(["none", "low", "medium", "high", "xhigh", "max"] as const);
+// What a config file may name. Custom models are user-owned, so this stays wider than any catalog row.
+export const nativeReasoningEfforts = Object.freeze(["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] as const);
+
+// The efforts OpenCode itself offers for each OpenAI row: the model's `variants` in
+// `opencode models openai --verbose`, checked on OpenCode 1.18.35.
+const hostEffortsWithNone: readonly InstallModelEffort[] = installModelEfforts;
+const hostEffortsFromLow: readonly InstallModelEffort[] = installModelEfforts.slice(1);
 
 export const defaultOpenAiRoutes = Object.freeze({
   lead: Object.freeze({ provider: "openai", model: "gpt-6-astra", effort: "xhigh" }),
@@ -63,18 +69,18 @@ export const hostLimitModelIds = Object.freeze([
   previousGenerationOpenAiModels.luna
 ] as const);
 
-// The OpenAI rows are the product policy, not the host catalog. Keep every
-// supported effort here so the picker, flags, config reader, and route guard
-// all consume one catalog rather than maintaining independent literal lists.
+// The OpenAI rows choose the models and their recommended efforts; each row's
+// efforts are the host list above. The picker, flags, config reader, and route
+// guard all consume this one catalog rather than independent literal lists.
 export const openaiRows: readonly ModelMenuRow[] = [
-  { provider: "openai", model: defaultOpenAiRoutes.lead.model, effort: defaultOpenAiRoutes.lead.effort, efforts: installModelEfforts, hint: "frontier reasoning (recommended lead)" },
-  { provider: "openai", model: newGenerationOpenAiModels.sol, effort: "xhigh", efforts: installModelEfforts, hint: "coding lead (recommended alternative)" },
-  { provider: "openai", model: defaultOpenAiRoutes.helper.model, effort: defaultOpenAiRoutes.helper.effort, efforts: installModelEfforts.slice(0, 5), hint: "balanced (recommended helper)" },
-  { provider: "openai", model: previousGpt6OpenAiModels.sol, effort: "xhigh", efforts: installModelEfforts, hint: "coding lead, previous generation" },
-  { provider: "openai", model: previousGenerationOpenAiModels.sol, effort: "xhigh", efforts: ["high", "xhigh", "max"], hint: "deepest reasoning, previous generation" },
-  { provider: "openai", model: previousGenerationOpenAiModels.luna, effort: "max", efforts: ["high", "max"], hint: "balanced, previous generation" },
-  { provider: "openai", model: previousGenerationOpenAiModels.family, effort: "high", efforts: ["high", "xhigh", "max"], hint: "previous generation" },
-  { provider: "openai", model: previousGenerationOpenAiModels.terra, effort: "xhigh", efforts: ["high", "xhigh"], hint: "previous generation" }
+  { provider: "openai", model: defaultOpenAiRoutes.lead.model, effort: defaultOpenAiRoutes.lead.effort, efforts: hostEffortsFromLow, hint: "frontier reasoning (recommended lead)" },
+  { provider: "openai", model: newGenerationOpenAiModels.sol, effort: "xhigh", efforts: hostEffortsFromLow, hint: "coding lead (recommended alternative)" },
+  { provider: "openai", model: defaultOpenAiRoutes.helper.model, effort: defaultOpenAiRoutes.helper.effort, efforts: hostEffortsWithNone, hint: "balanced (recommended helper)" },
+  { provider: "openai", model: previousGpt6OpenAiModels.sol, effort: "xhigh", efforts: hostEffortsWithNone, hint: "coding lead, previous generation" },
+  { provider: "openai", model: previousGenerationOpenAiModels.sol, effort: "xhigh", efforts: hostEffortsWithNone, hint: "deepest reasoning, previous generation" },
+  { provider: "openai", model: previousGenerationOpenAiModels.luna, effort: "max", efforts: hostEffortsWithNone, hint: "balanced, previous generation" },
+  { provider: "openai", model: previousGenerationOpenAiModels.family, effort: "high", efforts: hostEffortsWithNone, hint: "previous generation" },
+  { provider: "openai", model: previousGenerationOpenAiModels.terra, effort: "xhigh", efforts: hostEffortsWithNone, hint: "previous generation" }
 ];
 
 export const openaiProviderModels = Object.freeze({
@@ -90,6 +96,18 @@ export function openAiModelRow(model: string): ModelMenuRow | undefined {
 
 export function openAiModelEfforts(model: string): readonly InstallModelEffort[] {
   return openAiModelRow(model)?.efforts ?? [];
+}
+
+/**
+ * OpenCode no longer offers `ultra` for any OpenAI row. A saved route that names it on a catalog
+ * model runs as `max`, and the next install rewrites it; this returns that replacement, or undefined.
+ */
+export function replacedRetiredEffort(provider: string | undefined, model: string | undefined, effort: string | undefined): "max" | undefined {
+  if (effort !== "ultra" || model === undefined) return undefined;
+  const slash = model.indexOf("/");
+  const owner = slash > 0 ? model.slice(0, slash) : provider;
+  const id = slash > 0 ? model.slice(slash + 1) : model;
+  return owner === "openai" && openAiModelRow(stripFastSuffix(id)) !== undefined ? "max" : undefined;
 }
 
 export function isInstallModelEffort(value: string): value is InstallModelEffort {
@@ -111,14 +129,14 @@ export function legacyFastAliasHelp(): string {
 }
 
 export function modelEffortHelp(): string {
-  return `GPT-6 Astra and Sol accept ${installModelEfforts.join(", ")}; GPT-6 Luna accepts ${openAiModelEfforts(newGenerationOpenAiModels.luna).join(", ")} and rejects ultra.`;
+  return `GPT-6 Astra and GPT-6.1 Sol accept ${openAiModelEfforts(newGenerationOpenAiModels.astra).join(", ")}; GPT-6 Luna, GPT-6 Sol and the GPT-5.6 rows accept ${openAiModelEfforts(newGenerationOpenAiModels.luna).join(", ")}.`;
 }
 
 // Used only when the host catalog (~/.cache/opencode/models.json) is absent or unreadable.
 const fallbackXaiRows: readonly ModelMenuRow[] = [
   { provider: "xai", model: "grok-4.6", effort: "xhigh", efforts: ["low", "medium", "high", "xhigh"], hint: "frontier reasoning (catalog unavailable)" },
   { provider: "xai", model: "grok-4.5", effort: "high", efforts: ["low", "medium", "high"], hint: "catalog unavailable" },
-  { provider: "xai", model: "grok-4.3", effort: "high", efforts: ["low", "medium", "high"], hint: "catalog unavailable" }
+  { provider: "xai", model: "grok-4.3", effort: "high", efforts: ["none", "low", "medium", "high"], hint: "catalog unavailable" }
 ];
 
 const xaiRowLimit = 3;

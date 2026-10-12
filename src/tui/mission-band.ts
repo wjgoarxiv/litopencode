@@ -101,26 +101,34 @@ function ruled(lead: string, left: Line, right: Line, tail: string, width: numbe
   return [{ text: lead, fg: border }, ...l, { text: "─".repeat(fill), fg: border }, ...r, { text: tail, fg: border }];
 }
 
-function borderColor(view: MissionView, frame: MotionFrame, palette: MissionPalette): string {
-  if (!view.active) return palette.borderActive;
+/**
+ * A lit session whose turn has ended rests: nothing is running, so the card stops showing a lit step.
+ * A finished goal and an open warning still show, since they are news after the turn.
+ */
+function resting(view: MissionView, busy: boolean | undefined): boolean {
+  return view.active && busy === false && !view.complete && view.warnings.length === 0;
+}
+
+function borderColor(view: MissionView, frame: MotionFrame, palette: MissionPalette, rest: boolean): string {
+  if (!view.active || rest) return palette.borderActive;
   const enter = frame.chipEnter ? ease.outCubic(seg(frame.t, 0, motionTiming.entry)) : 1;
   const done = view.complete ? (frame.celebrate === undefined ? 1 : ease.inOutCubic(seg(frame.celebrate, 0, motionTiming.crossfade))) : 0;
   return mixHex(palette.borderActive, mixHex(mixHex(palette.accent, palette.warning, frame.warn), palette.success, done), enter);
 }
 
 /** The phase on the right of the title: always a glyph plus words. */
-function phaseLabel(view: MissionView, frame: MotionFrame, palette: MissionPalette): Segment {
-  if (!view.active) return { text: "○ IDLE", fg: palette.muted };
+function phaseLabel(view: MissionView, frame: MotionFrame, palette: MissionPalette, rest: boolean): Segment {
+  if (!view.active || rest) return { text: "○ IDLE", fg: palette.muted };
   const status = missionStatus(view);
   if (status.tone === "success") return { text: "✓ COMPLETE", fg: palette.success, bold: true };
   if (status.tone === "warning") return { text: `⚑ ${status.text}`, fg: mixHex(palette.info, palette.warning, Math.max(frame.warn, 0.5)), bold: true };
   return { text: `● ${view.phase.toUpperCase()}`, fg: palette.info, bold: true };
 }
 
-function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string): Line {
+function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string, rest: boolean): Line {
   const brand: Segment[] = [{ text: "🔥 ", fg: palette.text }, { text: "LIT", fg: shine(palette.primary, palette, 0.5, shimmerAt(frame), 0.6), bold: true }];
   const name = view.active ? view.discipline : "ready";
-  const right = [phaseLabel(view, frame, palette)];
+  const right = [phaseLabel(view, frame, palette, rest)];
   const withName = (room: number): Segment[] => [...brand, { text: " · ", fg: palette.muted }, { text: truncateCells(name, room), fg: view.active ? palette.text : palette.muted }];
   const nameRoom = width - cellWidth("╭─") - lineWidth(withName(0)) - 2 - (lineWidth(right) + 2) - cellWidth("─╮") - 1;
   const attempts: [Line, Line][] = [];
@@ -259,6 +267,8 @@ export type CardInputs = {
   readonly view: MissionView;
   readonly frame: MotionFrame;
   readonly chips: readonly SkillChip[];
+  /** Whether the session's turn is running; false lets a lit card rest at idle. Unknown keeps it working. */
+  readonly busy?: boolean;
   readonly shimmer?: ChipShimmer;
   readonly figures: CardFigures;
   /** The project's last goal, shown on the track while the session has no lit mission. */
@@ -270,12 +280,15 @@ export type CardInputs = {
  * the prompt never moves. Each row sheds its own low-priority parts as the terminal narrows.
  */
 export function statusCard(input: CardInputs, palette: MissionPalette, width: number): Line[] {
-  const { view, frame } = input;
-  const border = borderColor(view, frame, palette);
+  const { frame } = input;
+  const rest = resting(input.view, input.busy);
+  // At rest the track keeps what is done and unlights the step that was running.
+  const view: MissionView = rest ? { ...input.view, steps: input.view.steps.map((step) => (step.state === "now" ? { ...step, state: "todo" } : step)) } : input.view;
+  const border = borderColor(view, frame, palette, rest);
   const inner = width - 4;
   const row = (content: Line): Line => (inner < 0 ? fitLine([], width, palette) : [{ text: "│ ", fg: border }, ...fitLine(content, inner, palette), { text: " │", fg: border }]);
   return [
-    topLine(view, frame, palette, width, border),
+    topLine(view, frame, palette, width, border, rest),
     row(trackRow(view, frame, palette, Math.max(0, inner), input.last)),
     row(skillRow(input.chips, input.shimmer, palette, Math.max(0, inner))),
     bottomLine(view, input.figures, palette, width, border)

@@ -107,18 +107,15 @@ test("Existing momus and litwork-reviewer entries preserve host fields and expli
   });
 });
 
-test("G20 rejects Luna/xhigh before registration", () => {
-  const litConfig = mergeConfigs(defaultGlobalConfigFile(), {
-    agents: {
-      "lit-forge": {
-        provider: "openai",
-        model: "gpt-5.6-luna",
-        variant: "xhigh"
-      }
-    }
+test("G20 rejects a Luna effort OpenCode does not offer before registration, and registers Luna/xhigh", () => {
+  const route = (variant) => mergeConfigs(defaultGlobalConfigFile(), {
+    agents: { "lit-forge": { provider: "openai", model: "gpt-5.6-luna", variant } }
   });
 
-  assert.throws(() => registerLitOpenCodeAgents({}, litConfig), /unsafe.*lit-forge.*Luna/i);
+  assert.throws(() => registerLitOpenCodeAgents({}, route("minimal")), /unsafe.*lit-forge.*gpt-5\.6-luna/i);
+  const config = {};
+  registerLitOpenCodeAgents(config, route("xhigh"));
+  assert.equal(config.agent["lit-forge"].variant, "xhigh");
 });
 
 test("unknown GPT-5.6 model ids remain user-owned custom routes", () => {
@@ -183,7 +180,7 @@ test("prompt append remains inert data while the approved Astra lead route stays
   assert.match(config.agent["lit-loop"].prompt, /gpt-5\.6-luna with xhigh/);
 });
 
-test("installer rejects an existing Luna/xhigh route before printing success or mutating it", async () => {
+test("installer rejects an existing Luna/minimal route before printing success or mutating it", async () => {
   await withTempDir(async (dir) => {
     const filePath = path.join(dir, "litopencode.json");
     const before = JSON.stringify(
@@ -192,7 +189,7 @@ test("installer rejects an existing Luna/xhigh route before printing success or 
           "lit-forge": {
             provider: "openai",
             model: "gpt-5.6-luna",
-            variant: "xhigh"
+            variant: "minimal"
           }
         }
       },
@@ -204,7 +201,7 @@ test("installer rejects an existing Luna/xhigh route before printing success or 
     const result = runCli(["install", "--root", dir, "--no-model-prompt"]);
 
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /unsafe.*Luna.*xhigh/i);
+    assert.match(result.stderr, /unsafe.*gpt-5\.6-luna.*minimal/i);
     assert.doesNotMatch(result.stdout, /success|installed/i);
     assert.equal(await fs.readFile(filePath, "utf8"), before);
   });

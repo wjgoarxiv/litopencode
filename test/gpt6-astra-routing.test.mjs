@@ -9,7 +9,9 @@ import { litOpenCodeAgents, registerLitOpenCodeAgents, toOpenCodeAgentConfig } f
 import { diagnoseModelRoutes } from "../src/model-route-policy.ts";
 import { runCli, withTempDir } from "../test-support/cli-fixture.ts";
 
-const astraEfforts = ["low", "medium", "high", "xhigh", "max", "ultra"];
+// OpenCode 1.18.35 offers these for gpt-6-astra and gpt-6.1-sol; gpt-6-luna and gpt-6-sol add none.
+const astraEfforts = ["low", "medium", "high", "xhigh", "max"];
+const withNone = ["none", ...astraEfforts];
 const leadCategories = ["planning", "review"];
 const helperCategories = ["execution", "research"];
 
@@ -35,10 +37,12 @@ test("Given the GPT-6 OpenAI catalog, when Sol and Luna are requested, then thei
   assert.ok(luna);
   assert.equal(sol.effort, "xhigh");
   assert.equal(sol.hint, "coding lead (recommended alternative)");
-  assert.deepEqual(sol.efforts, ["low", "medium", "high", "xhigh", "max", "ultra"]);
-  assert.deepEqual(luna.efforts, ["low", "medium", "high", "xhigh", "max"]);
-  assert.deepEqual(resolveModelRoute("openai", "gpt-6.1-sol", "ultra", "--model"), route("openai", "gpt-6.1-sol", "ultra"));
-  assert.throws(() => resolveModelRoute("openai", "gpt-6-luna", "ultra", "--model"), /accepts effort|ultra/u);
+  assert.deepEqual(sol.efforts, astraEfforts);
+  assert.deepEqual(luna.efforts, withNone);
+  assert.deepEqual(resolveModelRoute("openai", "gpt-6.1-sol", "max", "--model"), route("openai", "gpt-6.1-sol", "max"));
+  assert.deepEqual(resolveModelRoute("openai", "gpt-6-luna", "none", "--model"), route("openai", "gpt-6-luna", "none"));
+  assert.throws(() => resolveModelRoute("openai", "gpt-6.1-sol", "ultra", "--model"), /must be one of|ultra/u);
+  assert.throws(() => resolveModelRoute("openai", "gpt-6.1-sol", "none", "--model"), /accepts effort|none/u);
   assert.throws(() => resolveModelRoute("openai", "gpt-6.1-sol-fast", "xhigh", "--model"), /not offered|gpt-6\.1-sol-fast/u);
 });
 
@@ -47,13 +51,13 @@ test("Given gpt-6-sol from an existing config, when it is requested or diagnosed
   assert.ok(previous);
   assert.match(previous.hint, /previous generation/u);
   assert.notEqual(previous.hint, "coding lead (recommended alternative)");
-  assert.deepEqual(previous.efforts, ["low", "medium", "high", "xhigh", "max", "ultra"]);
-  assert.deepEqual(resolveModelRoute("openai", "gpt-6-sol", "ultra", "--model"), route("openai", "gpt-6-sol", "ultra"));
+  assert.deepEqual(previous.efforts, withNone);
+  assert.deepEqual(resolveModelRoute("openai", "gpt-6-sol", "none", "--model"), route("openai", "gpt-6-sol", "none"));
   assert.throws(() => resolveModelRoute("openai", "gpt-6-sol-fast", "xhigh", "--model"), /not offered|gpt-6-sol-fast/u);
   for (const model of ["gpt-6-sol", "gpt-6.1-sol"]) {
     assert.deepEqual(diagnoseModelRoutes({ ok: { provider: "openai", model, variant: "xhigh" } }), [], model);
     assert.deepEqual(
-      diagnoseModelRoutes({ bad: { provider: "openai", model, variant: "none" } }).map((diagnostic) => diagnostic.code),
+      diagnoseModelRoutes({ bad: { provider: "openai", model, variant: "ultra" } }).map((diagnostic) => diagnostic.code),
       ["model_effort_unsupported"],
       model
     );

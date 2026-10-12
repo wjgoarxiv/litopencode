@@ -227,13 +227,11 @@ test("agent registry applies LitOpenCode model routing overrides", () => {
   assert.match(config.agent["lit-loop"].prompt, /local litopencode\.json routing policy/);
 });
 
-test("agent registry rejects Luna below high without silent fallback", () => {
+test("agent registry rejects a Luna route OpenCode cannot run, without silent fallback", () => {
   // Given: explicit unsafe agent routes that ordinary config loading must not rewrite.
   const unsafeRoutes = [
-    { model: "gpt-5.6-luna", variant: "medium" },
     { model: "gpt-5.6-luna", variant: "high", reasoningEffort: "low" },
-    { model: "gpt-5.6-luna", variant: "low", reasoningEffort: "high" },
-    { model: "gpt-5.6-luna", variant: "high", reasoningEffort: "xhigh" }
+    { model: "gpt-5.6-luna", variant: "minimal" }
   ];
 
   for (const route of unsafeRoutes) {
@@ -244,24 +242,24 @@ test("agent registry rejects Luna below high without silent fallback", () => {
     // When/Then: registration fails with the unsafe model named instead of substituting a default.
     assert.throws(
       () => registerLitOpenCodeAgents({}, litConfig),
-      /unsafe.*lit-loop.*Luna/i
+      /unsafe.*lit-loop.*gpt-5\.6-luna/i
     );
   }
 });
 
-test("Luna diagnostics inspect both explicit effort fields and reject conflicts", () => {
+test("Luna diagnostics inspect both explicit effort fields, accept every host effort and reject conflicts", () => {
   const diagnostics = diagnoseModelRoutes({
-    "low-variant": {
+    "minimal-variant": {
       provider: "openai",
       model: "gpt-5.6-luna",
-      variant: "low",
+      variant: "minimal",
       reasoningEffort: "high"
     },
-    "low-reasoning": {
+    "minimal-reasoning": {
       provider: "openai",
       model: "gpt-5.6-luna",
       variant: "high",
-      reasoningEffort: "low"
+      reasoningEffort: "minimal"
     },
     "safe-conflict": {
       provider: "openai",
@@ -269,52 +267,41 @@ test("Luna diagnostics inspect both explicit effort fields and reject conflicts"
       variant: "high",
       reasoningEffort: "xhigh"
     },
-    "valid-high": { provider: "openai", model: "gpt-5.6-luna", variant: "high" },
+    "valid-none": { provider: "openai", model: "gpt-5.6-luna", variant: "none" },
+    "valid-low": { provider: "openai", model: "gpt-5.6-luna", variant: "low" },
     "valid-xhigh": { provider: "openai", model: "gpt-5.6-luna", reasoningEffort: "xhigh" }
   });
 
   assert.deepEqual(diagnostics, [
     {
-      agentId: "low-variant",
-      code: "luna_effort_below_high",
+      agentId: "minimal-variant",
+      code: "model_effort_unsupported",
       model: "openai/gpt-5.6-luna",
-      effort: "variant=low, reasoningEffort=high"
+      effort: "variant=minimal, reasoningEffort=high"
     },
     {
-      agentId: "low-variant",
-      code: "luna_effort_conflict",
+      agentId: "minimal-variant",
+      code: "model_effort_conflict",
       model: "openai/gpt-5.6-luna",
-      effort: "variant=low, reasoningEffort=high"
+      effort: "variant=minimal, reasoningEffort=high"
     },
     {
-      agentId: "low-reasoning",
-      code: "luna_effort_below_high",
+      agentId: "minimal-reasoning",
+      code: "model_effort_unsupported",
       model: "openai/gpt-5.6-luna",
-      effort: "variant=high, reasoningEffort=low"
+      effort: "variant=high, reasoningEffort=minimal"
     },
     {
-      agentId: "low-reasoning",
-      code: "luna_effort_conflict",
+      agentId: "minimal-reasoning",
+      code: "model_effort_conflict",
       model: "openai/gpt-5.6-luna",
-      effort: "variant=high, reasoningEffort=low"
-    },
-    {
-      agentId: "safe-conflict",
-      code: "luna_xhigh_forbidden",
-      model: "openai/gpt-5.6-luna",
-      effort: "variant=high, reasoningEffort=xhigh"
+      effort: "variant=high, reasoningEffort=minimal"
     },
     {
       agentId: "safe-conflict",
-      code: "luna_effort_conflict",
+      code: "model_effort_conflict",
       model: "openai/gpt-5.6-luna",
       effort: "variant=high, reasoningEffort=xhigh"
-    },
-    {
-      agentId: "valid-xhigh",
-      code: "luna_xhigh_forbidden",
-      model: "openai/gpt-5.6-luna",
-      effort: "xhigh"
     }
   ]);
 });

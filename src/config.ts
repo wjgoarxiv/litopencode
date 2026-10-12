@@ -1,7 +1,7 @@
 import { createRuntimePaths, type RuntimePaths } from "./state.ts";
 import type { AgentPermission, AgentToolId } from "./agents/types.ts";
 import { readLitOpenCodeConfigFile } from "./config-parser.ts";
-import { defaultOpenAiRoutes } from "./cli/model-catalog.ts";
+import { defaultOpenAiRoutes, replacedRetiredEffort } from "./cli/model-catalog.ts";
 
 export { LitOpenCodeConfigError, readLitOpenCodeConfigFile } from "./config-parser.ts";
 
@@ -237,7 +237,15 @@ export function defaultGlobalConfigJson(): Record<string, unknown> {
 export function effectiveAgentConfig(config: LitOpenCodeConfig, agentId: string): LitOpenCodeAgentModelConfig {
   const agentConfig = config.agents[agentId] ?? {};
   const categoryConfig = agentConfig.category ? config.categories[agentConfig.category] : undefined;
-  return mergeAgentModelConfig(categoryConfig, agentConfig);
+  return withRetiredEffortsReplaced(mergeAgentModelConfig(categoryConfig, agentConfig));
+}
+
+/** A saved route on an effort OpenCode no longer offers runs as its replacement until install rewrites it. */
+export function withRetiredEffortsReplaced(route: LitOpenCodeAgentModelConfig): LitOpenCodeAgentModelConfig {
+  const variant = replacedRetiredEffort(route.provider, route.model, route.variant);
+  const reasoningEffort = replacedRetiredEffort(route.provider, route.model, route.reasoningEffort);
+  if (variant === undefined && reasoningEffort === undefined) return route;
+  return { ...route, ...(variant === undefined ? {} : { variant }), ...(reasoningEffort === undefined ? {} : { reasoningEffort }) };
 }
 
 export async function loadConfig(projectRoot: string): Promise<LoadedConfig> {

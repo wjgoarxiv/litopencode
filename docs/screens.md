@@ -2,7 +2,7 @@
 
 [README](../README.md) · [한국어](./screens-Ko-KR.md)
 
-This page shows what LitOpenCode prints and draws, so a healthy install looks familiar by the time you get there. It moved here from the README, which now keeps only one picture near the top.
+This page shows what LitOpenCode prints and draws, so a healthy install looks familiar by the time you get there.
 
 ## What you will see on screen
 

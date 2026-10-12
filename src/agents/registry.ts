@@ -5,6 +5,7 @@ import {
   defaultGlobalConfigFile,
   configSectionWasAuthored,
   effectiveAgentConfig,
+  withRetiredEffortsReplaced,
   type LitOpenCodeConfig,
   type LitOpenCodeAgentModelConfig,
   type ReasoningEffort
@@ -227,7 +228,7 @@ function routeLeadAgent(
   // supplies the fresh/default lead when no direct route was authored.
   if (hasAuthoredRouteFields(config.agents["lit-loop"])) return authoredOverride;
   const lead = leadCategoryRoute(config);
-  return lead === undefined ? authoredOverride : { ...authoredOverride, ...lead };
+  return lead === undefined ? authoredOverride : withRetiredEffortsReplaced({ ...authoredOverride, ...lead });
 }
 
 function applySpecialLeadRoute(

@@ -3,11 +3,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { litOpenCodeAgents, registerLitOpenCodeAgents } from "../agents.ts";
 import { defaultGlobalConfigFile, defaultGlobalConfigJson, mergeConfigs, readLitOpenCodeConfigFile, type LitOpenCodeConfig } from "../config.ts";
-import { diagnoseModelRoutes, effectiveAuthoredAgentRoutes, UnsafeModelRouteError } from "../model-route-policy.ts";
+import { diagnoseModelRoutes, effectiveAuthoredAgentRoutes, retiredEffortRoutes, UnsafeModelRouteError } from "../model-route-policy.ts";
 import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { isRecord, readJsonObjectIfPresent, readTextIfPresent } from "./json.ts";
 import { editJsoncObject, formatJsoncMember, hasJsoncComments, lineEnding } from "./jsonc.ts";
-import { installModelEfforts, isModelProvider, modelMenuRows, stripFastSuffix } from "./model-catalog.ts";
+import { installModelEfforts, isModelProvider, modelMenuRows, replacedRetiredEffort, stripFastSuffix } from "./model-catalog.ts";
 import { classifyModelConfig, selectedLitConfig } from "./model-policy.ts";
 import type { AgentConfigTarget } from "../agents/types.ts";
 import type { InstallModelEffort, InstallModelRoute, InstallModelSelection, InstallPermissionMode, InstallReport, ModelConfigClassification } from "./types.ts";
@@ -110,6 +110,36 @@ export async function readInstallModelSelection(root: string): Promise<InstallMo
   if (planning === undefined || execution === undefined || review === undefined || research === undefined) return undefined;
   if (!sameInstallRoute(planning, review) || !sameInstallRoute(execution, research)) return undefined;
   return { ...planning, helper: execution };
+}
+
+// The same suffix the TUI config backups use.
+const litConfigBackupSuffix = ".litopencode-backup";
+
+/**
+ * Rewrites saved routes that name an effort OpenCode no longer offers (ultra) to its replacement
+ * (max), after copying the file to `<file>.litopencode-backup`. Returns the one-line notice, or
+ * undefined when nothing changed. A dry run writes nothing and says nothing.
+ */
+export async function migrateRetiredEfforts(root: string, dryRun: boolean): Promise<string | undefined> {
+  const filePath = litOpenCodeConfigFileForOpenCodeRoot(root);
+  const existing = await readValidatedConfig(root);
+  const retired = retiredEffortRoutes(existing);
+  if (existing === null || retired.length === 0 || dryRun) return undefined;
+  const next = structuredClone(existing);
+  for (const { section, id } of retired) {
+    const route = (next[section] as Record<string, Record<string, unknown>>)[id];
+    const provider = typeof route.provider === "string" ? route.provider : undefined;
+    const model = route.model as string;
+    for (const field of ["variant", "reasoningEffort"] as const) {
+      const replacement = replacedRetiredEffort(provider, model, typeof route[field] === "string" ? route[field] as string : undefined);
+      if (replacement !== undefined) route[field] = replacement;
+    }
+  }
+  const backup = filePath + litConfigBackupSuffix;
+  await writeTextAtomically(backup, await fs.readFile(filePath, "utf8"));
+  await writeTextAtomically(filePath, JSON.stringify(next, null, 2) + "\n");
+  const count = retired.length === 1 ? "1 route" : `${retired.length} routes`;
+  return `Moved ${count} from ultra to max, which OpenCode no longer offers; the old file is at ${backup}.`;
 }
 
 export async function assertExistingModelRoutesSafe(root: string): Promise<void> {

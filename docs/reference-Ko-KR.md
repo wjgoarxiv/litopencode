@@ -89,11 +89,14 @@ CI와 비대화형 터미널에서는 자동 질문을 생략하며, 명시한 �
 새로 설치하거나 초기화하면 계획·검토 및 `lit-loop`는 `openai/gpt-6-astra`/`xhigh`,
 실행·연구 helper는 새 기본값인 `openai/gpt-6-luna`/`max`를 사용합니다. `gpt-6.1-sol`/`xhigh`는
 코딩 리드 대안입니다. `gpt-6-sol`은 이전 세대로 계속 선택할 수 있어 이 모델을 쓰는 기존 설정도 그대로 동작하며,
-같은 추론 수준을 지원하고 `-fast` 별칭은 없습니다. GPT-6 Astra와 GPT-6 Sol은 `low`, `medium`, `high`, `xhigh`, `max`, `ultra`를
-모두 지원합니다. GPT-6 Luna는 `low`, `medium`, `high`, `xhigh`, `max`를 지원하지만 `ultra`는
-지원하지 않습니다. 이전 세대 `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`는 계속 선택할 수 있고,
-현재 호스트 카탈로그에는 이 모델들의 지원 종료일이 등록되어 있지 않습니다. GPT-5.6 Luna는
-`high`와 `max`만 지원하고 `xhigh`는 허용하지 않습니다. 이 제한은 GPT-6 Luna에는 적용되지 않습니다.
+`-fast` 별칭은 없습니다. 모델마다 OpenCode가 그 모델에 내놓는 추론 수준을 그대로 고를 수 있습니다
+(`opencode models openai --verbose`의 `variants`, OpenCode 1.18.35에서 확인). GPT-6 Astra와 GPT-6.1 Sol은
+`low`, `medium`, `high`, `xhigh`, `max`를 지원합니다. GPT-6 Luna, GPT-6 Sol, GPT-5.6 계열은 `none`, `low`,
+`medium`, `high`, `xhigh`, `max`를 지원합니다. `ultra`를 지원하는 모델은 없습니다. `ultra`로 저장된 설정은 `max`로 동작하고, doctor가 `retiredEfforts`에 알려 주며,
+다음 설치가 백업을 남긴 뒤 `max`로 바꿉니다. 선택 메뉴는 모델을 고른
+뒤 그 역할의 추론 수준을 묻고, 모델이 지원하는 수준을 모두 보여 주며, 추천 수준에 표시를 붙여 기본값으로
+둡니다. 지금 설정의 수준이 여전히 지원되면 그 수준이 기본값입니다. 이전 세대 `gpt-5.6-sol`, `gpt-5.6-terra`,
+`gpt-5.6-luna`는 계속 선택할 수 있고, 현재 호스트 카탈로그에는 이 모델들의 지원 종료일이 등록되어 있지 않습니다.
 일반 설치와
 업데이트는 이미 설정된 모델을 보존합니다. 명시적인 `--model-prompt`만 관리 모델 키를 다시 씁니다.
 기존 GPT-5.6 계열의 `-fast` 의미는 유지하지만 `gpt-6-astra-fast` 별칭은 추가하지 않습니다.
@@ -267,7 +270,8 @@ OpenCode 1.18은 `tui.json`이나 `tui.jsonc`의 `plugin` 배열에 적힌 TUI �
   아래를 모두 가로지릅니다. lit을 쓰든 안 쓰든 세션 내내 보이고, 쉴 때나 일할 때나 똑같이 네 줄이라
   입력창이 움직이지 않습니다.
   - 위 테두리 왼쪽에 `🔥 LIT · <작업 이름>`, 오른쪽에 단계가 붙습니다(`● WORK`, `⚑ review blocked`,
-    `✓ COMPLETE`, lit 턴 전에는 `○ IDLE`).
+    `✓ COMPLETE`, lit 턴 전과 세션이 턴을 돌리지 않는 동안에는 `○ IDLE`. 이때는 OpenCode의 `session.status`를
+    읽고, 밝게 켜진 단계가 없습니다).
   - 첫째 줄은 칩과 같은 알약으로 그린 단계 줄 `PLAN ━ WORK ━ REVIEW`, 1/8칸 막대, 목표의
     `n/m criteria`, 다음 할 일입니다. 경고가 열려 있는 동안에는 `▸ 다음 일` 자리에 `⚑ <내용>`이
     들어갑니다. 쉬는 세션에서는 흐린 단계 줄 옆에 프로젝트의 마지막 목표를, 목표가 없으면
@@ -362,7 +366,7 @@ OpenCode는 세션이 바쁜 동안 들어온 `summarize` 호출을 줄 세웠�
 
 ### Doctor
 
-`litopencode doctor`의 출력에 `autoHandoff` 블록이 추가됩니다. 실제로 적용되는 스위치와 퍼센트, 각각의 출처, 상태 파일 경로, 두 변수 이름, 호스트의 압축 지점, `warnings`가 들어 있습니다. 호스트 지점은 LitOpenCode가 설치하는 창(372,000토큰, 압축은 334,800토큰, 곧 90%)에서만 알 수 있습니다. 그 지점과 같거나 높은 퍼센트는 OpenCode가 먼저 압축하므로 경고가 납니다. 다른 모델은 창과 여유분을 호스트가 정하므로 doctor가 숫자를 내놓지 않습니다.
+`litopencode doctor`의 출력에 `autoHandoff` 블록이 추가됩니다. 플러그인과 같은 프로젝트(작업 폴더 위의 git 루트, 없으면 그 폴더)에서 읽습니다. 실제로 적용되는 스위치와 퍼센트, 각각의 출처, 프로젝트, 상태 파일 경로, 두 변수 이름, 호스트의 압축 지점, `warnings`가 들어 있습니다. 호스트 지점은 LitOpenCode가 설치하는 창(372,000토큰, 압축은 334,800토큰, 곧 90%)에서만 알 수 있습니다. 그 지점과 같거나 높은 퍼센트는 OpenCode가 먼저 압축하므로 경고가 납니다. 다른 모델은 창과 여유분을 호스트가 정하므로 doctor가 숫자를 내놓지 않습니다.
 
 ### 디스크에 남는 것
 

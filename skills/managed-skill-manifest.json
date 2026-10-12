@@ -3002,7 +3002,7 @@
         },
         {
           "path": "templates/hyperframes/package-lock.json",
-          "sha256": "63a3fb341a364397d7f299597e3e8a35df68c70407bc8f81123949d81b6a3f1d"
+          "sha256": "2644db96a3d027c02e2ead8e37a0433b538aceb36db33faeca9dc51e6bbe2eab"
         },
         {
           "path": "templates/hyperframes/package.json",
@@ -3014,7 +3014,7 @@
         },
         {
           "path": "templates/remotion/package-lock.json",
-          "sha256": "c46d139056e22c0c9445f31289a50772cf407486983e3250372c23bda06fd7b5"
+          "sha256": "611af7ac6adf6d63219ee365a68571c2de4c923836b9d44412df2cce45b58d75"
         },
         {
           "path": "templates/remotion/package.json",
@@ -3412,11 +3412,11 @@
         },
         {
           "path": "package-lock.json",
-          "sha256": "5f6115daf93a2eb2a0ed7e4633ec043916809cb14e5ae1b734468b63bc0212c0"
+          "sha256": "0020b2d3824e933646da076edbe9515960c44fec31e654ababc99e43a6f09ada"
         },
         {
           "path": "package.json",
-          "sha256": "92116b94a64e12e211f1864c73325d46f64709496378423e443dc3d02d9da1ea"
+          "sha256": "fe26bce94ad45de74be1260258cf4fcdc60a4e0a76cb1460f0838c0502ab3f43"
         },
         {
           "path": "pretendard-font/LICENSE.txt",

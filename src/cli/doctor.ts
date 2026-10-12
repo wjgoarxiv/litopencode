@@ -1,3 +1,4 @@
+import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { litOpenCodeAgents, registerLitOpenCodeAgents } from "../agents.ts";
@@ -5,9 +6,11 @@ import { defaultGlobalConfigFile, loadConfig, mergeConfigs, readLitOpenCodeConfi
 import {
   diagnoseModelRoutes,
   effectiveAuthoredAgentRoutes,
+  retiredEffortRoutes,
+  retiredEffortWarning,
   projectModelRoutesForDiagnostics
 } from "../model-route-policy.ts";
-import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
+import { createRuntimePaths, litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import type { CliResult } from "./types.ts";
 import type { AgentConfigTarget } from "../agents/types.ts";
 import { isRecord, readJsonObjectIfPresent, readPackageMetadata } from "./json.ts";
@@ -112,6 +115,18 @@ async function inspectPlugin(root: string, metadata: { readonly name: string; re
   };
 }
 
+/**
+ * The project the plugin would use from here: OpenCode's worktree is the git root above the working
+ * directory, and without one the directory itself.
+ */
+export function doctorProjectRoot(cwd: string = process.cwd()): string {
+  const start = path.resolve(cwd);
+  for (let dir = start; ; dir = path.dirname(dir)) {
+    if (fsSync.existsSync(path.join(dir, ".git"))) return dir;
+    if (path.dirname(dir) === dir) return start;
+  }
+}
+
 export async function doctor(root: string): Promise<CliResult> {
   const metadata = await readPackageMetadata();
   const loaded = await loadConfig(root);
@@ -152,9 +167,14 @@ export async function doctor(root: string): Promise<CliResult> {
   const tui = await inspectTuiPlugin(root, installPlugin.present && installPlugin.configured !== null ? installPlugin.configured : installPlugin.expected);
   const hostConfig = await readOpenCodeConfig(root);
   const motion = probeMotionRuntime(metadata.packageRoot);
+  // The plugin keeps the auto-handoff setting per project, so doctor reads it from the project too.
+  const project = doctorProjectRoot();
+  const projectPaths = createRuntimePaths(project);
+  const projectLitConfig = await readLitOpenCodeConfigFile(projectPaths.configFile);
+  const autoHandoffConfig = projectLitConfig === undefined ? effectiveOpenCodeConfig : mergeConfigs(effectiveOpenCodeConfig, projectLitConfig);
   const autoHandoff = await createAutoHandoffSettings({
-    stateFile: loaded.paths.autoHandoffFile,
-    config: loaded.config.autoHandoff
+    stateFile: projectPaths.autoHandoffFile,
+    config: autoHandoffConfig.autoHandoff
   }).resolve();
   const hostCompaction = inspectHostCompactionPoint(hostConfig.config);
   const autoHandoffWarnings = [...autoHandoff.warnings];
@@ -176,7 +196,8 @@ export async function doctor(root: string): Promise<CliResult> {
           enabled: autoHandoff.enabled,
           percent: autoHandoff.percent,
           sources: autoHandoff.sources,
-          stateFile: loaded.paths.autoHandoffFile,
+          project,
+          stateFile: projectPaths.autoHandoffFile,
           env: { enabled: autoHandoffEnvEnabled, percent: autoHandoffEnvPercent },
           host: { autoCompaction: hostCompaction.autoCompaction, compactionPercent: hostCompaction.percent },
           compaction: "The plugin starts compaction itself after the handoff is saved; the user does not need to run /compact.",
@@ -199,7 +220,8 @@ export async function doctor(root: string): Promise<CliResult> {
           agents: Object.keys(effectiveOpenCodeConfig.agents),
           categories: Object.keys(effectiveOpenCodeConfig.categories),
           effective: projectModelRoutesForDiagnostics(reportedRoutes, routeDiagnostics),
-          routeDiagnostics
+          routeDiagnostics,
+          retiredEfforts: retiredEffortRoutes(await readJsonObjectIfPresent(openCodeLitConfigPath)).map(retiredEffortWarning)
         },
         state: {
           runtimeDir: loaded.paths.runtimeDir,

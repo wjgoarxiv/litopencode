@@ -220,6 +220,7 @@ test("a chat message that only mentions the route stays inert", async () => {
 // ---- doctor and catalog ----
 
 test("doctor shows the auto-handoff state and warns at or above the host compaction point", async () => {
+  // The config root doubles as the project here, so the saved setting sits in its .litopencode folder.
   await withCliTempDir(async (dir) => {
     await fs.mkdir(path.join(dir, ".litopencode"));
     await fs.writeFile(path.join(dir, ".litopencode", "auto-handoff.json"), JSON.stringify({ enabled: true, percent: 95 }));
@@ -228,6 +229,7 @@ test("doctor shows the auto-handoff state and warns at or above the host compact
     });
     assert.equal(configured.status, 0, configured.stderr);
     const result = runCli(["doctor", "--root", dir, "--no-auto-update"], {
+      cwd: dir,
       env: { ...process.env, XDG_CONFIG_HOME: path.join(dir, "xdg-config") }
     });
     assert.equal(result.status, 0, result.stderr);
@@ -243,6 +245,7 @@ test("doctor shows the auto-handoff state and warns at or above the host compact
 test("doctor reports OFF by default with no warnings", async () => {
   await withCliTempDir(async (dir) => {
     const result = runCli(["doctor", "--root", dir, "--no-auto-update"], {
+      cwd: dir,
       env: { ...process.env, XDG_CONFIG_HOME: path.join(dir, "xdg-config") }
     });
     assert.equal(result.status, 0, result.stderr);
@@ -258,6 +261,7 @@ test("doctor reports OFF by default with no warnings", async () => {
 test("doctor turns an invalid percent into OFF with a warning", async () => {
   await withCliTempDir(async (dir) => {
     const result = runCli(["doctor", "--root", dir, "--no-auto-update"], {
+      cwd: dir,
       env: {
         ...process.env,
         XDG_CONFIG_HOME: path.join(dir, "xdg-config"),
@@ -284,4 +288,37 @@ test("the lit-handoff skill documents the automatic route", async () => {
   const skill = await fs.readFile("skills/lit-handoff/SKILL.md", "utf8");
   assert.match(skill, /auto on <percent>/);
   assert.match(skill, /LITOPENCODE_AUTO_HANDOFF_PERCENT/);
+});
+
+test("doctor reads the auto-handoff setting from the project, the same place the plugin uses", async () => {
+  const { runCli, withTempDir } = await import("../test-support/cli-fixture.ts");
+  await withTempDir(async (dir) => {
+    const project = path.join(dir, "project");
+    const nested = path.join(project, "src", "deep");
+    await fs.mkdir(path.join(project, ".git"), { recursive: true });
+    await fs.mkdir(nested, { recursive: true });
+    await fs.mkdir(path.join(project, ".litopencode"), { recursive: true });
+    // What the chat message `lit-handoff auto on 70` saves.
+    await fs.writeFile(path.join(project, ".litopencode", "auto-handoff.json"), JSON.stringify({ enabled: true, percent: 70 }) + "\n");
+    const env = { ...process.env };
+    delete env.LITOPENCODE_AUTO_HANDOFF;
+    delete env.LITOPENCODE_AUTO_HANDOFF_PERCENT;
+    const doctor = (cwd) => {
+      const result = runCli(["doctor", "--root", path.join(dir, "config")], { cwd, env });
+      assert.equal(result.status, 0, result.stderr);
+      return JSON.parse(result.stdout).autoHandoff;
+    };
+
+    // The working directory comes back with symbolic links resolved (macOS /var is /private/var).
+    const realProject = await fs.realpath(project);
+    let report = doctor(nested);
+    assert.equal(report.project, realProject, "doctor finds the project root above the working directory");
+    assert.equal(report.stateFile, path.join(realProject, ".litopencode", "auto-handoff.json"));
+    assert.deepEqual({ enabled: report.enabled, percent: report.percent, sources: report.sources }, { enabled: true, percent: 70, sources: { enabled: "command", percent: "command" } });
+
+    await fs.rm(path.join(project, ".litopencode", "auto-handoff.json"));
+    await fs.writeFile(path.join(project, ".litopencode", "config.json"), JSON.stringify({ autoHandoff: { enabled: true, percent: 60 } }) + "\n");
+    report = doctor(project);
+    assert.deepEqual({ enabled: report.enabled, percent: report.percent, sources: report.sources }, { enabled: true, percent: 60, sources: { enabled: "config", percent: "config" } }, "the project's config file counts too");
+  });
 });

@@ -294,6 +294,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
                   view: snapshot.view,
                   frame: snapshot.frame,
                   chips: snapshot.card.chips,
+                  busy: snapshot.card.busy,
                   ...(shimmer === undefined ? {} : { shimmer }),
                   figures: { contextPercent: snapshot.card.contextPercent, ...(snapshot.card.branch === undefined ? {} : { branch: snapshot.card.branch }), inLane: snapshot.inLane },
                   ...(last === undefined ? {} : { last })

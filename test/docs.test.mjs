@@ -248,7 +248,7 @@ test("bilingual entry paths and operational references keep local document links
   }
 });
 
-test("GPT-6 model docs pin the catalog effort bounds and distinguish GPT-5.6 Luna", async () => {
+test("model docs pin the host effort ranges for every OpenAI row", async () => {
   const documents = Object.fromEntries(await Promise.all([
     ["reference", "docs/reference.md"],
     ["referenceKo", "docs/reference-Ko-KR.md"],
@@ -256,16 +256,13 @@ test("GPT-6 model docs pin the catalog effort bounds and distinguish GPT-5.6 Lun
     ["checklist", "docs/release-checklist.md"]
   ].map(async ([name, file]) => [name, (await readText(file)).replace(/\s+/gu, " ")])));
 
-  assert.ok(/GPT-6 Astra and Sol accept `low`, `medium`, `high`, `xhigh`, `max`, and `ultra`\./u.test(documents.reference), "English reference should state the complete Astra/Sol range");
-  assert.ok(/GPT-6 Luna accepts `low`, `medium`, `high`, `xhigh`, and `max`, but not `ultra`\./u.test(documents.reference), "English reference should allow GPT-6 Luna xhigh and exclude ultra");
-  assert.ok(/GPT-5\.6 Luna accepts only `high` and `max`; `xhigh` remains unsupported for that model\./u.test(documents.reference), "English reference should retain the legacy Luna limit");
-  assert.ok(/GPT-6 Astra와 GPT-6 Sol은 `low`, `medium`, `high`, `xhigh`, `max`, `ultra`를 모두 지원합니다\./u.test(documents.referenceKo), "Korean reference should state the complete Astra/Sol range");
-  assert.ok(/GPT-6 Luna는 `low`, `medium`, `high`, `xhigh`, `max`를 지원하지만 `ultra`는 지원하지 않습니다\./u.test(documents.referenceKo), "Korean reference should allow GPT-6 Luna xhigh and exclude ultra");
-  assert.ok(/GPT-5\.6 Luna는 `high`와 `max`만 지원하고 `xhigh`는 허용하지 않습니다\./u.test(documents.referenceKo), "Korean reference should retain the legacy Luna limit");
-  assert.ok(/GPT-6 Astra and Sol accept `low`, `medium`, `high`, `xhigh`, `max`, and `ultra`\./u.test(documents.migration), "migration docs should state the complete Astra/Sol range");
-  assert.ok(/GPT-6 Luna accepts `low`, `medium`, `high`, `xhigh`, and `max`, but not `ultra`\./u.test(documents.migration), "migration docs should allow GPT-6 Luna xhigh and exclude ultra");
-  assert.ok(/Previous-generation GPT-5\.6 Luna accepts only `high` and `max`; `xhigh` remains unsupported for that model\./u.test(documents.migration), "migration docs should retain the legacy Luna limit");
-  assert.ok(/accepts GPT-6 Luna\/xhigh, rejects GPT-6 Luna\/ultra and GPT-5\.6 Luna\/xhigh/u.test(documents.checklist), "active checklist should distinguish GPT-6 from GPT-5.6 Luna");
+  assert.ok(/GPT-6 Astra and GPT-6\.1 Sol accept `low`, `medium`, `high`, `xhigh`, and `max`\./u.test(documents.reference), "English reference should state the Astra/Sol host range");
+  assert.ok(/GPT-6 Luna, GPT-6 Sol, and the GPT-5\.6 rows accept `none`, `low`, `medium`, `high`, `xhigh`, and `max`\. No model accepts `ultra`; a saved `ultra` route runs as `max`/u.test(documents.reference), "English reference should state the host range for the other rows");
+  assert.ok(/GPT-6 Astra와 GPT-6\.1 Sol은 `low`, `medium`, `high`, `xhigh`, `max`를 지원합니다\./u.test(documents.referenceKo), "Korean reference should state the Astra/Sol host range");
+  assert.ok(/GPT-6 Luna, GPT-6 Sol, GPT-5\.6 계열은 `none`, `low`, `medium`, `high`, `xhigh`, `max`를 지원합니다\. `ultra`를 지원하는 모델은 없습니다\./u.test(documents.referenceKo), "Korean reference should state the host range for the other rows");
+  assert.ok(/GPT-6 Astra and GPT-6\.1 Sol accept `low`, `medium`, `high`, `xhigh`, and `max`; GPT-6 Luna, GPT-6 Sol, and the GPT-5\.6 rows accept `none`, `low`, `medium`, `high`, `xhigh`, and `max`\. No model accepts `ultra`\. A saved route set to `ultra` keeps running as `max`/u.test(documents.migration), "migration docs should state the host ranges");
+  assert.ok(/accepts GPT-6 Luna\/xhigh and GPT-5\.6 Luna\/xhigh, moves a managed route set to `ultra` to `max` with a backup/u.test(documents.checklist), "active checklist should follow the host ranges");
+  for (const text of Object.values(documents)) assert.doesNotMatch(text, /GPT-5\.6 Luna (?:accepts only|는 `high`와 `max`만)/u, "the old GPT-5.6 Luna limit is gone");
   assert.doesNotMatch(documents.reference, /Luna plus `?xhigh` is (?:rejected|forbidden)/iu);
   assert.doesNotMatch(documents.referenceKo, /Luna와 `xhigh` 조합도 허용하지 않습니다/u);
   assert.doesNotMatch(documents.migration, /LUNA plus xhigh is forbidden/iu);

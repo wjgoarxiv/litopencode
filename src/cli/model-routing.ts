@@ -14,6 +14,7 @@ import {
   type ModelProvider
 } from "./model-catalog.ts";
 import type {
+  InstallModelEffort,
   InstallModelRoute,
   InstallModelSelection,
   InstallPermissionChoice,
@@ -169,9 +170,23 @@ async function chooseProvider(reader: PromptReader, title: string, defaultProvid
   return providerMenu[index].provider;
 }
 
+// After a model, the role's effort: every effort the host offers for that model, the
+// recommended one marked, and the current route's effort as the default when it is still offered.
+async function chooseEffort(reader: PromptReader, role: string, row: ModelMenuRow, current: InstallModelEffort | undefined): Promise<InstallModelEffort> {
+  const preferred = current !== undefined && row.efforts.includes(current) ? current : row.effort;
+  const index = await chooseIndex(
+    reader,
+    "Choose the " + role + " reasoning effort for " + row.model + ".",
+    row.efforts.map((effort) => ({ label: effort, hint: effort === row.effort ? "recommended" : "" })),
+    Math.max(0, row.efforts.indexOf(preferred))
+  );
+  return row.efforts[index];
+}
+
 async function chooseRoute(
   reader: PromptReader,
   title: string,
+  role: string,
   provider: ModelProvider,
   defaultIndex: number,
   preferred: InstallModelRoute | undefined
@@ -187,14 +202,10 @@ async function chooseRoute(
     selectedDefault
   );
   const row = rows[index];
-  if (
-    preferred !== undefined &&
-    row.provider === preferred.provider &&
-    row.model === preferredModel
-  ) {
-    return preferred;
-  }
-  return { provider: row.provider, model: row.model, effort: row.effort };
+  const same = preferred !== undefined && row.provider === preferred.provider && row.model === preferredModel;
+  const effort = await chooseEffort(reader, role, row, same ? preferred.effort : undefined);
+  // An existing route keeps its exact model id (a -fast alias included).
+  return same ? { ...preferred, effort } : { provider: row.provider, model: row.model, effort };
 }
 
 function recommendedHelperIndex(provider: ModelProvider): number {
@@ -272,6 +283,7 @@ export async function promptModelSelection(
     const lead = await chooseRoute(
       reader,
       "Choose the LEAD model (plans and reviews).",
+      "LEAD",
       leadProvider,
       0,
       preferredSelection
@@ -285,6 +297,7 @@ export async function promptModelSelection(
     const helper = await chooseRoute(
       reader,
       "Choose the HELPER model (spawned and delegated agents).",
+      "HELPER",
       helperProvider,
       recommendedHelperIndex(helperProvider),
       preferredHelper

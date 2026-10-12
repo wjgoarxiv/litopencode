@@ -44,14 +44,14 @@ test("doctor reports package, config, and state paths without writing runtime fi
 });
 
 test("doctor diagnoses unsafe model routes without rewriting user config", async () => {
-  // Given: a user-owned route file containing low-effort and conflicting Luna overrides.
+  // Given: a user-owned route file with a host effort, one OpenCode does not offer, and a conflict.
   await withTempDir(async (dir) => {
     const filePath = path.join(dir, "litopencode.json");
     const before = JSON.stringify(
       {
         agents: {
           "lit-loop": { provider: "openai", model: "gpt-5.6-luna", variant: "medium" },
-          "lit-librarian": { provider: "openai", model: "gpt-5.6-luna", variant: "low" },
+          "lit-librarian": { provider: "openai", model: "gpt-5.6-luna", variant: "minimal" },
           "lit-explorer": {
             provider: "openai",
             model: "gpt-5.6-luna",
@@ -72,17 +72,10 @@ test("doctor diagnoses unsafe model routes without rewriting user config", async
     assert.equal(result.status, 0, result.stderr);
     const output = JSON.parse(result.stdout);
     assert.deepEqual(output.opencodeConfig.routeDiagnostics, [
-      { agentId: "lit-loop", code: "luna_effort_below_high", model: "openai/gpt-5.6-luna", effort: "medium" },
-      { agentId: "lit-librarian", code: "luna_effort_below_high", model: "openai/gpt-5.6-luna", effort: "low" },
+      { agentId: "lit-librarian", code: "model_effort_unsupported", model: "openai/gpt-5.6-luna", effort: "minimal" },
       {
         agentId: "lit-explorer",
-        code: "luna_xhigh_forbidden",
-        model: "openai/gpt-5.6-luna",
-        effort: "variant=high, reasoningEffort=xhigh"
-      },
-      {
-        agentId: "lit-explorer",
-        code: "luna_effort_conflict",
+        code: "model_effort_conflict",
         model: "openai/gpt-5.6-luna",
         effort: "variant=high, reasoningEffort=xhigh"
       }

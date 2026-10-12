@@ -110,9 +110,13 @@ export function readMissionInput(state: MissionStateSource, sessionID: string, l
   };
 }
 
-export type CardInput = { readonly chips: readonly SkillChip[]; readonly contextPercent: number | null; readonly branch?: string };
+export type CardInput = { readonly chips: readonly SkillChip[]; readonly busy: boolean; readonly contextPercent: number | null; readonly branch?: string };
 
-/** What the band card shows beside the mission: the session's skill chips, context use and git branch. */
+/**
+ * What the band card shows beside the mission: the session's skill chips, whether a turn is running,
+ * context use and git branch. OpenCode keeps each session's last `session.status` ({ type: "busy" },
+ * "retry" or "idle"); a session it has not seen run has none, which counts as not running.
+ */
 export function readCardInput(state: MissionStateSource, sessionID: string): CardInput {
   const messages = state.session.messages(sessionID);
   const uses: SkillUse[] = [];
@@ -126,9 +130,11 @@ export function readCardInput(state: MissionStateSource, sessionID: string): Car
     }
   }
   const status = state.session.status(sessionID)?.type;
+  const busy = status === "busy" || status === "retry";
   const branch = state.vcs?.branch?.trim();
   return {
-    chips: skillChips(uses, { since, busy: status === "busy" || status === "retry" }),
+    chips: skillChips(uses, { since, busy }),
+    busy,
     contextPercent: contextPercent(state, messages),
     ...(branch === undefined || branch === "" ? {} : { branch })
   };

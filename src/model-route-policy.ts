@@ -9,17 +9,13 @@ import {
   openAiModelEfforts,
   previousGenerationOpenAiModels,
   previousGpt6OpenAiModels,
+  replacedRetiredEffort,
   stripFastSuffix
 } from "./cli/model-catalog.ts";
 
 export type ModelRouteDiagnostic = {
   readonly agentId: string;
   readonly code:
-    | "luna_effort_below_high"
-    | "luna_xhigh_forbidden"
-    | "luna_effort_conflict"
-    | "terra_effort_below_high"
-    | "terra_effort_conflict"
     | "astra_effort_unsupported"
     | "astra_effort_conflict"
     | "model_effort_unsupported"
@@ -37,9 +33,15 @@ export type ModelRouteProjection = {
   readonly status: "configured" | "unsafe";
 };
 
-const safeLunaEfforts = new Set<string>(openAiModelEfforts(previousGenerationOpenAiModels.luna));
-const safeTerraEfforts = new Set<string>(openAiModelEfforts(previousGenerationOpenAiModels.terra));
 const safeAstraEfforts = new Set<string>(openAiModelEfforts(defaultOpenAiRoutes.lead.model));
+// The managed rows whose effort is checked; other GPT-5.6 ids stay user-owned as before.
+const guardedModels = new Set<string>([
+  newGenerationOpenAiModels.sol,
+  previousGpt6OpenAiModels.sol,
+  newGenerationOpenAiModels.luna,
+  previousGenerationOpenAiModels.luna,
+  previousGenerationOpenAiModels.terra
+]);
 
 function dispatchedModel(route: LitOpenCodeAgentModelConfig): string | undefined {
   if (route.model === undefined) return undefined;
@@ -96,43 +98,16 @@ export function diagnoseModelRoutes(
       }
       continue;
     }
-    if (modelId === newGenerationOpenAiModels.sol || modelId === previousGpt6OpenAiModels.sol || modelId === newGenerationOpenAiModels.luna) {
-      const supported = new Set<string>(openAiModelEfforts(modelId));
-      const variantUnsafe = route.variant !== undefined && !supported.has(route.variant);
-      const reasoningUnsafe = route.reasoningEffort !== undefined && !supported.has(route.reasoningEffort);
-      if (variantUnsafe || reasoningUnsafe || (route.variant === undefined && route.reasoningEffort === undefined)) {
-        diagnostics.push({ agentId, code: "model_effort_unsupported", model, effort });
-      }
-      if (route.variant !== undefined && route.reasoningEffort !== undefined && route.variant !== route.reasoningEffort) {
-        diagnostics.push({ agentId, code: "model_effort_conflict", model, effort });
-      }
-      continue;
-    }
-    if (modelId === previousGenerationOpenAiModels.luna) {
-      const hasXhigh = route.variant === "xhigh" || route.reasoningEffort === "xhigh";
-      if (
-        (route.variant !== undefined && route.variant !== "xhigh" && !safeLunaEfforts.has(route.variant)) ||
-        (route.reasoningEffort !== undefined && route.reasoningEffort !== "xhigh" && !safeLunaEfforts.has(route.reasoningEffort)) ||
-        (route.variant === undefined && route.reasoningEffort === undefined)
-      ) {
-        diagnostics.push({ agentId, code: "luna_effort_below_high", model, effort });
-      }
-      if (hasXhigh) diagnostics.push({ agentId, code: "luna_xhigh_forbidden", model, effort });
-      if (route.variant !== undefined && route.reasoningEffort !== undefined && route.variant !== route.reasoningEffort) {
-        diagnostics.push({ agentId, code: "luna_effort_conflict", model, effort });
-      }
-      continue;
-    }
-    if (modelId !== previousGenerationOpenAiModels.terra) continue;
-    if (
-      (route.variant !== undefined && !safeTerraEfforts.has(route.variant)) ||
-      (route.reasoningEffort !== undefined && !safeTerraEfforts.has(route.reasoningEffort)) ||
-      (route.variant === undefined && route.reasoningEffort === undefined)
-    ) {
-      diagnostics.push({ agentId, code: "terra_effort_below_high", model, effort });
+    // Each guarded row accepts exactly the efforts OpenCode offers for it.
+    if (!guardedModels.has(modelId)) continue;
+    const supported = new Set<string>(openAiModelEfforts(modelId));
+    const variantUnsafe = route.variant !== undefined && !supported.has(route.variant);
+    const reasoningUnsafe = route.reasoningEffort !== undefined && !supported.has(route.reasoningEffort);
+    if (variantUnsafe || reasoningUnsafe || (route.variant === undefined && route.reasoningEffort === undefined)) {
+      diagnostics.push({ agentId, code: "model_effort_unsupported", model, effort });
     }
     if (route.variant !== undefined && route.reasoningEffort !== undefined && route.variant !== route.reasoningEffort) {
-      diagnostics.push({ agentId, code: "terra_effort_conflict", model, effort });
+      diagnostics.push({ agentId, code: "model_effort_conflict", model, effort });
     }
   }
   return diagnostics;
@@ -165,22 +140,12 @@ export class UnsafeModelRouteError extends Error {
     const summary = diagnostics
       .map((diagnostic) => {
         switch (diagnostic.code) {
-          case "luna_effort_below_high":
-            return `${diagnostic.agentId}: Luna requires high or max (${diagnostic.model}, ${diagnostic.effort})`;
-          case "luna_xhigh_forbidden":
-            return `${diagnostic.agentId}: Luna plus xhigh is forbidden (${diagnostic.model}, ${diagnostic.effort})`;
-          case "luna_effort_conflict":
-            return `${diagnostic.agentId}: Luna effort fields conflict (${diagnostic.model}, ${diagnostic.effort})`;
-          case "terra_effort_below_high":
-            return `${diagnostic.agentId}: TERRA requires high or xhigh (${diagnostic.model}, ${diagnostic.effort})`;
-          case "terra_effort_conflict":
-            return `${diagnostic.agentId}: TERRA effort fields conflict (${diagnostic.model}, ${diagnostic.effort})`;
           case "astra_effort_unsupported":
-            return `${diagnostic.agentId}: Astra requires low, medium, high, xhigh, or max (${diagnostic.model}, ${diagnostic.effort})`;
+            return `${diagnostic.agentId}: Astra requires ${[...safeAstraEfforts].join(", ")} (${diagnostic.model}, ${diagnostic.effort})`;
           case "astra_effort_conflict":
             return `${diagnostic.agentId}: Astra effort fields conflict (${diagnostic.model}, ${diagnostic.effort})`;
           case "model_effort_unsupported":
-            return `${diagnostic.agentId}: ${diagnostic.model} accepts a supported catalog effort (${diagnostic.model}, ${diagnostic.effort})`;
+            return `${diagnostic.agentId}: ${diagnostic.model} accepts ${openAiModelEfforts(unqualifiedModel(diagnostic.model)).join(", ")} (${diagnostic.model}, ${diagnostic.effort})`;
           case "model_effort_conflict":
             return `${diagnostic.agentId}: ${diagnostic.model} effort fields conflict (${diagnostic.model}, ${diagnostic.effort})`;
         }
@@ -197,4 +162,32 @@ export function assertSafeEffectiveAgentRoutes(
 ): void {
   const diagnostics = diagnoseModelRoutes(effectiveAuthoredAgentRoutes(config, agentIds));
   if (diagnostics.length > 0) throw new UnsafeModelRouteError(diagnostics);
+}
+
+export type RetiredEffortRoute = { readonly section: "categories" | "agents"; readonly id: string; readonly model: string };
+
+function isRouteRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** The saved routes in a litopencode.json object that still name an effort OpenCode no longer offers. */
+export function retiredEffortRoutes(config: unknown): readonly RetiredEffortRoute[] {
+  const found: RetiredEffortRoute[] = [];
+  if (!isRouteRecord(config)) return found;
+  for (const section of ["categories", "agents"] as const) {
+    const entries = config[section];
+    if (!isRouteRecord(entries)) continue;
+    for (const [id, route] of Object.entries(entries)) {
+      if (!isRouteRecord(route) || typeof route.model !== "string") continue;
+      const provider = typeof route.provider === "string" ? route.provider : undefined;
+      const effort = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
+      if (replacedRetiredEffort(provider, route.model, effort(route.variant)) === undefined && replacedRetiredEffort(provider, route.model, effort(route.reasoningEffort)) === undefined) continue;
+      found.push({ section, id, model: route.model.slice(route.model.indexOf("/") + 1) });
+    }
+  }
+  return found;
+}
+
+export function retiredEffortWarning(route: RetiredEffortRoute): string {
+  return `ultra is no longer offered by OpenCode for ${route.model} (${route.section}.${route.id}); the next install moves it to max.`;
 }

@@ -40,12 +40,12 @@ test("interactive chooser offers only the contract provider and model rows", asy
   });
 });
 
-test("explicit Luna selection rejects effort below high without writing config", async () => {
-  // Given: a fresh isolated root and a Luna route below the supported effort floor.
+test("an explicit effort the model does not offer is refused without writing config", async () => {
+  // Given: a fresh isolated root and an Astra route with an effort OpenCode does not list for Astra.
   await withTempDir(async (dir) => {
     const filePath = path.join(dir, "litopencode.json");
 
-    // When: deterministic flags request Luna/medium.
+    // When: deterministic flags request Astra/none.
     const result = runCli([
       "install",
       "--root",
@@ -53,14 +53,14 @@ test("explicit Luna selection rejects effort below high without writing config",
       "--provider",
       "openai",
       "--model",
-      "gpt-5.6-luna",
+      "gpt-6-astra",
       "--effort",
-      "medium"
+      "none"
     ]);
 
     // Then: validation fails before any route file is written.
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /Luna.*high.*max/i);
+    assert.match(result.stderr, /gpt-6-astra accepts effort low, medium, high, xhigh, max \(got none\)/u);
     await assert.rejects(fs.stat(filePath), { code: "ENOENT" });
   });
 });
