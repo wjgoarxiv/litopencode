@@ -5,6 +5,16 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.21 - 2026-10-12
+
+- The README demo on GitHub is a new film of one real OpenCode turn. It plays without music, and a numbered label names each part LitOpenCode adds as it appears: the `lit` word, the status card switching to WORK, the light mode for a small fix, the reply that reads before editing, the fix with its test, the real test run and the closing summary.
+- The README now shows the LIT status card as it looks in OpenCode: quiet before the first lit prompt, bright skill chips while a request runs, and dimmed recent chips after the turn. It also walks through automatic handoff with pictures of the `lit-handoff auto` messages, the message and toast when the handoff runs, and the doctor block, in English and Korean.
+- The quick start has a short prompt to paste into a coding agent so it installs LitOpenCode for you. The agent checks the requirements, shows a dry run and asks before installing, runs `litopencode doctor`, and reminds you to restart OpenCode.
+- The LIT card along the bottom of the screen no longer stays on WORK after the agent has finished. When the session's turn ends it settles to `○ IDLE`, no step stays lit and the skill chips dim to the recent list; a subagent finishing does not change the main card, and your next prompt brings WORK back.
+- Install now asks for a reasoning effort after each model, for the lead and the helpers, and lists every effort OpenCode offers for that model with the recommended one marked as the default. GPT-6 Astra and GPT-6.1 Sol offer low to max; GPT-6 Luna, GPT-6 Sol and the GPT-5.6 models offer none to max, so GPT-5.6 Luna can now use xhigh. OpenCode offers `ultra` for no model, so it is no longer offered either. A route you saved with `ultra` keeps working as `max`, `litopencode doctor` warns about it, and the next install changes it to `max` with a one-line notice after backing up `litopencode.json`.
+- `litopencode doctor` now reads the automatic handoff setting from your project, the same place LitOpenCode itself uses, so a `lit-handoff auto on 70` sent in chat shows up in doctor. Run it from the project folder.
+- lit-pptx now installs sharp 0.35.5, and the readme-studio motion templates use sharp 0.35.5 and source-map-js 1.2.2.
+
 ## 1.0.20 - 2026-10-12
 
 - The band along the bottom of OpenCode's main screen is now a small card that stays on screen for the whole session. The top edge shows LIT, the current workflow and its phase. The first row shows PLAN ━ WORK ━ REVIEW with the goal and the next task. The second row shows a chip for each LitOpenCode skill that ran: skills used by the current request are bright and get a short shine as they appear, then dim into a recent list when the answer is done, and extra chips fold into `+N`. The bottom edge shows context use, elapsed time and the git branch. Before you use lit in a session, the card shows the project's last goal. `band: false` still hides it and `band: { card: true }` still adds the detail card.
