@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.20 Release Scope
+
+- The band along the bottom of OpenCode's main screen is now a small card that stays on screen for the whole session. The top edge shows LIT, the current workflow and its phase. The first row shows PLAN ━ WORK ━ REVIEW with the goal and the next task. The second row shows a chip for each LitOpenCode skill that ran: skills used by the current request are bright and get a short shine as they appear, then dim into a recent list when the answer is done, and extra chips fold into `+N`. The bottom edge shows context use, elapsed time and the git branch. Before you use lit in a session, the card shows the project's last goal. `band: false` still hides it and `band: { card: true }` still adds the detail card.
+
 ## 1.0.19 Release Scope
 
 - The README is shorter for first-time readers. It says what LitOpenCode does, how to install it and what to type first, and the detail now lives in docs pages (guide, skills, screens and brand) in English and Korean. The GitHub page also plays a short film of a real session.

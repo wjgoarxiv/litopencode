@@ -5,7 +5,9 @@ are tracked separately from this product history.
 
 ## Unreleased
 
-- The band along the bottom of OpenCode's main screen is now a status card that stays on screen for the whole session. Its border carries the LIT mark, the discipline and the phase; one row shows the PLAN ━ WORK ━ REVIEW track with the goal and the next task, the other shows chips for the LitOpenCode skills that fired. Skills from the current request are bright and get a short light sweep as they arrive, then dim to a recent list when the turn ends; extra chips fold into `+N`. The bottom border shows context use, elapsed time and the git branch. Before any lit turn the card shows the project's last goal. `band: false` still hides it and `band: { card: true }` still adds the detail card.
+## 1.0.20 - 2026-10-12
+
+- The band along the bottom of OpenCode's main screen is now a small card that stays on screen for the whole session. The top edge shows LIT, the current workflow and its phase. The first row shows PLAN ━ WORK ━ REVIEW with the goal and the next task. The second row shows a chip for each LitOpenCode skill that ran: skills used by the current request are bright and get a short shine as they appear, then dim into a recent list when the answer is done, and extra chips fold into `+N`. The bottom edge shows context use, elapsed time and the git branch. Before you use lit in a session, the card shows the project's last goal. `band: false` still hides it and `band: { card: true }` still adds the detail card.
 
 ## 1.0.19 - 2026-10-11
 

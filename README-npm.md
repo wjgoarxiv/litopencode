@@ -1,13 +1,13 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: five armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
 
 # LitOpenCode
 
 **LitOpenCode is a workflow plugin for OpenCode. Add `lit` to a prompt and the work gets planned, built, checked and written down, so the next session knows where you stopped.**
 
 <p align="center">
-<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/docs/assets/readme/badge-version.svg" alt="1.0.19" /></a>
+<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/docs/assets/readme/badge-version.svg" alt="1.0.20" /></a>
 <a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://img.shields.io/npm/dm/@litfamily/litopencode?label=downloads&color=D7F75B" alt="npm downloads per month" /></a>
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
+<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub stars" /></a>
 </p>
 
@@ -57,9 +57,9 @@ npm uninstall -g @litfamily/litopencode
 ## More
 
 - [Guide on GitHub](https://github.com/wjgoarxiv/litopencode/blob/main/docs/guide.md): install options, automatic handoff, troubleshooting and removal.
-- [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/docs/reference.md)
-- [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/CHANGELOG.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/docs/privacy.md)
-- [LitFamily hub](https://github.com/wjgoarxiv/litfamily) · [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/LICENSE) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.19/docs/assets/readme/JetBrainsMono-OFL.txt)
+- [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/docs/reference.md)
+- [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/CHANGELOG.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/docs/privacy.md)
+- [LitFamily hub](https://github.com/wjgoarxiv/litfamily) · [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/LICENSE) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.20/docs/assets/readme/JetBrainsMono-OFL.txt)
 
 <details>
 <summary>Copy ASCII logo</summary>
