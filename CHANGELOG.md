@@ -5,6 +5,10 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.23 - 2026-10-13
+
+- The README demo on GitHub is a new film of one real OpenCode turn with the workflow map. A numbered label names each part as it appears: the `lit` word, the LIT IGNITED toast, the card's map skipping interview and plan to light WORK, the new test, the running tool and its time beside the map (`bash · 0:00` while `npm test` runs), the passing test run and the card settling to IDLE when the turn ends. It still plays without music.
+
 ## 1.0.22 - 2026-10-13
 
 - The LIT card, the chip beside the prompt and the sidebar now show where you are in the workflow, not only which skill ran. A map runs `interview › plan › work › review › done` and lights the step you are on with its count, such as `WORK 3/7` while `/start-work` works through a saved plan. A lit-loop goal counts its criteria instead (`CRITERION 1/3`), and a litresearch run follows its own steps from `decompose` through each `wave` to `synthesis`. A step the request went past without doing shows `–`. The sidebar draws the map top to bottom with a line that fills as you move forward.
