@@ -43,7 +43,8 @@ test("a session without a lit mark is idle, even on the default lit-loop agent, 
 test("phases follow the marks: planning, a saved plan, then work with todo progress and the next item", () => {
   const planning = buildMissionView({ marks: [{ at: 1, mode: "lit-plan" }], todos: [], now });
   assert.equal(planning.phase, "plan");
-  assert.deepEqual(planning.steps.map((step) => step.state), ["now", "todo", "todo"]);
+  assert.deepEqual(planning.steps.map((step) => step.id), ["interview", "plan", "work", "review", "done"]);
+  assert.deepEqual(planning.steps.map((step) => step.state), ["skip", "now", "todo", "todo", "todo"]);
 
   const working = buildMissionView({
     marks: [{ at: 1, mode: "lit-plan" }, { at: 2, command: "lit-plan", operation: "save-plan" }, { at: 3, mode: "start-work" }],
@@ -58,15 +59,15 @@ test("phases follow the marks: planning, a saved plan, then work with todo progr
   });
   assert.equal(working.phase, "work");
   assert.equal(working.planSaved, true);
-  assert.deepEqual(working.steps.map((step) => step.state), ["done", "now", "todo"]);
+  assert.deepEqual(working.steps.map((step) => step.state), ["skip", "done", "now", "todo", "todo"]);
   assert.deepEqual(working.progress, { done: 2, total: 4 });
   assert.equal(working.next, "README 데모 GIF 교체");
 });
 
 test("a bounded lit-task never claims a plan it did not make", () => {
   const view = buildMissionView({ marks: [{ at: 1, mode: "lit-task" }], todos: [], now });
-  assert.deepEqual(view.steps.map((step) => step.state), ["skip", "now", "todo"]);
-  assert.match(text(chipLine(view, resting, palette, 80)), /PLAN –/u);
+  assert.deepEqual(view.steps.map((step) => step.state), ["skip", "skip", "now", "todo", "todo"]);
+  assert.match(text(chipLine(view, resting, palette, 80)), /plan –/u);
 });
 
 test("the ledger supplies goal, criteria progress, the next criterion and an evidence timeline", () => {
@@ -110,7 +111,7 @@ test("open review blockers, retries, pending permission and a full context turn 
     now
   });
   assert.equal(view.phase, "review");
-  assert.deepEqual(view.steps.map((step) => step.state), ["skip", "done", "warn"]);
+  assert.deepEqual(view.steps.map((step) => step.state), ["skip", "skip", "done", "warn", "todo"]);
   assert.deepEqual(view.warnings.map((warning) => warning.kind), ["blocker", "retry", "permission", "context"]);
   assert.equal(view.warnings.at(-1)?.text, "ctx 76%");
 
@@ -121,7 +122,7 @@ test("open review blockers, retries, pending permission and a full context turn 
     now
   });
   assert.equal(unfinished.phase, "work");
-  assert.deepEqual(unfinished.steps.map((step) => step.state), ["skip", "warn", "todo"]);
+  assert.deepEqual(unfinished.steps.map((step) => step.state), ["skip", "skip", "warn", "todo", "todo"]);
 });
 
 test("a completed goal is the done phase, and the transition toasts once with the completion moment", () => {
@@ -129,7 +130,7 @@ test("a completed goal is the done phase, and the transition toasts once with th
   const after = buildMissionView({ marks: [{ at: 1, mode: "lit-loop" }], todos: [], ledger: ledger({ status: "complete", criteria: [criterion("C1", "pass")] }), now });
   assert.equal(after.phase, "done");
   assert.equal(after.complete, true);
-  assert.deepEqual(after.steps.map((step) => step.state), ["skip", "done", "done"]);
+  assert.deepEqual(after.steps.map((step) => step.state), ["skip", "skip", "done", "done", "done"]);
   const notices = missionNotices(before, after);
   assert.equal(notices.length, 1);
   assert.equal(notices[0].celebrate, true);
@@ -206,14 +207,16 @@ test("every panel row fits inside the rounded box, Hangul-heavy content and ever
 test("the panel box: phase title, criteria bottom title, and a border that carries the state", () => {
   const working = buildMissionView({ marks: [{ at: 1, mode: "lit-loop" }], todos: [], ledger: ledger({ criteria: [criterion("C1", "pass"), criterion("C2", "pending"), criterion("C3", "pending")] }), now });
   const box = missionPanel(working, restingFrameFor(working), palette);
-  assert.equal(box.title, " 🔥 LIT ▸ WORK ");
+  assert.equal(working.family, "loop", "lit-loop counting criteria is the loop family");
+  assert.equal(box.title, " 🔥 LIT ▸ CRITERION ");
   assert.equal(box.bottomTitle, " 1/3 criteria ");
   assert.equal(box.border, palette.accent);
   assert.equal(box.background, undefined, "the default palette has no opaque panel token");
   assert.equal(text(box.rows[3]), "HUD를 짧게 만들기");
   assert.match(text(box.rows[0]), /^█   █ ▀█▀  lit-loop/u);
   assert.match(text(box.rows[1]), /^█▄▄ █  █   ● active/u);
-  assert.match(text(box.rows[5]), /^█{10}[▏▎▍▌▋▊▉]?─+$/u);
+  assert.deepEqual(box.rows.slice(4, 13).map(text), ["◇ interview –", "┃", "◇ plan –", "┃", "◉ criterion 1/3", "┆", "◇ review", "┆", "◇ done"]);
+  assert.match(text(box.rows[13]), /^█{10}[▏▎▍▌▋▊▉]?─+$/u);
 
   const blocked = buildMissionView({ marks: [{ at: 1, mode: "lit-loop" }], todos: [], ledger: ledger({ criteria: [criterion("C1", "pass")], reviewBlockers: [{ id: "B1", detail: "d", resolved: false, needsUserDecision: false }] }), now });
   const amber = missionPanel(blocked, restingFrameFor(blocked), palette);
@@ -228,17 +231,23 @@ test("the panel box: phase title, criteria bottom title, and a border that carri
   assert.equal(green.border, palette.success);
   assert.match(text(green.rows[1]), /✓ COMPLETE/u);
 });
-test("the chip is pills in phase order with a micro bar and sheds labels before values as it narrows", () => {
+test("the chip is the breadcrumb around the running stage with a gradient bar and sheds labels before values as it narrows", () => {
   const view = buildMissionView({ marks: [{ at: 1, mode: "lit-plan" }, { at: 2, command: "lit-plan", operation: "save-plan" }], todos: [{ content: "a", status: "completed" }, { content: "b", status: "pending" }], now });
-  assert.equal(text(chipLine(view, resting, palette, 80)), " 🔥 LIT   PLAN ✓  ›  WORK 1/2  ›  REVIEW  ▰▰▰▱▱");
+  assert.equal(text(chipLine(view, resting, palette, 80)), " 🔥 LIT  plan ✓ ›  WORK  ▰▰▰▰▱▱▱ 1/2 › review");
   assert.equal(chipTier(view, resting, palette, 80), "full");
   assert.equal(chipTier(view, resting, palette, 36), "medium");
-  assert.equal(text(chipLine(view, resting, palette, 36)), "🔥  WORK 1/2  ›  REVIEW  ▰▰▰▱▱");
+  assert.equal(text(chipLine(view, resting, palette, 36)), "🔥  WORK  ▰▰▰▱▱ 1/2 › review");
   assert.equal(chipTier(view, resting, palette, 16), "tight");
-  assert.equal(text(chipLine(view, resting, palette, 16)), "🔥  1/2  ▰▰▰▱▱");
+  assert.equal(text(chipLine(view, resting, palette, 16)), "🔥  1/2 ");
   for (const budget of [16, 36, 80]) assert.ok(lineWidth(chipLine(view, resting, palette, budget)) <= budget, String(budget));
+  const line = chipLine(view, resting, palette, 80);
+  const plan = line.find((segment) => segment.text === "plan ✓");
+  assert.equal(plan.fg, mixHex(palette.primary, palette.secondary, 0.5), "each stage takes its place on the primary-secondary-accent ramp");
+  const filled = line.filter((segment) => segment.text === "▰").map((segment) => segment.fg);
+  assert.equal(filled[0], palette.primary);
+  assert.notEqual(filled.at(-1), palette.primary, "the bar runs along the primary-secondary-accent ramp");
   const blocked = buildMissionView({ marks: [{ at: 1, mode: "lit-loop" }], todos: [], ledger: ledger({ criteria: [criterion("C1", "pass"), criterion("C2", "pending")], reviewBlockers: [{ id: "B1", detail: "d", resolved: false, needsUserDecision: false }] }), now });
-  assert.match(text(chipLine(blocked, restingFrameFor(blocked), palette, 80)), / WORK ⚑ 1\/2 /u);
+  assert.match(text(chipLine(blocked, restingFrameFor(blocked), palette, 80)), / CRITERION ⚑ .* 1\/2/u);
   assert.match(text(chipLine(blocked, restingFrameFor(blocked), palette, 16)), /⚑ 1\/2/u);
 });
 
@@ -318,8 +327,8 @@ test("a warning cross-fades in 140 ms and slides its row in; the completion mome
   assert.equal(at(motionTiming.complete).moving, false);
   assert.equal(at(motionTiming.complete).celebrate, undefined);
   assert.equal(motionTiming.complete <= 1200, true);
-  assert.match(text(chipLine(done, at(100), palette, 80)), / WORK 2\/2 /u, "WORK flips to done at 200 ms");
-  assert.match(text(chipLine(done, at(400), palette, 80)), / WORK 2\/2 ✓ .* REVIEW ✓ /u);
+  assert.match(text(chipLine(done, at(100), palette, 80)), / CRITERION .* 2\/2 › review › done/u, "the running stage flips to done at 200 ms");
+  assert.match(text(chipLine(done, at(400), palette, 80)), /criterion 2\/2 ✓ › review ✓ › done ✓/u);
   const pop = missionPanel(done, at(600), palette);
   assert.match(text(pop.rows[1]), /✓ COMPLETE/u);
   assert.ok(pop.rows[1].some((segment) => segment.bg !== undefined), "COMPLETE is a filled pill while it pops");

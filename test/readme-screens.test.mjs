@@ -121,15 +121,21 @@ test("on-screen captions say whether a picture is a capture or a sample", async 
 });
 
 test("the README status card pictures show what the shipped card draws, and stay out of the package", async () => {
-  const now = Date.parse("2026-10-12T07:05:00.000Z");
-  const working = buildMissionView({ marks: [{ at: now - 20_000, mode: "lit-humanizer" }], todos: [], ledger: undefined, now, agent: "lit-loop" });
+  // The pictures are real OpenCode 1.18.35 captures at 100 columns (a 98-cell card); the same states
+  // drawn from the shipped card code must carry every string the alt text names.
+  const now = Date.parse("2026-10-13T08:05:00.000Z");
+  const criterion = (id, scenario, status) => ({ id, scenario, qaChannel: "", testRef: "", status, evidence: [] });
+  const ledger = { version: 1, activeGoalId: "G1", goals: [{ id: "G1", sessionId: "ses_demo", objective: "Add a --lang es option that prints Hola", title: "Spanish greeting", status: "active", createdAt: "2026-10-13T08:04:30.000Z", updatedAt: "2026-10-13T08:04:40.000Z", criteria: [criterion("C1", "node greet.js --lang es prints Hola, world!", "pass"), criterion("C2", "the default greeting is unchanged", "pending"), criterion("C3", "npm test passes with a Spanish test", "pending")], checkpoints: [{ id: "k1", at: "2026-10-13T08:04:41.000Z", summary: "C1 green" }], steering: [], reviewBlockers: [] }] };
+  const marks = [{ at: now - 20_000, mode: "lit-loop" }];
+  const working = buildMissionView({ marks, todos: [], ledger, sessionStatus: "busy", live: { tool: "bash", start: now - 9_000 }, now, agent: "lit-loop" });
+  const after = buildMissionView({ marks, todos: [], ledger, sessionStatus: "idle", now, agent: "lit-loop" });
   const idle = buildMissionView({ marks: [], todos: [], ledger: undefined, now });
-  const draw = (view, chips, contextPercent, busy) => statusCard({ view, frame: restingFrameFor(view), chips, ...(busy === undefined ? {} : { busy }), figures: { contextPercent, branch: "main", inLane: false } }, paletteFromTheme(undefined), 80)
-    .map((row) => row.map((segment) => segment.text).join("").replace(/[─│╭╮╰╯]/gu, " ").replace(/ +/gu, " "));
+  const draw = (view, chips, contextPercent, busy) => statusCard({ view, frame: restingFrameFor(view, now), chips, ...(busy === undefined ? {} : { busy }), figures: { contextPercent, branch: "main", inLane: false } }, paletteFromTheme(undefined), 98)
+    .map((row) => row.map((segment) => segment.text).join("").replace(/[╭╰]─|─[╮╯]|─{2,}/gu, " ").replace(/[│╭╮╰╯]/gu, " ").replace(/ +/gu, " "));
   const cards = {
-    idle: { rows: draw(idle, [], 4), strings: ["🔥 LIT · ready", "○ IDLE", "add lit to a prompt to start", "skills none yet", "ctx 4% · ⎇ main"] },
-    working: { rows: draw(working, [{ name: "lit-humanizer", current: true }, { name: "lit-diagram-drawer", current: true }, { name: "debugging", current: false }], 6, true), strings: ["🔥 LIT · lit-humanizer", "● WORK", "lit-humanizer", "lit-diagram-drawer", "debugging", "ctx 6% · ⟳ 0m · ⎇ main"] },
-    recent: { rows: draw(working, [{ name: "lit-diagram-drawer", current: false }, { name: "lit-humanizer", current: false }, { name: "debugging", current: false }], 7, false), strings: ["🔥 LIT · lit-humanizer", "○ IDLE", "lit-diagram-drawer, lit-humanizer, debugging", "ctx 7% · ⟳ 0m · ⎇ main"] }
+    idle: { rows: draw(idle, [], 4), strings: ["🔥 LIT · ready", "○ IDLE", "interview ─ plan ─ work ─ review ─ done", "add lit to a prompt to start", "skills none yet", "ctx 4% · ⎇ main"] },
+    working: { rows: draw(working, [{ name: "lit-loop", current: true }], 4, true), strings: ["🔥 LIT · lit-loop", "● CRITERION", "interview – ━ plan – ━ CRITERION 1/3 ─ review ─ done", "bash · 0:09", "skills lit-loop", "ctx 4% · ⟳ 0m · ⎇ main"] },
+    recent: { rows: draw(after, [{ name: "lit-loop", current: false }], 6, false), strings: ["🔥 LIT · lit-loop", "○ IDLE", "interview – ━ plan – ━ criterion ─ review ─ done", "▸ C2 the default greeting", "ctx 6% · ⟳ 0m · ⎇ main"] }
   };
   const ignore = await fs.readFile(".npmignore", "utf8");
   for (const [state, { rows, strings }] of Object.entries(cards)) {
@@ -146,6 +152,7 @@ test("the README status card pictures show what the shipped card draws, and stay
         if (readme === "README.md") assert.ok(tag[1].includes(text), `${readme}: ${state} alt names "${text}"`);
         assert.ok(rows.join(" ").includes(text.split(", ")[0]), `${state}: "${text}" comes from the shipped card`);
       }
+      assert.doesNotMatch(tag[1], /PLAN ━ WORK ━ REVIEW/u, `${readme}: the ${state} picture shows the workflow map, not the old three-step track`);
     }
   }
   for (const file of npmReadmes) assert.doesNotMatch(await fs.readFile(file, "utf8"), /status-card-/u, `${file} does not embed the card pictures`);

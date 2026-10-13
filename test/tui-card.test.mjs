@@ -96,7 +96,7 @@ test("the card is four rows of exactly the given width: border title, phase trac
   for (const line of lines) assert.equal(lineWidth(line), 120);
   const [top, track, skills, bottom] = lines.map(text);
   assert.match(top, /^╭─ 🔥 LIT · lit-task ─+ ● WORK ─╮$/u);
-  assert.match(track, /^│  PLAN –  ━  WORK 1\/3  ━  REVIEW   [█▏▎▍▌▋▊▉─]{16}  1\/3 criteria  ▸ C2 C2 README links hello\.txt +│$/u);
+  assert.match(track, /^│ interview – ━ plan – ━  WORK  1\/3 ─ review ─ done  [█▏▎▍▌▋▊▉─]{16}  1\/3 criteria  ▸ C2 C2 README links hello\.txt +│$/u);
   assert.match(skills, /^│ skills  lit-task   lit-pptx   debugging  +│$/u);
   assert.match(bottom, /^╰─+ ctx 34% · ⟳ 7m · ⎇ feat\/card ─╯$/u);
 });
@@ -110,7 +110,7 @@ test("an idle session keeps the same four rows with the last goal, recent skills
   for (const line of lines) assert.equal(lineWidth(line), 120);
   const [top, track, skills, bottom] = lines.map(text);
   assert.match(top, /^╭─ 🔥 LIT · ready ─+ ○ IDLE ─╮$/u);
-  assert.match(track, /^│  PLAN  ━  WORK  ━  REVIEW   last: hello\.txt 인사말 만들기 ✓ 2\/2 +│$/u);
+  assert.match(track, /^│ interview ─ plan ─ work ─ review ─ done  last: hello\.txt 인사말 만들기 ✓ 2\/2 +│$/u);
   assert.match(skills, /^│ skills  lit-pptx  +│$/u);
   assert.match(bottom, /^╰─+ ctx 34% · ⎇ feat\/card ─╯$/u, "an idle session has no elapsed time");
   const empty = statusCard({ view: idle, frame: restingFrameFor(idle), chips: [], figures: { contextPercent: null, inLane: false } }, palette, 120).map(text);
@@ -140,7 +140,7 @@ test("narrow widths shed the next text, bar width, the bar, the criteria and the
   const wideBar = lastWidthWith(1, /[█▏▎▍▌▋▊▉─]{16}/u);
   const anyBar = lastWidthWith(1, /[█▏▎▍▌▋▊▉]/u);
   const criteria = lastWidthWith(1, /criteria/u);
-  const labels = lastWidthWith(1, /PLAN/u);
+  const labels = lastWidthWith(1, /plan/u);
   assert.ok(next > wideBar && wideBar > anyBar && anyBar > criteria && criteria > labels, JSON.stringify({ next, wideBar, anyBar, criteria, labels }));
   const branch = lastWidthWith(3, /⎇/u);
   const time = lastWidthWith(3, /⟳/u);
@@ -226,7 +226,7 @@ test("the card settles to idle when the root session's turn ends, ignores a fini
     const input = readCardInput(state, "root");
     return { input, rows: statusCard({ view: working, frame: restingFrameFor(working), chips: input.chips, busy: input.busy, figures }, palette, 120) };
   };
-  const workPill = (rows) => rows[1].find((segment) => segment.text.includes("WORK"));
+  const workPill = (rows) => rows[1].find((segment) => /work/iu.test(segment.text));
 
   let { input, rows } = draw();
   assert.equal(input.busy, true, "a finished child leaves the root card working");

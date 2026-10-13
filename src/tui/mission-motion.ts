@@ -1,6 +1,6 @@
 // Motion for the mission chip and panel. Everything here is a pure function of a clock value, so the
 // TUI only runs a frame timer while one of these tracks is still moving and stays static otherwise.
-import { missionRowKeys, type MissionView } from "./mission-model.ts";
+import { currentStepIndex, missionRowKeys, type MissionView } from "./mission-model.ts";
 
 export const motionTiming = Object.freeze({
   stagger: 60,
@@ -75,6 +75,10 @@ export type MotionState = {
   readonly warnFrom: number;
   readonly warnTo: number;
   readonly celebrate: boolean;
+  /** The stage index the map moved forward from; the connectors below it fill and the chip flashes once. */
+  readonly stageFrom?: number;
+  /** The stage that was running when the mission completed; it and the stages after it flip to done in turn. */
+  readonly celebrateFrom?: number;
 };
 
 export type MotionFrame = {
@@ -87,6 +91,11 @@ export type MotionFrame = {
   readonly warn: number;
   /** Milliseconds into the completion moment while it plays, otherwise undefined. */
   readonly celebrate?: number;
+  readonly celebrateFrom?: number;
+  /** While a stage change plays: the stage index the map moved forward from. */
+  readonly stageFrom?: number;
+  /** The clock this frame was sampled at, for the live step's elapsed time. */
+  readonly now?: number;
   readonly moving: boolean;
 };
 
@@ -128,6 +137,7 @@ function settleTime(state: MotionState): number {
   if (state.chipEnter) end = Math.max(end, 3 * motionTiming.stagger + motionTiming.entry);
   if (state.barFrom !== state.barTo) end = Math.max(end, state.barDelay + motionTiming.fill);
   if (state.celebrate) end = Math.max(end, motionTiming.complete);
+  if (state.stageFrom !== undefined) end = Math.max(end, motionTiming.shimmer);
   return end;
 }
 
@@ -148,8 +158,12 @@ export function planMotion(
   const current = sampleMotion(state, now);
   const appearing = prev === undefined || !prev.active;
   const before = new Set(appearing ? [] : missionRowKeys(prev));
-  const entering = missionRowKeys(next).filter((key) => !before.has(key));
+  // The live step changes with every tool call, so its row appears in place instead of sliding in.
+  const entering = missionRowKeys(next).filter((key) => !before.has(key) && key !== "live");
   const goalArrived = !appearing && prev?.goal === undefined && next.goal !== undefined;
+  const from = appearing || prev === undefined ? -1 : currentStepIndex(prev);
+  const to = currentStepIndex(next);
+  const celebrate = !appearing && prev?.complete !== true && next.complete;
   return {
     changeAt: now,
     entering,
@@ -159,13 +173,15 @@ export function planMotion(
     barDelay: goalArrived || appearing ? motionTiming.fillDelayOnGoal : 0,
     warnFrom: appearing ? nextWarn : current.warn,
     warnTo: nextWarn,
-    celebrate: !appearing && prev?.complete !== true && next.complete
+    celebrate,
+    ...(from >= 0 && to > from && prev?.family === next.family ? { stageFrom: from } : {}),
+    ...(celebrate && from >= 0 ? { celebrateFrom: from } : {})
   };
 }
 
 export function sampleMotion(state: MotionState, now: number): MotionFrame {
   if (state.changeAt === undefined) {
-    return { t: Number.POSITIVE_INFINITY, entering: [], chipEnter: false, barRatio: state.barTo, warn: state.warnTo, moving: false };
+    return { t: Number.POSITIVE_INFINITY, entering: [], chipEnter: false, barRatio: state.barTo, warn: state.warnTo, now, moving: false };
   }
   const t = now - state.changeAt;
   const moving = t < settleTime(state);
@@ -177,11 +193,13 @@ export function sampleMotion(state: MotionState, now: number): MotionFrame {
     chipEnter: moving && state.chipEnter,
     barRatio: clamp01(state.barFrom + (state.barTo - state.barFrom) * fill),
     warn: clamp01(state.warnFrom + (state.warnTo - state.warnFrom) * fade),
-    ...(moving && state.celebrate ? { celebrate: t } : {}),
+    ...(moving && state.celebrate ? { celebrate: t, ...(state.celebrateFrom === undefined ? {} : { celebrateFrom: state.celebrateFrom }) } : {}),
+    ...(moving && state.stageFrom !== undefined ? { stageFrom: state.stageFrom } : {}),
+    now,
     moving
   };
 }
 
-export function restingFrameFor(view: MissionView): MotionFrame {
-  return { t: Number.POSITIVE_INFINITY, entering: [], chipEnter: false, barRatio: ratio(view), warn: warnTarget(view), moving: false };
+export function restingFrameFor(view: MissionView, now?: number): MotionFrame {
+  return { t: Number.POSITIVE_INFINITY, entering: [], chipEnter: false, barRatio: ratio(view), warn: warnTarget(view), ...(now === undefined ? {} : { now }), moving: false };
 }

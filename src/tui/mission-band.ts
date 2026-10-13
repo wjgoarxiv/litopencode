@@ -4,20 +4,23 @@
 // It reuses the chip's pills, the panel's bar and the shared motion frame, so the chip, the panel and
 // the band always move together.
 import { ease, mixHex, motionTiming, seg, type MotionFrame } from "./mission-motion.ts";
-import { contextWarnPercent, missionStatus, type MissionView } from "./mission-model.ts";
+import { contextWarnPercent, currentStepIndex, missionStatus, stepName, type MissionView } from "./mission-model.ts";
 import type { ChipShimmer, SkillChip } from "./mission-skills.ts";
 import {
   cellWidth,
   chipSparkCells,
   chipSparkWidth,
+  crumb,
   fade,
   lineWidth,
+  linkColor,
+  liveSegments,
   missionPanel,
   progressBar,
   shimmerAt,
   shine,
+  stageFlash,
   statusSegments,
-  stepPill,
   truncateCells,
   type LastMission,
   type Line,
@@ -38,6 +41,23 @@ export function readBandOptions(options: unknown): BandOptions {
   return { enabled: true, card };
 }
 
+export type NotifyOptions = { readonly enabled: boolean; readonly desktop: boolean; readonly sound: boolean };
+
+/**
+ * Reads the finish alert switch from the plugin's tui.json options. It is off unless `notify` is true
+ * (desktop notification and the host's `done` sound) or an object that turns either part off with
+ * `desktop: false` or `sound: false`.
+ */
+export function readNotifyOptions(options: unknown): NotifyOptions {
+  const notify = typeof options === "object" && options !== null ? (options as Record<string, unknown>).notify : undefined;
+  if (notify === true) return { enabled: true, desktop: true, sound: true };
+  if (typeof notify !== "object" || notify === null) return { enabled: false, desktop: false, sound: false };
+  const record = notify as Record<string, unknown>;
+  const desktop = record.desktop !== false;
+  const sound = record.sound !== false;
+  return { enabled: desktop || sound, desktop, sound };
+}
+
 const minimumText = 12;
 
 function elapsedText(minutes: number | undefined): string {
@@ -45,7 +65,10 @@ function elapsedText(minutes: number | undefined): string {
   return total < 60 ? `${total}m` : `${Math.floor(total / 60)}h${String(total % 60).padStart(2, "0")}`;
 }
 
-/** The text after the bar: a warning (⚑ and words) replaces the next task; a finished mission shows COMPLETE. */
+/**
+ * The text after the bar: a warning (⚑ and words) replaces the live step and the next task; a finished
+ * mission shows COMPLETE. Otherwise the live step, then the next task when it still has room.
+ */
 function trailing(view: MissionView, frame: MotionFrame, palette: MissionPalette, room: number): Segment[] {
   if (view.complete) {
     // Before COMPLETE pops in, the slot stays empty rather than flashing the header's "● active".
@@ -59,8 +82,11 @@ function trailing(view: MissionView, frame: MotionFrame, palette: MissionPalette
     const color = warning.kind === "retry" ? mixHex(palette.warning, palette.error, 0.5) : palette.warning;
     return [{ text: "  ⚑ ", fg: color, bold: true }, { text: truncateCells(warning.text, room - 4), fg: color }];
   }
-  if (view.next === undefined) return [];
-  return [{ text: "  ▸ ", fg: palette.muted }, { text: truncateCells(view.next, room - 4), fg: palette.text }];
+  const live = liveSegments(view, frame, palette, Math.min(28, room - 2));
+  const lead: Segment[] = live.length === 0 ? [] : [{ text: "  ", fg: palette.muted }, ...live];
+  const left = room - lineWidth(lead);
+  if (view.next === undefined || left < minimumText) return lead;
+  return [...lead, { text: "  ▸ ", fg: palette.muted }, { text: truncateCells(view.next, left - 4), fg: palette.text }];
 }
 
 /** Cuts or pads a line to exactly `width` cells, keeping wide glyphs whole. */
@@ -122,7 +148,7 @@ function phaseLabel(view: MissionView, frame: MotionFrame, palette: MissionPalet
   const status = missionStatus(view);
   if (status.tone === "success") return { text: "✓ COMPLETE", fg: palette.success, bold: true };
   if (status.tone === "warning") return { text: `⚑ ${status.text}`, fg: mixHex(palette.info, palette.warning, Math.max(frame.warn, 0.5)), bold: true };
-  return { text: `● ${view.phase.toUpperCase()}`, fg: palette.info, bold: true };
+  return { text: `● ${stepName(view.phase, view).toUpperCase()}`, fg: palette.info, bold: true };
 }
 
 function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string, rest: boolean): Line {
@@ -164,16 +190,20 @@ function bottomLine(view: MissionView, figures: CardFigures, palette: MissionPal
   return fitLine([{ text: "╰" + "─".repeat(Math.max(0, width)), fg: border }], width, palette);
 }
 
+/** The whole stage map as a breadcrumb, `plan ✓ ━ WORK 1/3 ─ review ─ done`, or only the running stage when tight. */
 function trackPills(view: MissionView, frame: MotionFrame, palette: MissionPalette, tight: boolean): Segment[] {
   const alpha = (index: number): number => (frame.chipEnter ? ease.outCubic(seg(frame.t, index * motionTiming.stagger, motionTiming.entry)) : 1);
-  if (tight) {
-    const current = view.steps.find((step) => step.state === "now" || step.state === "warn") ?? view.steps[view.complete ? 2 : view.active ? 1 : 0];
-    return [fade(stepPill(current, view, frame, palette), alpha(0), palette)];
-  }
+  const reached = currentStepIndex(view);
+  const current = Math.min(view.steps.length - 1, Math.max(0, reached));
+  const flash = stageFlash(frame);
+  if (tight) return crumb(view, current, frame, palette, 0, flash).map((segment) => fade(segment, alpha(0), palette));
   const out: Segment[] = [];
-  view.steps.forEach((step, index) => {
-    if (index > 0) out.push(fade({ text: " ━ ", fg: view.steps[index - 1].state === "done" ? palette.success : palette.borderSubtle }, alpha(index), palette));
-    out.push(fade(stepPill(step, view, frame, palette), alpha(index), palette));
+  view.steps.forEach((_step, index) => {
+    if (index > 0) {
+      const color = linkColor(view, index, frame, palette, palette.borderSubtle);
+      out.push(fade({ text: color === palette.borderSubtle ? " ─ " : " ━ ", fg: color }, alpha(index), palette));
+    }
+    for (const segment of crumb(view, index, frame, palette, 0, index === current && reached >= 0 ? flash : -1)) out.push(fade(segment, alpha(index), palette));
   });
   return out;
 }
@@ -205,7 +235,8 @@ function trackRow(view: MissionView, frame: MotionFrame, palette: MissionPalette
   for (const plan of trackPlans) {
     const pills = trackPills(view, frame, palette, plan.tight);
     const bar = plan.bar > 0 && view.progress !== undefined ? [gap, ...progressBar(frame.barRatio, plan.bar, palette, sweep)] : [];
-    const goal = view.goal;
+    // In the criterion loop the stage itself counts criteria, so the count is not repeated.
+    const goal = view.family === "loop" ? undefined : view.goal;
     const criteria: Segment[] = plan.criteria && goal !== undefined ? [gap, { text: `${goal.passed}/${goal.total} criteria`, fg: goal.total > 0 && goal.passed === goal.total ? palette.success : palette.muted }] : [];
     const fixed = lineWidth(pills) + lineWidth(bar) + lineWidth(criteria);
     if (fixed > width) continue;

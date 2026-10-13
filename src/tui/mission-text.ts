@@ -2,13 +2,14 @@
 // (Hangul and emoji take two cells), truncation, the gradient bar, and the coloured segments the TUI
 // renders as spans. Every frame of motion is drawn from a MotionFrame, so all of it is testable here.
 import { ease, mixHex, rowEntryStart, seg, slideIn, motionTiming, type MotionFrame } from "./mission-motion.ts";
-import { missionRowKeys, missionStatus, type MissionStep, type MissionView, type StepState } from "./mission-model.ts";
+import { currentStepIndex, missionRowKeys, missionStatus, stepName, type MissionStep, type MissionView, type StepState } from "./mission-model.ts";
 
 export type Segment = { readonly text: string; readonly fg: string; readonly bg?: string; readonly bold?: boolean };
 export type Line = readonly Segment[];
 
 export type MissionPalette = {
   readonly primary: string;
+  readonly secondary: string;
   readonly accent: string;
   readonly info: string;
   readonly warning: string;
@@ -73,6 +74,7 @@ export function paletteFromTheme(theme: Record<string, unknown> | undefined, mod
   const neutral = mode === "light" ? "#f2f2f2" : "#1c1c1c";
   return {
     primary: pick("primary", "#ff6337"),
+    secondary: pick("secondary", "#ff2d95"),
     accent: pick("accent", "#b48cff"),
     info: pick("info", "#0aa6c2"),
     warning: pick("warning", "#ffaf3c"),
@@ -211,11 +213,16 @@ export function progressBar(ratio: number, cells: number, palette: MissionPalett
   return segments;
 }
 
-function microBar(ratio: number, palette: MissionPalette): Segment[] {
-  const filled = Math.max(0, Math.min(5, Math.round(Math.max(0, Math.min(1, ratio)) * 5)));
+/** The stage colour ramp: the theme's primary through secondary to accent, so every theme keeps its own feel. */
+export function stageColor(index: number, count: number, palette: MissionPalette): string {
+  return gradientAt([palette.primary, palette.secondary, palette.accent], count <= 1 ? 0 : index / (count - 1));
+}
+
+function microBar(ratio: number, palette: MissionPalette, cells = 5): Segment[] {
+  const filled = Math.max(0, Math.min(cells, Math.round(Math.max(0, Math.min(1, ratio)) * cells)));
   const segments: Segment[] = [];
-  for (let index = 0; index < 5; index += 1) {
-    segments.push(index < filled ? { text: "▰", fg: gradientAt([palette.primary, palette.accent], index / 4) } : { text: "▱", fg: palette.borderSubtle });
+  for (let index = 0; index < cells; index += 1) {
+    segments.push(index < filled ? { text: "▰", fg: gradientAt([palette.primary, palette.secondary, palette.accent], cells <= 1 ? 0 : index / (cells - 1)) } : { text: "▱", fg: palette.borderSubtle });
   }
   return segments;
 }
@@ -224,14 +231,17 @@ function countText(view: MissionView): string {
   return view.progress === undefined ? "" : `${view.progress.done}/${view.progress.total}`;
 }
 
-/** The step state to draw: during the completion moment WORK and REVIEW flip to done one after the other. */
-function shownState(step: MissionStep, view: MissionView, frame: MotionFrame): { readonly state: StepState; readonly doneMix: number } {
+/**
+ * The step state to draw. During the completion moment the stage that was running and every stage
+ * after it flip to done one after the other, 60 ms apart.
+ */
+function shownState(step: MissionStep, index: number, frame: MotionFrame): { readonly state: StepState; readonly doneMix: number } {
   const t = frame.celebrate;
-  if (t === undefined || step.state !== "done" || step.id === "plan") return { state: step.state, doneMix: step.state === "done" ? 1 : 0 };
-  const at = step.id === "work" ? motionTiming.workDoneAt : motionTiming.reviewDoneAt;
-  const mix = ease.inOutCubic(seg(t, at, motionTiming.crossfade));
-  if (t < at) return { state: step.id === "work" ? "now" : "todo", doneMix: 0 };
-  return { state: "done", doneMix: mix };
+  const from = frame.celebrateFrom;
+  if (t === undefined || from === undefined || step.state !== "done" || index < from) return { state: step.state, doneMix: step.state === "done" ? 1 : 0 };
+  const at = motionTiming.workDoneAt + (index - from) * (motionTiming.reviewDoneAt - motionTiming.workDoneAt);
+  if (t < at) return { state: index === from ? "now" : "todo", doneMix: 0 };
+  return { state: "done", doneMix: ease.inOutCubic(seg(t, at, motionTiming.crossfade)) };
 }
 
 type PillStyle = { readonly fg: string; readonly bg?: string; readonly bold: boolean };
@@ -243,28 +253,74 @@ function pillStyle(state: StepState, palette: MissionPalette, warn: number): Pil
   return { fg: palette.onFill, bg: mixHex(palette.info, palette.warning, level), bold: true };
 }
 
-function blendStyle(from: PillStyle, to: PillStyle, amount: number, palette: MissionPalette): PillStyle {
-  if (amount <= 0) return from;
-  if (amount >= 1) return to;
-  const bgFrom = from.bg ?? palette.mixBase;
-  const bgTo = to.bg ?? palette.mixBase;
-  return { fg: mixHex(from.fg, to.fg, amount), bg: mixHex(bgFrom, bgTo, amount), bold: amount < 0.5 ? from.bold : to.bold };
+/** A light pass over the running stage: once when the map moves forward, and during the completion moment. */
+export function stageFlash(frame: MotionFrame): number {
+  if (frame.stageFrom !== undefined && frame.t <= motionTiming.shimmer) return -0.2 + 1.4 * seg(frame.t, 0, motionTiming.shimmer);
+  return shimmerAt(frame);
 }
 
-function stepLabel(step: MissionStep, state: StepState, view: MissionView): string {
-  const name = step.id.toUpperCase();
-  const count = step.id === "work" && view.progress !== undefined ? countText(view) : "";
-  if (state === "done") return [name, count, "✓"].filter((part) => part !== "").join(" ");
-  if (state === "skip") return `${name} –`;
-  if (state === "warn") return [name, "⚑", count].filter((part) => part !== "").join(" ");
-  return [name, state === "now" ? count : ""].filter((part) => part !== "").join(" ");
+/**
+ * The colour of the connector into stage `index`. It carries the stage ramp once the stage before it is
+ * behind the map, and fills in turn, 60 ms apart, when the map has just moved forward.
+ */
+export function linkColor(view: MissionView, index: number, frame: MotionFrame, palette: MissionPalette, idle: string): string {
+  const before = view.steps[index - 1];
+  if (before === undefined) return idle;
+  const state = shownState(before, index - 1, frame).state;
+  if (state !== "done" && state !== "skip") return idle;
+  const color = stageColor(index - 0.5, view.steps.length, palette);
+  if (frame.stageFrom === undefined || index <= frame.stageFrom) return color;
+  return mixHex(idle, color, ease.outCubic(seg(frame.t, (index - frame.stageFrom - 1) * motionTiming.stagger, motionTiming.entry)));
 }
 
-export function stepPill(step: MissionStep, view: MissionView, frame: MotionFrame, palette: MissionPalette): Segment {
-  const { state, doneMix } = shownState(step, view, frame);
-  const before = pillStyle(step.id === "work" ? "now" : "todo", palette, frame.warn);
-  const style = state === "done" && doneMix < 1 ? blendStyle(before, pillStyle("done", palette, frame.warn), doneMix, palette) : pillStyle(state, palette, frame.warn);
-  return { text: ` ${stepLabel(step, state, view)} `, fg: style.fg, ...(style.bg === undefined ? {} : { bg: style.bg }), bold: style.bold };
+/**
+ * One stage of the breadcrumb. Behind the map a stage is its name in its ramp colour with `✓` (or `–`
+ * when skipped); ahead it is a muted name; the running stage is a filled capital pill followed by an
+ * optional `bar`-cell bar and the count.
+ */
+export function crumb(view: MissionView, index: number, frame: MotionFrame, palette: MissionPalette, bar: number, flash = -1): Segment[] {
+  const step = view.steps[index];
+  const { state, doneMix } = shownState(step, index, frame);
+  const name = stepName(step.id, view);
+  const counted = step.id === "work" && view.progress !== undefined;
+  if (state === "done") {
+    const color = stageColor(index, view.steps.length, palette);
+    return [{ text: [name, counted ? countText(view) : "", "✓"].filter((part) => part !== "").join(" "), fg: doneMix >= 1 ? color : mixHex(index === frame.celebrateFrom ? palette.info : palette.muted, color, doneMix) }];
+  }
+  if (state === "skip") return [{ text: `${name} –`, fg: palette.muted }];
+  if (state === "todo") return [{ text: name, fg: palette.muted }];
+  const style = pillStyle(state, palette, frame.warn);
+  const label = ` ${name.toUpperCase()}${state === "warn" ? " ⚑" : ""} `;
+  const chars = [...label];
+  const pill: Segment[] = flash < 0
+    ? [{ text: label, fg: style.fg, ...(style.bg === undefined ? {} : { bg: style.bg }), bold: style.bold }]
+    : chars.map((char, position) => ({ text: char, fg: style.fg, bg: shine(style.bg ?? palette.info, palette, position / (chars.length - 1), flash, 0.3), bold: true }));
+  if (!counted) return pill;
+  return [...pill, ...(bar > 0 ? [{ text: " ", fg: palette.muted }, ...microBar(frame.barRatio, palette, bar)] : []), { text: ` ${countText(view)}`, fg: palette.text, bold: true }];
+}
+
+const spinnerFrames = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
+
+function clockText(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const rest = String(seconds % 60).padStart(2, "0");
+  return minutes < 60 ? `${minutes}:${rest}` : `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}:${rest}`;
+}
+
+/**
+ * The live step: the running tool's name and how long it has run, `⠹ bash · 0:48`. The spinner moves
+ * with the elapsed second, so it changes only when the time does. Nothing of the tool's input is shown.
+ */
+export function liveSegments(view: MissionView, frame: MotionFrame, palette: MissionPalette, room: number): Segment[] {
+  if (view.live === undefined || view.complete || room < 4) return [];
+  const seconds = frame.now === undefined ? undefined : Math.max(0, Math.floor((frame.now - view.live.start) / 1000));
+  const spin = [...spinnerFrames][(seconds ?? 0) % 10];
+  const time = seconds === undefined ? "" : ` · ${clockText(seconds)}`;
+  return [
+    { text: `${spin} `, fg: palette.warning },
+    { text: truncateCells(view.live.tool, Math.max(1, room - 2 - cellWidth(time))), fg: palette.text },
+    { text: time, fg: palette.muted }
+  ];
 }
 
 function brandPill(palette: MissionPalette, sweep: number): Segment[] {
@@ -276,31 +332,42 @@ export type ChipTier = "full" | "medium" | "tight";
 
 export type ChipGroup = readonly Segment[];
 
-/** The chip's pill groups for a tier; the five-segment bar is appended unless `withMicroBar` is false. */
-export function chipGroups(view: MissionView, frame: MotionFrame, palette: MissionPalette, tier: ChipTier, withMicroBar = true): ChipGroup[] {
-  const sweep = shimmerAt(frame);
+/**
+ * The chip's groups for a tier. The full tier is the brand and the breadcrumb around the running stage
+ * (the one before, the running one with a seven-cell bar, the one after); medium keeps the running
+ * stage and the next with a five-cell bar; tight keeps only the count.
+ */
+export function chipGroups(view: MissionView, frame: MotionFrame, palette: MissionPalette, tier: ChipTier): ChipGroup[] {
   const space: Segment = { text: " ", fg: palette.muted };
-  const separator: Segment = { text: " › ", fg: palette.borderActive };
   const flame: Segment = { text: "🔥", fg: palette.text };
+  const count = view.steps.length;
+  const reached = currentStepIndex(view);
+  const current = Math.min(count - 1, Math.max(0, reached));
+  const flash = stageFlash(frame);
   const groups: ChipGroup[] = [];
+  const trail = (from: number, to: number, bar: number): void => {
+    for (let index = Math.max(0, from); index <= Math.min(count - 1, to); index += 1) {
+      const lead: Segment = index === Math.max(0, from) ? space : { text: " › ", fg: linkColor(view, index, frame, palette, palette.borderActive) };
+      groups.push([lead, ...crumb(view, index, frame, palette, bar, index === current ? flash : -1)]);
+    }
+  };
+  // A finished map keeps its last stages in view, so the completion moment can flip them in turn.
+  const anchor = reached >= count ? count - 2 : current;
   if (tier === "full") {
-    groups.push(brandPill(palette, sweep));
-    view.steps.forEach((step, index) => groups.push([index === 0 ? space : separator, stepPill(step, view, frame, palette)]));
+    groups.push(brandPill(palette, shimmerAt(frame)));
+    trail(anchor - 1, anchor + 1, 7);
   } else if (tier === "medium") {
     groups.push([flame]);
-    const current = view.steps.findIndex((step) => step.state === "now" || step.state === "warn");
-    const from = current >= 0 ? current : view.complete ? 1 : 0;
-    view.steps.slice(from, from + 2).forEach((step, index) => groups.push([index === 0 ? space : separator, stepPill(step, view, frame, palette)]));
+    trail(anchor, anchor + 1, 5);
   } else {
     groups.push([flame]);
-    const current = view.steps.find((step) => step.state === "now" || step.state === "warn") ?? view.steps[1];
-    const count = countText(view);
-    const done = view.complete && (frame.celebrate === undefined || frame.celebrate >= motionTiming.workDoneAt);
-    const value = done ? `✓ ${count}`.trim() : current.state === "warn" ? `⚑ ${count}`.trim() : count || current.id.toUpperCase();
-    const style = pillStyle(done ? "done" : current.state === "warn" ? "warn" : "now", palette, frame.warn);
+    const step = view.steps[current];
+    const shown = shownState(step, current, frame).state;
+    const done = view.complete && shown === "done";
+    const value = done ? `✓ ${countText(view)}`.trim() : step.state === "warn" ? `⚑ ${countText(view)}`.trim() : countText(view) || stepName(step.id, view).toUpperCase();
+    const style = pillStyle(done ? "done" : step.state === "warn" ? "warn" : "now", palette, frame.warn);
     groups.push([space, { text: ` ${value} `, fg: style.fg, ...(style.bg === undefined ? {} : { bg: style.bg }), bold: style.bold }]);
   }
-  if (withMicroBar && view.progress !== undefined) groups.push([space, ...microBar(frame.barRatio, palette)]);
   return groups;
 }
 
@@ -347,13 +414,18 @@ export function chipTier(view: MissionView, frame: MotionFrame, palette: Mission
 }
 
 /**
- * The phase chip on the right of the prompt's agent/model row: `🔥 LIT` `PLAN` › `WORK n/m` › `REVIEW`
- * and a five-segment bar, shedding labels before values as `budget` shrinks. Idle sessions render nothing.
+ * The map chip on the right of the prompt's agent/model row: `🔥 LIT  plan ✓ › WORK ▰▰▰▱▱▱▱ 3/7 › review`,
+ * then the live step when the full chip leaves room for it, shedding labels before values as `budget`
+ * shrinks. Idle sessions render nothing.
  */
 export function chipLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, budget: number): Line {
   if (!view.active) return [];
   const tier = chipTier(view, frame, palette, budget);
   const groups = chipGroups(view, frame, palette, tier);
+  if (tier === "full") {
+    const live = liveSegments(view, frame, palette, 24);
+    if (live.length > 0 && groupsWidth(groups) + 2 + lineWidth(live) <= budget) groups.push([{ text: "  ", fg: palette.muted }, ...live]);
+  }
   const out: Segment[] = [];
   if (frame.celebrate !== undefined && groupsWidth(groups) + chipSparkWidth <= budget) out.push(...(chipSparkCells(frame.celebrate, palette) ?? []));
   groups.forEach((group, index) => {
@@ -400,19 +472,31 @@ export function statusSegments(view: MissionView, frame: MotionFrame, palette: M
   return { segments: [fade(pill, progress <= 0 ? 0 : ease.outCubic(progress), palette)], offset: Math.max(-1, slideIn(progress)) };
 }
 
-function stepsRow(view: MissionView, frame: MotionFrame, palette: MissionPalette): Segment[] {
-  const out: Segment[] = [];
-  let previousDone = false;
-  view.steps.forEach((step, index) => {
-    const { state, doneMix } = shownState(step, view, frame);
-    const live = mixHex(palette.info, palette.warning, state === "warn" ? Math.max(frame.warn, 0.5) : frame.warn);
-    const color = state === "done" ? mixHex(step.id === "work" ? palette.info : palette.muted, palette.success, doneMix) : state === "now" || state === "warn" ? live : palette.muted;
-    const glyph = state === "done" ? "✓" : state === "skip" ? "–" : state === "warn" ? "⚑" : state === "now" ? "●" : "○";
-    if (index > 0) out.push({ text: " ── ", fg: previousDone ? palette.success : palette.borderSubtle });
-    out.push({ text: `${glyph} ${step.id.toUpperCase()}`, fg: color, bold: state === "now" || state === "warn" });
-    previousDone = state === "done";
-  });
-  return out;
+/**
+ * One stage of the sidebar's vertical map: `◆` behind, `◉` running in bold, `⚑` flagged, `◇` ahead,
+ * with the plan's task count or the loop's iteration on the right.
+ */
+function stepperRow(view: MissionView, index: number, frame: MotionFrame, palette: MissionPalette, width: number): Segment[] {
+  const step = view.steps[index];
+  const { state, doneMix } = shownState(step, index, frame);
+  const counted = step.id === "work" && view.progress !== undefined ? ` ${countText(view)}` : "";
+  const name = `${stepName(step.id, view)}${counted}`;
+  const note = step.id === "plan" && view.planTasks !== undefined ? `${view.planTasks} tasks` : step.id === "work" && view.iteration !== undefined ? `iter ${view.iteration}` : "";
+  const live = mixHex(palette.info, palette.warning, state === "warn" ? Math.max(frame.warn, 0.5) : frame.warn);
+  let head: Segment[];
+  if (state === "done") {
+    const color = stageColor(index, view.steps.length, palette);
+    head = [{ text: "◆ ", fg: doneMix >= 1 ? color : mixHex(palette.info, color, doneMix) }, { text: name, fg: palette.text }];
+  } else if (state === "now" || state === "warn") {
+    head = [{ text: `${state === "warn" ? "⚑" : "◉"} ${name}`, fg: live, bold: true }];
+  } else {
+    head = [{ text: `◇ ${name}${state === "skip" ? " –" : ""}`, fg: palette.muted }];
+  }
+  if (note === "") return head;
+  const room = width - cellWidth(note) - 1;
+  const used = lineWidth(head);
+  if (used > room) return head;
+  return [...head, { text: " ".repeat(width - used - cellWidth(note)), fg: palette.muted }, { text: note, fg: palette.muted }];
 }
 
 function criterionSegment(id: string, status: string, palette: MissionPalette): Segment {
@@ -547,9 +631,9 @@ export type MissionPanel = {
 
 /**
  * The sidebar mission panel: a rounded box whose border carries the state (accent while working,
- * warning on a warning, success when complete), a tiny LIT header, the goal title, the phase line,
- * the bar, the next item, criteria, warnings and the evidence timeline. Rows are at most
- * `panelInnerWidth` cells.
+ * warning on a warning, success when complete), a tiny LIT header, the goal title, the vertical stage
+ * map with its connectors, the bar, the detail line, the live step, criteria, warnings and the
+ * evidence timeline. Rows are at most `panelInnerWidth` cells.
  */
 export function missionPanel(view: MissionView, frame: MotionFrame, palette: MissionPalette): MissionPanel | undefined {
   if (!view.active) return undefined;
@@ -564,10 +648,21 @@ export function missionPanel(view: MissionView, frame: MotionFrame, palette: Mis
   rows.set("h2", [...logoLine(1, palette, sweep), { text: " ".repeat(Math.max(0, statusStart - logoWidth)), fg: palette.muted }, ...status.segments]);
   rows.set("b1", []);
   if (view.goal !== undefined) rows.set("title", [{ text: truncateCells(view.goal.title, width), fg: palette.text, bold: true }]);
-  rows.set("steps", stepsRow(view, frame, palette));
+  view.steps.forEach((step, index) => {
+    if (index > 0) {
+      const color = linkColor(view, index, frame, palette, palette.borderSubtle);
+      rows.set(`link:${index}`, [{ text: color === palette.borderSubtle ? "┆" : "┃", fg: color }]);
+    }
+    rows.set(`step:${step.id}`, stepperRow(view, index, frame, palette, width));
+  });
   if (view.progress !== undefined) rows.set("bar", progressBar(frame.barRatio, width, palette, sweep));
   rows.set("b2", []);
-  if (view.next !== undefined) rows.set("next", [{ text: "next ", fg: palette.muted }, { text: truncateCells(`▸ ${view.next}`, width - 5), fg: palette.text }]);
+  // The detail line: `└ task 3 · next ▸ …`, or a research run's claim counts.
+  const lead = view.detail === undefined ? "" : truncateCells(view.detail, width - 2);
+  const gap = lead !== "" && view.next !== undefined ? " · " : "";
+  const next = view.next === undefined ? "" : truncateCells(`next ▸ ${view.next}`, Math.max(0, width - 2 - cellWidth(lead) - cellWidth(gap)));
+  rows.set("detail", [{ text: "└ ", fg: palette.muted }, { text: lead + (next === "" ? "" : gap), fg: palette.muted }, ...(next === "" ? [] : [{ text: next, fg: palette.text }])]);
+  rows.set("live", liveSegments(view, frame, palette, width));
   if (view.goal !== undefined) {
     const criteria: Segment[] = [{ text: "crit", fg: palette.muted }];
     for (const criterion of view.goal.criteria) {
@@ -606,7 +701,7 @@ export function missionPanel(view: MissionView, frame: MotionFrame, palette: Mis
   const enter = frame.chipEnter ? ease.outCubic(seg(frame.t, 0, motionTiming.entry)) : 1;
   const done = view.complete ? (frame.celebrate === undefined ? 1 : ease.inOutCubic(seg(frame.celebrate, 0, motionTiming.crossfade))) : 0;
   const border = mixHex(palette.mixBase, mixHex(mixHex(palette.accent, palette.warning, frame.warn), palette.success, done), enter);
-  const phase = view.complete ? "COMPLETE" : view.phase.toUpperCase();
+  const phase = view.complete ? "COMPLETE" : stepName(view.phase, view).toUpperCase();
   const flagged = view.warnings.length > 0 && !view.complete ? " ⚑" : "";
   const bottom = view.goal !== undefined
     ? ` ${view.goal.passed}/${view.goal.total} criteria${view.complete ? " ✓" : ""} `

@@ -359,27 +359,51 @@ package exports its TUI module as `@litfamily/litopencode/tui` (`dist/tui.js`, p
 
 What it draws:
 
-- A phase chip on the right of the prompt's agent/model row: a `🔥 LIT` pill, then `PLAN` ›
-  `WORK n/m` › `REVIEW` pills and a five-segment `▰▱` bar. When the row is narrower it drops the
-  labels first: `🔥` with the current and next phase, then `🔥` with only the count. The room comes
-  from OpenCode's stored sidebar setting and the session kind (a child session has no sidebar); when
-  the setting cannot be read yet, the chip assumes the sidebar is open and stays narrower.
+- A workflow map, so the session shows where it is in the LIT workflow and not only which skill
+  fired. Each session follows one stage table:
+  - the main chain `interview › plan › work n/m › review › done`;
+  - lit-loop's criterion loop, the same stages with the work stage reading `criterion n/m`, when a
+    lit-loop or litgoal session counts goal criteria rather than tasks;
+  - a litresearch run, `decompose › wave n › expand › verify › synthesis`, while the session runs
+    litresearch or a run folder it wrote is still open.
+
+  A stage the session moved past without doing reads `–`: a bounded `lit-task` makes no plan, so its
+  plan stage is skipped, never claimed, and finishing every todo without `review-work` leaves review
+  at `–`. A review command, a review blocker or a goal completed through the ledger CLI (whose gate
+  includes review) marks it done; a goal the agent marks complete in a hand-written `goals.json`
+  passed no gate and leaves review at `–`. Stages behind the running one take their place on a colour
+  ramp from the theme's primary through secondary to accent; stages ahead are muted.
+- A map chip on the right of the prompt's agent/model row: a `🔥 LIT` pill and the breadcrumb around
+  the running stage, `plan ✓ › WORK ▰▰▰▱▱▱▱ 3/7 › review`, with the running stage as a filled pill and a
+  seven-cell bar. When the row has room the live step follows (`⠹ bash · 0:48`). Narrower, it drops
+  the live step, then the brand and the stage behind (`🔥` with the running and next stage and a
+  five-cell bar), then everything but `🔥` and the count. The room comes from OpenCode's stored
+  sidebar setting and the session kind (a child session has no sidebar); when the setting cannot be
+  read yet, the chip assumes the sidebar is open and stays narrower.
 - A mission panel at the top of the session sidebar, in a 36-cell rounded box titled
-  `🔥 LIT ▸ <PHASE>` with `n/m criteria` in the bottom border. The border carries the state: the
+  `🔥 LIT ▸ <STAGE>` with `n/m criteria` in the bottom border. The border carries the state: the
   theme accent while working, the warning colour on a warning, the success colour when complete.
   Inside: a two-row `LIT` with the discipline and a status beside it, the goal title in bold, the
-  phase line, a gradient bar drawn in eighth-cell blocks over a thin rule, the next todo or open
-  criterion, the criteria, warnings, and the last four evidence events.
+  vertical stage map (`◆` behind, `◉` running in bold, `⚑` flagged, `◇` ahead, joined by `┃`
+  connectors in the ramp colour up to the running stage and dotted `┆` after it, with the saved
+  plan's task count beside plan and `iter k` beside work), a gradient bar drawn in eighth-cell
+  blocks over a thin rule, the detail line `└ task 3 · next ▸ <item>` (a research run shows its claim
+  and verified counts instead), the live step, the criteria, warnings, and the last four evidence
+  events.
+- The live step: the name of the tool the session is running and how long it has run, read from the
+  running tool part's name and start time. Its input (commands, paths, arguments) is never read or
+  shown. It appears only while the turn runs.
 - A band: a status card along the bottom of the screen (OpenCode's `app_bottom` slot), under the
   session and the sidebar alike. It is on screen for the whole session, lit or not, and keeps the
   same four rows idle or working, so the prompt never moves:
   - the top border carries `🔥 LIT · <discipline>` on the left and the phase on the right
     (`● WORK`, `⚑ review blocked`, `✓ COMPLETE`, or `○ IDLE` before any lit turn and whenever the
     session is not running a turn, read from OpenCode's own `session.status`; at rest no step is lit);
-  - row one is the phase track `PLAN ━ WORK ━ REVIEW` in the chip's pills, an eighth-block bar,
-    `n/m criteria` for the goal and the next task. While a warning is open, `⚑ <text>` takes the
-    place of `▸ next`. An idle session shows the dim track with the project's last goal, or
-    `add lit to a prompt to start`;
+  - row one is the whole stage map as a breadcrumb, `interview – ━ plan ✓ ━ WORK 3/7 ─ review ─ done`,
+    an eighth-block bar, `n/m criteria` for the goal (left out in the criterion loop, whose stage
+    already counts them), the live step and the next task. While a
+    warning is open, `⚑ <text>` takes the place of the live step and `▸ next`. An idle session shows
+    the dim map with the project's last goal, or `add lit to a prompt to start`;
   - row two holds the skill chips: every LitOpenCode skill that fired in the session, several at
     once. Skills fired by the current request are bright accent pills while it runs, and a new one
     gets a short light sweep as it arrives; when the turn ends they dim and stay as the recent list,
@@ -388,8 +412,8 @@ What it draws:
     (`⟳ 7m`) and the git branch.
 
   A subagent session shows its parent's card with `· in lane`; the home screen has no band. When the
-  card is narrow each row drops its own low-priority parts: the track drops the next-task text, bar
-  width, the bar, the criteria count and then the step labels; the bottom border drops the branch,
+  card is narrow each row drops its own low-priority parts: the track drops the live step and
+  next-task text, bar width, the bar, the criteria count and then every stage but the running one; the bottom border drops the branch,
   then the time, then the context use. It never wraps. The completion moment plays here too.
 - A line under the home prompt, after OpenCode's tips: `🔥 lit ready · last: <goal> ✓ n/m`. It
   appears only when the project ledger holds a goal.
@@ -399,9 +423,14 @@ What it draws:
 - One toast per refresh for a gate event: plan saved or not saved, goal set, criterion passed,
   review blocker opened or resolved, and completion. Several events at once collapse into the most
   urgent one.
-- A completion moment of at most 1.2 seconds when the goal completes or every todo is done: the
-  border turns green, the bar fills, `WORK` then `REVIEW` turn done, a light sweep crosses the brand,
-  embers rise through the panel and `COMPLETE` pops in with a small overshoot before it settles.
+- A completion moment of at most 1.2 seconds when the goal completes, every todo is done or a
+  research run writes its report: the border turns green, the bar fills, the stage that was running
+  and each stage after it turn done 60 ms apart, a light sweep crosses the brand, embers rise
+  through the panel and `COMPLETE` pops in with a small overshoot before it settles.
+- An opt-in finish alert at that same moment, through OpenCode's `attention.notify`: a desktop
+  notification and the host's `done` sound. It is off by default; see the options below. OpenCode's
+  own `attention` setting still decides whether anything plays, and it is off until tui.json turns
+  it on (`"attention": { "enabled": true }`); without it OpenCode answers `attention_disabled`.
 
 Where the data comes from, with nothing new written for the TUI:
 
@@ -412,17 +441,40 @@ Where the data comes from, with nothing new written for the TUI:
   "Current" means fired since the latest user message while the session is busy.
 - The `metadata.litopencode` marks this plugin already attaches to user-message parts when `lit`
   activates a mode or a command runs (`save-plan` included). A session with no mark is idle and the
-  chip and panel stay hidden, even on the default `lit-loop` agent.
+  chip and panel stay hidden, even on the default `lit-loop` agent. Slash commands such as
+  `/litresearch` mark the map through OpenCode's command hook, so they need the command files
+  `litopencode install` writes; with only a `plugin` entry OpenCode sends them as plain text, which
+  marks nothing.
 - OpenCode's todo list for the session (progress and next item), its status (retry), pending
   permissions and questions, and context use from the last assistant message (amber at 75%).
 - `.litopencode/litgoal/lit-loop/goals.json` under the project root. Symbolic links and files over
-  1 MiB are ignored. A goal last updated before the session's first lit turn is treated as earlier
-  work and left out.
+  1 MiB are ignored. Besides the ledger shape the CLI writes (`goals` with `activeGoalId`), it reads
+  what an agent writes by hand: one goal at the top, a goal under `goal`, or the last entry of a
+  `goals` list, with `completed` or `done` counted as a passed criterion or a complete goal. A goal
+  last updated before the session's first lit turn is treated as earlier work and left out. Its
+  checkpoints are the loop family's iterations.
+- `.litopencode/litgoal/lit-loop/work-schema-3.json`, the bounded work record `/start-work` keeps,
+  when it belongs to this session and is not cancelled: its `work.progressed` turns are the work
+  stage's iterations, and the plan file it names gives the task count and next item from its
+  column-zero `- [ ]` / `- [x]` rows. The plan is read only when it is a regular file inside the
+  project root.
+- The most recently written run folder under `.litopencode/litgoal/lit-loop/research/`: a
+  `report.md` means synthesis, a claim in `claim-graph.jsonl` with a gate result (`verified`,
+  `abstained`, `unresolved`, `refuted`) means verify, a `journal.md` whose last heading starts with
+  `EXPAND` means expand, claims mean a wave (numbered by the highest `wave` field or `## Wave`
+  heading), and nothing yet means decompose. A folder last written before the session's first lit
+  turn is earlier work.
+- The running tool part of the session's latest assistant message, for the live step: its tool name
+  and `time.start` only.
 
 Motion runs on a short frame timer only while a transition plays and stops afterwards: new rows
 and pills slide in with ease-out-back, 160 ms each and 60 ms apart; the bar fills in 300 ms; a
-warning row slides in over 220 ms and colours cross-fade in 140 ms; the light sweep takes 400 ms. While a
-lit session is open the panel re-reads the goal ledger every two seconds; an idle session does not.
+warning row slides in over 220 ms and colours cross-fade in 140 ms; the light sweep takes 400 ms.
+When the map moves forward, the connectors between the old and new stage fill top to bottom 60 ms
+apart and the running pill flashes once; nothing loops. The live step changes in place without a
+slide-in, and while a tool runs its elapsed time ticks once a second; with no tool running there is
+no timer at all. While a lit session is open the panel re-reads the goal ledger, the bounded work
+record and the research folder every two seconds; an idle session does not.
 Colours come from the active OpenCode theme. Set `["@litfamily/litopencode@<version>", { "motion": false }]`
 in `tui.json` to keep it static, or turn the plugin off by id `litopencode` in OpenCode's plugin
 manager or with `plugin_enabled`.
@@ -433,6 +485,13 @@ Band options go in the same options object:
 - `{ "band": { "card": true } }` adds a rounded detail card under the status card with the warnings,
   the next task and the goal. While a goal exists the card keeps a fixed four rows, so a warning arriving or
   clearing never moves the prompt. The card is off by default.
+
+The finish alert goes in the same object and is off unless set:
+
+- `{ "notify": true }` sends a desktop notification and plays the `done` sound when a mission
+  completes.
+- `{ "notify": { "sound": false } }` keeps only the notification; `{ "notify": { "desktop": false } }`
+  keeps only the sound.
 
 A ledger written from another terminal (for example `litopencode record-evidence`) raises no
 OpenCode event, so the shared two-second ledger check picks it up; the chip, the panel and the band

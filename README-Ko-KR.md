@@ -92,17 +92,19 @@ lit notes.md를 금요일 팀 회의용 발표자료 10장으로 만들어줘
 
 LitOpenCode를 설치하면 OpenCode 세션 화면 맨 아래에 작은 카드가 붙습니다. 카드는 세션 내내 그 자리에 있고, 작업이 돌든 안 돌든 같은 네 줄을 유지하기 때문에 프롬프트 입력 칸이 위아래로 움직이지 않습니다.
 
-첫 `lit` 프롬프트를 보내기 전에는 카드가 조용합니다. 제목에는 `🔥 LIT · ready`와 `○ IDLE`이 보이고, 단계 표시는 흐리며, 어떻게 시작하면 되는지 알려 줍니다. 아래 테두리에는 컨텍스트 창이 얼마나 찼는지와 지금 git 브랜치가 나옵니다.
+첫 `lit` 프롬프트를 보내기 전에는 카드가 조용합니다. 제목에는 `🔥 LIT · ready`와 `○ IDLE`이 보이고, 작업 흐름 지도는 흐리며, 어떻게 시작하면 되는지 알려 줍니다. 아래 테두리에는 컨텍스트 창이 얼마나 찼는지와 지금 git 브랜치가 나옵니다.
 
-<p align="center"><img src="./docs/assets/readme/status-card-idle.webp" width="760" alt="lit 프롬프트를 보내기 전 OpenCode의 LIT 상태 카드. 위 테두리 왼쪽에 🔥 LIT · ready, 오른쪽에 ○ IDLE이 적혀 있다. 첫 줄에는 흐린 PLAN ━ WORK ━ REVIEW 단계 표시와 add lit to a prompt to start가, 둘째 줄에는 skills none yet이 있고, 아래 테두리에는 ctx 4% · ⎇ main이 보인다." /></p>
+<p align="center"><img src="./docs/assets/readme/status-card-idle.webp" width="760" alt="lit 프롬프트를 보내기 전 OpenCode의 LIT 상태 카드. 위 테두리 왼쪽에 🔥 LIT · ready, 오른쪽에 ○ IDLE이 적혀 있다. 첫 줄에는 흐린 작업 흐름 지도 interview ─ plan ─ work ─ review ─ done과 add lit to a prompt to start가, 둘째 줄에는 skills none yet이 있고, 아래 테두리에는 ctx 4% · ⎇ main이 보인다." /></p>
 
-`lit`을 붙인 프롬프트를 보내면 카드가 깨어납니다. 제목에 워크플로 이름과 단계가 나오고, 단계 표시가 지금 진행 중인 단계를 밝히고, 요청이 쓰는 LitOpenCode 스킬마다 밝은 칩이 하나씩 붙습니다. 새 칩이 붙을 때는 빛이 한 번 훑고 지나갑니다. 아래 예에서는 한 요청 안에서 스킬 두 개가 함께 일하고, 앞선 차례에 쓴 `debugging`은 회색으로 남아 있습니다.
+`lit`을 붙인 프롬프트를 보내면 카드가 깨어납니다. 제목에 워크플로 이름과 지금 단계가 나오고, 지도는 그 단계를 개수와 함께 밝힙니다. 아래 lit-loop 요청은 목표 기준 세 개 가운데 하나를 통과했으므로 지도가 `CRITERION 1/3`으로 보이고, 하지 않고 지나간 단계에는 `–`가 붙으며, 막대는 끝난 몫을 보여 줍니다. 도구가 도는 동안에는 막대 옆에 도구 이름과 걸린 시간이 나옵니다. 요청이 쓰는 LitOpenCode 스킬마다 밝은 칩이 하나씩 붙고, 새 칩이 붙을 때는 빛이 한 번 훑고 지나갑니다. 앞선 차례에 쓴 스킬은 회색으로 남습니다.
 
-<p align="center"><img src="./docs/assets/readme/status-card-working.webp" width="760" alt="lit 요청이 진행 중인 LIT 상태 카드. 위 테두리에 🔥 LIT · lit-humanizer와 오른쪽 ● WORK가 적혀 있고, 단계 표시에서 WORK가 밝다. 스킬 줄에는 밝은 보라색 칩 lit-humanizer와 lit-diagram-drawer, 그다음 회색 debugging 칩이 있다. 아래 테두리에는 ctx 6% · ⟳ 0m · ⎇ main이 보인다." /></p>
+<p align="center"><img src="./docs/assets/readme/status-card-working.webp" width="760" alt="lit-loop 요청이 진행 중인 LIT 상태 카드. 위 테두리에 🔥 LIT · lit-loop과 오른쪽 ● CRITERION이 적혀 있다. 첫 줄에는 작업 흐름 지도 interview – ━ plan – ━ CRITERION 1/3 ─ review ─ done이 있고 지금 단계는 채운 알약으로 보이며, 3분의 1쯤 찬 막대와 지금 하는 일 ⠏ bash · 0:09가 이어진다. 둘째 줄은 skills lit-loop이고 lit-loop이 밝은 보라색 칩이다. 아래 테두리에는 ctx 4% · ⟳ 0m · ⎇ main이 보인다." /></p>
 
-차례가 끝나면 카드가 가라앉습니다. 제목이 `○ IDLE`로 바뀌고, 밝게 켜진 단계가 없어지며, 칩은 흐려지지만 사라지지 않고 가장 최근에 쓴 것부터 남아 무엇이 돌았는지 보여 줍니다. 다음 프롬프트를 보내면 카드가 다시 깨어납니다. 같은 스킬을 다시 쓰면 그 칩이 다시 밝아지고, 칩이 자리보다 많으면 나머지는 `+N`으로 접힙니다.
+차례가 끝나면 카드가 가라앉습니다. 제목이 `○ IDLE`로 바뀌고, 밝게 켜진 단계가 없어지며, 지금 하는 일 자리에는 다음에 할 항목이 들어갑니다. 칩은 흐려지지만 사라지지 않고 가장 최근에 쓴 것부터 남아 무엇이 돌았는지 보여 줍니다. 다음 프롬프트를 보내면 카드가 다시 깨어납니다. 같은 스킬을 다시 쓰면 그 칩이 다시 밝아지고, 칩이 자리보다 많으면 나머지는 `+N`으로 접힙니다.
 
-<p align="center"><img src="./docs/assets/readme/status-card-recent.webp" width="760" alt="차례가 끝난 뒤의 LIT 상태 카드. 제목은 🔥 LIT · lit-humanizer와 ○ IDLE이고, 단계 표시에서 밝게 켜진 단계가 없다. 칩 세 개가 모두 회색이 되었고 최근 순서로 lit-diagram-drawer, lit-humanizer, debugging이 놓여 있다. 아래 테두리에는 ctx 7% · ⟳ 0m · ⎇ main이 보인다." /></p>
+<p align="center"><img src="./docs/assets/readme/status-card-recent.webp" width="760" alt="차례가 끝난 뒤의 LIT 상태 카드. 제목은 🔥 LIT · lit-loop과 ○ IDLE이다. 지도 interview – ━ plan – ━ criterion ─ review ─ done에는 밝게 켜진 단계가 없고, 막대는 여전히 3분의 1을 보여 주며, ▸ C2 the default greeting…이 다음 기준을 알려 준다. lit-loop 칩은 이제 회색이다. 아래 테두리에는 ctx 6% · ⟳ 0m · ⎇ main이 보인다." /></p>
+
+단계 표시는 작업 흐름 전체를 담은 지도입니다. 인터뷰로 시작한 요청은 `interview › plan › work › review › done`을 따라가고, 지금 단계는 개수와 함께 밝게 켜집니다. 예를 들어 `/start-work`가 저장된 계획을 처리하는 동안에는 `WORK 3/7`처럼 보입니다. lit-loop 목표는 기준과 반복 횟수를 세고, litresearch 실행은 `decompose`에서 `wave`를 거쳐 `synthesis`까지 자기 단계를 따릅니다. 입력창 옆 칩은 지금 단계 앞뒤를, 사이드바는 같은 지도를 위에서 아래로 그리며 다음 단계로 넘어갈 때 선이 차오릅니다. 도구가 도는 동안에는 `⠹ bash · 0:48`처럼 도구 이름과 걸린 시간이 함께 보입니다. 긴 작업 중에 자리를 비운다면 같은 `tui.json` 항목에 `{ "notify": true }`를 주세요. OpenCode 자체 설정 `"attention": { "enabled": true }`도 켜 두면, 미션이 끝날 때 데스크톱 알림과 소리로 알려 줍니다. 직접 넣기 전에는 꺼져 있습니다.
 
 카드는 기본으로 켜져 있습니다. 화면 아래를 비워 두고 싶다면 OpenCode `tui.json`의 LitOpenCode 항목에 `{ "band": false }` 옵션을 주세요. 더 자세히 보고 싶을 때는 `{ "band": { "card": true } }`를 주면 목표, 다음 할 일, 경고를 담은 카드가 하나 더 아래에 붙습니다. 카드의 각 부분은 [레퍼런스](./docs/reference-Ko-KR.md#tui-미션-패널)에 자세히 있습니다.
 

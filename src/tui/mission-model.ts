@@ -1,7 +1,8 @@
 // The mission view model for the OpenCode TUI. It reads only what LitOpenCode already leaves behind:
 // the `metadata.litopencode` marks the plugin attaches to user-message parts on activation and on
-// commands, the host todo list, and the evidence ledger in .litopencode/litgoal/lit-loop/goals.json.
-// No new state is written for the TUI.
+// commands, the host todo list and running tool, the evidence ledger in
+// .litopencode/litgoal/lit-loop/goals.json, the bounded work record work-schema-3.json with its plan
+// checklist, and litresearch run folders. No new state is written for the TUI.
 
 export type LitMark = {
   readonly at: number;
@@ -13,6 +14,28 @@ export type LitMark = {
 
 export type TodoInput = { readonly content: string; readonly status: string };
 
+/** The plan file's `- [ ]` / `- [x]` rows: how many are ticked, how many exist, and the first open one. */
+export type PlanChecklist = { readonly done: number; readonly total: number; readonly next?: string };
+
+/** This session's bounded work from work-schema-3.json: its status, recorded progress turns and plan. */
+export type WorkInput = { readonly status: string; readonly iterations: number; readonly plan?: PlanChecklist };
+
+export type ResearchStage = "decompose" | "wave" | "expand" | "verify" | "synthesis";
+
+/** The latest litresearch run folder: what its journal, claim graph and report say so far. */
+export type ResearchInput = {
+  readonly stage: ResearchStage;
+  readonly waves: number;
+  readonly claims: number;
+  readonly verified: number;
+  readonly reported: boolean;
+  /** Last write to the run folder, in ms; a run older than the session's first lit turn is earlier work. */
+  readonly touchedAt: number;
+};
+
+/** The tool the session is running now: its name and start time only, never its input. */
+export type LiveStep = { readonly tool: string; readonly start: number };
+
 export type MissionInput = {
   readonly marks: readonly LitMark[];
   readonly agent?: string;
@@ -23,10 +46,18 @@ export type MissionInput = {
   readonly pendingPermissions?: number;
   readonly pendingQuestions?: number;
   readonly contextPercent?: number | null;
+  readonly work?: WorkInput;
+  readonly research?: ResearchInput;
+  readonly live?: LiveStep;
   readonly now: number;
 };
 
-export type StepId = "plan" | "work" | "review";
+/**
+ * Which stage table the map follows: the main chain, lit-loop's criterion loop (the same stages with
+ * the work stage counting criteria), or a litresearch run.
+ */
+export type MissionFamily = "main" | "loop" | "research";
+export type StepId = "interview" | "plan" | "work" | "review" | "done" | ResearchStage;
 // "skip" marks a phase this session passed without doing it, such as planning for a bounded lit-task.
 export type StepState = "done" | "skip" | "now" | "todo" | "warn";
 export type MissionStep = { readonly id: StepId; readonly state: StepState };
@@ -48,10 +79,19 @@ export type MissionEvent = { readonly ago: string; readonly kind: string; readon
 export type MissionView = {
   readonly active: boolean;
   readonly discipline: string;
-  readonly phase: StepId | "done";
+  readonly family: MissionFamily;
+  readonly phase: StepId;
   readonly steps: readonly MissionStep[];
   readonly progress?: { readonly done: number; readonly total: number };
   readonly next?: string;
+  /** The lead of the detail line: `task 3`, or a research run's claim counts. */
+  readonly detail?: string;
+  /** Recorded turns of the current loop: bounded work progress, or lit-loop goal checkpoints. */
+  readonly iteration?: number;
+  /** How many tasks the saved plan holds, shown beside the plan stage. */
+  readonly planTasks?: number;
+  readonly wave?: number;
+  readonly live?: LiveStep;
   readonly goal?: MissionGoal;
   readonly blockers: readonly { readonly id: string; readonly detail: string; readonly needsUserDecision: boolean }[];
   readonly warnings: readonly MissionWarning[];
@@ -74,15 +114,18 @@ export const contextWarnPercent = 75;
 const timelineLimit = 4;
 const staleGoalSlackMs = 60_000;
 
+export const familySteps: Readonly<Record<MissionFamily, readonly StepId[]>> = Object.freeze({
+  main: Object.freeze(["interview", "plan", "work", "review", "done"] as const),
+  loop: Object.freeze(["interview", "plan", "work", "review", "done"] as const),
+  research: Object.freeze(["decompose", "wave", "expand", "verify", "synthesis"] as const)
+});
+
 export const idleMission: MissionView = Object.freeze({
   active: false,
   discipline: "",
+  family: "main",
   phase: "plan",
-  steps: Object.freeze([
-    { id: "plan", state: "todo" },
-    { id: "work", state: "todo" },
-    { id: "review", state: "todo" }
-  ] as const),
+  steps: Object.freeze(familySteps.main.map((id) => Object.freeze({ id, state: "todo" as const }))),
   blockers: Object.freeze([]),
   warnings: Object.freeze([]),
   timeline: Object.freeze([]),
@@ -116,9 +159,60 @@ export function readLitMark(metadata: unknown, at: number): LitMark | undefined 
 
 function stepOf(name: string): StepId | undefined {
   if (name === "") return undefined;
+  if (name === "deep-interview" || name.endsWith("-interview")) return "interview";
   if (name === "review-work" || name.includes("review")) return "review";
-  if (name === "lit-plan" || name.endsWith("-plan") || name === "lit-crucible" || name === "deep-interview") return "plan";
+  if (name === "lit-plan" || name.endsWith("-plan") || name === "lit-crucible") return "plan";
   return "work";
+}
+
+function isResearchName(name: string): boolean {
+  return name === "litresearch" || name === "lit-research";
+}
+
+/** The name a stage shows: the loop counts criteria at its work stage and a research wave carries its number. */
+export function stepName(id: StepId, view: Pick<MissionView, "family" | "wave">): string {
+  if (id === "work" && view.family === "loop") return "criterion";
+  if (id === "wave") return `wave ${Math.max(1, view.wave ?? 1)}`;
+  return id;
+}
+
+/** Index of the stage that is running (or flagged); the step count once complete; -1 while idle. */
+export function currentStepIndex(view: Pick<MissionView, "steps" | "complete" | "active">): number {
+  if (!view.active) return -1;
+  const index = view.steps.findIndex((step) => step.state === "now" || step.state === "warn");
+  return index >= 0 ? index : view.complete ? view.steps.length : -1;
+}
+
+/**
+ * Counts a plan's checkbox rows at column zero (`- [ ] 1. title — …`). The first open row, cut at its
+ * em dash, becomes the next item. Indented rows are not tasks.
+ */
+export function planChecklist(text: string): PlanChecklist | undefined {
+  let done = 0;
+  let total = 0;
+  let next: string | undefined;
+  for (const line of text.split(/\r?\n/u)) {
+    const match = /^- \[( |x|X)\] +(.*)$/u.exec(line);
+    if (match === null) continue;
+    total += 1;
+    if (match[1] !== " ") done += 1;
+    else if (next === undefined) next = match[2].split(" — ")[0].trim();
+  }
+  if (total === 0) return undefined;
+  return { done, total, ...(next === undefined || next === "" ? {} : { next }) };
+}
+
+/**
+ * Lenient read of work-schema-3.json for one session: undefined when it is absent, another session's,
+ * cancelled, or not the schema-3 shape. Iterations count the recorded `work.progressed` turns.
+ */
+export function readWorkState(raw: unknown, sessionID: string): { readonly status: string; readonly iterations: number; readonly planPath: string } | undefined {
+  if (!isRecord(raw) || raw.schemaVersion !== 3 || raw.sessionID !== sessionID) return undefined;
+  const status = text(raw.status);
+  if (status === "" || status === "cancelled") return undefined;
+  const history = Array.isArray(raw.history) ? raw.history.filter(isRecord) : [];
+  const plan = isRecord(raw.plan) ? text(raw.plan.path) : "";
+  return { status, iterations: history.filter((entry) => entry.type === "work.progressed").length, planPath: plan };
 }
 
 type LedgerCriterion = { readonly id: string; readonly scenario: string; readonly status: string; readonly evidence: readonly { readonly kind: string; readonly ref: string; readonly at: string }[] };
@@ -130,23 +224,49 @@ type LedgerGoal = {
   readonly criteria: readonly LedgerCriterion[];
   readonly checkpoints: readonly { readonly summary: string; readonly at: string }[];
   readonly reviewBlockers: readonly { readonly id: string; readonly detail: string; readonly resolved: boolean; readonly needsUserDecision: boolean }[];
+  /** Written by the ledger CLI, whose completion gate checks evidence; a hand-written goal passed none. */
+  readonly gated: boolean;
 };
 
-/** Lenient read of goals.json: the active goal, or undefined when the file is absent or not the ledger shape. */
+// The ledger CLI accepts `passed`, `failed` and `completed` as spellings of its own statuses; a goals.json
+// the agent writes by hand also marks a finished criterion `completed` or `done`.
+const criterionStatusSpellings: Readonly<Record<string, string>> = { passed: "pass", completed: "pass", complete: "pass", done: "pass", failed: "fail" };
+const goalStatusSpellings: Readonly<Record<string, string>> = { completed: "complete", done: "complete" };
+
+/**
+ * Picks the goal out of goals.json: the ledger's active goal, else what an agent writes by hand —
+ * a goal nested under `goal`, the last entry of a `goals` list, or one goal object at the top.
+ */
+function pickGoal(raw: Record<string, unknown>): Record<string, unknown> | undefined {
+  const hasCriteria = (value: unknown): value is Record<string, unknown> => isRecord(value) && Array.isArray(value.criteria);
+  if (Array.isArray(raw.goals)) {
+    if (raw.activeGoalId !== undefined) {
+      const active = raw.goals.find((candidate) => isRecord(candidate) && candidate.id === raw.activeGoalId);
+      return isRecord(active) ? active : undefined;
+    }
+    return raw.goals.filter(hasCriteria).at(-1);
+  }
+  if (hasCriteria(raw.goal)) return raw.goal;
+  return hasCriteria(raw) ? raw : undefined;
+}
+
+/** Lenient read of goals.json: the goal it names, or undefined when there is none. */
 export function readActiveGoal(raw: unknown): LedgerGoal | undefined {
-  if (!isRecord(raw) || !Array.isArray(raw.goals)) return undefined;
-  const goal = raw.goals.find((candidate) => isRecord(candidate) && candidate.id === raw.activeGoalId);
-  if (!isRecord(goal)) return undefined;
+  if (!isRecord(raw)) return undefined;
+  const goal = pickGoal(raw);
+  if (goal === undefined) return undefined;
   const list = (value: unknown): readonly Record<string, unknown>[] => (Array.isArray(value) ? value.filter(isRecord) : []);
+  const status = text(goal.status);
   return {
+    gated: goal !== raw && Array.isArray(raw.goals) && raw.activeGoalId !== undefined,
     title: text(goal.title) || text(goal.objective),
-    status: text(goal.status),
+    status: goalStatusSpellings[status] ?? status,
     createdAt: text(goal.createdAt),
     updatedAt: text(goal.updatedAt),
     criteria: list(goal.criteria).map((criterion) => ({
       id: text(criterion.id),
       scenario: text(criterion.scenario),
-      status: text(criterion.status),
+      status: criterionStatusSpellings[text(criterion.status)] ?? text(criterion.status),
       evidence: list(criterion.evidence).map((entry) => ({ kind: text(entry.kind), ref: text(entry.ref), at: text(entry.at) }))
     })),
     checkpoints: list(goal.checkpoints).map((entry) => ({ summary: text(entry.summary), at: text(entry.at) })),
@@ -207,24 +327,36 @@ export function buildMissionView(input: MissionInput): MissionView {
   const planSaved = planMark !== undefined && planMark.blocked !== true;
   const planBlocked = planMark?.blocked === true;
   const discipline = latest?.mode && latest.mode !== "bounded-authority-lifecycle" ? latest.mode : latest?.command ?? input.agent ?? "lit";
+  // A research run counts when this session started it or wrote to it; an older folder is earlier work.
+  const research = input.research !== undefined && !(input.research.touchedAt < marks[0].at - staleGoalSlackMs) ? input.research : undefined;
+  const researching = isResearchName(discipline) || (research !== undefined && !research.reported);
+  const work = input.work;
 
   const counted = input.todos.filter((todo) => todo.status !== "cancelled");
+  const planList = work?.plan;
   const progress = counted.length > 0
     ? { done: counted.filter((todo) => todo.status === "completed").length, total: counted.length }
-    : goal !== undefined && goal.criteria.length > 0
-      ? { done: goal.criteria.filter((criterion) => criterion.status === "pass").length, total: goal.criteria.length }
-      : undefined;
+    : planList !== undefined
+      ? { done: planList.done, total: planList.total }
+      : goal !== undefined && goal.criteria.length > 0
+        ? { done: goal.criteria.filter((criterion) => criterion.status === "pass").length, total: goal.criteria.length }
+        : undefined;
+  const countsTasks = counted.length > 0 || planList !== undefined;
   const nextTodo = counted.find((todo) => todo.status === "in_progress") ?? counted.find((todo) => todo.status === "pending");
   const nextCriterion = goal?.criteria.find((criterion) => criterion.status !== "pass");
+  const family: MissionFamily = researching ? "research" : !countsTasks && goal !== undefined && goal.criteria.length > 0 && /lit-?loop|litgoal/u.test(discipline) ? "loop" : "main";
 
   const blockers = (goal?.reviewBlockers ?? []).filter((blocker) => !blocker.resolved);
-  const complete = goal?.status === "complete" || (progress !== undefined && progress.total > 0 && progress.done === progress.total && goal === undefined && counted.length > 0);
+  const complete = researching
+    ? research?.reported === true
+    : goal?.status === "complete" || (progress !== undefined && progress.total > 0 && progress.done === progress.total && goal === undefined && countsTasks);
 
-  let phase: StepId | "done" = latest === undefined ? agentStep ?? "work" : stepOf(latest.command ?? latest.mode ?? "") ?? "work";
+  let phase: StepId = latest === undefined ? agentStep ?? "work" : stepOf(latest.command ?? latest.mode ?? "") ?? "work";
   if (latest?.operation === "save-plan" && !planBlocked) phase = "work";
   // A blocker sends finished work back to review; with criteria still open the work phase carries the warning.
   const workComplete = progress === undefined || progress.done === progress.total;
   if (blockers.length > 0 || goal?.status === "review_blocked") phase = workComplete ? "review" : phase === "review" ? "review" : "work";
+  if (researching) phase = research?.stage ?? "decompose";
   if (complete) phase = "done";
 
   const warnings: MissionWarning[] = [];
@@ -242,22 +374,48 @@ export function buildMissionView(input: MissionInput): MissionView {
     warnings.push({ kind: "context", text: `ctx ${Math.round(input.contextPercent)}%` });
   }
 
-  const order: readonly StepId[] = ["plan", "work", "review"];
-  const position = phase === "done" ? order.length : order.indexOf(phase);
-  const planned = planMark !== undefined || agentStep === "plan" || marks.some((mark) => stepOf(mark.command ?? mark.mode ?? "") === "plan");
+  const order = familySteps[family];
+  const position = complete ? order.length : order.indexOf(phase);
+  const visited = (id: StepId): boolean => {
+    if (id === "interview") return agentStep === "interview" || marks.some((mark) => stepOf(mark.command ?? mark.mode ?? "") === "interview");
+    if (id === "plan") return planMark !== undefined || work !== undefined || agentStep === "plan" || marks.some((mark) => stepOf(mark.command ?? mark.mode ?? "") === "plan");
+    // Finished todos alone prove no review; a review command, a review blocker or the goal ledger's
+    // completion gate does.
+    if (id === "review") return (goal?.status === "complete" && goal.gated) || blockers.length > 0 || (goal?.reviewBlockers.length ?? 0) > 0 || marks.some((mark) => stepOf(mark.command ?? mark.mode ?? "") === "review");
+    return true;
+  };
   const steps = order.map((id, index): MissionStep => {
-    if (index < position) return { id, state: id === "plan" && !planned ? "skip" : "done" };
+    if (index < position) return { id, state: visited(id) ? "done" : "skip" };
     if (index > position) return { id, state: "todo" };
     return { id, state: warnings.length > 0 ? "warn" : "now" };
   });
 
+  const iteration = work !== undefined && work.iterations > 0 ? work.iterations : family === "loop" && goal !== undefined && goal.checkpoints.length > 0 ? goal.checkpoints.length : undefined;
+  const nextPlan = nextTodo === undefined ? planList?.next : undefined;
+  const detail = family === "research"
+    ? research === undefined ? undefined : `${research.claims} claims · ${research.verified} verified`
+    : countsTasks && progress !== undefined && progress.done < progress.total ? `task ${progress.done + 1}` : undefined;
+  const live = input.live !== undefined && (input.sessionStatus === "busy" || input.sessionStatus === "retry") ? input.live : undefined;
+
   return {
     active: true,
     discipline,
+    family,
     phase,
     steps,
-    ...(progress === undefined ? {} : { progress }),
-    ...(nextTodo !== undefined ? { next: nextTodo.content } : nextCriterion !== undefined ? { next: `${nextCriterion.id} ${nextCriterion.scenario}`.trim() } : {}),
+    ...(family === "research" || progress === undefined ? {} : { progress }),
+    ...(family === "research"
+      ? {}
+      : nextTodo !== undefined
+        ? { next: nextTodo.content }
+        : nextPlan !== undefined
+          ? { next: nextPlan }
+          : nextCriterion !== undefined ? { next: `${nextCriterion.id} ${nextCriterion.scenario}`.trim() } : {}),
+    ...(detail === undefined ? {} : { detail }),
+    ...(iteration === undefined ? {} : { iteration }),
+    ...(planList === undefined ? {} : { planTasks: planList.total }),
+    ...(family === "research" && research !== undefined && research.waves > 0 ? { wave: research.waves } : {}),
+    ...(live === undefined ? {} : { live }),
     ...(goal === undefined
       ? {}
       : {
@@ -360,11 +518,13 @@ export function missionRowKeys(view: MissionView): readonly string[] {
   if (!view.active) return [];
   const keys = ["h1", "h2", "b1"];
   if (view.goal !== undefined) keys.push("title");
-  keys.push("steps");
+  view.steps.forEach((step, index) => keys.push(...(index === 0 ? [] : [`link:${index}`]), `step:${step.id}`));
   if (view.progress !== undefined) keys.push("bar");
-  const detail = (view.next !== undefined && !view.complete) || view.goal !== undefined || view.warnings.length > 0;
-  if (detail) keys.push("b2");
-  if (view.next !== undefined && !view.complete) keys.push("next");
+  const line = (view.next !== undefined || view.detail !== undefined) && !view.complete;
+  const live = view.live !== undefined && !view.complete;
+  if (line || live || view.goal !== undefined || view.warnings.length > 0) keys.push("b2");
+  if (line) keys.push("detail");
+  if (live) keys.push("live");
   if (view.goal !== undefined) keys.push("crit");
   view.warnings.forEach((warning) => keys.push(`warn:${warning.kind}:${warning.text}`));
   if (view.timeline.length > 0) {

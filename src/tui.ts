@@ -1,16 +1,18 @@
-// LitOpenCode's TUI plugin: a phase chip beside the prompt, a mission panel in the session sidebar,
-// a status card with skill chips along the bottom, toasts for gate events and a short completion moment. OpenCode loads it from the package's `./tui`
-// export through the `plugin` list in tui.json. It only reads state; the server plugin owns writes.
+// LitOpenCode's TUI plugin: a workflow map chip beside the prompt, a mission panel with a vertical
+// stage map in the session sidebar, a status card with skill chips along the bottom, the live step,
+// toasts for gate events, a short completion moment and an opt-in finish alert. OpenCode loads it from
+// the package's `./tui` export through the `plugin` list in tui.json. It only reads state; the server
+// plugin owns writes.
 import type { TuiPlugin, TuiPluginApi, TuiPluginModule } from "@opencode-ai/plugin/tui";
 import { createEffect, createMemo, createSignal } from "solid-js";
 import { useTerminalDimensions } from "@opentui/solid";
 import { jsx } from "@opentui/solid/jsx-runtime";
-import { buildMissionView, lastMission, leadingNotice, missionNotices, type MissionView } from "./tui/mission-model.ts";
+import { buildMissionView, lastMission, leadingNotice, missionNotices, type MissionNotice, type MissionView } from "./tui/mission-model.ts";
 import { idleMotion, motionTiming, planMotion, sampleMotion, type MotionState } from "./tui/mission-motion.ts";
 import { chipBudget, chipLine, homeLine, missionPanel, paletteFromTheme, panelWidth, type Line, type MissionPalette } from "./tui/mission-text.ts";
-import { createLedgerReader, missionProjectRoot, readCardInput, readMissionInput, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
+import { createLedgerReader, createWorkReader, missionProjectRoot, readCardInput, readLatestResearchRun, readMissionInput, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
 import { chipShimmer, idleChipMotion, planChipMotion, type ChipMotion } from "./tui/mission-skills.ts";
-import { bandCard, readBandOptions, statusCard } from "./tui/mission-band.ts";
+import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "./tui/mission-band.ts";
 
 export const litOpenCodeTuiPluginId = "litopencode";
 
@@ -18,6 +20,7 @@ const homeLineWidth = 69;
 const refreshDelayMs = 80;
 const ledgerPollMs = 2000;
 const toastMs = 4000;
+const liveTickMs = 1000;
 const trackedSessionLimit = 4;
 const refreshEvents = [
   "message.updated",
@@ -49,7 +52,9 @@ function lineElement(line: Line): unknown {
 const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   const motionEnabled = (options as Record<string, unknown> | undefined)?.motion !== false;
   const band = readBandOptions(options);
+  const notify = readNotifyOptions(options);
   const readLedger = createLedgerReader();
+  const readWork = createWorkReader();
   const sessions = new Map<string, SessionEntry>();
   const tracked: string[] = [];
   const [revision, setRevision] = createSignal(0);
@@ -57,6 +62,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   let frameTimer: ReturnType<typeof setInterval> | undefined;
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
   let pollTimer: ReturnType<typeof setInterval> | undefined;
+  let liveTimer: ReturnType<typeof setInterval> | undefined;
 
   const state = (): MissionStateSource => api.state as unknown as MissionStateSource;
   const palette = (): MissionPalette => paletteFromTheme(api.theme.current as unknown as Record<string, unknown>, api.theme.mode());
@@ -92,18 +98,42 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     }, motionTiming.frameMs);
   }
 
+  // The live step's elapsed time is the only steady change: one tick a second while a tool runs, and
+  // no timer at all otherwise.
+  function syncLiveTick(): void {
+    const running = [...sessions.values()].some((entry) => entry.view.live !== undefined);
+    if (running && liveTimer === undefined) liveTimer = setInterval(() => setClock(Date.now()), liveTickMs);
+    if (!running && liveTimer !== undefined) {
+      clearInterval(liveTimer);
+      liveTimer = undefined;
+    }
+  }
+
+  // The finish alert is off unless tui.json opts in; OpenCode's own attention settings still decide
+  // whether a desktop notification or a sound actually plays.
+  function alertFinish(notice: MissionNotice): void {
+    if (!notify.enabled) return;
+    void api.attention
+      .notify({ title: "🔥 LIT complete", message: notice.message, notification: notify.desktop, sound: notify.sound ? { name: "done" } : false })
+      .catch(() => undefined);
+  }
+
   function refresh(sessionID: string): void {
     const now = Date.now();
     const source = state();
-    const ledger = readLedger(missionProjectRoot(source.path));
-    const next = buildMissionView(readMissionInput(source, sessionID, ledger, now));
+    const root = missionProjectRoot(source.path);
+    const ledger = readLedger(root);
+    const next = buildMissionView(readMissionInput(source, sessionID, ledger, now, { work: readWork(root, sessionID), research: readLatestResearchRun(root) }));
     const card = readCardInput(source, sessionID);
     const entry = sessions.get(sessionID);
     const viewChanged = entry === undefined || JSON.stringify(entry.view) !== JSON.stringify(next);
     if (!viewChanged && JSON.stringify(entry.card) === JSON.stringify(card)) return;
     if (entry !== undefined && viewChanged) {
-      const notice = leadingNotice(missionNotices(entry.view, next));
+      const notices = missionNotices(entry.view, next);
+      const notice = leadingNotice(notices);
       if (notice !== undefined) api.ui.toast({ variant: notice.variant, title: notice.title, message: notice.message, duration: toastMs });
+      const finish = notices.find((candidate) => candidate.celebrate === true);
+      if (finish !== undefined) alertFinish(finish);
     }
     sessions.set(sessionID, {
       view: next,
@@ -114,6 +144,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     setClock(now);
     setRevision(revision() + 1);
     ensureFrames();
+    syncLiveTick();
   }
 
   function refreshTracked(): void {
@@ -187,6 +218,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     if (frameTimer !== undefined) clearInterval(frameTimer);
     if (refreshTimer !== undefined) clearTimeout(refreshTimer);
     if (pollTimer !== undefined) clearInterval(pollTimer);
+    if (liveTimer !== undefined) clearInterval(liveTimer);
     sessions.clear();
   });
 
