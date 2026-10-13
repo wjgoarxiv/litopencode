@@ -6,6 +6,14 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.22 Release Scope
+
+- The LIT card, the chip beside the prompt and the sidebar now show where you are in the workflow, not only which skill ran. A map runs `interview › plan › work › review › done` and lights the step you are on with its count, such as `WORK 3/7` while `/start-work` works through a saved plan. A lit-loop goal counts its criteria instead (`CRITERION 1/3`), and a litresearch run follows its own steps from `decompose` through each `wave` to `synthesis`. A step the request went past without doing shows `–`. The sidebar draws the map top to bottom with a line that fills as you move forward.
+- While a tool runs, its name and running time sit beside the map, like `⠹ bash · 0:48`. Only the tool's name and start time are read, never its command or arguments, and the step disappears when the turn ends.
+- A finished mission can now tell you so. Add `{ "notify": true }` to the LitOpenCode entry in `tui.json` for a desktop notification and the `done` sound, or turn either one off with `{ "notify": { "sound": false } }` or `{ "notify": { "desktop": false } }`. It is off until you add it, and OpenCode plays nothing unless its own `"attention": { "enabled": true }` is set too.
+- The README pictures of the status card are new captures from OpenCode showing the workflow map, the live tool step and the card after the turn, in English and Korean.
+- A lit-loop turn shows its criteria even when the agent writes `goals.json` by hand, as one goal at the top or nested under `goal`, with `completed` or `done` counted as passed. A goal marked complete by hand passed no gate, so review stays at `–`; only a goal completed through the ledger, whose gate includes review, marks it done. In the criterion view the card leaves out the separate criteria count, so the live step keeps its room on the row.
+
 ## 1.0.21 Release Scope
 
 - The README demo on GitHub is a new film of one real OpenCode turn. It plays without music, and a numbered label names each part LitOpenCode adds as it appears: the `lit` word, the status card switching to WORK, the light mode for a small fix, the reply that reads before editing, the fix with its test, the real test run and the closing summary.
