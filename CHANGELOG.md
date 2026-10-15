@@ -5,6 +5,10 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.25 - 2026-10-15
+
+- The write guard now refuses sentences that say what a document is not for, such as `동일 조건의 독립 성능 비교로 쓰지 않음.` or an English line saying a result is not a benchmark. When the model writes one with the write or edit tool, the call is refused and the model rewrites it. Three new rules cover Korean pledges, a Korean pledge repeated through a document, and the English forms, and the status-negation warning now also reads `쓰지 않음`, the polite endings and bold-wrapped endings. Legal and financial notices, safety warnings, operating rules, method lines and real negative findings stay untouched, and the rules still finish in milliseconds on very long runs of spaces. The lit-docx and lit-pptx skills now ask for a real limit once, as a fact beside the number it affects, and keep anything about what the document is not for in the reply.
+
 ## 1.0.24 - 2026-10-14
 
 - The LIT card, the chip beside the prompt, the sidebar panel and the home line now wear the LIT colours in every OpenCode theme: the `🔥 LIT` pill runs from pink to flame, the workflow map ramps from flame through pink to the LIT accent, the running stage and the current skills are accent pills, and warnings and the finished state use LIT amber and green. Text, panels and borders still follow your theme, and on a light theme the LIT colours deepen so they stay readable. The README pictures of the card show the new look.
