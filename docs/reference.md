@@ -372,7 +372,7 @@ What it draws:
   at `–`. A review command, a review blocker or a goal completed through the ledger CLI (whose gate
   includes review) marks it done; a goal the agent marks complete in a hand-written `goals.json`
   passed no gate and leaves review at `–`. Stages behind the running one take their place on a colour
-  ramp from the theme's primary through secondary to accent; stages ahead are muted.
+  ramp from LIT flame through pink to the LIT accent; stages ahead are muted.
 - A map chip on the right of the prompt's agent/model row: a `🔥 LIT` pill and the breadcrumb around
   the running stage, `plan ✓ › WORK ▰▰▰▱▱▱▱ 3/7 › review`, with the running stage as a filled pill and a
   seven-cell bar. When the row has room the live step follows (`⠹ bash · 0:48`). Narrower, it drops
@@ -382,7 +382,7 @@ What it draws:
   read yet, the chip assumes the sidebar is open and stays narrower.
 - A mission panel at the top of the session sidebar, in a 36-cell rounded box titled
   `🔥 LIT ▸ <STAGE>` with `n/m criteria` in the bottom border. The border carries the state: the
-  theme accent while working, the warning colour on a warning, the success colour when complete.
+  LIT accent while working, LIT amber on a warning, LIT green when complete.
   Inside: a two-row `LIT` with the discipline and a status beside it, the goal title in bold, the
   vertical stage map (`◆` behind, `◉` running in bold, `⚑` flagged, `◇` ahead, joined by `┃`
   connectors in the ramp colour up to the running stage and dotted `┆` after it, with the saved
@@ -405,7 +405,7 @@ What it draws:
     warning is open, `⚑ <text>` takes the place of the live step and `▸ next`. An idle session shows
     the dim map with the project's last goal, or `add lit to a prompt to start`;
   - row two holds the skill chips: every LitOpenCode skill that fired in the session, several at
-    once. Skills fired by the current request are bright accent pills while it runs, and a new one
+    once. Skills fired by the current request are bright LIT accent pills while it runs, and a new one
     gets a short light sweep as it arrives; when the turn ends they dim and stay as the recent list,
     newest first, and firing one again brightens it. Chips that do not fit collapse into `+N`;
   - the bottom border holds the context use (amber from 75%), the time since the first lit turn
@@ -417,8 +417,8 @@ What it draws:
   then the time, then the context use. It never wraps. The completion moment plays here too.
 - A line under the home prompt, after OpenCode's tips: `🔥 lit ready · last: <goal> ✓ n/m`. It
   appears only when the project ledger holds a goal.
-- Warnings always carry `⚑` and words, not colour alone, because some themes use one colour for
-  both accent and warning. Theme surfaces with alpha 0 (the system and lucent-orng themes) are left
+- Warnings always carry `⚑` and words, not colour alone, so they read the same without colour.
+  Theme surfaces with alpha 0 (the system and lucent-orng themes) are left
   unfilled rather than painted black.
 - One toast per refresh for a gate event: plan saved or not saved, goal set, criterion passed,
   review blocker opened or resolved, and completion. Several events at once collapse into the most
@@ -475,8 +475,16 @@ apart and the running pill flashes once; nothing loops. The live step changes in
 slide-in, and while a tool runs its elapsed time ticks once a second; with no tool running there is
 no timer at all. While a lit session is open the panel re-reads the goal ledger, the bounded work
 record and the research folder every two seconds; an idle session does not.
-Colours come from the active OpenCode theme. Set `["@litfamily/litopencode@<version>", { "motion": false }]`
-in `tui.json` to keep it static, or turn the plugin off by id `litopencode` in OpenCode's plugin
+
+The LIT parts wear the LIT colours in every theme: the `🔥 LIT` pill runs from pink (`#ff2d95`) to
+flame (`#ff6337`), the stage ramp runs flame, pink, then the LIT accent (`#5fd7ff`), the running stage
+and the current skill chips are accent pills, the bar runs flame to accent, and the state colours are
+LIT amber (`#ffaf3c`), green (`#6bdb8f`) and red (`#ff5f5f`). Pills always use dark ink (`#0b0f14`). Text, muted
+text, the panel and element fills, the borders and transparent surfaces still come from the active
+OpenCode theme. On a light theme the pill fills stay bright, and the LIT colours drawn as text
+deepen within the same hue (flame `#e2521f`, pink `#d81b78`, accent `#0a87b8`, green `#1f9d55`, amber
+`#b86e00`, red `#d93a3a`) so they stay readable on a white background. Set
+`["@litfamily/litopencode@<version>", { "motion": false }]` in `tui.json` to turn the motion off, or turn the plugin off by id `litopencode` in OpenCode's plugin
 manager or with `plugin_enabled`.
 
 Band options go in the same options object:

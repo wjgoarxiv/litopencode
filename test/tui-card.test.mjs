@@ -161,11 +161,12 @@ test("skill chips: bright pills for the current request, dim recent names, and +
   const wide = skillRow(many, undefined, palette, 120);
   assert.equal(lineWidth(wide), 120);
   const bright = wide.find((segment) => segment.text === " lit-plan ");
-  assert.equal(bright.bg, palette.accent);
+  assert.equal(bright.bg, "#5fd7ff", "a current chip is a LIT accent pill");
+  assert.equal(bright.fg, "#0b0f14", "with dark ink");
   assert.equal(bright.bold, true);
   const dim = wide.find((segment) => segment.text.includes("debugging"));
   assert.equal(dim.fg, palette.muted);
-  assert.notEqual(dim.bg, palette.accent);
+  assert.notEqual(dim.bg, "#5fd7ff");
   const narrow = text(skillRow(many, undefined, palette, 40));
   assert.equal(cellWidth(narrow), 40);
   assert.match(narrow, /lit-plan.*lit-pptx.*\+\d/u, "current chips stay and the rest collapse into +N");
@@ -183,7 +184,7 @@ test("a skill arriving in the current request shimmers briefly, only once, and n
   assert.ok(mid !== undefined && mid.sweep > 0 && mid.sweep < 1);
   assert.equal(chipShimmer(motion, 1000 + motionTiming.shimmer + 1), undefined);
   const lit = skillRow(after, mid, palette, 80);
-  const pptxCells = lit.filter((segment) => segment.bg !== undefined && segment.bg !== palette.accent);
+  const pptxCells = lit.filter((segment) => segment.bg !== undefined && segment.bg !== palette.fill);
   assert.ok(pptxCells.length > 0, "the sweep lightens part of the new chip");
   assert.deepEqual(planChipMotion(after, after, 2000, motion, true), motion, "the same chips do not restart it");
   assert.deepEqual(planChipMotion(undefined, after, 1000, idleChipMotion, true).arrivals, ["lit-pptx"], "a new session's first chip belongs to the running request and shimmers");
@@ -231,13 +232,13 @@ test("the card settles to idle when the root session's turn ends, ignores a fini
   let { input, rows } = draw();
   assert.equal(input.busy, true, "a finished child leaves the root card working");
   assert.match(text(rows[0]), /● WORK ─╮$/u);
-  assert.equal(workPill(rows).bg, palette.info, "the running step is lit");
+  assert.equal(workPill(rows).bg, "#5fd7ff", "the running step is lit as a LIT accent pill");
 
   statuses.root = { type: "idle" };
   ({ input, rows } = draw());
   assert.equal(input.busy, false);
   assert.match(text(rows[0]), /^╭─ 🔥 LIT · lit-task ─+ ○ IDLE ─╮$/u, "the title settles to idle");
-  assert.notEqual(workPill(rows).bg, palette.info, "no step stays lit after the turn");
+  assert.notEqual(workPill(rows).bg, "#5fd7ff", "no step stays lit after the turn");
   assert.ok(input.chips.every((chip) => !chip.current), "chips dim to recent");
   assert.equal(rows[0][0].fg, palette.borderActive, "the border returns to its resting colour");
 

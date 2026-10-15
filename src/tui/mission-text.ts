@@ -25,9 +25,23 @@ export type MissionPalette = {
   readonly element?: string;
   /** What fades and tints mix toward: the panel, else the background, else a neutral for the mode. */
   readonly mixBase: string;
+  /** The running stage's pill and the current skill chip, and that pill on a warning: bright in every mode. */
+  readonly fill: string;
+  readonly fillWarn: string;
   /** Text drawn on a filled pill. */
   readonly onFill: string;
 };
+
+/**
+ * The LIT signature colours. Dark themes use them as they are; light themes deepen the colours drawn
+ * as text within the same hue so words stay readable, while pill fills keep the bright signature with
+ * dark ink in both modes.
+ */
+const litColors = {
+  dark: { flame: "#ff6337", pink: "#ff2d95", accent: "#5fd7ff", green: "#6bdb8f", amber: "#ffaf3c", red: "#ff5f5f" },
+  light: { flame: "#e2521f", pink: "#d81b78", accent: "#0a87b8", green: "#1f9d55", amber: "#b86e00", red: "#d93a3a" },
+  ink: "#0b0f14"
+} as const;
 
 /** Panel box width in cells, and the content width inside its border and one cell of padding per side. */
 export const panelWidth = 36;
@@ -59,8 +73,9 @@ export function colorToHex(value: unknown, fallback: string): string {
 }
 
 /**
- * Builds the palette from `api.theme.current`. A surface token with alpha 0 (the system and
- * lucent-orng themes) means "draw no background", never black.
+ * Builds the palette from `api.theme.current`: the LIT signature colours for the brand, the map ramp,
+ * the pills, the bar and the state colours, over the theme's text, muted text, fills and borders.
+ * A surface token with alpha 0 (the system and lucent-orng themes) means "draw no background", never black.
  */
 export function paletteFromTheme(theme: Record<string, unknown> | undefined, mode: "dark" | "light" = "dark"): MissionPalette {
   const pick = (key: string, fallback: string): string => colorToHex(theme?.[key], fallback);
@@ -72,14 +87,15 @@ export function paletteFromTheme(theme: Record<string, unknown> | undefined, mod
   const panel = surface("backgroundPanel");
   const element = surface("backgroundElement");
   const neutral = mode === "light" ? "#f2f2f2" : "#1c1c1c";
+  const lit = litColors[mode];
   return {
-    primary: pick("primary", "#ff6337"),
-    secondary: pick("secondary", "#ff2d95"),
-    accent: pick("accent", "#b48cff"),
-    info: pick("info", "#0aa6c2"),
-    warning: pick("warning", "#ffaf3c"),
-    success: pick("success", "#6bdb8f"),
-    error: pick("error", "#ff5f5f"),
+    primary: lit.flame,
+    secondary: lit.pink,
+    accent: lit.accent,
+    info: lit.accent,
+    warning: lit.amber,
+    success: lit.green,
+    error: lit.red,
     text: pick("text", "#e6edf3"),
     muted: pick("textMuted", "#7d8590"),
     borderActive: pick("borderActive", "#484f58"),
@@ -88,7 +104,9 @@ export function paletteFromTheme(theme: Record<string, unknown> | undefined, mod
     ...(panel === undefined ? {} : { panel }),
     ...(element === undefined ? {} : { element }),
     mixBase: panel ?? background ?? neutral,
-    onFill: background ?? panel ?? (mode === "light" ? "#ffffff" : "#0b0b0b")
+    fill: litColors.dark.accent,
+    fillWarn: litColors.dark.amber,
+    onFill: litColors.ink
   };
 }
 
@@ -213,7 +231,7 @@ export function progressBar(ratio: number, cells: number, palette: MissionPalett
   return segments;
 }
 
-/** The stage colour ramp: the theme's primary through secondary to accent, so every theme keeps its own feel. */
+/** The stage colour ramp: LIT flame through pink to the LIT accent. */
 export function stageColor(index: number, count: number, palette: MissionPalette): string {
   return gradientAt([palette.primary, palette.secondary, palette.accent], count <= 1 ? 0 : index / (count - 1));
 }
@@ -250,7 +268,7 @@ function pillStyle(state: StepState, palette: MissionPalette, warn: number): Pil
   if (state === "done") return { fg: palette.success, bg: mixHex(palette.success, palette.background ?? palette.mixBase, 0.72), bold: false };
   if (state === "todo" || state === "skip") return { fg: palette.muted, ...(palette.panel === undefined ? {} : { bg: palette.panel }), bold: false };
   const level = state === "warn" ? Math.max(warn, 0.5) : warn;
-  return { fg: palette.onFill, bg: mixHex(palette.info, palette.warning, level), bold: true };
+  return { fg: palette.onFill, bg: mixHex(palette.fill, palette.fillWarn, level), bold: true };
 }
 
 /** A light pass over the running stage: once when the map moves forward, and during the completion moment. */
@@ -294,7 +312,7 @@ export function crumb(view: MissionView, index: number, frame: MotionFrame, pale
   const chars = [...label];
   const pill: Segment[] = flash < 0
     ? [{ text: label, fg: style.fg, ...(style.bg === undefined ? {} : { bg: style.bg }), bold: style.bold }]
-    : chars.map((char, position) => ({ text: char, fg: style.fg, bg: shine(style.bg ?? palette.info, palette, position / (chars.length - 1), flash, 0.3), bold: true }));
+    : chars.map((char, position) => ({ text: char, fg: style.fg, bg: shine(style.bg ?? palette.fill, palette, position / (chars.length - 1), flash, 0.3), bold: true }));
   if (!counted) return pill;
   return [...pill, ...(bar > 0 ? [{ text: " ", fg: palette.muted }, ...microBar(frame.barRatio, palette, bar)] : []), { text: ` ${countText(view)}`, fg: palette.text, bold: true }];
 }
@@ -323,9 +341,13 @@ export function liveSegments(view: MissionView, frame: MotionFrame, palette: Mis
   ];
 }
 
+/** The `🔥 LIT` pill: LIT pink to flame across its cells with dark ink, bright on light themes too. */
 function brandPill(palette: MissionPalette, sweep: number): Segment[] {
   const chars = [" ", "🔥", " ", "L", "I", "T", " "];
-  return chars.map((char, index) => ({ text: char, fg: palette.onFill, bg: shine(palette.primary, palette, index / (chars.length - 1), sweep, 0.3), bold: true }));
+  return chars.map((char, index) => {
+    const position = index / (chars.length - 1);
+    return { text: char, fg: palette.onFill, bg: shine(mixHex(litColors.dark.pink, litColors.dark.flame, position), palette, position, sweep, 0.3), bold: true };
+  });
 }
 
 export type ChipTier = "full" | "medium" | "tight";

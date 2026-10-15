@@ -210,7 +210,7 @@ test("the panel box: phase title, criteria bottom title, and a border that carri
   assert.equal(working.family, "loop", "lit-loop counting criteria is the loop family");
   assert.equal(box.title, " 🔥 LIT ▸ CRITERION ");
   assert.equal(box.bottomTitle, " 1/3 criteria ");
-  assert.equal(box.border, palette.accent);
+  assert.equal(box.border, "#5fd7ff", "the working border is the LIT accent");
   assert.equal(box.background, undefined, "the default palette has no opaque panel token");
   assert.equal(text(box.rows[3]), "HUD를 짧게 만들기");
   assert.match(text(box.rows[0]), /^█   █ ▀█▀  lit-loop/u);
@@ -221,14 +221,14 @@ test("the panel box: phase title, criteria bottom title, and a border that carri
   const blocked = buildMissionView({ marks: [{ at: 1, mode: "lit-loop" }], todos: [], ledger: ledger({ criteria: [criterion("C1", "pass")], reviewBlockers: [{ id: "B1", detail: "d", resolved: false, needsUserDecision: false }] }), now });
   const amber = missionPanel(blocked, restingFrameFor(blocked), palette);
   assert.equal(amber.title, " 🔥 LIT ▸ REVIEW ⚑ ");
-  assert.equal(amber.border, palette.warning);
+  assert.equal(amber.border, "#ffaf3c", "the warning border is LIT amber");
   assert.match(text(amber.rows[1]), /⚑ review blocked/u, "a warning carries a glyph and words, not colour alone");
 
   const done = buildMissionView({ marks: [{ at: 1, mode: "lit-loop" }], todos: [], ledger: ledger({ status: "complete", criteria: [criterion("C1", "pass")] }), now });
   const green = missionPanel(done, restingFrameFor(done), palette);
   assert.equal(green.title, " 🔥 LIT ▸ COMPLETE ");
   assert.equal(green.bottomTitle, " 1/1 criteria ✓ ");
-  assert.equal(green.border, palette.success);
+  assert.equal(green.border, "#6bdb8f", "the complete border is LIT green");
   assert.match(text(green.rows[1]), /✓ COMPLETE/u);
 });
 test("the chip is the breadcrumb around the running stage with a gradient bar and sheds labels before values as it narrows", () => {
@@ -242,9 +242,14 @@ test("the chip is the breadcrumb around the running stage with a gradient bar an
   for (const budget of [16, 36, 80]) assert.ok(lineWidth(chipLine(view, resting, palette, budget)) <= budget, String(budget));
   const line = chipLine(view, resting, palette, 80);
   const plan = line.find((segment) => segment.text === "plan ✓");
-  assert.equal(plan.fg, mixHex(palette.primary, palette.secondary, 0.5), "each stage takes its place on the primary-secondary-accent ramp");
+  assert.equal(plan.fg, mixHex("#ff6337", "#ff2d95", 0.5), "each stage takes its place on the LIT flame-pink-accent ramp");
+  const brand = line.slice(0, 7);
+  assert.equal(text(brand), " 🔥 LIT ");
+  assert.equal(brand[0].bg, "#ff2d95", "the brand pill starts LIT pink");
+  assert.equal(brand[6].bg, "#ff6337", "and ends LIT flame");
+  assert.ok(brand.every((segment) => segment.fg === "#0b0f14" && segment.bold), "with dark bold ink");
   const filled = line.filter((segment) => segment.text === "▰").map((segment) => segment.fg);
-  assert.equal(filled[0], palette.primary);
+  assert.equal(filled[0], "#ff6337");
   assert.notEqual(filled.at(-1), palette.primary, "the bar runs along the primary-secondary-accent ramp");
   const blocked = buildMissionView({ marks: [{ at: 1, mode: "lit-loop" }], todos: [], ledger: ledger({ criteria: [criterion("C1", "pass"), criterion("C2", "pending")], reviewBlockers: [{ id: "B1", detail: "d", resolved: false, needsUserDecision: false }] }), now });
   assert.match(text(chipLine(blocked, restingFrameFor(blocked), palette, 80)), / CRITERION ⚑ .* 1\/2/u);
@@ -266,8 +271,8 @@ test("the gradient bar always spans its cell count and fills smoothly in eighths
   assert.ok(progressBar(0.53, 10, palette).some((segment) => /[▏▎▍▌▋▊▉]/u.test(segment.text)));
   assert.equal(text(progressBar(0, 6, palette)), "──────", "the empty track is a thin rule, not a dither");
   const ramp = progressBar(1, 4, palette).map((segment) => segment.fg);
-  assert.equal(ramp[0], palette.primary);
-  assert.equal(ramp[3], palette.accent);
+  assert.equal(ramp[0], "#ff6337", "the bar runs from LIT flame");
+  assert.equal(ramp[3], "#5fd7ff", "to the LIT accent");
 });
 
 test("easing curves start at 0, end at 1, and ease-out-back overshoots before settling", () => {
@@ -341,7 +346,9 @@ test("theme colours arrive as RGBA objects and become hex; missing tokens fall b
   assert.equal(colorToHex({ toInts: () => [255, 45, 149, 255] }, "#000000"), "#ff2d95");
   assert.equal(colorToHex({ r: 0, g: 0.5, b: 1 }, "#000000"), "#0080ff");
   assert.equal(colorToHex("nope", "#123456"), "#123456");
-  assert.equal(paletteFromTheme({ primary: { toInts: () => [1, 2, 3, 255] } }).primary, "#010203");
+  const themed = paletteFromTheme({ primary: { toInts: () => [1, 2, 3, 255] }, text: { toInts: () => [1, 2, 3, 255] } });
+  assert.equal(themed.text, "#010203", "neutrals come from the theme");
+  assert.equal(themed.primary, "#ff6337", "the signature roles stay LIT whatever the theme says");
 });
 
 test("the TUI state slice becomes mission input: marks from user parts, last agent, todos and context use", () => {

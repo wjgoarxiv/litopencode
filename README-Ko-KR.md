@@ -98,7 +98,7 @@ LitOpenCode를 설치하면 OpenCode 세션 화면 맨 아래에 작은 카드�
 
 `lit`을 붙인 프롬프트를 보내면 카드가 깨어납니다. 제목에 워크플로 이름과 지금 단계가 나오고, 지도는 그 단계를 개수와 함께 밝힙니다. 아래 lit-loop 요청은 목표 기준 세 개 가운데 하나를 통과했으므로 지도가 `CRITERION 1/3`으로 보이고, 하지 않고 지나간 단계에는 `–`가 붙으며, 막대는 끝난 몫을 보여 줍니다. 도구가 도는 동안에는 막대 옆에 도구 이름과 걸린 시간이 나옵니다. 요청이 쓰는 LitOpenCode 스킬마다 밝은 칩이 하나씩 붙고, 새 칩이 붙을 때는 빛이 한 번 훑고 지나갑니다. 앞선 차례에 쓴 스킬은 회색으로 남습니다.
 
-<p align="center"><img src="./docs/assets/readme/status-card-working.webp" width="760" alt="lit-loop 요청이 진행 중인 LIT 상태 카드. 위 테두리에 🔥 LIT · lit-loop과 오른쪽 ● CRITERION이 적혀 있다. 첫 줄에는 작업 흐름 지도 interview – ━ plan – ━ CRITERION 1/3 ─ review ─ done이 있고 지금 단계는 채운 알약으로 보이며, 3분의 1쯤 찬 막대와 지금 하는 일 ⠏ bash · 0:09가 이어진다. 둘째 줄은 skills lit-loop이고 lit-loop이 밝은 보라색 칩이다. 아래 테두리에는 ctx 4% · ⟳ 0m · ⎇ main이 보인다." /></p>
+<p align="center"><img src="./docs/assets/readme/status-card-working.webp" width="760" alt="lit-loop 요청이 진행 중인 LIT 상태 카드. 위 테두리에 🔥 LIT · lit-loop과 오른쪽 ● CRITERION이 적혀 있고, 분홍색 LIT 글자가 눈에 띈다. 첫 줄에는 작업 흐름 지도 interview – ━ plan – ━ CRITERION 1/3 ─ review ─ done이 있고 지금 단계는 하늘색으로 채운 알약으로 보이며, 3분의 1쯤 찬 막대와 지금 하는 일 ⠏ bash · 0:09가 이어진다. 둘째 줄은 skills lit-loop이고 lit-loop이 밝은 하늘색 칩이다. 아래 테두리에는 ctx 4% · ⟳ 0m · ⎇ main이 보인다." /></p>
 
 차례가 끝나면 카드가 가라앉습니다. 제목이 `○ IDLE`로 바뀌고, 밝게 켜진 단계가 없어지며, 지금 하는 일 자리에는 다음에 할 항목이 들어갑니다. 칩은 흐려지지만 사라지지 않고 가장 최근에 쓴 것부터 남아 무엇이 돌았는지 보여 줍니다. 다음 프롬프트를 보내면 카드가 다시 깨어납니다. 같은 스킬을 다시 쓰면 그 칩이 다시 밝아지고, 칩이 자리보다 많으면 나머지는 `+N`으로 접힙니다.
 

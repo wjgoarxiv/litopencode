@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { buildMissionView, lastMission, missionRowKeys, planChecklist, readWorkState, stepName } from "../src/tui/mission-model.ts";
-import { idleMotion, motionTiming, planMotion, restingFrameFor, sampleMotion } from "../src/tui/mission-motion.ts";
+import { idleMotion, mixHex, motionTiming, planMotion, restingFrameFor, sampleMotion } from "../src/tui/mission-motion.ts";
 import { chipLine, lineWidth, linkColor, liveSegments, missionPanel, paletteFromTheme, panelInnerWidth } from "../src/tui/mission-text.ts";
 import { createWorkReader, readLatestResearchRun, readLiveStep, readMissionInput, readResearchRun } from "../src/tui/mission-source.ts";
 import { readNotifyOptions, statusCard } from "../src/tui/mission-band.ts";
@@ -207,6 +207,7 @@ test("moving forward fills the connectors in turn and flashes the chip once, the
   assert.equal(moved.stageFrom, 1);
   const start = sampleMotion(moved, 10_000);
   const lit = linkColor(working, 2, restingFrameFor(working), palette, palette.borderSubtle);
+  assert.equal(lit, mixHex("#ff6337", "#ff2d95", 0.75), "a lit connector sits on the LIT flame-pink-accent ramp");
   assert.equal(linkColor(working, 2, start, palette, palette.borderSubtle), palette.borderSubtle, "the connector starts unlit");
   assert.equal(linkColor(working, 2, sampleMotion(moved, 10_000 + motionTiming.entry), palette, palette.borderSubtle), lit, "and fills within one entry");
   const flashing = chipLine(working, sampleMotion(moved, 10_000 + motionTiming.shimmer / 2), palette, 80);

@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { buildMissionView } from "../src/tui/mission-model.ts";
 import { restingFrameFor } from "../src/tui/mission-motion.ts";
 import { lineWidth, paletteFromTheme } from "../src/tui/mission-text.ts";
-import { bandCard, readBandOptions } from "../src/tui/mission-band.ts";
+import { bandCard, readBandOptions, statusCard } from "../src/tui/mission-band.ts";
 
 // The band's switches and its opt-in detail card. The status card itself is covered in
 // tui-card.test.mjs.
@@ -41,4 +41,12 @@ test("the opt-in card keeps a fixed four rows while a goal exists, warnings firs
   assert.match(text(calm.rows[1]), /^goal  hello\.txt 인사말 만들기  ✓C1 ○C2 ○C3$/u, "the criteria keep their gap after the title");
   const noGoal = buildMissionView({ marks, todos: [], now });
   assert.equal(bandCard(noGoal, restingFrameFor(noGoal), palette, 160), undefined);
+});
+
+test("the band's LIT word is LIT pink, deepened on light themes", () => {
+  const idle = buildMissionView({ marks: [], todos: [], now });
+  const word = (pal) => statusCard({ view: idle, frame: restingFrameFor(idle), chips: [], figures: { contextPercent: 4, inLane: false } }, pal, 98)[0].find((segment) => segment.text === "LIT");
+  assert.equal(word(palette).fg, "#ff2d95");
+  assert.equal(word(palette).bold, true);
+  assert.equal(word(paletteFromTheme(undefined, "light")).fg, "#d81b78");
 });

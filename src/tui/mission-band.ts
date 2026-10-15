@@ -152,7 +152,7 @@ function phaseLabel(view: MissionView, frame: MotionFrame, palette: MissionPalet
 }
 
 function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string, rest: boolean): Line {
-  const brand: Segment[] = [{ text: "🔥 ", fg: palette.text }, { text: "LIT", fg: shine(palette.primary, palette, 0.5, shimmerAt(frame), 0.6), bold: true }];
+  const brand: Segment[] = [{ text: "🔥 ", fg: palette.text }, { text: "LIT", fg: shine(palette.secondary, palette, 0.5, shimmerAt(frame), 0.6), bold: true }];
   const name = view.active ? view.discipline : "ready";
   const right = [phaseLabel(view, frame, palette, rest)];
   const withName = (room: number): Segment[] => [...brand, { text: " · ", fg: palette.muted }, { text: truncateCells(name, room), fg: view.active ? palette.text : palette.muted }];
@@ -256,13 +256,13 @@ function chipSegments(chip: SkillChip, shimmer: ChipShimmer | undefined, palette
   const text = ` ${chip.name} `;
   if (!chip.current) return [{ text, fg: palette.muted, ...(palette.element === undefined ? {} : { bg: palette.element }) }];
   const sweep = shimmer?.names.includes(chip.name) === true ? shimmer.sweep : -1;
-  if (sweep < 0) return [{ text, fg: palette.onFill, bg: palette.accent, bold: true }];
+  if (sweep < 0) return [{ text, fg: palette.onFill, bg: palette.fill, bold: true }];
   const chars = [...text];
-  return chars.map((char, index) => ({ text: char, fg: palette.onFill, bg: shine(palette.accent, palette, index / (chars.length - 1), sweep, 0.3), bold: true }));
+  return chars.map((char, index) => ({ text: char, fg: palette.onFill, bg: shine(palette.fill, palette, index / (chars.length - 1), sweep, 0.3), bold: true }));
 }
 
 /**
- * The skill chips row, exactly `width` cells: bright accent pills for the current request first, then
+ * The skill chips row, exactly `width` cells: bright LIT accent pills for the current request first, then
  * dim recent names, and `+N` for the ones that do not fit. The label goes before any chip does.
  */
 export function skillRow(chips: readonly SkillChip[], shimmer: ChipShimmer | undefined, palette: MissionPalette, width: number): Line {

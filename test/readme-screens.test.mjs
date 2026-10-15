@@ -121,8 +121,8 @@ test("on-screen captions say whether a picture is a capture or a sample", async 
 });
 
 test("the README status card pictures show what the shipped card draws, and stay out of the package", async () => {
-  // The pictures are real OpenCode 1.18.35 captures at 100 columns (a 98-cell card); the same states
-  // drawn from the shipped card code must carry every string the alt text names.
+  // The pictures are the shipped card code drawn at 100 columns (a 98-cell card) with OpenCode's
+  // opencode dark theme, from the states below; they must carry every string the alt text names.
   const now = Date.parse("2026-10-13T08:05:00.000Z");
   const criterion = (id, scenario, status) => ({ id, scenario, qaChannel: "", testRef: "", status, evidence: [] });
   const ledger = { version: 1, activeGoalId: "G1", goals: [{ id: "G1", sessionId: "ses_demo", objective: "Add a --lang es option that prints Hola", title: "Spanish greeting", status: "active", createdAt: "2026-10-13T08:04:30.000Z", updatedAt: "2026-10-13T08:04:40.000Z", criteria: [criterion("C1", "node greet.js --lang es prints Hola, world!", "pass"), criterion("C2", "the default greeting is unchanged", "pending"), criterion("C3", "npm test passes with a Spanish test", "pending")], checkpoints: [{ id: "k1", at: "2026-10-13T08:04:41.000Z", summary: "C1 green" }], steering: [], reviewBlockers: [] }] };
@@ -154,6 +154,14 @@ test("the README status card pictures show what the shipped card draws, and stay
       }
       assert.doesNotMatch(tag[1], /PLAN ━ WORK ━ REVIEW/u, `${readme}: the ${state} picture shows the workflow map, not the old three-step track`);
     }
+  }
+  // The card wears the LIT colours: the alt text names them, never a theme's purple.
+  const colourWords = { "README.md": [/pink LIT/u, /bright cyan chip/u], "README-Ko-KR.md": [/분홍색 LIT/u, /밝은 하늘색 칩/u] };
+  for (const readme of githubReadmes) {
+    const content = await fs.readFile(readme, "utf8");
+    const alts = [...content.matchAll(/<img src="\.\/docs\/assets\/readme\/status-card-[a-z]+\.webp" width="760" alt="([^"]+)" \/>/gu)].map((match) => match[1]).join("\n");
+    for (const word of colourWords[readme]) assert.match(alts, word, `${readme}: the card alt text names ${word}`);
+    assert.doesNotMatch(alts, /purple|보라/u, `${readme}: no theme purple left in the card alt text`);
   }
   for (const file of npmReadmes) assert.doesNotMatch(await fs.readFile(file, "utf8"), /status-card-/u, `${file} does not embed the card pictures`);
 });
