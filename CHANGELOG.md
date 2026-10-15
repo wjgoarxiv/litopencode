@@ -5,6 +5,10 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.24 - 2026-10-14
+
+- The LIT card, the chip beside the prompt, the sidebar panel and the home line now wear the LIT colours in every OpenCode theme: the `🔥 LIT` pill runs from pink to flame, the workflow map ramps from flame through pink to the LIT accent, the running stage and the current skills are accent pills, and warnings and the finished state use LIT amber and green. Text, panels and borders still follow your theme, and on a light theme the LIT colours deepen so they stay readable. The README pictures of the card show the new look.
+
 ## 1.0.23 - 2026-10-13
 
 - The README demo on GitHub is a new film of one real OpenCode turn with the workflow map. A numbered label names each part as it appears: the `lit` word, the LIT IGNITED toast, the card's map skipping interview and plan to light WORK, the new test, the running tool and its time beside the map (`bash · 0:00` while `npm test` runs), the passing test run and the card settling to IDLE when the turn ends. It still plays without music.

@@ -30,7 +30,7 @@ npm exec --package @litfamily/litopencode@latest -- litopencode install --yes   
 
 What install actually does is small. It adds the plugin to OpenCode's config and copies LitOpenCode's commands and skills into your OpenCode config folder. Your routes, which say which model handles each kind of work, are kept in `~/.config/opencode/litopencode.json`. If you set `XDG_CONFIG_HOME`, that whole config folder moves with it. Routes you've already customized are left as they are. The [installation and model reference](./reference.md#install) covers custom roots, provider choices, terminal behavior, and unattended setup.
 
-This checkout is `@litfamily/litopencode@1.0.23`. The registry's `@latest` can be different, so run `npm view @litfamily/litopencode version` when the exact version matters.
+This checkout is `@litfamily/litopencode@1.0.24`. The registry's `@latest` can be different, so run `npm view @litfamily/litopencode version` when the exact version matters.
 
 ## Your first task
 
