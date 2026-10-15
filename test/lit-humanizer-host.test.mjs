@@ -122,3 +122,15 @@ test("host-shaped calls: the pre-write hook reads the write from output.args, as
     assert.match(output.output, /LIT_HUMANIZER_WARN/u);
   });
 });
+
+test("the real pre-write hook refuses a negative pledge in a Korean deliverable and lets a method fact through", async () => {
+  await withPlugin(async (_root, hooks) => {
+    const blocked = { tool: "write", sessionID: "humanizer-host-session", callID: "humanizer-host-pledge" };
+    await assert.rejects(
+      hooks["tool.execute.before"](blocked, { args: { filePath: "reports/final.md", content: "동일 조건의 독립 성능 비교로 쓰지 않음.\n" } }),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+    const allowed = { tool: "write", sessionID: "humanizer-host-session", callID: "humanizer-host-near-miss" };
+    await hooks["tool.execute.before"](allowed, { args: { filePath: "reports/final.md", content: "이 장비는 방폭 구역에서 사용하지 않습니다. 냉각수로 쓰지 않음.\n" } });
+  });
+});

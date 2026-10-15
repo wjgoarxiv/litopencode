@@ -245,7 +245,7 @@
         },
         {
           "path": "fixtures/rule-cases.json",
-          "sha256": "309e65f6de8ebacd98651d55f1cc946f6c2be9f81187d721de25ef522e6be9f9"
+          "sha256": "498dae0a7aa89ec1b8b6b5bcd929a099c2fc988fbf4d18598f638cee16eeace4"
         },
         {
           "path": "references/code-patterns.md",
@@ -293,11 +293,11 @@
         },
         {
           "path": "references/taxonomy.md",
-          "sha256": "82d8e806a7aa800e2fee106f0959b7b689d5e92e4b1356f259e8a5dfefb6dcde"
+          "sha256": "12762da55de333e180cdb55e1e1964d43cad2d2f355ea789e7f82fda0a06a2d9"
         },
         {
           "path": "rules.json",
-          "sha256": "d69ad386d534bde0fdbc08603151f82477db78e4c920203bf070128e927a7a5b"
+          "sha256": "6153ca0835b04fc9512c903b4c5080c3a45cd1fd68c1a9dbad8972b5a150fb6c"
         },
         {
           "path": "scripts/core.mjs",
@@ -3636,7 +3636,7 @@
         },
         {
           "path": "specs/markdown-slide-spec-v1.md",
-          "sha256": "eb9b04d070d9f2774746e65a34e5e6833fefd097ea7e01fc32327934ca8ee42b"
+          "sha256": "90ab86cef7ac7d7b8fa2cbe5b309c455638948272d84508fdf35aaab635d31bc"
         },
         {
           "path": "specs/markdown-slide-spec-v2.md",
@@ -3831,7 +3831,7 @@
         },
         {
           "path": "references/tonalities/manual.md",
-          "sha256": "c065f438f98f105e25a512308727c9fda542ac4ab70e9f3f92979745bbb7838f"
+          "sha256": "db39dcc2f02cf2931286bb71ee20cc8c6ff551f6b618e845c024114527f1d5ee"
         },
         {
           "path": "references/tonalities/memo.md",

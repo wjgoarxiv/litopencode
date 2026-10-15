@@ -53,7 +53,7 @@ in a hanging indent wide enough for the widest number, so the heading texts of a
 
 - Do not use a `::: cover` directive unless you want a kicker line above the title; the control block
   comes from the frontmatter.
-- Open with scope and responsibilities: what the manual covers, what it does not, who does what.
+- Open with scope and responsibilities: what the manual covers and who does what, stated as facts (which line, which equipment, which site); a list of what it is not for belongs in the reply.
 - Write each procedure as a Markdown numbered list (`1.`, `2.`, …), one action per step, in the
   imperative. Each new list restarts at 1.
 - Put conditions and values in tables (inspection items with their limits and the action when a limit is

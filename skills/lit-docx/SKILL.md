@@ -116,7 +116,7 @@ State material limitations, including a blocked export or visual check, in the u
 
 ## #contract.evidence
 
-Retain the direction card, conversion output, the gate JSON, and rendered PNG pages in the task's evidence location. Open the rendered pages; file existence alone cannot establish typography or pagination. Keep uncertainty and source attribution in the document itself where a reader needs them.
+Retain the direction card, conversion output, the gate JSON, and rendered PNG pages in the task's evidence location. Open the rendered pages; file existence alone cannot establish typography or pagination. Write a real uncertainty once, as a fact about the data or method beside the number it affects, and keep source attribution beside the figure; what the document is not for goes in the reply.
 
 ## #contract.hard_stops
 
