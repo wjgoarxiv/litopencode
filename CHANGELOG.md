@@ -5,6 +5,10 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.26 - 2026-10-16
+
+- The write guard now refuses more of the lines that tell a reader what a document is not for, such as `This table is not a ranking.` or `이 문서는 제품을 비교하려는 것이 아닙니다.` These forms came from real sessions. Bold-label callouts such as `> **주의:** ...` are now read too, while ordinary quoted text is still skipped, and lines from manuals and lab reports that only look similar stay allowed. Files saved through `apply_patch` are now checked before they land, the same way the write and edit tools already were.
+
 ## 1.0.25 - 2026-10-15
 
 - The write guard now refuses sentences that say what a document is not for, such as `동일 조건의 독립 성능 비교로 쓰지 않음.` or an English line saying a result is not a benchmark. When the model writes one with the write or edit tool, the call is refused and the model rewrites it. Three new rules cover Korean pledges, a Korean pledge repeated through a document, and the English forms, and the status-negation warning now also reads `쓰지 않음`, the polite endings and bold-wrapped endings. Legal and financial notices, safety warnings, operating rules, method lines and real negative findings stay untouched, and the rules still finish in milliseconds on very long runs of spaces. The lit-docx and lit-pptx skills now ask for a real limit once, as a fact beside the number it affects, and keep anything about what the document is not for in the reply.
