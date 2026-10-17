@@ -293,15 +293,15 @@
         },
         {
           "path": "references/taxonomy.md",
-          "sha256": "12762da55de333e180cdb55e1e1964d43cad2d2f355ea789e7f82fda0a06a2d9"
+          "sha256": "6836096bef306685749d8d0639026ff63e42f2e452a14b762f4d6241421080c8"
         },
         {
           "path": "rules.json",
-          "sha256": "6153ca0835b04fc9512c903b4c5080c3a45cd1fd68c1a9dbad8972b5a150fb6c"
+          "sha256": "d79e5619f673912e032bcd54fd24ea299b1b2e22643fb128cbe522ad020cc6eb"
         },
         {
           "path": "scripts/core.mjs",
-          "sha256": "8e628854ba1026227463ecf3ac277d1250b1b2250082e0f80b29ff880024322b"
+          "sha256": "abaff0390680e9c2602cde701f7224acd3586ebed0dcb2a807570359baac62fc"
         },
         {
           "path": "scripts/detect.mjs",

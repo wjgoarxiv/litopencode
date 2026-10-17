@@ -92,6 +92,108 @@ function toolText(input: ToolGuardRequest): { readonly file: string; readonly va
   return { file: candidate, value: values[0] };
 }
 
+const patchTools = new Set(["apply_patch", "patch"]);
+
+type PatchChunk = { readonly before: readonly string[]; readonly after: readonly string[] };
+type PatchFile = {
+  readonly kind: "add" | "update";
+  readonly file: string;
+  readonly moveTo?: string;
+  readonly contents: string;
+  readonly chunks: readonly PatchChunk[];
+  readonly added: readonly string[];
+};
+
+function patchTextOf(input: ToolGuardRequest): string | undefined {
+  if (!patchTools.has(input.tool) || !isRecord(input.args)) return undefined;
+  const value = input.args.patchText;
+  return typeof value === "string" ? value : undefined;
+}
+
+// Reads the apply_patch envelope: `*** Add File:` bodies are `+` lines, `*** Update File:` carries an optional
+// `*** Move to:` and `@@` chunks of ` `, `-` and `+` lines. Delete hunks remove text and are not scanned.
+function parsePatch(patchText: string): readonly PatchFile[] {
+  const lines = patchText.split(/\r?\n/u);
+  const begin = lines.findIndex((line) => line.trim() === "*** Begin Patch");
+  const end = lines.findIndex((line) => line.trim() === "*** End Patch");
+  if (begin < 0 || end < 0 || begin >= end) throw new Error("patch text has no Begin/End markers");
+  const isHeader = (line: string) => /^\*\*\* (?:Add|Update|Delete) File:/u.test(line);
+  const files: PatchFile[] = [];
+  let index = begin + 1;
+  while (index < end) {
+    const line = lines[index];
+    if (line.startsWith("*** Add File:")) {
+      const body: string[] = [];
+      index += 1;
+      while (index < end && !isHeader(lines[index])) {
+        if (lines[index].startsWith("+")) body.push(lines[index].slice(1));
+        index += 1;
+      }
+      files.push({ kind: "add", file: line.slice(13).trim(), contents: body.join("\n"), chunks: [], added: body });
+    } else if (line.startsWith("*** Update File:")) {
+      const file = line.slice(16).trim();
+      let moveTo: string | undefined;
+      index += 1;
+      if (index < end && lines[index].startsWith("*** Move to:")) {
+        moveTo = lines[index].slice(12).trim();
+        index += 1;
+      }
+      const chunks: PatchChunk[] = [];
+      const added: string[] = [];
+      let before: string[] = [];
+      let after: string[] = [];
+      let open = false;
+      const close = () => {
+        if (open) chunks.push({ before, after });
+        before = [];
+        after = [];
+        open = false;
+      };
+      while (index < end && !isHeader(lines[index])) {
+        const row = lines[index];
+        if (row.startsWith("@@")) close();
+        else if (row.startsWith("*** End of File")) { /* marker only */ }
+        else if (row.startsWith("+")) { open = true; after.push(row.slice(1)); added.push(row.slice(1)); }
+        else if (row.startsWith("-")) { open = true; before.push(row.slice(1)); }
+        else { open = true; const text = row.startsWith(" ") ? row.slice(1) : row; before.push(text); after.push(text); }
+        index += 1;
+      }
+      close();
+      files.push({ kind: "update", file, moveTo: moveTo === "" ? undefined : moveTo, contents: "", chunks, added });
+    } else {
+      index += 1;
+    }
+  }
+  return files;
+}
+
+function applyChunks(oldText: string, chunks: readonly PatchChunk[]): string {
+  const lines = oldText.split("\n");
+  const trailing = lines.length > 1 && lines[lines.length - 1] === "";
+  if (trailing) lines.pop();
+  let cursor = 0;
+  for (const chunk of chunks) {
+    if (chunk.before.length === 0) {
+      lines.push(...chunk.after);
+      cursor = lines.length;
+      continue;
+    }
+    const matches = (at: number, normalize: (text: string) => string) =>
+      chunk.before.every((text, offset) => at + offset < lines.length && normalize(lines[at + offset]) === normalize(text));
+    let found = -1;
+    for (const normalize of [(text: string) => text, (text: string) => text.trimEnd(), (text: string) => text.trim()]) {
+      for (let at = cursor; at + chunk.before.length <= lines.length && found < 0; at += 1) {
+        if (matches(at, normalize)) found = at;
+      }
+      if (found >= 0) break;
+    }
+    if (found < 0) throw new Error("patch chunk was not found in the current file");
+    lines.splice(found, chunk.before.length, ...chunk.after);
+    cursor = found + chunk.after.length;
+  }
+  return lines.join("\n") + (trailing ? "\n" : "");
+}
+
 function runJsonProcess(command: string, args: readonly string[], input: string, timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, [...args], { shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
@@ -215,8 +317,65 @@ export function createDeliverableHedgeGuard(options: DeliverableHedgeGuardOption
   const scan = options.scan ?? ((request: HumanizerScanRequest) => defaultScan(request, timeoutMs));
   const pending = new Map<string, PendingNotice>();
 
+  async function scanTarget(file: string, oldText: string, newText: string): Promise<number> {
+    if (Buffer.byteLength(newText, "utf8") > maxTextBytes) throw new Error("new text exceeds scan limit");
+    const findings = await scan({ file, oldText, newText });
+    const block = findings.filter((finding) => finding.severity === "block");
+    if (block.length > 0) {
+      const first = block[0];
+      throw new Error(`LIT_HUMANIZER_BLOCKED rule=${first.rule} line=${first.line} path=${displayPath(file)}. Revise the new text before saving.`);
+    }
+    return findings.length;
+  }
+
+  // An apply_patch call can add several files; each deliverable-path target gets the same per-file scan as write
+  // and edit. A chunk that cannot be located in the current file is scanned as appended text instead, so an added
+  // pledge is still refused (the host rejects a patch whose context does not match, so nothing is saved either way).
+  async function guardPatch(callID: string, patchText: string): Promise<void> {
+    try {
+      if (Buffer.byteLength(patchText, "utf8") > maxTextBytes) throw new Error("patch text exceeds scan limit");
+      let warned = 0;
+      let warnedFile = "";
+      for (const entry of parsePatch(patchText)) {
+        const target = entry.moveTo ?? entry.file;
+        if (isInternalPath(target) || !readerFacingExtensions.has(path.extname(target).toLowerCase())) continue;
+        const oldText = await existingText(projectRoot, entry.kind === "add" ? target : entry.file);
+        let newText: string;
+        if (entry.kind === "add") newText = entry.contents;
+        else {
+          try {
+            newText = applyChunks(oldText, entry.chunks);
+          } catch {
+            newText = `${oldText}\n${entry.added.join("\n")}`;
+          }
+        }
+        const count = await scanTarget(target, oldText, newText);
+        if (count > 0 && warned === 0) warnedFile = target;
+        warned += count;
+      }
+      if (warned > 0) {
+        remember(pending, callID, {
+          tier: "warn",
+          message: `LIT_HUMANIZER_WARN findings=${warned} path=${displayPath(warnedFile)}. Review the new wording; keep any accurate, useful warning.`
+        });
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("LIT_HUMANIZER_BLOCKED")) throw error;
+      remember(pending, callID, {
+        tier: "unavailable",
+        message: `LIT_HUMANIZER_GUARD_UNAVAILABLE: ${oneLine(error)}; write allowed without this check.`
+      });
+    }
+  }
+
   return {
     async before(input) {
+      const patchText = patchTextOf(input);
+      if (patchText !== undefined) {
+        pending.delete(input.callID);
+        await guardPatch(input.callID, patchText);
+        return;
+      }
       const text = toolText(input);
       if (text === undefined) return;
       pending.delete(input.callID);
@@ -233,17 +392,11 @@ export function createDeliverableHedgeGuard(options: DeliverableHedgeGuardOption
           ? text.value ?? ""
           : applyEdit(oldText, (input.args as ToolRecord).oldString ?? (input.args as ToolRecord).old_string, text.value ?? "",
             (input.args as ToolRecord).replaceAll);
-        if (Buffer.byteLength(newText, "utf8") > maxTextBytes) throw new Error("new text exceeds scan limit");
-        const findings = await scan({ file: text.file, oldText, newText });
-        const block = findings.filter((finding) => finding.severity === "block");
-        if (block.length > 0) {
-          const first = block[0];
-          throw new Error(`LIT_HUMANIZER_BLOCKED rule=${first.rule} line=${first.line} path=${displayPath(text.file)}. Revise the new text before saving.`);
-        }
-        if (findings.length > 0) {
+        const warned = await scanTarget(text.file, oldText, newText);
+        if (warned > 0) {
           remember(pending, input.callID, {
             tier: "warn",
-            message: `LIT_HUMANIZER_WARN findings=${findings.length} path=${displayPath(text.file)}. Review the new wording; keep any accurate, useful warning.`
+            message: `LIT_HUMANIZER_WARN findings=${warned} path=${displayPath(text.file)}. Review the new wording; keep any accurate, useful warning.`
           });
         }
       } catch (error) {

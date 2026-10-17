@@ -115,7 +115,7 @@ DOCX and PPTX text extraction uses `scripts/extract_office_text.py`, which relie
 
 ## Guard scope and limits
 
-Scan only text being added or changed. Preserve pre-existing file content and user quotations. Skip fenced and inline code, Markdown blockquotes, and internal paths such as `plans/`, `evidence/`, `HANDOFF*`, `.lit*/`, `.hermes/`, and ledgers. The native OpenCode guard applies to reader-facing text paths, not every source or configuration file. Office and PDF checks happen after creation: a hit asks the model to fix its source and rebuild; it cannot undo the tool that created the file.
+Scan only text being added or changed. Preserve pre-existing file content and user quotations. Skip fenced and inline code, Markdown blockquotes (except a quote opening with a bold label, which the pledge rules read as the author's callout), and internal paths such as `plans/`, `evidence/`, `HANDOFF*`, `.lit*/`, `.hermes/`, and ledgers. The native OpenCode guard applies to reader-facing text paths, not every source or configuration file. Office and PDF checks happen after creation: a hit asks the model to fix its source and rebuild; it cannot undo the tool that created the file.
 
 Block only high-confidence patterns such as label-only evidence lines, stacked disclaimers, and chatbot residue. Word choice, contrast, triads, and rhythm are warnings. A hit is an editing signal, not proof of model authorship. Stop when another change would alter meaning, hide a real limitation, or flatten the writer's voice.
 

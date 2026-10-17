@@ -161,7 +161,7 @@ test("no near-miss, reviewed sentence or operating rule hits a pledge rule", () 
 });
 
 test("whole-document cases block or stay clean exactly as expected for their rule", () => {
-  assert.equal(pledgeCases.document_cases.length, 8);
+  assert.equal(pledgeCases.document_cases.length, 13);
   for (const doc of pledgeCases.document_cases) {
     const blocked = scanText(doc.text, shippedRules, "document.md").some((hit) => hit.rule === doc.rule && hit.severity === "block");
     assert.equal(blocked, doc.expect === "block", `${doc.rule} expected ${doc.expect}: ${JSON.stringify(doc.text)}`);
@@ -219,5 +219,149 @@ test("pre-write guard refuses a pledge that an edit adds and keeps a pledge that
       guard.before(request("edit", "report.md", { oldString: "Body line.", newString: pledgeCases.pledges[1].text })),
       /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
     );
+  });
+});
+
+function patchRequest(patchText, callID = "patch-call", tool = "apply_patch") {
+  return { tool, sessionID: "humanizer-session", callID, args: { patchText } };
+}
+
+const userPledge = "동일 조건의 독립 성능 비교로 쓰지 않음.";
+
+test("pre-write guard refuses a pledge that an apply_patch add-file hunk writes, and lets a near-miss add pass", async () => {
+  await temporary(async (_root, guard) => {
+    await assert.rejects(
+      guard.before(patchRequest(`*** Begin Patch\n*** Add File: report.md\n+# Report\n+${userPledge}\n*** End Patch`)),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+    await guard.before(patchRequest(`*** Begin Patch\n*** Add File: report.md\n+# Report\n+${pledgeCases.near_misses[0].text}\n*** End Patch`, "near-add"));
+    // not a reader-facing path: same text is allowed
+    await guard.before(patchRequest(`*** Begin Patch\n*** Add File: data.json\n+${userPledge}\n*** End Patch`, "json-add"));
+    await guard.before(patchRequest(`*** Begin Patch\n*** Add File: evidence/notes.md\n+${userPledge}\n*** End Patch`, "internal-add"));
+  });
+});
+
+test("pre-write guard checks apply_patch update hunks and moves against the real file", async () => {
+  await temporary(async (root, guard) => {
+    await fs.writeFile(path.join(root, "report.md"), "# Report\n본문 첫 줄.\n본문 둘째 줄.\n", "utf8");
+    await assert.rejects(
+      guard.before(patchRequest(`*** Begin Patch\n*** Update File: report.md\n@@\n # Report\n 본문 첫 줄.\n+${userPledge}\n*** End Patch`)),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+    await guard.before(patchRequest(`*** Begin Patch\n*** Update File: report.md\n@@\n-본문 둘째 줄.\n+본문 둘째 줄을 고쳤다.\n*** End Patch`, "near-update"));
+    // a move target is the path that is saved
+    await assert.rejects(
+      guard.before(patchRequest(`*** Begin Patch\n*** Update File: report.md\n*** Move to: final.md\n@@\n 본문 둘째 줄.\n+${userPledge}\n*** End Patch`, "move")),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+    // one file in a multi-file patch is enough
+    await assert.rejects(
+      guard.before(patchRequest(`*** Begin Patch\n*** Add File: notes.json\n+{}\n*** Add File: second.md\n+${userPledge}\n*** End Patch`, "multi")),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+  });
+});
+
+test("pre-write guard lets an apply_patch hunk remove or keep a pledge that is already in the file", async () => {
+  await temporary(async (root, guard) => {
+    await fs.writeFile(path.join(root, "report.md"), `# Report\n${userPledge}\n본문.\n`, "utf8");
+    await guard.before(patchRequest(`*** Begin Patch\n*** Update File: report.md\n@@\n # Report\n-${userPledge}\n 본문.\n*** End Patch`, "remove"));
+    await guard.before(patchRequest(`*** Begin Patch\n*** Update File: report.md\n@@\n-본문.\n+본문을 고쳤다.\n*** End Patch`, "keep"));
+    await guard.before(patchRequest(`*** Begin Patch\n*** Delete File: report.md\n*** End Patch`, "delete"));
+    // a hunk whose context is missing is still scanned as appended text
+    await assert.rejects(
+      guard.before(patchRequest(`*** Begin Patch\n*** Update File: report.md\n@@\n 없는 줄.\n+${userPledge.replace("독립", "공정")}\n*** End Patch`, "lost-context")),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+  });
+});
+
+test("pre-write guard reports an unparsable apply_patch as unavailable and still allows it", async () => {
+  await temporary(async (_root, guard) => {
+    const input = patchRequest("not a patch", "bad-patch");
+    await guard.before(input);
+    const output = { title: "Patch", output: "done", metadata: {} };
+    await guard.after(input, output);
+    assert.match(output.output, /LIT_HUMANIZER_GUARD_UNAVAILABLE/u);
+  });
+});
+
+const calloutPledge = "> **주의:** 이 표는 순위가 아닙니다.\n";
+
+test("every pledge seen in produced deliverables lands on its rule and tier, and the block-tier ones are refused before the write", async () => {
+  assert.equal(pledgeCases.pledges_observed.length, 26);
+  for (const seen of pledgeCases.pledges_observed) {
+    const hits = scanText(seen.text, shippedRules, "observed.md");
+    assert.ok(hits.some((hit) => hit.rule === seen.rule && hit.severity === seen.severity),
+      `${seen.text} must hit ${seen.rule}/${seen.severity}, got ${JSON.stringify(hits.map((hit) => hit.rule))}`);
+  }
+  await temporary(async (_root, guard) => {
+    let index = 0;
+    for (const seen of pledgeCases.pledges_observed.filter((entry) => entry.severity === "block")) {
+      index += 1;
+      await assert.rejects(
+        guard.before({ ...request("write", "deliverable.md", { content: `${seen.text}\n` }), callID: `observed-${index}` }),
+        new RegExp(`LIT_HUMANIZER_BLOCKED rule=${seen.rule}\\b`, "u"),
+        seen.text
+      );
+    }
+  });
+});
+
+test("pre-write guard refuses the widened pledge wording in both languages", async () => {
+  await temporary(async (_root, guard) => {
+    await assert.rejects(
+      guard.before(request("write", "deliverable.md", { content: "This table is not a ranking.\n" })),
+      /LIT_HUMANIZER_BLOCKED rule=en-negative-pledge\b/u
+    );
+    await assert.rejects(
+      guard.before(request("write", "deliverable.md", { content: "이 문서는 제품을 비교하려는 것이 아닙니다.\n" })),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+  });
+});
+
+test("a bold-label callout is read as the author's own text, a plain quote stays quoted", async () => {
+  await temporary(async (_root, guard) => {
+    await assert.rejects(
+      guard.before(request("write", "deliverable.md", { content: calloutPledge })),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+    await assert.rejects(
+      guard.before(request("write", "deliverable.md", { content: "> **Note:** This table is not a ranking.\n" })),
+      /LIT_HUMANIZER_BLOCKED rule=en-negative-pledge\b/u
+    );
+    await guard.before(request("write", "plain-quote.md", { content: "> 이 표는 순위가 아닙니다.\n" }));
+    await guard.before(request("write", "plain-quote-en.md", { content: "> This table is not a ranking.\n" }));
+    // rules without the callout context still skip the quote line
+    await guard.before(request("write", "quoted-source.md", { content: "> **출처:** Source: user quote\n" }));
+  });
+});
+
+test("reviewed false positives stay allowed", async () => {
+  await temporary(async (_root, guard) => {
+    await guard.before(request("write", "deliverable.md", { content: "숫자와 문자열은 서로 비교할 수 없습니다.\n" }));
+    await guard.before(request("write", "deliverable-en.md", { content: "Do not compare these values directly; convert to SI first.\n" }));
+  });
+});
+
+test("an edit and an apply_patch hunk that add a callout pledge are refused; a plain quote hunk is allowed", async () => {
+  await temporary(async (root, guard) => {
+    await fs.writeFile(path.join(root, "report.md"), "# Report\nBody line.\n", "utf8");
+    await assert.rejects(
+      guard.before(request("edit", "report.md", { oldString: "Body line.", newString: `Body line.\n${calloutPledge}` })),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+    await assert.rejects(
+      guard.before(patchRequest(`*** Begin Patch\n*** Add File: callout.md\n+# Report\n+> **주의:** 이 표는 순위가 아닙니다.\n*** End Patch`, "callout-add")),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+    await assert.rejects(
+      guard.before(patchRequest(`*** Begin Patch\n*** Update File: report.md\n@@\n # Report\n+> **주의:** 이 표는 순위가 아닙니다.\n*** End Patch`, "callout-update")),
+      /LIT_HUMANIZER_BLOCKED rule=ko-negative-pledge\b/u
+    );
+    await guard.before(patchRequest(`*** Begin Patch\n*** Add File: quote.md\n+# Report\n+> 이 표는 순위가 아닙니다.\n*** End Patch`, "quote-add"));
+    await fs.writeFile(path.join(root, "kept.md"), `# Report\n${calloutPledge}`, "utf8");
+    await guard.before(request("edit", "kept.md", { oldString: "# Report", newString: "# Report v2" }));
   });
 });
