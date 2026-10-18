@@ -106,7 +106,6 @@ test("on-screen captions say whether a picture is a capture or a sample", async 
     const samples = section.match(english ? /^\*Sample output/gmu : /^\*예시 화면입니다/gmu) ?? [];
     assert.equal(captured.length, 3, `${file}: install, doctor and planner pictures are captures`);
     assert.equal(samples.length, 1, `${file}: the toast picture is a sample`);
-    assert.ok(section.includes(english ? "[What you will see](./guide.md#what-you-will-see)" : "[화면에서 보이는 것](./guide-Ko-KR.md#화면에서-보이는-것)"), `${file}: links to the Jev pictures instead of repeating them`);
   }
   for (const file of githubReadmes) {
     const content = await fs.readFile(file, "utf8");

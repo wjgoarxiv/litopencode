@@ -28,14 +28,87 @@ import { inspectLspCapability } from "./lsp-capability.ts";
 import { probeMotionRuntime } from "./motion-runtime.ts";
 import { isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { inspectTuiPlugin } from "./tui-config.ts";
-import { jevSkillHintDoctorLine } from "../jev-skill-hint.ts";
 import {
+  autoUpdateCheckPath,
   autoUpdateInstallLockPath,
   autoUpdateJournalPath,
   autoUpdateReceiptPath,
   isAutoUpdateDisabled,
+  readAutoUpdateCheck,
   readAutoUpdateReceipt
 } from "./auto-update.ts";
+
+const updateNow = "npx @litfamily/litopencode@latest install";
+
+/** Each row says what a cause means and the one thing to do about it. */
+const autoUpdateRemedies = [
+  { cause: "next-start", meaning: "A newer version is installed, but the OpenCode that installed it still runs the old one.", remedy: "Quit and start OpenCode again." },
+  { cause: "offline", meaning: "OpenCode could not reach the npm registry at its last start, so nothing was checked.", remedy: "Check the network or proxy. The next OpenCode start checks again." },
+  { cause: "backoff", meaning: "The last update to this version failed and was undone, so OpenCode waits a day before trying it again.", remedy: `Run \`${updateNow}\` to update now, or wait a day or for a newer release.` },
+  { cause: "timeout", meaning: "A step of the last update ran past its 30 second limit and was undone.", remedy: `Usually a slow network. Run \`${updateNow}\` once while online.` },
+  { cause: "missing-command", meaning: "npm or node was not on the PATH OpenCode started with, so the update could not run.", remedy: `Install Node.js where OpenCode can find it, or update by hand with \`${updateNow}\`.` },
+  { cause: "install-failed", meaning: "The last update failed and the old setup was put back.", remedy: `Run \`${updateNow}\` and read what it prints.` },
+  { cause: "stopped", meaning: "The last update could not prove the old setup came back, so the plugin refuses to load.", remedy: `Run \`${updateNow}\`. The kept backup folder holds the old files.` },
+  { cause: "lock-busy", meaning: "Another OpenCode start held the update lock.", remedy: "Nothing to do; the next start tries again. If it repeats with no OpenCode open, delete the lock file." },
+  { cause: "opted-out", meaning: "Automatic update is switched off by --no-auto-update or by CI, NO_UPDATE_NOTIFIER, LITOPENCODE_NO_AUTO_UPDATE or LITOPENCODE_NO_UPDATE_CHECK.", remedy: "Remove the switch from the environment OpenCode starts in." },
+  { cause: "local-checkout", meaning: "The plugin runs from a git checkout, which is never updated automatically.", remedy: "Pull the checkout with git, or install the published package." }
+] as const;
+
+type AutoUpdateCause = (typeof autoUpdateRemedies)[number]["cause"];
+
+const skipCauses: Readonly<Record<string, AutoUpdateCause>> = {
+  "registry-unavailable": "offline",
+  backoff: "backoff",
+  "install-lock-busy": "lock-busy",
+  disabled: "opted-out",
+  "local-checkout": "local-checkout"
+};
+
+/**
+ * Doctor reads the receipt and the record each OpenCode start leaves behind. It
+ * cannot see inside a running OpenCode, so "running" means the last start seen.
+ */
+export async function inspectAutoUpdate(input: {
+  readonly homeDir?: string;
+  readonly env: NodeJS.ProcessEnv;
+  readonly pinnedVersion: string | null;
+}): Promise<Record<string, unknown>> {
+  const enabled = !isAutoUpdateDisabled(input.env);
+  const receipt = await readAutoUpdateReceipt(input.homeDir);
+  const lastCheck = await readAutoUpdateCheck(input.homeDir);
+  const summary = receipt === undefined || receipt.status === "unreadable" ? undefined : receipt;
+  let cause: AutoUpdateCause | null = null;
+  let nextStart: string | null = null;
+  if (summary !== undefined && (summary.status === "failed" || (summary.status === "rolled-back" && !(summary.rollbackOk && summary.priorStateVerified && summary.stagedStateKnown)))) {
+    cause = "stopped";
+  } else if (lastCheck?.reason !== undefined && skipCauses[lastCheck.reason] !== undefined) {
+    cause = skipCauses[lastCheck.reason];
+  } else if (lastCheck?.status === "rolled-back" && summary?.failure !== undefined) {
+    cause = summary.failure.missingCommand ? "missing-command" : summary.failure.timedOut ? "timeout" : "install-failed";
+  } else if (summary?.status === "updated" && summary.targetVersion !== undefined) {
+    const running = lastCheck?.runningVersion ?? summary.currentVersion;
+    if (running !== undefined && running !== summary.targetVersion) {
+      cause = "next-start";
+      nextStart = `installed ${summary.targetVersion}, running ${running}: takes effect the next time OpenCode starts`;
+    }
+  }
+  if (cause === null && !enabled) cause = "opted-out";
+  return {
+    enabled,
+    state: cause === null ? (lastCheck === undefined ? "unknown" : "current") : cause === "next-start" ? "next-start" : "attention",
+    cause,
+    nextStart,
+    pinnedVersion: input.pinnedVersion,
+    lastCheck: lastCheck ?? null,
+    proof: "Doctor reads files only. It cannot see which version a running OpenCode has loaded; restarting OpenCode is the sure way.",
+    remedies: autoUpdateRemedies,
+    installLock: autoUpdateInstallLockPath(input.homeDir),
+    journal: autoUpdateJournalPath(input.homeDir),
+    receipt: autoUpdateReceiptPath(input.homeDir),
+    check: autoUpdateCheckPath(input.homeDir),
+    lastReceipt: receipt
+  };
+}
 
 function pluginSpec(metadata: { readonly name: string; readonly version: string }): string {
   return metadata.name + "@" + metadata.version;
@@ -204,7 +277,6 @@ export async function doctor(root: string): Promise<CliResult> {
           warnings: autoHandoffWarnings
         },
         motion,
-        jevSkillHint: jevSkillHintDoctorLine(process.env),
         config: {
           source: loaded.source,
           sources: loaded.sources,
@@ -244,13 +316,10 @@ export async function doctor(root: string): Promise<CliResult> {
             derivedTruthFiles: false
           }
         },
-        autoUpdate: {
-          enabled: !isAutoUpdateDisabled(process.env),
-          installLock: autoUpdateInstallLockPath(),
-          journal: autoUpdateJournalPath(),
-          receipt: autoUpdateReceiptPath(),
-          lastReceipt: await readAutoUpdateReceipt()
-        },
+        autoUpdate: await inspectAutoUpdate({
+          env: process.env,
+          pinnedVersion: installPlugin.configured?.startsWith(`${metadata.name}@`) === true ? installPlugin.configured.slice(metadata.name.length + 1) : null
+        }),
         install: {
           ok: installPlugin.ok && commandAliases.ok && nativeSkills.ok,
           plugin: installPlugin,

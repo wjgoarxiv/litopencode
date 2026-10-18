@@ -133,6 +133,11 @@ const diagramCreationIntent = /^\s*(?:lit[,:]?\s+)?(?:please\s+)?(?:create|draw|
 const officeAuthoringVerb = /(?<![a-z])(?:make|create|write|draft|prepare|produce|generate|convert|edit|build)(?![a-z])|(?<![a-z])turn(?=(?:[^.!?\n]|\.(?=\S))*?(?<![a-z])into(?![a-z])(?:[^.!?\n]|\.(?=\S))*?(?<![a-z])(?:slides?|decks?|presentations?|pptx?|reports?|documents?|docx|word)(?![a-z]))|만들|작성|써줘|제작|변환|편집/u;
 const reportNoun = /(?<![a-z])(?:reports?|documents?|docx|word)(?![a-z])|보고서|리포트|기획서|제안서|문서|워드/u;
 const slidesNoun = /(?<![a-z])(?:slides?|decks?|presentations?|pptx?)(?![a-z])|발표자료|발표|슬라이드|피피티|덱/u;
+// A deliverable the user asked to receive as Markdown or plain text ("saved as report.md", "in Markdown",
+// "as plain text"). An input file such as "turn notes.md into slides" is not one. A named Office or PDF
+// output keeps the skill route, because the skill then renders that file from its own source.
+const markdownDeliverable = /(?<![a-z])(?:save|saved|saving|write|written|output|deliver|export)\s+(?:(?:it|them|this|both|each)\s+)?(?:as|to|in|into)\s+`?[\w./-]*\.(?:md|markdown|txt)(?![a-z])|(?<![a-z])(?:as|in)\s+(?:plain\s+)?markdown(?![a-z])|(?<![a-z])plain[- ]text(?![a-z])|마크다운(?:으로|\s*파일로|\s*형식)|\.md\s*(?:로|으로|파일로)\s*(?:저장|작성)/u;
+const officeFileFormat = /(?<![a-z])(?:docx|pptx?|pdf|word|powerpoint)(?![a-z])|워드|파워포인트|피피티/u;
 // lit-typographic-motion (MO-C-18..24). The trigger is a creation verb plus a compound motion-video
 // noun, or plus a bare video noun that none of the five exclusions claims. Bare 모션/motion and
 // 인트로/intro never trigger alone. The verbs are the office/UI making verbs plus a small motion set
@@ -412,7 +417,11 @@ export function promptForChatActivationMode(mode: ChatActivationMode, triggerTex
 After the workspace check, use OpenCode's native skill tool to load lit-diagram-drawer before authoring the requested conceptual diagram. This is the one narrowly relevant skill for this bounded task. Resolve resources from the skill location returned by OpenCode, follow its verification and export steps, and inspect the final PNG. If the skill is unavailable, report that limit instead of claiming it ran.
 </lit-task-mode>`);
   }
-  if (mode === "lit-task" && officeAuthoringVerb.test(raw)) {
+  if (mode === "lit-task" && officeAuthoringVerb.test(raw) && markdownDeliverable.test(raw) && !officeFileFormat.test(raw) && (reportNoun.test(raw) || slidesNoun.test(raw))) {
+    targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
+The requested deliverable is a Markdown or plain-text file, not an Office file. Write each named file as ordinary Markdown that a reader opens directly: headings, paragraphs, lists and tables, with no YAML front matter, no \`:::\` directive blocks and no tonality, layout or title-treatment keys. Do not build a DOCX or PPTX and do not load lit-docx or lit-pptx for it; their Markdown is converter source and belongs only beside a file that skill renders.
+</lit-task-mode>`);
+  } else if (mode === "lit-task" && officeAuthoringVerb.test(raw)) {
     const skills = [reportNoun.test(raw) ? "lit-docx" : undefined, slidesNoun.test(raw) ? "lit-pptx" : undefined].filter(Boolean);
     if (skills.length > 0) targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
 After the workspace check, use OpenCode's native skill tool to load ${skills.join(" and ")} before drafting the requested Office deliverable. Resolve scripts and templates from the installed skill location. Under lit, create the editable ${skills.includes("lit-docx") ? "DOCX" : ""}${skills.length === 2 ? " and " : ""}${skills.includes("lit-pptx") ? "PPTX" : ""} with its Markdown source; unless the user selected a tonality, profile or template, choose its design direction (tonality) yourself and name it with two alternatives in the reply, without asking a style question. If facts are missing, complete a realistic example without asking or leaving placeholders; mark invented names and figures as sample assumptions in the file and reply. Run its QA and inspect rendered pages or slides. Report missing optional host tools honestly. If a skill is unavailable, report that limit instead of claiming it ran.

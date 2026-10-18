@@ -248,3 +248,42 @@ test("every tracked file carrying either version spelling is registered", () => 
     assert.ok(entry.why.trim().length > 0, `why must be non-empty for ${entry.path}`);
   }
 });
+
+async function writeRegistryFixture(dir, files, manifests) {
+  await fs.mkdir(path.join(dir, "tools"));
+  await writeJson(path.join(dir, "package.json"), { name: "litopencode", version: "1.2.3" });
+  await writeJson(path.join(dir, "package-lock.json"), {
+    name: "litopencode",
+    version: "1.2.3",
+    lockfileVersion: 3,
+    packages: { "": { name: "litopencode", version: "1.2.3" } }
+  });
+  for (const [relativePath, text] of Object.entries(files)) await fs.writeFile(path.join(dir, relativePath), text);
+  await writeJson(path.join(dir, "tools/version-manifests.json"), { schema: "litopencode.version-lockstep/v1", manifests });
+}
+
+test("a pinned site that lost one of its version occurrences fails the registry guard", async () => {
+  await withTempDir(async (dir) => {
+    await writeRegistryFixture(dir, { "README.md": "Install litopencode@1.2.3.\nThe badge still reads 1.2.2.\n" }, [
+      { path: "README.md", kind: "pinned", occurrences: 2, why: "install line and badge" }
+    ]);
+
+    const result = runRepositoryCheckerFrom(dir);
+
+    assert.equal(result.status, 1, `${result.stdout}\n${result.stderr}`);
+    assert.match(result.stderr, /README\.md version occurrence mismatch: expected 2, found 1/u);
+  });
+});
+
+test("a release history without a heading for the current version fails the registry guard", async () => {
+  await withTempDir(async (dir) => {
+    await writeRegistryFixture(dir, { "CHANGELOG.md": "# Changelog\n\n## 1.2.2\n\n- previous release; 1.2.3 is mentioned but has no heading\n" }, [
+      { path: "CHANGELOG.md", kind: "history", occurrences: 1, why: "release history" }
+    ]);
+
+    const result = runRepositoryCheckerFrom(dir);
+
+    assert.equal(result.status, 1, `${result.stdout}\n${result.stderr}`);
+    assert.match(result.stderr, /CHANGELOG\.md has no heading for the current package version/u);
+  });
+});

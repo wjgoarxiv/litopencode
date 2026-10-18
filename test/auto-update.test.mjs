@@ -452,3 +452,245 @@ test("an unsafe state root skips the update before any mutation so the plugin st
     assert.deepEqual(await fs.readdir(elsewhere), []);
   });
 });
+
+async function writePrivateReceipt(home, fields) {
+  const state = path.join(home, ".litopencode");
+  await fs.mkdir(state, { recursive: true, mode: 0o700 });
+  const receipt = {
+    schemaVersion: 1,
+    status: "rolled-back",
+    reason: "plugin",
+    currentVersion: "0.1.63",
+    targetVersion: "0.1.64",
+    spec: "@litfamily/litopencode@0.1.64",
+    configRoot: path.join(home, "xdg", "opencode"),
+    startedAt: Date.now() - 60_000,
+    finishedAt: Date.now() - 60_000,
+    journalPath: autoUpdate.autoUpdateJournalPath(home),
+    backupPath: path.join(state, ".auto-update-backup-x"),
+    backupRetained: true,
+    priorStateVerified: true,
+    stagedStateKnown: true,
+    doctor: { ok: false },
+    rollback: { ok: true },
+    failure: { step: "npm-install", timedOut: true, missingCommand: false },
+    ...fields
+  };
+  await fs.writeFile(autoUpdate.autoUpdateReceiptPath(home), JSON.stringify(receipt) + "\n", { encoding: "utf8", mode: 0o600 });
+  return receipt;
+}
+
+test("a plugin start backs off for a day after a safe rollback of the same target", async () => {
+  await withFixture(async ({ home, root }) => {
+    await writePrivateReceipt(home, {});
+    const calls = [];
+    const options = {
+      reason: "plugin",
+      homeDir: home,
+      configRoot: root,
+      currentVersion: "0.1.63",
+      env: { HOME: home, PATH: process.env.PATH },
+      fetchLatestVersion: async () => "0.1.64",
+      runCommand: stagedPackageRunner("0.1.64", calls)
+    };
+
+    const result = await autoUpdate.runAutoUpdate(options);
+    assert.equal(result.status, "skipped");
+    assert.equal(result.reason, "backoff");
+    assert.equal(result.targetVersion, "0.1.64");
+    assert.equal(autoUpdate.canContinueAfterAutoUpdate(result), true);
+    assert.deepEqual(calls, []);
+    assert.equal(autoUpdate.autoUpdateFailureBackoffMs, 24 * 60 * 60 * 1000);
+
+    // An explicit install or doctor is the user's own request and is not held back.
+    assert.equal((await autoUpdate.runAutoUpdate({ ...options, reason: "management" })).status, "updated");
+  });
+});
+
+test("the backoff ends for a newer target, an old failure, or a rollback that could not be proven", async () => {
+  for (const [label, fields, latest] of [
+    ["newer target", {}, "0.1.65"],
+    ["older than a day", { finishedAt: Date.now() - autoUpdate.autoUpdateFailureBackoffMs - 1_000 }, "0.1.64"],
+    ["unknown staged state", { stagedStateKnown: false }, "0.1.64"],
+    ["failed rollback", { status: "failed", rollback: { ok: false }, priorStateVerified: false }, "0.1.64"],
+    ["updated receipt", { status: "updated", backupRetained: false, failure: undefined }, "0.1.64"]
+  ]) {
+    await withFixture(async ({ home, root }) => {
+      await writePrivateReceipt(home, fields);
+      const calls = [];
+      const result = await autoUpdate.runAutoUpdate({
+        reason: "plugin",
+        homeDir: home,
+        configRoot: root,
+        currentVersion: "0.1.63",
+        env: { HOME: home, PATH: process.env.PATH },
+        fetchLatestVersion: async () => latest,
+        runCommand: stagedPackageRunner(latest, calls)
+      });
+      assert.equal(result.status, "updated", label);
+      assert.equal(calls.length, 3, label);
+    });
+  }
+});
+
+test("the receipt names the failed step, a timeout, and a missing command without keeping command output", async () => {
+  await withFixture(async ({ home, root }) => {
+    const missing = Object.assign(new Error("spawn npm ENOENT"), { code: "ENOENT", stderr: "secret-output" });
+    const result = await autoUpdate.runAutoUpdate({
+      reason: "plugin",
+      homeDir: home,
+      configRoot: root,
+      currentVersion: "0.1.63",
+      env: { HOME: home, PATH: process.env.PATH },
+      fetchLatestVersion: async () => "0.1.64",
+      runCommand: async () => {
+        throw missing;
+      }
+    });
+    assert.equal(result.status, "rolled-back");
+    const raw = await fs.readFile(autoUpdate.autoUpdateReceiptPath(home), "utf8");
+    assert.deepEqual(JSON.parse(raw).failure, { step: "npm-install", timedOut: false, missingCommand: true });
+    assert.doesNotMatch(raw, /secret-output/u);
+    const summary = await autoUpdate.readAutoUpdateReceipt(home);
+    assert.deepEqual(summary.failure, { step: "npm-install", timedOut: false, missingCommand: true });
+    assert.equal(summary.targetVersion, "0.1.64");
+    assert.equal(summary.currentVersion, "0.1.63");
+  });
+
+  await withFixture(async ({ home, root }) => {
+    const runner = stagedPackageRunner("0.1.64");
+    await autoUpdate.runAutoUpdate({
+      reason: "plugin",
+      homeDir: home,
+      configRoot: root,
+      currentVersion: "0.1.63",
+      env: { HOME: home, PATH: process.env.PATH },
+      fetchLatestVersion: async () => "0.1.64",
+      runCommand: async (command, args, options) => {
+        if (args.includes("install") && command !== "npm") throw Object.assign(new Error("Command failed"), { killed: true, signal: "SIGTERM" });
+        return await runner(command, args, options);
+      }
+    });
+    const receipt = JSON.parse(await fs.readFile(autoUpdate.autoUpdateReceiptPath(home), "utf8"));
+    assert.deepEqual(receipt.failure, { step: "install", timedOut: true, missingCommand: false });
+  });
+});
+
+test("every plugin start leaves a private last-check record with the version that ran it", async () => {
+  await withFixture(async ({ home }) => {
+    const result = await autoUpdate.runPluginAutoUpdate({ homeDir: home });
+    // The test runs from a git checkout, so the plugin path stops at the checkout guard.
+    assert.equal(result.reason, "local-checkout");
+    const checkPath = autoUpdate.autoUpdateCheckPath(home);
+    assert.equal((await fs.stat(checkPath)).mode & 0o777, 0o600);
+    const record = await autoUpdate.readAutoUpdateCheck(home);
+    const pkg = JSON.parse(await fs.readFile(new URL("../package.json", import.meta.url), "utf8"));
+    assert.equal(record.runningVersion, pkg.version);
+    assert.equal(record.status, "skipped");
+    assert.equal(record.reason, "local-checkout");
+    assert.equal(typeof record.at, "number");
+  });
+
+  await withFixture(async ({ home }) => {
+    await autoUpdate.recordAutoUpdateCheck(home, "0.1.63", { status: "skipped", reason: "registry-unavailable", currentVersion: "0.1.63" });
+    assert.equal((await autoUpdate.readAutoUpdateCheck(home)).reason, "registry-unavailable");
+    // A state root that is not safe to write must never stop the plugin.
+    const other = path.join(home, "other");
+    await fs.mkdir(other);
+    const linked = path.join(home, "linked");
+    await fs.mkdir(linked);
+    await fs.symlink(other, path.join(linked, ".litopencode"));
+    await autoUpdate.recordAutoUpdateCheck(linked, "0.1.63", { status: "updated" });
+    assert.deepEqual(await fs.readdir(other), []);
+  });
+});
+
+test("a registry latest equal to the running version starts no transaction", async () => {
+  await withFixture(async ({ home, root }) => {
+    const calls = [];
+    const result = await autoUpdate.runAutoUpdate({
+      reason: "plugin",
+      homeDir: home,
+      configRoot: root,
+      currentVersion: "0.1.64",
+      env: { HOME: home, PATH: process.env.PATH },
+      fetchLatestVersion: async () => "0.1.64",
+      runCommand: stagedPackageRunner("0.1.64", calls)
+    });
+
+    assert.equal(result.status, "skipped");
+    assert.equal(result.reason, "up-to-date");
+    assert.deepEqual(calls, []);
+    assert.equal(await autoUpdate.readAutoUpdateReceipt(home), undefined);
+  });
+});
+
+test("a post-install doctor that still reports the old version rolls the update back", async () => {
+  await withFixture(async ({ home, root }) => {
+    const before = { $schema: "https://opencode.ai/config.json", plugin: ["@litfamily/litopencode@0.1.63"] };
+    const configPath = path.join(root, "opencode.json");
+    await fs.writeFile(configPath, JSON.stringify(before, null, 2) + "\n");
+    const staged = stagedPackageRunner("0.1.64");
+    const runCommand = async (command, args, options) => {
+      if (args.includes("doctor")) {
+        return { stdout: JSON.stringify({ package: { name: "@litfamily/litopencode", version: "0.1.63" }, install: { ok: true } }), stderr: "" };
+      }
+      return staged(command, args, options);
+    };
+
+    const result = await autoUpdate.runAutoUpdate({
+      reason: "management",
+      homeDir: home,
+      configRoot: root,
+      currentVersion: "0.1.63",
+      env: { HOME: home, PATH: process.env.PATH },
+      fetchLatestVersion: async () => "0.1.64",
+      runCommand
+    });
+
+    assert.equal(result.status, "rolled-back");
+    const receipt = JSON.parse(await fs.readFile(autoUpdate.autoUpdateReceiptPath(home), "utf8"));
+    assert.equal(receipt.doctor.ok, false);
+    assert.equal(receipt.doctor.package.version, "0.1.63");
+    assert.deepEqual(JSON.parse(await fs.readFile(configPath, "utf8")), before);
+  });
+});
+
+test("a rollback whose restored bytes differ from the backup is not reported as verified", async () => {
+  await withFixture(async ({ home, root }) => {
+    const configPath = path.join(root, "opencode.json");
+    await fs.writeFile(configPath, JSON.stringify({ plugin: ["@litfamily/litopencode@0.1.63"] }) + "\n");
+    const runCommand = async (command, args) => {
+      if (command === "npm") return stagedPackageRunner("0.1.64")(command, args);
+      throw new Error("staged installer failed");
+    };
+    // Fault injection: the restore copy of opencode.json lands with one extra byte.
+    const realCp = fs.cp;
+    fs.cp = async (source, destination, options) => {
+      await realCp(source, destination, options);
+      if (String(source).includes(".auto-update-backup-") && destination === configPath) await fs.appendFile(configPath, " ");
+    };
+    let result;
+    try {
+      result = await autoUpdate.runAutoUpdate({
+        reason: "plugin",
+        homeDir: home,
+        configRoot: root,
+        currentVersion: "0.1.63",
+        env: { HOME: home, PATH: process.env.PATH },
+        fetchLatestVersion: async () => "0.1.64",
+        runCommand
+      });
+    } finally {
+      fs.cp = realCp;
+    }
+
+    assert.equal(result.status, "failed");
+    assert.equal(result.priorStateVerified, false);
+    assert.equal(result.rollback.ok, false);
+    assert.equal(autoUpdate.canContinueAfterAutoUpdate(result), false);
+    const receipt = await autoUpdate.readAutoUpdateReceipt(home);
+    assert.equal(receipt.priorStateVerified, false);
+    assert.equal(receipt.backupRetained, true);
+  });
+});

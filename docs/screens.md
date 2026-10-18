@@ -6,7 +6,7 @@ This page shows what LitOpenCode prints and draws, so a healthy install looks fa
 
 ## What you will see on screen
 
-Here is what LitOpenCode prints. Four pictures follow, and each is labelled as a capture or a sample. Every picture comes in a dark and a light version with the same text; your browser shows the one that matches its theme. The Jev hint has its own pictures under [What you will see](./guide.md#what-you-will-see) in the guide.
+Here is what LitOpenCode prints. Four pictures follow, and each is labelled as a capture or a sample. Every picture comes in a dark and a light version with the same text; your browser shows the one that matches its theme.
 
 **The installer.** `litopencode install` lists five numbered steps, ticks each one off as it finishes, and ends with a green box. The box says the install is ready and what to do next: restart OpenCode, press Tab and choose lit-loop.
 

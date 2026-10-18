@@ -5,7 +5,7 @@ import process from "node:process";
 import { readStableRegularFile } from "../skills/frontend-ui-ux/scripts/stable-file-read.mjs";
 
 // Shown by the GitHub pages only; the npm cards never reference them, so they stay out of the package.
-const GITHUB_ONLY_README_MEDIA = /^docs\/assets\/readme\/(?:jev-[^/]+\.webp|(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|status-card-(?:idle|working|recent)\.webp|auto-handoff-(?:settings|compact|doctor)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
+const GITHUB_ONLY_README_MEDIA = /^docs\/assets\/readme\/(?:(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|status-card-(?:idle|working|recent)\.webp|auto-handoff-(?:settings|compact|doctor)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
 // The landing README links these GitHub pages for what moved off it (guide, skills gallery, screens,
 // artwork). They load images by paths relative to docs/, and they stay out of the package with the social preview.
 const GITHUB_DOC_PAGES = ["docs/guide.md", "docs/guide-Ko-KR.md", "docs/skills.md", "docs/skills-Ko-KR.md", "docs/screens.md", "docs/screens-Ko-KR.md", "docs/brand.md", "docs/brand-Ko-KR.md"];
@@ -18,7 +18,7 @@ const FORBIDDEN_PATH_RULES = [
   { label: "local asset generator", pattern: /^generate_cover\.py$/u },
   { label: "repository cover PNG", pattern: /^cover\.png$/u },
   { label: "repository cover vector", pattern: /^docs\/assets\/cover\.svg$/u },
-  { label: "GitHub-only README media (Jev snapshots, on-screen pictures, status card, automatic handoff, promo film)", pattern: GITHUB_ONLY_README_MEDIA },
+  { label: "GitHub-only README media (on-screen pictures, status card, automatic handoff, promo film)", pattern: GITHUB_ONLY_README_MEDIA },
   { label: "unapproved README presentation asset", pattern: /^docs\/assets\/readme\/(?!(?:ascii-readme|badge-version|badge-license|lucide-book-open|lucide-play|lucide-shield-check)\.svg$|litopencode-wordmark\.svg$|litopencode-clay-icon\.png$|(?:litfamily-machines|poster)\.png$|ignition-film\.mp4$|ignition-readme\.gif$|(?:Lucide-LICENSE|JetBrainsMono-OFL)\.txt$)/u },
   { label: "maintainer release checklist", pattern: /^docs\/release-checklist\.md$/u },
   { label: "GitHub-only docs page, social preview or demo film", pattern: GITHUB_ONLY_DOCS },

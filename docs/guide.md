@@ -2,7 +2,7 @@
 
 [README](../README.md) · [한국어](./guide-Ko-KR.md) · [Skills and commands](./skills.md) · [Screens](./screens.md) · [Workflow reference](./reference.md)
 
-The README keeps the short version. This guide has the rest of what a user needs: what install asks and changes, how a first task and a planned task run, automatic handoff, safety and updates, the optional Jev hint, troubleshooting, and a full uninstall.
+The README keeps the short version. This guide has the rest of what a user needs: what install asks and changes, how a first task and a planned task run, automatic handoff, safety and updates, troubleshooting, and a full uninstall.
 
 ## Install
 
@@ -81,61 +81,6 @@ When LitOpenCode fetches a public page, it first checks where the request is goi
 LitOpenCode can update itself. On interactive startup, and after an install or doctor run succeeds, it may check for a new release, and it does that in the foreground, so you may wait a moment. To turn automatic updates off, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`.
 
 Skill learning has been removed. If an earlier release left learning records in a project's `.litopencode` folder, LitOpenCode no longer reads, changes or deletes them; they're yours to keep or remove. [More on that state](./reference.md#skill-learning-state).
-
-## Jev skill hint (optional)
-
-Sometimes the right skill isn't obvious from a prompt. This optional hint asks an outside model for a second opinion. It is off by default.
-
-When you turn it on, each eligible chat turn asks Jev, TypeSafe's hosted typed-decision model, which LitOpenCode skill fits the prompt. If Jev names one of LitOpenCode's own skills with enough confidence, the turn gets one advisory line naming that skill. It's only a suggestion: the model still decides whether to load the skill, and the hint gives no permission and starts no tool. Slash commands, child sessions, turns a lit route already claimed, and prompts under four characters are skipped.
-
-To turn it on, set both variables in the environment that starts OpenCode:
-
-```sh
-export LITOPENCODE_JEV=1
-export TYPESAFE_API_KEY=<your own TypeSafe key>
-```
-
-**Once it's on, each eligible prompt leaves your machine and goes to TypeSafe (typesafe.ai).** Before sending, LitOpenCode cuts the prompt to 2,000 characters and replaces home paths, e-mail addresses and token-shaped strings. It never sends files, tool output or earlier turns. Everything else in the prompt goes as written, so hostnames, customer names, or a password that isn't written as `password=...` would be sent too.
-
-The key needs care as well. Because `TYPESAFE_API_KEY` is exported in the shell that starts OpenCode, the agent's own tools can read it. Make a key just for this feature and give it a low spending limit. TypeSafe bills your own account, at about $0.04 per million input tokens.
-
-The hint never holds a turn up for long. Each request stops after 1.5 seconds and isn't retried; if it fails, the turn carries on as usual, with one short note the first time it happens in a session.
-
-You can always see whether it's working. `litopencode doctor` reports `Jev skill hint: off`, `on`, or `flag on but TYPESAFE_API_KEY missing`, and never shows the key. On the first eligible turn of each session, a `✦ Jev skill hint is ON` toast shows once. When a turn gets a hint, a short toast such as `Jev → lit-humanizer (0.27s)` names the skill and the request time; when the feature is off or no skill fits, nothing pops up. [What you will see](#what-you-will-see) shows each of these.
-
-To turn it off, unset `LITOPENCODE_JEV` or set it to anything other than `1`.
-
-Tuning variables and the debug trace are in the [Jev skill hint reference](./reference.md#jev-skill-hint-optional).
-
-### What you will see
-
-Jev is quiet on screen. When it's on you'll notice two things: a small toast in the top-right corner of OpenCode, and one line in `litopencode doctor`. Here is each one, so you know what to expect before you turn it on.
-
-**In the terminal.** `litopencode doctor` is the quickest check. With nothing set it says the hint is off. Set the flag without a key and it says the key is missing, which is the line to act on if you expected hints and none arrive. With both set it says on. It never prints the key.
-
-<p align="center"><img src="./assets/readme/jev-doctor.webp" width="694" alt="Terminal window showing three runs of litopencode doctor with the Jev line picked out. With nothing set: Jev skill hint: off. After export LITOPENCODE_JEV=1: Jev skill hint: flag on but TYPESAFE_API_KEY missing. After export TYPESAFE_API_KEY=example-key: Jev skill hint: on." /></p>
-
-*Captured from the real `litopencode doctor` in an isolated shell, with the Jev line picked out by `jq`. The key in the picture is a placeholder; doctor only checks that a key exists.*
-
-**The first prompt of a session.** A toast announces that the hint is on. The feature sends prompts out of your machine, so it says so once per session in case you forgot you had switched it on. If Jev has no suggestion for that prompt, this is all you see.
-
-<p align="center"><img src="./assets/readme/jev-toast-notice.webp" width="694" alt="OpenCode home screen with an amber-edged toast in the top-right corner that reads: ✦ Jev skill hint is ON." /></p>
-
-*Sample output: the toast text and style come from the plugin's own toast function, and OpenCode drew it. No request went to TypeSafe.*
-
-**A first prompt that gets a hint.** OpenCode shows one toast at a time, so the notice and the hint share a box. The notice is the title, and the suggested skill and the request time sit below it. The skill and the time here are examples.
-
-<p align="center"><img src="./assets/readme/jev-toast-first-hint.webp" width="694" alt="OpenCode home screen with an amber-edged toast in the top-right corner. Its first line reads: ✦ Jev skill hint is ON. Its second line reads: Jev → lit-humanizer (0.27s)." /></p>
-
-*Sample output, produced the same way. The skill name and the time are examples.*
-
-**Later prompts.** Each prompt that gets a hint shows a quieter toast with only the skill and the time. When no skill fits, or Jev is off, nothing appears.
-
-<p align="center"><img src="./assets/readme/jev-toast-hint.webp" width="694" alt="OpenCode home screen with a teal-edged toast in the top-right corner that reads: Jev → lit-humanizer (0.27s)." /></p>
-
-*Sample output, produced the same way. The skill name and the time are examples.*
-
-The suggestion itself is one sentence naming the skill. It goes to the model and isn't shown as something you typed.
 
 ## Troubleshooting
 

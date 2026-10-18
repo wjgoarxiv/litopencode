@@ -66,6 +66,36 @@ test("lit routes the 'turn X into a deck or report' shape to the Office skills, 
   }
 });
 
+test("a requested Markdown or plain-text deliverable is written as ordinary Markdown, never as the renderers' source", () => {
+  // The Office skills' Markdown carries frontmatter and ::: directives because their converters read it.
+  // A reader who asked for report.md or slides.md gets neither, and no DOCX or PPTX build.
+  const markdownAsks = [
+    "Write a department-head report of about two A4 pages, saved as report.md. Write exactly five slides of presentation text, saved as slides.md.\n\nlit",
+    "Prepare the quarterly report in Markdown lit",
+    "Draft the project report as plain text lit",
+    "sources 자료로 보고서를 마크다운으로 작성해줘 lit"
+  ];
+  for (const prompt of markdownAsks) {
+    const routed = route(prompt);
+    assert.doesNotMatch(routed, /native skill tool to load lit-(?:docx|pptx)/u, prompt);
+    assert.match(routed, /ordinary Markdown/u, prompt);
+    assert.match(routed, /no YAML front matter/u, prompt);
+    assert.match(routed, /no `:::` directive blocks/u, prompt);
+  }
+  // An input .md file is not an output request, and a named Office file keeps the skill route.
+  for (const prompt of ["lit turn notes.md into slides", "Write the report as report.docx and keep report.md beside it lit", "Convert report.docx to Markdown lit"]) {
+    const routed = route(prompt);
+    assert.match(routed, /native skill tool to load lit-(?:docx|pptx) before drafting/u, prompt);
+    assert.doesNotMatch(routed, /ordinary Markdown/u, prompt);
+  }
+  for (const id of ["lit-docx", "lit-pptx"]) {
+    const body = readFileSync(`skills/${id}/SKILL.md`, "utf8");
+    assert.match(body, /requested Markdown or plain-text deliverable/u, id);
+    assert.match(body, /no frontmatter/u, id);
+    assert.match(body, /no `:::` directive blocks/u, id);
+  }
+});
+
 test("Office skills are registered and carry installed scripts, templates, fonts, and pinned runtime locks", () => {
   for (const id of ["lit-pptx", "lit-docx"]) {
     assert.ok(litOpenCodeFeatures.some((feature) => feature.id === id));

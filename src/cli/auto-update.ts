@@ -16,11 +16,14 @@ export const autoUpdateLockTimeoutMs = 2_000;
 /** Keep a live owner protected for the whole bounded transaction plus one command window. */
 export const autoUpdateInstallLockStaleMs = autoUpdateTransactionBoundMs + autoUpdateTimeoutMs;
 export const autoUpdateRecursionEnv = "LITOPENCODE_AUTO_UPDATE_IN_PROGRESS";
+/** After a safe rollback, OpenCode starts leave the same target alone for this long. */
+export const autoUpdateFailureBackoffMs = 24 * 60 * 60 * 1000;
 
 const stateRootName = ".litopencode";
 const receiptFileName = "auto-update-receipt.json";
 const journalFileName = "auto-update-journal.jsonl";
 const installLockFileName = "auto-update-install.lock";
+const checkFileName = "auto-update-check.json";
 const maxCommandOutputBytes = 4 * 1024 * 1024;
 
 type CommandOutput = {
@@ -100,6 +103,12 @@ type DoctorReceipt = {
   readonly error?: string;
 };
 
+export type AutoUpdateFailure = {
+  readonly step: "prepare" | "npm-install" | "install" | "doctor";
+  readonly timedOut: boolean;
+  readonly missingCommand: boolean;
+};
+
 type AutoUpdateReceipt = {
   readonly schemaVersion: 1;
   readonly status: AutoUpdateRunResult["status"];
@@ -117,6 +126,7 @@ type AutoUpdateReceipt = {
   readonly stagedStateKnown: boolean;
   readonly doctor: DoctorReceipt;
   readonly rollback: { readonly ok: boolean; readonly error?: string };
+  readonly failure?: AutoUpdateFailure;
 };
 
 const execFileAsync = promisify(execFile);
@@ -148,6 +158,10 @@ export function autoUpdateJournalPath(homeDir: string = os.homedir()): string {
 
 export function autoUpdateReceiptPath(homeDir: string = os.homedir()): string {
   return path.join(stateRoot(homeDir), receiptFileName);
+}
+
+export function autoUpdateCheckPath(homeDir: string = os.homedir()): string {
+  return path.join(stateRoot(homeDir), checkFileName);
 }
 
 function truthyEnvironmentValue(value: string | undefined): boolean {
@@ -216,6 +230,17 @@ function commandFailure(error: unknown): string {
   return [stderr ? `stderr: ${stderr}` : "", stdout ? `stdout: ${stdout}` : "", code ? `code: ${code}` : "", signal ? `signal: ${signal}` : "", !stderr && !stdout && !code && !signal ? error.message : ""]
     .filter(Boolean)
     .join("; ");
+}
+
+/** Classify a failure by kind only; command output never reaches the receipt. */
+function failureKind(step: AutoUpdateFailure["step"], error: unknown): AutoUpdateFailure {
+  const candidate = (typeof error === "object" && error !== null ? error : {}) as { readonly code?: unknown; readonly killed?: unknown; readonly message?: unknown };
+  const message = typeof candidate.message === "string" ? candidate.message : "";
+  return {
+    step,
+    timedOut: candidate.killed === true || /automatic update command exceeded/u.test(message),
+    missingCommand: candidate.code === "ENOENT"
+  };
 }
 
 async function defaultRunCommand(
@@ -497,6 +522,8 @@ async function updateTransaction(
   // resulting host state unknown until the snapshot is restored and verified.
   let stagedStateKnown = true;
   let priorStateVerified = false;
+  let step: AutoUpdateFailure["step"] = "prepare";
+  let failure: AutoUpdateFailure | undefined;
   try {
     await fs.mkdir(stageRoot, { recursive: true, mode: 0o700 });
     await fs.writeFile(path.join(stageRoot, "package.json"), '{"private":true}\n', { encoding: "utf8", mode: 0o600 });
@@ -520,11 +547,13 @@ async function updateTransaction(
       "--no-save",
       spec
     ];
+    step = "npm-install";
     await bounded(() => runCommand("npm", npmArgs, { cwd: stageRoot, env: childEnv, timeout: autoUpdateTimeoutMs, maxBuffer: maxCommandOutputBytes }), autoUpdateTimeoutMs);
     await appendJournal(homeDir, "npm-install", { spec });
     const entrypoint = await packageEntrypoint(stageRoot, targetVersion);
     const nodeExecutable = options.nodeExecutable ?? childNodeExecutable();
     const installArgs = [entrypoint, "install", "--root", options.configRoot, "--no-model-prompt", "--no-permission-prompt", "--no-auto-update"];
+    step = "install";
     stagedStateKnown = false;
     await bounded(
       () => runCommand(nodeExecutable, installArgs, { cwd: options.configRoot, env: childEnv, timeout: autoUpdateTimeoutMs, maxBuffer: maxCommandOutputBytes }),
@@ -533,6 +562,7 @@ async function updateTransaction(
     stagedStateKnown = true;
     await appendJournal(homeDir, "install", { spec });
     const doctorArgs = [entrypoint, "doctor", "--root", options.configRoot, "--json", "--no-auto-update"];
+    step = "doctor";
     stagedStateKnown = false;
     const doctorOutput = await bounded(
       () => runCommand(nodeExecutable, doctorArgs, { cwd: options.configRoot, env: childEnv, timeout: autoUpdateTimeoutMs, maxBuffer: maxCommandOutputBytes }),
@@ -545,8 +575,8 @@ async function updateTransaction(
     status = "updated";
     await appendJournal(homeDir, "updated", { spec });
   } catch (error) {
-    const failure = commandFailure(error);
-    await tryAppendJournal(homeDir, "failure", { error: failure });
+    failure = failureKind(step, error);
+    await tryAppendJournal(homeDir, "failure", { error: commandFailure(error) });
     try {
       await restoreSnapshot(options.configRoot, snapshot);
       priorStateVerified = await verifySnapshot(options.configRoot, snapshot);
@@ -580,7 +610,8 @@ async function updateTransaction(
     priorStateVerified: status === "updated" ? true : priorStateVerified,
     stagedStateKnown,
     doctor,
-    rollback
+    rollback,
+    ...(failure === undefined ? {} : { failure })
   };
   await writeReceipt(homeDir, receipt);
   return {
@@ -594,6 +625,19 @@ async function updateTransaction(
     stagedStateKnown,
     ...(status === "rolled-back" || status === "failed" ? { rollback } : {})
   };
+}
+
+/**
+ * A rollback that left the old setup proven in place is safe to wait on. Without
+ * this, a failing update re-ran its snapshot and npm install on every OpenCode
+ * start. Anything less certain keeps retrying, because a retry is the repair path.
+ */
+async function inFailureBackoff(homeDir: string, targetVersion: string): Promise<boolean> {
+  const last = await readAutoUpdateReceipt(homeDir);
+  if (last === undefined || last.status !== "rolled-back") return false;
+  if (!last.rollbackOk || !last.priorStateVerified || !last.stagedStateKnown || last.targetVersion !== targetVersion) return false;
+  const age = Date.now() - last.finishedAt;
+  return age >= 0 && age < autoUpdateFailureBackoffMs;
 }
 
 export async function runAutoUpdate(options: AutoUpdateOptions): Promise<AutoUpdateRunResult> {
@@ -611,6 +655,9 @@ export async function runAutoUpdate(options: AutoUpdateOptions): Promise<AutoUpd
   if (parseStableVersion(targetVersion) === undefined) return { status: "skipped", currentVersion: options.currentVersion, reason: "invalid-latest-version" };
   const comparison = compareStableVersions(targetVersion, options.currentVersion);
   if (comparison !== 1) return { status: "skipped", currentVersion: options.currentVersion, targetVersion, reason: "up-to-date" };
+  if (options.reason === "plugin" && (await inFailureBackoff(homeDir, targetVersion))) {
+    return { status: "skipped", currentVersion: options.currentVersion, targetVersion, reason: "backoff" };
+  }
 
   let lock: InstallLock | undefined;
   try {
@@ -653,7 +700,20 @@ export type AutoUpdateReceiptSummary = {
   readonly stagedStateKnown: boolean;
   readonly rollbackOk: boolean;
   readonly finishedAt: number;
+  readonly currentVersion?: string;
+  readonly targetVersion?: string;
+  readonly failure?: AutoUpdateFailure;
 };
+
+function isFailureRecord(value: unknown): value is AutoUpdateFailure {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    (record.step === "prepare" || record.step === "npm-install" || record.step === "install" || record.step === "doctor") &&
+    typeof record.timedOut === "boolean" &&
+    typeof record.missingCommand === "boolean"
+  );
+}
 
 /** Read only the bounded safety summary used by doctor; never echo command output. */
 export async function readAutoUpdateReceipt(homeDir: string = os.homedir()): Promise<AutoUpdateReceiptSummary | { readonly status: "unreadable" } | undefined> {
@@ -683,7 +743,10 @@ export async function readAutoUpdateReceipt(homeDir: string = os.homedir()): Pro
       priorStateVerified: parsed.priorStateVerified,
       stagedStateKnown: parsed.stagedStateKnown,
       rollbackOk: parsed.rollback.ok,
-      finishedAt: parsed.finishedAt
+      finishedAt: parsed.finishedAt,
+      ...(typeof parsed.currentVersion === "string" ? { currentVersion: parsed.currentVersion } : {}),
+      ...(typeof parsed.targetVersion === "string" ? { targetVersion: parsed.targetVersion } : {}),
+      ...(isFailureRecord(parsed.failure) ? { failure: { step: parsed.failure.step, timedOut: parsed.failure.timedOut, missingCommand: parsed.failure.missingCommand } } : {})
     };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
@@ -700,15 +763,72 @@ async function isLocalCheckout(packageRoot: string): Promise<boolean> {
   }
 }
 
-export async function runPluginAutoUpdate(): Promise<AutoUpdateRunResult> {
+export type AutoUpdateCheckRecord = {
+  readonly schemaVersion: 1;
+  readonly at: number;
+  /** The plugin version this OpenCode start loaded, which keeps running until the next start. */
+  readonly runningVersion: string;
+  readonly status: AutoUpdateRunResult["status"];
+  readonly reason?: string;
+  readonly targetVersion?: string;
+};
+
+/** Best effort: a state root that is not safe to write never stops the plugin. */
+export async function recordAutoUpdateCheck(homeDir: string, runningVersion: string, result: AutoUpdateRunResult): Promise<void> {
+  try {
+    await ensurePrivateStateRoot(homeDir);
+    const record: AutoUpdateCheckRecord = {
+      schemaVersion: 1,
+      at: Date.now(),
+      runningVersion,
+      status: result.status,
+      ...(result.reason === undefined ? {} : { reason: result.reason }),
+      ...(result.targetVersion === undefined ? {} : { targetVersion: result.targetVersion })
+    };
+    const checkPath = autoUpdateCheckPath(homeDir);
+    const temporary = `${checkPath}.${randomUUID()}.tmp`;
+    await fs.writeFile(temporary, `${JSON.stringify(record)}\n`, { encoding: "utf8", mode: 0o600 });
+    await fs.rename(temporary, checkPath);
+  } catch {
+    // The record only feeds doctor.
+  }
+}
+
+export async function readAutoUpdateCheck(homeDir: string = os.homedir()): Promise<AutoUpdateCheckRecord | undefined> {
+  try {
+    const checkPath = autoUpdateCheckPath(homeDir);
+    const stat = await fs.lstat(checkPath);
+    if (stat.isSymbolicLink() || !stat.isFile() || (stat.mode & 0o077) !== 0) return undefined;
+    if (typeof process.getuid === "function" && stat.uid !== process.getuid()) return undefined;
+    const parsed = JSON.parse(await fs.readFile(checkPath, "utf8")) as Partial<AutoUpdateCheckRecord>;
+    if (parsed.schemaVersion !== 1 || typeof parsed.at !== "number" || typeof parsed.runningVersion !== "string" || typeof parsed.status !== "string") return undefined;
+    return {
+      schemaVersion: 1,
+      at: parsed.at,
+      runningVersion: parsed.runningVersion,
+      status: parsed.status,
+      ...(typeof parsed.reason === "string" ? { reason: parsed.reason } : {}),
+      ...(typeof parsed.targetVersion === "string" ? { targetVersion: parsed.targetVersion } : {})
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+export async function runPluginAutoUpdate(options: { readonly homeDir?: string } = {}): Promise<AutoUpdateRunResult> {
   const metadata = await readPackageMetadata();
-  if (await isLocalCheckout(metadata.packageRoot)) return { status: "skipped", reason: "local-checkout" };
-  return await runAutoUpdate({
-    reason: "plugin",
-    configRoot: defaultOpenCodeConfigRoot(),
-    currentVersion: metadata.version,
-    env: process.env
-  });
+  const homeDir = options.homeDir ?? os.homedir();
+  const result = (await isLocalCheckout(metadata.packageRoot))
+    ? ({ status: "skipped", reason: "local-checkout" } as const)
+    : await runAutoUpdate({
+        reason: "plugin",
+        homeDir,
+        configRoot: defaultOpenCodeConfigRoot(),
+        currentVersion: metadata.version,
+        env: process.env
+      });
+  await recordAutoUpdateCheck(homeDir, metadata.version, result);
+  return result;
 }
 
 export async function runInteractiveAutoUpdate(input: InteractiveAutoUpdateGate): Promise<AutoUpdateRunResult> {

@@ -170,7 +170,7 @@ The [full removal steps](./docs/guide.md#uninstall) cover the copied commands an
 
 ## Learn more
 
-- [Guide](./docs/guide.md): install options, a first task and a planned task, automatic handoff, safety and updates, an optional hint that suggests a skill for your prompt (Jev), troubleshooting and full removal.
+- [Guide](./docs/guide.md): install options, a first task and a planned task, automatic handoff, safety and updates, troubleshooting and full removal.
 - [Skills and commands](./docs/skills.md): every route and skill, each with a picture, plus documents, slides, design and browser notes.
 - [Screens](./docs/screens.md): what the installer, the health check, the toast and the planner look like, and a 22-second film.
 - [Workflow reference](./docs/reference.md): models, permissions, host hooks, every skill, and reproducible verification. In Korean: [한국어 상세 안내](./docs/reference-Ko-KR.md).

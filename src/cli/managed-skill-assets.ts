@@ -136,7 +136,7 @@ export function isRecursivelyManagedSkill(id: LitOpenCodeRuntimeSkillId): id is 
 // id without writing its trigger is a compile error, not a silent fallback.
 const skillDiscoveryDescriptions = Object.freeze({
   "workflow-loop":
-    "Trigger when the user wants a multi-step LitOpenCode work loop started, resumed, or kept running — bare `lit`, `/lit`, `/litwork`, \"keep going\", \"continue the loop\" — or when a request needs goal binding, ordered execution, and ledger-backed progress across turns instead of one answer.",
+    "Trigger when the user wants a multi-step LitOpenCode work loop started, resumed, or kept running — bare `lit`, `/lit`, `/litwork`, \"keep going\", \"continue the loop\" — or when a request needs goal binding, ordered execution, and ledger-backed progress across turns instead of one answer. Also trigger when one request hands over a whole feature, fix, or ticket to carry through to done — build it, add tests, verify against each acceptance condition and on the real user-facing path, clean up temporary artifacts, then report what changed (\"start to finish\", \"end to end\", \"see it through\", \"처음부터 끝까지\", \"끝까지 해줘\"). Do not trigger for a question, an explanation, or a one-line snippet.",
   "durable-litgoal":
     "Trigger when work needs an objective that outlives the current turn: binding a goal with checkable criteria, reading or appending the `.litopencode/litgoal` ledger, resuming a schema-3 bounded-authority work record, or answering \"what was I working on\" from durable state rather than chat memory.",
   "agent-roster":
@@ -146,7 +146,7 @@ const skillDiscoveryDescriptions = Object.freeze({
   "start-work":
     "Trigger when an approved plan or an explicit go-ahead already exists and implementation should begin or resume — \"start work\", \"execute the plan\", \"pick up where we left off\" — so the loop runs in verifiable slices with delegation lanes, evidence, and an independent verifier before any completion claim.",
   "review-work":
-    "Trigger when something must be judged rather than produced: a draft plan needing a PASS / ITERATE / NEEDS-CONTEXT achievability verdict, or finished work needing the five-lane scope-diff, tests-evidence, package-payload, security-provenance, and real-surface-docs check before it can be called done.",
+    "Trigger when something must be judged rather than produced: a patch, diff, PR, branch, or set of open changes to inspect for real defects, risks, or merge readiness (\"review this\", \"is this safe to merge\", \"point out anything risky\", \"리뷰해줘\", \"검토해줘\", \"합쳐도 될지 봐줘\"), where findings need file-and-line evidence, a reproduction path, and severity; a draft plan needing a PASS / ITERATE / NEEDS-CONTEXT achievability verdict; or finished work needing the five-lane scope-diff, tests-evidence, package-payload, security-provenance, and real-surface-docs check before it can be called done. When fixes are also asked for, the review comes first. Do not trigger for a general question about git, merging, or how code review works.",
   litresearch:
     "Trigger when a question needs sourced investigation rather than recall — comparing options, confirming whether a library, API, or behavior actually works as claimed, gathering public evidence across several sources — so verified facts, hypotheses, contradictions, and residual uncertainty stay separated before a verdict.",
   "reference-benchmark-claims":

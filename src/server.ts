@@ -1,7 +1,6 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createChatMessageActivationHook, showActivationToast, showJevSkillHintToast } from "./activation.ts";
+import { createChatMessageActivationHook, showActivationToast } from "./activation.ts";
 import { registerLitOpenCodeAgents } from "./agents.ts";
 import { createAutoHandoff } from "./auto-handoff-hooks.ts";
 import { createBoundedAuthorityEventHook } from "./bounded-authority-hooks.ts";
@@ -10,7 +9,6 @@ import { loadConfig } from "./config.ts";
 import { createDeliverableHedgeGuard } from "./deliverable-hedge-guard.ts";
 import { createToolExecuteAfterHook, createToolExecuteBeforeHook } from "./hooks.ts";
 import { createLogger } from "./logger.ts";
-import { createJevSkillHint } from "./jev-skill-hint.ts";
 import { createIgnitionState } from "./ignition.ts";
 import { createSessionLookup } from "./session-lineage.ts";
 import { applyCompactionRuleReset, applyStaticRuleInjection } from "./rules/hooks.ts";
@@ -62,12 +60,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       ignitionState.activate(sessionID, skillId, !appendedLit);
     };
     const boundedAuthorityEvent = createBoundedAuthorityEventHook(root, input?.client, loaded.config.boundedAuthority);
-    const skillHint = createJevSkillHint({
-      traceFile: path.join(loaded.paths.logsDir, "jev-skill-hint.jsonl"),
-      traceRoot: loaded.paths.projectRoot
-    });
     // Keyed by session: the host resolves command parts into a new array before chat.message runs.
-    const pendingCommand = new Set<string>();
     const trustedCommandActivations = new Map<string, string>();
     const commandActivation = createCommandActivationHook(root, {
       commandAliasRoot: defaultOpenCodeConfigRoot(),
@@ -84,8 +77,6 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       event: async (eventInput) => {
         if (eventInput.event.type === "session.deleted") {
           ignitionState.clear(eventInput.event.properties.info.id);
-          skillHint.forget(eventInput.event.properties.info.id);
-          pendingCommand.delete(eventInput.event.properties.info.id);
           trustedCommandActivations.delete(eventInput.event.properties.info.id);
         }
         await boundedAuthorityEvent(eventInput);
@@ -101,12 +92,6 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           ignitionState.resetDiscipline(sessionID);
         },
         onSkillActivation: recordSkillActivation,
-        isCommandTurn: (sessionID) => pendingCommand.delete(sessionID),
-        skillHint: async (sessionID, promptText) => {
-          const hint = await skillHint.hintFor(sessionID, promptText);
-          showJevSkillHintToast(input?.client, hint, skillHint.claimAwareness(sessionID, promptText));
-          return hint;
-        },
         trustedInjectedSkill: (sessionID) => {
           const skillId = trustedCommandActivations.get(sessionID);
           trustedCommandActivations.delete(sessionID);
@@ -117,7 +102,6 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         }
       }),
       "command.execute.before": async (commandInput, commandOutput) => {
-        pendingCommand.add(commandInput.sessionID);
         const priorLength = commandOutput.parts.length;
         await commandActivation(commandInput, commandOutput);
         const activationPart = commandOutput.parts.slice(priorLength).reverse().find(

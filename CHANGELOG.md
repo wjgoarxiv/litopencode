@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- The optional Jev skill hint is gone. In testing it improved skill choice by no more than run-to-run noise, and in real use the model followed none of the 45 hints it received. LitOpenCode no longer contacts TypeSafe, adds no hint line or toast, and `litopencode doctor` no longer reports it. `LITOPENCODE_JEV`, the other `LITOPENCODE_JEV_*` variables and `TYPESAFE_API_KEY` are now ignored and can be deleted, and so can an old debug trace at `.litopencode/logs/jev-skill-hint.jsonl`.
+
 ## 1.0.26 - 2026-10-16
 
 - The write guard now refuses more of the lines that tell a reader what a document is not for, such as `This table is not a ranking.` or `이 문서는 제품을 비교하려는 것이 아닙니다.` These forms came from real sessions. Bold-label callouts such as `> **주의:** ...` are now read too, while ordinary quoted text is still skipped, and lines from manuals and lab reports that only look similar stay allowed. Files saved through `apply_patch` are now checked before they land, the same way the write and edit tools already were.

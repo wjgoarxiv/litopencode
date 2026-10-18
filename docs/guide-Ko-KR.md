@@ -2,7 +2,7 @@
 
 [README](../README-Ko-KR.md) · [English](./guide.md) · [스킬과 명령](./skills-Ko-KR.md) · [화면 미리 보기](./screens-Ko-KR.md) · [상세 안내](./reference-Ko-KR.md)
 
-README에는 짧은 안내만 남겼습니다. 이 문서에는 나머지를 모았습니다. 설치가 무엇을 묻고 무엇을 바꾸는지, 첫 작업과 계획을 세우는 작업이 어떻게 흘러가는지, 자동 인수인계, 안전과 업데이트, 선택 기능인 Jev 힌트, 문제 해결, 완전한 제거 방법입니다.
+README에는 짧은 안내만 남겼습니다. 이 문서에는 나머지를 모았습니다. 설치가 무엇을 묻고 무엇을 바꾸는지, 첫 작업과 계획을 세우는 작업이 어떻게 흘러가는지, 자동 인수인계, 안전과 업데이트, 문제 해결, 완전한 제거 방법입니다.
 
 ## 설치
 
@@ -81,61 +81,6 @@ planner는 계획만 세웁니다. `lit-plan`은 `edit`, `bash`, `task` 권한�
 LitOpenCode는 스스로 업데이트할 수 있습니다. 대화형으로 시작할 때와 install이나 doctor가 성공한 뒤에 새 버전을 확인할 수 있는데, 이 확인이 끝날 때까지 기다리므로 잠깐 멈출 수 있습니다. 자동 업데이트를 끄려면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요.
 
 스킬 학습 기능은 제거되었습니다. 이전 릴리스가 프로젝트의 `.litopencode` 폴더에 남긴 학습 기록이 있더라도, LitOpenCode는 이제 그 파일을 읽지도, 바꾸지도, 지우지도 않습니다. 남겨 둘지 지울지는 직접 정하면 됩니다. [자세한 내용](./reference.md#skill-learning-state)
-
-## Jev 스킬 힌트 (선택)
-
-프롬프트만 봐서는 어떤 스킬이 맞는지 분명하지 않을 때가 있습니다. 이 선택 기능은 바깥 모델에게 한 번 더 의견을 묻습니다. 기본값은 꺼짐입니다.
-
-켜 두면 조건에 맞는 대화 턴마다 TypeSafe가 호스팅하는 판단 모델 Jev에게 이 프롬프트에 맞는 LitOpenCode 스킬이 무엇인지 묻습니다. Jev가 LitOpenCode 스킬 가운데 하나를 충분한 확신으로 고르면, 그 턴에 해당 스킬을 알려 주는 참고 문장 한 줄이 붙습니다. 어디까지나 제안이라서, 스킬을 불러올지는 여전히 모델이 정하고 힌트가 권한을 주거나 도구를 실행하지는 않습니다. 슬래시 명령, 하위 세션, 이미 lit 경로가 처리한 턴, 공백을 뺀 4자 미만의 프롬프트는 건너뜁니다.
-
-켜려면 OpenCode를 실행하는 환경에 두 변수를 모두 설정합니다.
-
-```sh
-export LITOPENCODE_JEV=1
-export TYPESAFE_API_KEY=<본인의 TypeSafe 키>
-```
-
-**켜는 순간부터 조건에 맞는 프롬프트는 내 컴퓨터를 떠나 TypeSafe(typesafe.ai)로 전송됩니다.** 보내기 전에 프롬프트를 2,000자에서 자르고, 홈 경로·이메일 주소·토큰 형태의 문자열을 가립니다. 파일, 도구 출력, 이전 대화는 보내지 않습니다. 나머지는 쓴 그대로 전송되므로 호스트 이름, 고객 이름, `password=...` 형식이 아닌 비밀번호도 함께 넘어갑니다.
-
-키도 조심해서 다뤄야 합니다. `TYPESAFE_API_KEY`는 OpenCode를 실행하는 셸에 export되어 있어서 에이전트의 도구도 이 값을 읽을 수 있습니다. 이 기능 전용 키를 따로 만들고 사용 한도를 낮게 잡아 두세요. 요금은 본인의 TypeSafe 계정에 청구되며, 입력 토큰 100만 개당 약 0.04달러입니다.
-
-힌트 때문에 대화가 오래 멈추지는 않습니다. 요청은 1.5초가 지나면 끊기고 다시 시도하지 않습니다. 실패해도 턴은 평소대로 진행되고, 세션에서 처음 실패했을 때만 짧은 안내가 한 번 붙습니다.
-
-켜져 있는지는 언제든 확인할 수 있습니다. `litopencode doctor`는 `Jev skill hint: off`, `on`, `flag on but TYPESAFE_API_KEY missing` 가운데 하나를 보여 주고, 키는 표시하지 않습니다. 세션마다 조건에 맞는 첫 턴에는 `✦ Jev skill hint is ON` 알림이 한 번 뜹니다. 힌트가 붙은 턴에는 `Jev → lit-humanizer (0.27s)`처럼 스킬 이름과 요청 시간을 담은 짧은 알림이 뜨고, 기능이 꺼져 있거나 맞는 스킬이 없으면 아무 알림도 뜨지 않습니다. [화면에서 보이는 것](#화면에서-보이는-것)에서 각각을 확인할 수 있습니다.
-
-끄려면 `LITOPENCODE_JEV`를 지우거나 `1`이 아닌 값으로 바꿉니다.
-
-세부 변수와 디버그 기록은 [Jev 스킬 힌트 참조 문서](./reference-Ko-KR.md#jev-스킬-힌트-선택)에 있습니다.
-
-### 화면에서 보이는 것
-
-Jev는 화면에서 조용합니다. 켜 두면 눈에 띄는 것은 두 가지입니다. OpenCode 오른쪽 위에 뜨는 작은 알림과 `litopencode doctor`의 한 줄입니다. 켜기 전에 어떻게 보이는지 미리 확인해 두세요.
-
-**터미널에서.** `litopencode doctor`가 가장 빠른 확인 방법입니다. 아무것도 설정하지 않았다면 힌트가 꺼져 있다고 알려 줍니다. 플래그만 켜고 키를 넣지 않았다면 키가 없다고 알려 주는데, 힌트를 기대했는데 아무것도 오지 않을 때 확인할 줄이 바로 이 줄입니다. 둘 다 설정했다면 켜져 있다고 나옵니다. 키 자체는 표시하지 않습니다.
-
-<p align="center"><img src="./assets/readme/jev-doctor.webp" width="694" alt="litopencode doctor를 세 번 실행하고 Jev 줄만 뽑아 보여 주는 터미널 창. 아무것도 설정하지 않았을 때는 Jev skill hint: off, export LITOPENCODE_JEV=1 뒤에는 Jev skill hint: flag on but TYPESAFE_API_KEY missing, export TYPESAFE_API_KEY=example-key 뒤에는 Jev skill hint: on." /></p>
-
-*격리한 셸에서 실제 `litopencode doctor`를 실행해 캡처했고, Jev 줄은 `jq`로 뽑았습니다. 그림의 키는 자리표시 값입니다. doctor는 키가 있는지만 확인합니다.*
-
-**세션의 첫 프롬프트.** 힌트가 켜져 있다는 알림이 한 번 뜹니다. 이 기능은 프롬프트를 내 컴퓨터 밖으로 보내기 때문에, 켜 둔 것을 잊지 않도록 세션마다 한 번 알려 줍니다. Jev가 그 프롬프트에 제안할 스킬이 없으면 보이는 것은 이 알림뿐입니다.
-
-<p align="center"><img src="./assets/readme/jev-toast-notice.webp" width="694" alt="OpenCode 첫 화면 오른쪽 위에 주황색 테두리의 알림이 떠 있고 ✦ Jev skill hint is ON 이라고 적혀 있다." /></p>
-
-*예시 화면입니다. 알림의 문구와 스타일은 플러그인이 쓰는 알림 함수에서 나왔고, 화면은 OpenCode가 그렸습니다. TypeSafe로 요청은 가지 않았습니다.*
-
-**힌트가 붙는 첫 프롬프트.** OpenCode는 알림을 한 번에 하나만 보여 주기 때문에, 안내와 힌트가 한 상자를 함께 씁니다. 안내가 제목이 되고, 그 아래에 제안된 스킬 이름과 요청 시간이 나옵니다. 여기 나온 스킬 이름과 시간은 예시입니다.
-
-<p align="center"><img src="./assets/readme/jev-toast-first-hint.webp" width="694" alt="OpenCode 첫 화면 오른쪽 위의 주황색 테두리 알림. 첫 줄은 ✦ Jev skill hint is ON, 둘째 줄은 Jev → lit-humanizer (0.27s)." /></p>
-
-*같은 방식으로 만든 예시 화면입니다. 스킬 이름과 시간은 예시입니다.*
-
-**이후의 프롬프트.** 힌트가 붙는 프롬프트마다 스킬 이름과 시간만 담은 조용한 알림이 뜹니다. 맞는 스킬이 없거나 Jev가 꺼져 있으면 아무것도 뜨지 않습니다.
-
-<p align="center"><img src="./assets/readme/jev-toast-hint.webp" width="694" alt="OpenCode 첫 화면 오른쪽 위에 청록색 테두리의 알림이 떠 있고 Jev → lit-humanizer (0.27s) 라고 적혀 있다." /></p>
-
-*같은 방식으로 만든 예시 화면입니다. 스킬 이름과 시간은 예시입니다.*
-
-제안 자체는 스킬 이름을 담은 문장 한 줄입니다. 이 문장은 모델에게 전달되고, 사용자가 입력한 말로는 표시되지 않습니다.
 
 ## 문제 해결
 

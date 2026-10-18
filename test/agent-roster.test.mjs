@@ -166,13 +166,24 @@ test("bounded lit mode overrides durable loop defaults and tool guidance", () =>
   assert.match(loop.prompt, /plugin-injected <lit-task-mode>/i);
   assert.match(loop.prompt, /Do not call the task, lit, litwork, start-work, or review-work tools/i);
   assert.match(loop.prompt, /Do not preload the workflow skills or agent roster/i);
-  assert.match(loop.prompt, /Do not load skill documentation before inspecting the task and repository/i);
+  assert.match(loop.prompt, /consult at most one narrowly relevant skill only if inspection reveals a specific gap/i);
   assert.match(loop.prompt, /only for a task that inherently spans multiple turns|when the user explicitly asks/i);
 
   assert.match(litTool.description, /bare lit activation is automatic/i);
   assert.match(litworkTool.description, /only when the user asks for persistent tracking/i);
   assert.match(startWorkTool.description, /only through explicit/i);
   assert.match(reviewWorkTool.description, /only when the user explicitly requests/i);
+});
+
+test("lit-loop loads the matching skill before it inspects the workspace", () => {
+  const loop = litOpenCodeAgents.find((agent) => agent.id === "lit-loop");
+  assert.ok(loop);
+  assert.doesNotMatch(loop.prompt, /Do not load skill documentation before inspecting/i);
+  const skillFirst = loop.prompt.search(/load that skill with the skill tool first/i);
+  const thenInspect = loop.prompt.search(/then inspect the workspace/i);
+  assert.ok(skillFirst >= 0, "lit-loop prompt must tell the model to load the matching skill first");
+  assert.ok(thenInspect > skillFirst, "workspace inspection must come after the skill load");
+  assert.match(loop.prompt, /Plain questions[^.]*need no skill/i);
 });
 
 test("agent registry ships the Astra lead/review routes and ordinary Luna helper routes", () => {

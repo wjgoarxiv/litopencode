@@ -365,3 +365,14 @@ test("an edit and an apply_patch hunk that add a callout pledge are refused; a p
     await guard.before(request("edit", "kept.md", { oldString: "# Report", newString: "# Report v2" }));
   });
 });
+
+test("an edit whose new text is past the scan limit is allowed with a notice that names the limit", async () => {
+  await temporary(async (_root, guard) => {
+    const oversized = request("edit", "deliverable.md", { oldString: "absent anchor", newString: "a".repeat(4 * 1024 * 1024 + 1) });
+    await guard.before(oversized);
+    const output = { title: "Edit", output: "", metadata: {} };
+    await guard.after(oversized, output);
+    assert.match(output.output, /^LIT_HUMANIZER_GUARD_UNAVAILABLE: new text exceeds scan limit; write allowed without this check\.$/u);
+    assert.equal(output.metadata.litopencodeHumanizerGuard?.tier, "unavailable");
+  });
+});
