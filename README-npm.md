@@ -11,19 +11,19 @@
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub stars" /></a>
 </p>
 
-LitOpenCode keeps the goal, the plan, what was checked and the next step in `.litopencode/litgoal/` inside your project, so a long task picks up the next day where it stopped.
+LitOpenCode keeps the goal, the plan, what was checked and the next step in `.litopencode/litgoal/` inside your project, so a long task picks up the next day where it stopped. It is made for OpenCode work that spans more than one sitting: features over several sessions, planned refactors, research you return to, and reports or decks built from your notes.
 
 **[Full guide, screens and skills gallery on GitHub →](https://github.com/wjgoarxiv/litopencode#readme)**
 
 ## Quick start
 
-You need Node.js with npm, and OpenCode with a model provider set up.
+You need Node.js with npm, and OpenCode 1.18 or 1.19 with a model provider set up. LitOpenCode is built for OpenCode 1. OpenCode 2 changed how plugins load, and LitOpenCode does not support it yet.
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode install
 ```
 
-Add `--yes` to take the defaults, or `--dry-run` to preview without writing anything. Restart OpenCode, press **Tab**, pick **lit-loop**, open an empty folder and send:
+Add `--dry-run` to see what would change before anything is written, or `--yes` to take the defaults and skip the questions. Restart OpenCode, press **Tab**, pick **lit-loop**, open an empty folder and send:
 
 ```text
 lit Build a to-do list in one index.html with no dependencies; check adding and completing items, then leave results and next steps.
@@ -46,7 +46,7 @@ Each skill is pictured in the [skills gallery on GitHub](https://github.com/wjgo
 
 ## Updates and removal
 
-LitOpenCode checks for updates on interactive start and after a successful install or doctor run. To turn that off, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`. `npm exec --package @litfamily/litopencode@latest -- litopencode doctor` checks the setup and changes nothing.
+LitOpenCode checks for updates on interactive start and after a successful install or doctor run. If you'd rather choose when to update, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`. `npm exec --package @litfamily/litopencode@latest -- litopencode doctor` checks the setup and changes nothing.
 
 To remove it, delete the `@litfamily/litopencode` entry from the `plugin` array in OpenCode's `opencode.jsonc` and restart OpenCode. If you installed it globally:
 

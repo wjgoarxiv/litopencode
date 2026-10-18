@@ -10,8 +10,6 @@ users need a patch release to stop receiving the old behavior.
 
 - When a startup update fails and the rollback leaves the old setup working, OpenCode no longer reruns the snapshot and npm install on every start. Startup leaves that same version alone for a day; an explicit install still runs it, and a newer release is tried at once. The receipt names the failed step, a timeout or a missing command, without command output. `litopencode doctor` now reports the update state, its cause, what the next start will run ("installed X, running Y") and a remedy for each cause, and says it cannot see inside a running OpenCode.
 
-- The optional Jev skill hint is gone. In testing it improved skill choice by no more than run-to-run noise, and in real use the model followed none of the 45 hints it received. LitOpenCode no longer contacts TypeSafe, adds no hint line or toast, and `litopencode doctor` no longer reports it. `LITOPENCODE_JEV`, the other `LITOPENCODE_JEV_*` variables and `TYPESAFE_API_KEY` are now ignored and can be deleted, and so can an old debug trace at `.litopencode/logs/jev-skill-hint.jsonl`.
-
 - lit-loop now loads the skill that matches a request before it inspects the workspace; plain questions and requests no listed skill covers still load none. The review-work trigger now names reviewing a patch, diff, PR or open changes, with Korean cues, and the workflow-loop trigger names carrying one feature, fix or ticket through build, tests, real-surface checks and cleanup.
 
 - A request whose deliverable is a Markdown or plain-text file, such as `report.md` or `slides.md`, now gets ordinary Markdown. lit-docx and lit-pptx no longer write their converter source (YAML front matter and `:::` blocks) into those files or start a DOCX or PPTX build; they keep that source format only for files they render.
@@ -94,9 +92,8 @@ users need a patch release to stop receiving the old behavior.
 
 ## 1.0.13 Release Scope
 
-- The GitHub pages (English and Korean) now show what Jev looks like: the `litopencode doctor` line and the toasts when Jev is off, on, or missing its key. Jev stays off unless you turn it on, and the reference lists what each toast says.
 - The GitHub pages gained a short motion film that follows one `lit` prompt from request to record.
-- The package no longer carries the Jev pictures and the film, which only the GitHub pages show, so the download is about 1.8 MB smaller.
+- The package no longer carries the pictures and the film that only the GitHub pages show, so the download is about 1.8 MB smaller.
 
 ## 1.0.12 Release Scope
 
@@ -108,14 +105,9 @@ users need a patch release to stop receiving the old behavior.
 - The motion skill's runtime now installs `ws` 8.22.0 instead of 8.18.3, which fixes a memory-exhaustion denial of service and an uninitialized-memory disclosure in that package. After upgrading, run `litopencode motion-runtime install` again so the cache picks up the new version.
 - Two Wikify captures running at the same moment no longer fail with a blocked store error when one of them releases its lock while the other is checking it. The waiting capture now retries.
 - A Lit slash command now shows the `🔥 LIT IGNITED` toast once. Before, the same toast appeared twice, with the second one replacing the first.
-- The Jev debug trace (`LITOPENCODE_JEV_TRACE=1`) now also refuses a symlinked `.litopencode` or `.litopencode/logs` folder. It writes nothing and the turn continues normally.
 
 ## 1.0.10 Release Scope
 
-- Add an optional Jev skill hint. It is off by default. With `LITOPENCODE_JEV=1` and your own `TYPESAFE_API_KEY` set, an eligible chat turn gets one advisory line naming a LitOpenCode skill. The model still decides whether to load it.
-- When the hint is on, each eligible prompt is sent to TypeSafe. Home paths, e-mail addresses, `password=`-style assignments and other token-shaped strings are replaced first, and the prompt is then cut to 2,000 characters. Files, tool output and earlier turns are not sent. Slash commands and child sessions are skipped.
-- While the hint is on, a `✦ Jev skill hint is ON` toast shows once per session, and a turn that gets a hint shows a short toast such as `Jev → lit-humanizer (0.27s)`. `litopencode doctor` reports whether the hint is off, on, or missing its key.
-- The hint reaches the model but is not shown or copied as your own words. A redirected Jev request is refused, and the debug trace never writes through a symlink.
 - A skill started with a slash command now stays active in a running OpenCode. Before, it was cleared when the command's message arrived.
 
 ## 1.0.9 Release Scope

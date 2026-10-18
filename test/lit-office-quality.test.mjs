@@ -58,7 +58,6 @@ test("Office skills give bare lit a complete labelled sample when facts are abse
 // must show them run, never skipped.
 const deckRoot = "skills/lit-pptx";
 const runtimeEnv = { ...process.env, PYTHONDONTWRITEBYTECODE: "1" };
-delete runtimeEnv.TYPESAFE_API_KEY;
 const deckDoctor = spawnSync(process.execPath, [`${deckRoot}/run.mjs`, "doctor"], { encoding: "utf8", env: runtimeEnv });
 const deckReadiness = deckDoctor.status === 0 ? JSON.parse(deckDoctor.stdout) : {};
 const deckSkip = deckReadiness.nodeReady && deckReadiness.pythonReady ? false : "office runtime not in the LitOpenCode cache";

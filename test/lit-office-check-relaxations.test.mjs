@@ -11,7 +11,6 @@ import { after, describe, it } from "node:test";
 // rows and list markers are not dashes. Each runs the check's own function in the cached runtime that
 // the office skills install (`run.mjs doctor`, `run.py doctor`), and skips with that reason without it.
 const runtimeEnv = { ...process.env, PYTHONDONTWRITEBYTECODE: "1" };
-delete runtimeEnv.TYPESAFE_API_KEY;
 const cache = join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "litopencode", "office");
 const venvPython = (skill, prefix) => join(cache,
   `${prefix}-${createHash("sha256").update(readFileSync(`skills/${skill}/requirements.lock`)).digest("hex").slice(0, 16)}`, "bin", "python");

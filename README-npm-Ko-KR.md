@@ -11,19 +11,19 @@
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub 스타" /></a>
 </p>
 
-LitOpenCode는 목표와 계획, 확인한 내용, 다음 할 일을 프로젝트 안의 `.litopencode/litgoal/`에 남겨 두기 때문에, 긴 작업도 다음 날 멈춘 자리에서 이어 갈 수 있습니다.
+LitOpenCode는 목표와 계획, 확인한 내용, 다음 할 일을 프로젝트 안의 `.litopencode/litgoal/`에 남겨 두기 때문에, 긴 작업도 다음 날 멈춘 자리에서 이어 갈 수 있습니다. 몇 세션에 걸쳐 만드는 기능, 계획을 세워 진행하는 리팩터링, 며칠씩 이어 가는 조사, 메모로 만드는 보고서나 발표자료처럼 한 번에 끝나지 않는 OpenCode 작업에 잘 맞습니다.
 
 **[전체 안내, 화면, 스킬 갤러리는 GitHub에서 →](https://github.com/wjgoarxiv/litopencode/blob/main/README-Ko-KR.md)**
 
 ## 빠르게 시작하기
 
-Node.js와 npm, 그리고 모델 제공자를 설정해 둔 OpenCode가 있으면 됩니다.
+Node.js와 npm, 그리고 모델 제공자를 설정해 둔 OpenCode 1.18 또는 1.19가 있으면 됩니다. LitOpenCode는 OpenCode 1용입니다. 플러그인 로딩 방식이 달라진 OpenCode 2는 아직 지원하지 않습니다.
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode install
 ```
 
-기본값으로 바로 설치하려면 `--yes`를, 아무것도 쓰지 않고 무엇이 바뀔지만 보려면 `--dry-run`을 붙이세요. OpenCode를 다시 시작하고 **Tab** 키로 **lit-loop**를 고른 뒤, 빈 폴더를 열고 이렇게 보냅니다.
+무엇이 바뀔지 먼저 보려면 `--dry-run`을, 기본값으로 질문 없이 설치하려면 `--yes`를 붙이세요. OpenCode를 다시 시작하고 **Tab** 키로 **lit-loop**를 고른 뒤, 빈 폴더를 열고 이렇게 보냅니다.
 
 ```text
 lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, 추가와 완료 표시를 확인한 뒤 다음 할 일을 남겨줘.
@@ -46,7 +46,7 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 ## 업데이트와 제거
 
-LitOpenCode는 대화형으로 시작할 때와 install·doctor가 성공한 뒤 새 버전을 확인합니다. 끄려면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요. `npm exec --package @litfamily/litopencode@latest -- litopencode doctor`는 설치 상태를 확인할 뿐 아무것도 바꾸지 않습니다.
+LitOpenCode는 대화형으로 시작할 때와 install·doctor가 성공한 뒤 새 버전을 확인합니다. 업데이트 시점을 직접 정하고 싶다면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요. `npm exec --package @litfamily/litopencode@latest -- litopencode doctor`는 설치 상태를 확인할 뿐 아무것도 바꾸지 않습니다.
 
 제거하려면 OpenCode의 `opencode.jsonc`에서 `plugin` 배열의 `@litfamily/litopencode` 항목을 지우고 OpenCode를 다시 시작하세요. 전역으로 설치했다면 다음 명령도 실행합니다.
 

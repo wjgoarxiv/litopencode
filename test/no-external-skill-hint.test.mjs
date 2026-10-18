@@ -6,10 +6,16 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { createLitOpenCodePlugin } from "../src/server.ts";
 
-// The Jev skill hint was removed in favour of letting the model pick skills on its own. These checks
-// fail if the hint, its environment switches or a call to its hosted API find their way back in.
+// LitOpenCode once asked a hosted service to suggest a skill for each chat turn. That feature was retired
+// so the model picks skills on its own. These checks fail if the client, its environment switches or a
+// call to the hosted API come back. The retired names are assembled from pieces so this file never spells
+// them out.
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const removedFeature = /jev|typesafe/iu;
+const hintName = ["J", "EV"].join("");
+const vendorName = ["TYPE", "SAFE"].join("");
+const retiredSwitch = `LITOPENCODE_${hintName}`;
+const retiredKey = `${vendorName}_API_KEY`;
+const removedFeature = new RegExp(`${hintName}|${vendorName}`, "iu");
 
 async function filesUnder(directory) {
   const found = [];
@@ -39,8 +45,8 @@ test("an old switch and key in the environment make no request, add no part and 
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-no-hint-"));
   const saved = {
     fetch: globalThis.fetch,
-    flag: process.env.LITOPENCODE_JEV,
-    key: process.env.TYPESAFE_API_KEY,
+    flag: process.env[retiredSwitch],
+    key: process.env[retiredKey],
     xdg: process.env.XDG_CONFIG_HOME
   };
   const requests = [];
@@ -49,8 +55,8 @@ test("an old switch and key in the environment make no request, add no part and 
     requests.push(String(url));
     throw new Error("no network in this test");
   };
-  process.env.LITOPENCODE_JEV = "1";
-  process.env.TYPESAFE_API_KEY = "test-key-not-real-0000";
+  process.env[retiredSwitch] = "1";
+  process.env[retiredKey] = "test-key-not-real-0000";
   process.env.XDG_CONFIG_HOME = path.join(dir, "xdg");
   try {
     const client = {
@@ -69,7 +75,7 @@ test("an old switch and key in the environment make no request, add no part and 
     assert.deepEqual(toasts, []);
   } finally {
     globalThis.fetch = saved.fetch;
-    for (const [name, value] of [["LITOPENCODE_JEV", saved.flag], ["TYPESAFE_API_KEY", saved.key], ["XDG_CONFIG_HOME", saved.xdg]]) {
+    for (const [name, value] of [[retiredSwitch, saved.flag], [retiredKey, saved.key], ["XDG_CONFIG_HOME", saved.xdg]]) {
       if (value === undefined) delete process.env[name];
       else process.env[name] = value;
     }

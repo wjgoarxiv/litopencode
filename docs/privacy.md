@@ -14,7 +14,6 @@ providers, npm, and other tools have their own behavior and policies.
 | Project `.litopencode/litgoal/lit-loop/` | Goals, criteria, checkpoints, session identifiers, evidence references, a brief, ledger events, and bounded lifecycle state used to resume work. Evidence files can contain commands, output, or project material. |
 | Project `.litopencode/knowledge/` | Locally captured knowledge claims and review state. Legacy skill-learning files from earlier releases are left untouched and are no longer read. |
 | Project `.litopencode/logs/litopencode.log` | The logger's JSON-lines destination for timestamps, levels, and messages when explicitly enabled. The current server creates the logger with logging disabled by default. |
-| Project `.litopencode/logs/jev-skill-hint.jsonl` | No longer written. Earlier releases could leave this debug trace of the removed Jev skill hint; LitOpenCode never reads it, and you can delete it. |
 | OpenCode config root | Plugin registration, `litopencode.json` routes and choices, and installed command/skill files. The default is `~/.config/opencode`; `XDG_CONFIG_HOME` or a CLI `--root` changes the applicable root. |
 | Home `~/.litopencode/` | Update cache, locks, transaction journal and receipt, and retained recovery backups after an unsuccessful automatic update. Backups can contain OpenCode configuration and installed command/skill content. |
 

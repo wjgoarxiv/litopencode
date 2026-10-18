@@ -19,23 +19,32 @@
 
 ## Why you might want it
 
-OpenCode is good at the conversation in front of it. The trouble starts when that conversation ends. A long session gets compacted, you close the terminal, and the next morning you are piecing together what you decided, what you already checked, and what was left. OpenCode has no place of its own to keep a goal between sessions.
+OpenCode is good at the conversation in front of it. The trouble starts when that conversation ends. A long session gets compacted, you close the terminal, and the next morning you are piecing together what you decided, what you already checked and what was left. OpenCode keeps no goal of its own from one session to the next.
 
-LitOpenCode gives the work a routine and a memory. Add `lit` to a prompt and the task goes through the same steps each time: frame it, plan it, build it, check it, and write down the next step. Those notes go into `.litopencode/litgoal/` inside your project, so the next session reads them and carries on from there. Bigger jobs can be planned first by an agent that is not allowed to touch your files, then carried out and reviewed.
+LitOpenCode gives the work a routine and a memory. Add `lit` to a prompt and the task goes through the same steps each time: frame it, plan it, build it, check it, and write down the next step. Those notes go into `.litopencode/litgoal/` inside your project, so the next session reads them and carries on from there. Bigger jobs can be planned first by an agent that is locked out of your files, then carried out and reviewed.
 
-You keep using OpenCode the way you do now. It still runs the model and asks for permission the way it always has, and your provider login stays where it is. LitOpenCode needs no other LitFamily product.
+In practice it looks like this:
+
+```text
+Evening:  lit add a --shout flag that prints the greeting in capitals, with a test
+          → the flag lands with its test, and the run is written to .litopencode/litgoal/
+Morning:  /lit-recap
+          → what was built, what was checked, what is next
+```
 
 ## Quick start
 
-You need Node.js with npm, and [OpenCode](https://opencode.ai) with a model provider already set up. Install with one command:
+You need Node.js with npm, and [OpenCode](https://opencode.ai) 1.18 or 1.19 with a model provider already set up. LitOpenCode is built for OpenCode 1. OpenCode 2 changed how plugins load, and LitOpenCode does not support it yet. Install with one command:
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode install
 ```
 
-The installer asks which models to use and how much freedom the agents get; add `--yes` to take the defaults, or `--dry-run` to see what would change without writing anything. Permissions start at `safe`, where OpenCode asks you before acting.
+The installer asks which models to use and how much freedom the agents get. Add `--dry-run` when you want to see what would change before anything is written, or `--yes` when the defaults are fine and you'd rather skip the questions. Permissions start at `safe`, where OpenCode asks you before acting.
 
-**Or let a coding agent install it.** Paste this into the agent you already use. It checks first, shows you the plan and waits for your yes before anything changes.
+### Or let a coding agent install it
+
+Paste this into the agent you already use. It checks first, shows you the plan and waits for your yes before anything changes.
 
 ```text
 Please install LitOpenCode, the lit workflow plugin for OpenCode, on this machine.
@@ -50,43 +59,65 @@ Please install LitOpenCode, the lit workflow plugin for OpenCode, on this machin
 6. Remind me to restart OpenCode, press Tab and choose lit-loop.
 ```
 
-Restart OpenCode, press **Tab**, and pick **lit-loop**. Then open an empty folder and send your first task:
+### Your first task
+
+Restart OpenCode, press **Tab**, and pick **lit-loop**. Then open an empty folder and send:
 
 ```text
 lit Build a to-do list in one index.html with no dependencies; check adding and completing items, then leave results and next steps.
 ```
 
-**What you will see.** For six seconds a toast appears that reads `🔥 LIT IGNITED` with the name of the workflow that started, which tells you LitOpenCode picked up your prompt. When the work is done you have an `index.html` to open and try, and a record of what was built and checked in `.litopencode/litgoal/`. Come back another day, type `/lit-recap`, and it tells you what was done and what comes next. [Screens](./docs/screens.md) shows the installer, the toast, the health check and the planner's locked permissions, so a healthy install looks familiar.
+For six seconds a toast appears that reads `🔥 LIT IGNITED` with the name of the workflow that started, which tells you LitOpenCode picked up your prompt. When the work is done you have an `index.html` to open and try, and a record of what was built and checked in `.litopencode/litgoal/`. Come back another day, type `/lit-recap`, and it tells you what was done and what comes next. [Screens](./docs/screens.md) shows the installer, the toast, the health check and the planner's locked permissions, so a healthy install looks familiar.
 
-The model inside OpenCode does the work, and a model can be wrong. When a reply says something passed, open the file and look for yourself.
+The model inside OpenCode does the work, and models make mistakes. When a reply says something passed, open the file and check it yourself.
 
 ## What you get
 
-**Start with one word.** Put `lit` at the end of any request, or type `/lit`. The task is framed, planned, built, verified and recapped, and each step leaves a note you can read later.
+### Start with one word
+
+Put `lit` at the end of any request, or type `/lit`. The task is framed, planned, built, verified and recapped, and each step leaves a note you can read later.
 
 ```text
 Add a dark-mode toggle to the settings page and keep the existing tests passing lit
 ```
 
-**Plan first when the job is big.** Press Tab and pick `lit-plan`. The planner reads your project and writes a checklist, then waits for explicit user confirmation; it cannot edit files, run shell commands or hand work to another agent. Run `/start-work` to carry the approved plan out one slice at a time, and `/review-work` to have the change looked at from five angles, worst findings first.
+### Plan first when the job is big
 
-**Pick up where you stopped.** Type a bare `handoff`, or `/lit-handoff`, to leave a continuation file for the next session, and `/lit-recap` to read back what is done, what is blocked and what is next. If you like, [automatic handoff](#automatic-handoff) writes the handoff for you before the context window fills up.
+Press Tab and pick `lit-plan`. The planner reads your project and writes a checklist, then waits for explicit user confirmation; it cannot edit files, run shell commands or hand work to another agent. Run `/start-work` to carry the approved plan out one slice at a time, and `/review-work` to have the change looked at from five angles, worst findings first.
 
-**Research with sources.** `/litresearch` works in rounds and keeps a source next to each claim, along with what is still uncertain.
+### Pick up where you stopped
+
+Type a bare `handoff`, or `/lit-handoff`, to leave a continuation file for the next session, and `/lit-recap` to read back what is done, what is blocked and what is next. If you like, [automatic handoff](#automatic-handoff) writes the handoff for you before the context window fills up.
+
+### Research with sources
+
+`/litresearch` works in rounds and keeps a source next to each claim, along with what is still uncertain.
 
 ```text
 lit research Which SQLite settings matter most for a write-heavy local app?
 ```
 
-**Reports, decks and figures.** Ask for a report or slides with `lit` and you get an editable Word file or PowerPoint deck, built from a Markdown source you keep, in a design direction the skill picks and names first. Journal-sized figures from measured data come from `/lit-scientific-visualization`, and concept diagrams have a skill of their own.
+### Reports, decks and figures
+
+Ask for a report or slides with `lit` and you get an editable Word file or PowerPoint deck, built from a Markdown source you keep, in a design direction the skill picks and names first. Journal-sized figures from measured data come from `/lit-scientific-visualization`, and concept diagrams have a skill of their own.
 
 ```text
 lit Turn notes.md into a ten-slide deck for Friday's team review
 ```
 
-**Writing that sounds like a person.** `/lit-humanizer` rewrites stiff English or Korean prose while keeping the facts, the writer's voice and the qualifiers that matter.
+### Writing that sounds like a person
+
+`/lit-humanizer` rewrites stiff English or Korean prose while keeping the facts, the writer's voice and the qualifiers that matter.
+
+### And the rest
 
 There is more: debugging, refactoring, code cleanup, commits, language servers, repository rules that load once per session and again for files you edit (`/rules`), interface work, browser automation and a project wiki. The [skills gallery](./docs/skills.md) shows each one with a picture of what it makes.
+
+## Who it's for
+
+LitOpenCode is for people who already use OpenCode and give it work that spans more than one sitting: a feature that takes a few sessions, a refactor with a plan behind it, research you come back to, or a report or deck built from your notes. It also suits anyone who wants each change checked and reviewed before calling it done.
+
+You keep using OpenCode the way you do now. It still runs the model and asks for permission the way it always has, and your provider login stays where it is. LitOpenCode needs no other LitFamily product.
 
 ## The LIT card
 
@@ -150,17 +181,25 @@ Install registers the plugin in OpenCode's config (`opencode.jsonc`), copies com
 
 ## Requirements, updates and removal
 
-**Requirements.** Node.js with npm, and OpenCode with a provider you have already logged in to. On the OpenAI provider, a fresh install plans and reviews with GPT-6 Astra and builds with GPT-6 Luna; you can choose others during install.
+### Requirements
 
-**Check the install.** `litopencode doctor` reports whether the plugin and skills are wired up. It only reads and changes nothing.
+Node.js with npm, and OpenCode 1.18 or 1.19 with a provider you have already logged in to. On the OpenAI provider, a fresh install plans and reviews with GPT-6 Astra and builds with GPT-6 Luna; you can choose others during install.
+
+### Check the install
+
+When something looks off, or right after installing, `litopencode doctor` tells you whether the plugin and skills are wired up. It only reads and changes nothing.
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 ```
 
-**Updates.** LitOpenCode checks for a new release when it starts interactively and after an install or doctor run succeeds. To turn that off, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`. Running the install command again also updates it, and routes you have customized are kept.
+### Updates
 
-**Uninstall.** Remove the `@litfamily/litopencode` entry from the `plugin` array in OpenCode's `opencode.jsonc`, then restart OpenCode. If you installed it globally, also run:
+LitOpenCode checks for a new release when it starts interactively and after an install or doctor run succeeds. If you'd rather choose when to update, for example on a machine you keep pinned, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`. Running the install command again also updates it, and routes you have customized are kept.
+
+### Uninstall
+
+Remove the `@litfamily/litopencode` entry from the `plugin` array in OpenCode's `opencode.jsonc`, then restart OpenCode. If you installed it globally, also run:
 
 ```sh
 npm uninstall -g @litfamily/litopencode
@@ -181,7 +220,7 @@ The [full removal steps](./docs/guide.md#uninstall) cover the copied commands an
 
 ## Contributing and license
 
-If LitOpenCode saves you a morning of "where was I?", a star on GitHub helps other OpenCode users find it.
+If LitOpenCode saves you a morning of "where was I?", a star on GitHub helps other OpenCode users find it, and so does telling a friend the short version: add `lit` to an OpenCode prompt, and tomorrow's session knows where today's stopped.
 
 Bug reports and pull requests are welcome. Start with [Contributing](./CONTRIBUTING.md), and see [Support](./SUPPORT.md), [Security](./SECURITY.md) and the [Code of conduct](./CODE_OF_CONDUCT.md).
 
