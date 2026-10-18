@@ -5,7 +5,15 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.27 - 2026-10-18
+
+- When a startup update fails and the rollback leaves the old setup working, OpenCode no longer reruns the snapshot and npm install on every start. Startup leaves that same version alone for a day; an explicit install still runs it, and a newer release is tried at once. The receipt names the failed step, a timeout or a missing command, without command output. `litopencode doctor` now reports the update state, its cause, what the next start will run ("installed X, running Y") and a remedy for each cause, and says it cannot see inside a running OpenCode.
+
 - The optional Jev skill hint is gone. In testing it improved skill choice by no more than run-to-run noise, and in real use the model followed none of the 45 hints it received. LitOpenCode no longer contacts TypeSafe, adds no hint line or toast, and `litopencode doctor` no longer reports it. `LITOPENCODE_JEV`, the other `LITOPENCODE_JEV_*` variables and `TYPESAFE_API_KEY` are now ignored and can be deleted, and so can an old debug trace at `.litopencode/logs/jev-skill-hint.jsonl`.
+
+- lit-loop now loads the skill that matches a request before it inspects the workspace; plain questions and requests no listed skill covers still load none. The review-work trigger now names reviewing a patch, diff, PR or open changes, with Korean cues, and the workflow-loop trigger names carrying one feature, fix or ticket through build, tests, real-surface checks and cleanup.
+
+- A request whose deliverable is a Markdown or plain-text file, such as `report.md` or `slides.md`, now gets ordinary Markdown. lit-docx and lit-pptx no longer write their converter source (YAML front matter and `:::` blocks) into those files or start a DOCX or PPTX build; they keep that source format only for files they render.
 
 ## 1.0.26 - 2026-10-16
 
