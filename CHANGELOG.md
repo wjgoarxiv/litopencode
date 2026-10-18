@@ -5,6 +5,12 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.28 - 2026-10-18
+
+- The README gets you started sooner and says who LitOpenCode is for: people who give OpenCode work that spans more than one sitting, such as a feature over a few sessions, a planned refactor, research they come back to, or a report or deck built from their notes. A short evening-and-morning sketch shows a session picked up the next day, and the requirements now name OpenCode 1.18 or 1.19, because OpenCode 2 loads plugins differently and is not supported yet. The images are unchanged.
+
+- Leftover notes about the retired skill-hint feature are gone from the release checklist and the privacy page.
+
 ## 1.0.27 - 2026-10-18
 
 - When a startup update fails and the rollback leaves the old setup working, OpenCode no longer reruns the snapshot and npm install on every start. Startup leaves that same version alone for a day; an explicit install still runs it, and a newer release is tried at once. The receipt names the failed step, a timeout or a missing command, without command output. `litopencode doctor` now reports the update state, its cause, what the next start will run ("installed X, running Y") and a remedy for each cause, and says it cannot see inside a running OpenCode.
