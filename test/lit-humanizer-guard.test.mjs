@@ -183,7 +183,9 @@ test("pre-write guard refuses every block-tier pledge and names the rule, and le
     let nearIndex = 0;
     for (const near of [...pledgeCases.near_misses, ...pledgeCases.near_misses_review]) {
       nearIndex += 1;
-      await guard.before({ ...request("write", "deliverable.md", { content: `${near.text}\n` }), callID: `near-miss-${nearIndex}` });
+      // A near miss may still stack definitional negations; then only negation-cluster may refuse it, never a pledge rule.
+      await guard.before({ ...request("write", "deliverable.md", { content: `${near.text}\n` }), callID: `near-miss-${nearIndex}` })
+        .catch((error) => assert.match(error.message, /^LIT_HUMANIZER_BLOCKED rule=negation-cluster /u, near.text));
     }
   });
 });

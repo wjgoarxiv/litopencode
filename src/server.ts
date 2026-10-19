@@ -54,7 +54,8 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       config: loaded.config.autoHandoff,
       ...(getSession === undefined ? {} : { getSession })
     });
-    const deliverableHedgeGuard = createDeliverableHedgeGuard({ projectRoot: root });
+    // The host resolves a relative write or edit path against its launch directory, which can be a subfolder of the worktree.
+    const deliverableHedgeGuard = createDeliverableHedgeGuard({ projectRoot: input?.directory?.trim() || root });
     const recordSkillActivation = async (sessionID: string, skillId: string, appendedLit = false): Promise<void> => {
       showActivationToast(input?.client, skillId);
       ignitionState.activate(sessionID, skillId, !appendedLit);

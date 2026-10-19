@@ -274,6 +274,17 @@ function applyEdit(oldText: string, oldString: unknown, newString: string, repla
   return oldText.slice(0, index) + newString + oldText.slice(index + oldString.length);
 }
 
+// The block path throws this text, so the model sees the positive-first rewrite in the refusal itself.
+const negationAdvice = "Several negations sit in one place. Say what the thing is first, then add the caveat once. " +
+  'Example: write "18,420 visits in total, including repeat visits" instead of "18,420 is not the number of residents".';
+
+function warnMessage(count: number, file: string, negationCluster: boolean): string {
+  const base = `LIT_HUMANIZER_WARN findings=${count} path=${displayPath(file)}`;
+  return negationCluster
+    ? `${base} rule=negation-cluster. ${negationAdvice}`
+    : `${base}. Review the new wording; keep any accurate, useful warning.`;
+}
+
 function remember(pending: Map<string, PendingNotice>, callID: string, notice: PendingNotice): void {
   if (pending.size >= maxPendingCalls) pending.delete(pending.keys().next().value as string);
   pending.set(callID, notice);
@@ -317,15 +328,16 @@ export function createDeliverableHedgeGuard(options: DeliverableHedgeGuardOption
   const scan = options.scan ?? ((request: HumanizerScanRequest) => defaultScan(request, timeoutMs));
   const pending = new Map<string, PendingNotice>();
 
-  async function scanTarget(file: string, oldText: string, newText: string): Promise<number> {
+  async function scanTarget(file: string, oldText: string, newText: string): Promise<readonly HumanizerFinding[]> {
     if (Buffer.byteLength(newText, "utf8") > maxTextBytes) throw new Error("new text exceeds scan limit");
     const findings = await scan({ file, oldText, newText });
     const block = findings.filter((finding) => finding.severity === "block");
     if (block.length > 0) {
       const first = block[0];
-      throw new Error(`LIT_HUMANIZER_BLOCKED rule=${first.rule} line=${first.line} path=${displayPath(file)}. Revise the new text before saving.`);
+      const advice = block.some((finding) => finding.rule === "negation-cluster") ? ` ${negationAdvice}` : "";
+      throw new Error(`LIT_HUMANIZER_BLOCKED rule=${first.rule} line=${first.line} path=${displayPath(file)}. Revise the new text before saving.${advice}`);
     }
-    return findings.length;
+    return findings;
   }
 
   // An apply_patch call can add several files; each deliverable-path target gets the same per-file scan as write
@@ -336,6 +348,7 @@ export function createDeliverableHedgeGuard(options: DeliverableHedgeGuardOption
       if (Buffer.byteLength(patchText, "utf8") > maxTextBytes) throw new Error("patch text exceeds scan limit");
       let warned = 0;
       let warnedFile = "";
+      let negationCluster = false;
       for (const entry of parsePatch(patchText)) {
         const target = entry.moveTo ?? entry.file;
         if (isInternalPath(target) || !readerFacingExtensions.has(path.extname(target).toLowerCase())) continue;
@@ -349,14 +362,15 @@ export function createDeliverableHedgeGuard(options: DeliverableHedgeGuardOption
             newText = `${oldText}\n${entry.added.join("\n")}`;
           }
         }
-        const count = await scanTarget(target, oldText, newText);
-        if (count > 0 && warned === 0) warnedFile = target;
-        warned += count;
+        const found = await scanTarget(target, oldText, newText);
+        if (found.length > 0 && warned === 0) warnedFile = target;
+        warned += found.length;
+        negationCluster ||= found.some((finding) => finding.rule === "negation-cluster");
       }
       if (warned > 0) {
         remember(pending, callID, {
           tier: "warn",
-          message: `LIT_HUMANIZER_WARN findings=${warned} path=${displayPath(warnedFile)}. Review the new wording; keep any accurate, useful warning.`
+          message: warnMessage(warned, warnedFile, negationCluster)
         });
       }
     } catch (error) {
@@ -392,11 +406,11 @@ export function createDeliverableHedgeGuard(options: DeliverableHedgeGuardOption
           ? text.value ?? ""
           : applyEdit(oldText, (input.args as ToolRecord).oldString ?? (input.args as ToolRecord).old_string, text.value ?? "",
             (input.args as ToolRecord).replaceAll);
-        const warned = await scanTarget(text.file, oldText, newText);
-        if (warned > 0) {
+        const found = await scanTarget(text.file, oldText, newText);
+        if (found.length > 0) {
           remember(pending, input.callID, {
             tier: "warn",
-            message: `LIT_HUMANIZER_WARN findings=${warned} path=${displayPath(text.file)}. Review the new wording; keep any accurate, useful warning.`
+            message: warnMessage(found.length, text.file, found.some((finding) => finding.rule === "negation-cluster"))
           });
         }
       } catch (error) {

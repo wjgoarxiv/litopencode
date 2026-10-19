@@ -189,6 +189,11 @@ function ruleSegments(rows, rule, cache) {
   return segments;
 }
 
+function lineTextAt(text, offset) {
+  const end = text.indexOf('\n', offset);
+  return text.slice(text.lastIndexOf('\n', offset - 1) + 1, end < 0 ? text.length : end).trim();
+}
+
 export function scanText(text, rules, file = '<stdin>') {
   if (isInternalPath(file)) return [];
   const findings = [];
@@ -200,15 +205,90 @@ export function scanText(text, rules, file = '<stdin>') {
       rule.regex.lastIndex = 0;
       const match = rule.regex.exec(segment.text);
       if (!match) continue;
-      findings.push({
+      const finding = {
         file,
         rule: rule.id,
         severity: rule.severity,
         line: lineAtOffset(segment, match.index),
         excerpt: segment.text.trim().replace(/\s+/g, ' ').slice(0, 180),
-      });
+      };
+      // A document-scope match runs from its first occurrence to its last; the lines in between are not part of it.
+      if (rule.scope === 'document') {
+        finding.occurrences = [lineTextAt(segment.text, match.index), lineTextAt(segment.text, match.index + match[0].length - 1)];
+      }
+      findings.push(finding);
     }
   }
+  return findings;
+}
+
+// negation-cluster sits beside the rule engine because it counts per block, not per line or sentence.
+// A paragraph or list block (split on blank lines) is counted as a whole; a Markdown table is counted per column
+// and ignores cells of 12 characters or fewer, where status values such as '해당 아님' live. Fenced code,
+// blockquote lines and inline code were already blanked by sourceRows. Reworded forms that restate a definition
+// count too, so swapping one negation for another does not pass. Two Korean negations, or three in any language,
+// block; exactly two that are not both Korean warn.
+const NEGATION_KO = /아닙니다|아님|아니다|아니며|아니라|아닌/gu;
+const NEGATION_EN = /(?<![\p{L}\p{N}_])(?:is not|are not|isn't|aren't|not a|rather than)(?![\p{L}\p{N}_])/giu;
+const NEGATION_KO_REWORD = /(?:로|으로) (?:읽을|볼|해석할|간주할) 수 없|(?:로|으로) 보지 않|(?:을|를) (?:뜻하지|의미하지|나타내지|가리키지) 않|(?:와|과)는 다(?:릅니다|르다|름|르며|르고|르므로)|(?:로|으로) (?:읽으면|보면|해석하면) 안 /gu;
+const NEGATION_EN_REWORD = /(?<![\p{L}\p{N}_])(?:(?:should not|cannot|can't|must not) be (?:read|taken|interpreted|treated) as|(?:does|do) not (?:mean|represent|indicate))(?![\p{L}\p{N}_])/giu;
+const NEGATION_BLOCK_KO = 2;
+const NEGATION_BLOCK_TOTAL = 3;
+const NEGATION_WARN_TOTAL = 2;
+
+function matches(text, pattern) {
+  return text.match(pattern)?.length ?? 0;
+}
+
+function negationTier(text) {
+  const ko = matches(text, NEGATION_KO) + matches(text, NEGATION_KO_REWORD);
+  const total = ko + matches(text, NEGATION_EN) + matches(text, NEGATION_EN_REWORD);
+  if (ko >= NEGATION_BLOCK_KO || total >= NEGATION_BLOCK_TOTAL) return 'block';
+  return total >= NEGATION_WARN_TOTAL ? 'warn' : null;
+}
+
+function clusteredText(block) {
+  const lines = block.map((row) => row.candidate);
+  if (!lines.every((line) => /^\s*\|/.test(line))) {
+    const text = lines.join('\n');
+    const severity = negationTier(text);
+    return severity ? { text, severity } : null;
+  }
+  const cells = lines.filter((line) => !/^[\s|:-]+$/.test(line))
+    .map((line) => line.trim().replace(/^\||\|$/g, '').split('|').map((cell) => cell.trim()));
+  const width = Math.max(...cells.map((row) => row.length));
+  let warned = null;
+  for (let column = 0; column < width; column += 1) {
+    const text = cells.map((row) => row[column] ?? '').filter((cell) => [...cell].length > 12).join('\n');
+    const severity = negationTier(text);
+    if (severity === 'block') return { text, severity };
+    if (severity === 'warn') warned ??= { text, severity };
+  }
+  return warned;
+}
+
+export function negationClusterFindings(text, file = '<stdin>') {
+  if (isInternalPath(file)) return [];
+  const findings = [];
+  let block = [];
+  const flush = () => {
+    const hit = block.length ? clusteredText(block) : null;
+    if (hit !== null) {
+      findings.push({
+        file,
+        rule: 'negation-cluster',
+        severity: hit.severity,
+        line: block[0].number,
+        excerpt: hit.text.trim().replace(/\s+/g, ' ').slice(0, 180),
+      });
+    }
+    block = [];
+  };
+  for (const row of sourceRows(text)) {
+    if (row.skipped || !row.candidate.trim()) flush();
+    else block.push(row);
+  }
+  flush();
   return findings;
 }
 

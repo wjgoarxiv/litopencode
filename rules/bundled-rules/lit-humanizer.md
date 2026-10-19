@@ -9,4 +9,6 @@ Check only new or changed model text. Skip fenced and inline code, Markdown bloc
 
 Use footnotes or a reference list when citations are requested. Do not put a confidence ledger, verification inventory, or limitations checklist in a reader-facing deliverable. State a material risk once, plainly, in the chat reply. Keep internal evidence, plans, ledgers, handoffs, status, and machine-readable records detailed. Preserve a real limitation when removing it would change meaning or mislead the reader.
 
+Lead with what a figure or thing is, then give a needed caveat once. Rewrite `18,420회는 주민 수가 아님` as "18,420회는 같은 사람의 반복 방문을 포함한 방문 횟수 합계입니다". The pre-write guard refuses a paragraph, list or table column that stacks two Korean definitional negations or three in any language, and reworded forms such as `~로 읽을 수 없음` or `does not mean` count too. Exactly two that are not both Korean draw a `negation-cluster` warning. Write bad examples in inline code or a blockquote.
+
 Review comments, commit messages, pull requests, changelogs, and README prose. Remove narration and needless one-use code wrappers only when behavior, trust-boundary checks, accessibility, and data integrity remain intact.

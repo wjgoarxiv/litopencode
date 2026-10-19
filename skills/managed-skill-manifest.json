@@ -301,11 +301,11 @@
         },
         {
           "path": "scripts/core.mjs",
-          "sha256": "abaff0390680e9c2602cde701f7224acd3586ebed0dcb2a807570359baac62fc"
+          "sha256": "c237695aa44185e948fbd43eaccf71c15e264311325d06563d8d06b74af1e560"
         },
         {
           "path": "scripts/detect.mjs",
-          "sha256": "45a853a1341c5e4d61022edd4ed1289e49028005251682e3298a3946411f18bf"
+          "sha256": "5b70f4253334681e382fad7d1d6070509afd3bfc821cb83fea718456c9eea817"
         },
         {
           "path": "scripts/extract_office_text.py",
@@ -313,7 +313,7 @@
         },
         {
           "path": "scripts/guard-scan.mjs",
-          "sha256": "f9677316adaf262496cc2222eb4b3fca8c1f3b8bf8288a324ca68b97fe09d67d"
+          "sha256": "6567964e02e5a6843a8b2b5920cfcad4f80f2642ccf84eb2eb316facb714e6a7"
         },
         {
           "path": "scripts/ko-metrics.mjs",

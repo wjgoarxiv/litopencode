@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { exitCode, parseRules, scanText } from './core.mjs';
+import { exitCode, negationClusterFindings, parseRules, scanText } from './core.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const usage = 'Usage: node scripts/detect.mjs [--json] [--rules FILE] [--path LABEL] [FILE ...] (use - or omit FILE to read stdin)';
@@ -62,7 +62,8 @@ function main() {
   for (const file of files) {
     try {
       const label = file === '-' ? stdinLabel : file;
-      const hits = scanText(contentFor(file), rules, label);
+      const content = contentFor(file);
+      const hits = [...scanText(content, rules, label), ...negationClusterFindings(content, label)];
       findings.push(...hits);
       scanned.push(file);
     } catch (error) {
