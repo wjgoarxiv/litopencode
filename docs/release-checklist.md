@@ -6,6 +6,16 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.29 Release Scope
+
+- The write guard now catches a paragraph that keeps defining a figure by negation. Two Korean definitional negations in one paragraph, list or table column, or three in any language, are refused, and reworded forms such as `~로 읽을 수 없음`, `~와는 다름`, `does not mean` or `must not be read as` count too; exactly two, unless both are Korean, draw a warning. The refusal carries the fix: say what the figure is first, then give the caveat once, for example "18,420 visits in total, including repeat visits". A limitation stated once, short table cells such as `해당 아님`, plain comparisons such as `~와 다르다`, code and quoted examples still pass. The lit-humanizer skill and its bundled rule teach the same habit.
+
+- Editing a line that sits between two repeated pledges in a document no longer re-raises the pledge that was already there; adding another one is still refused.
+
+- When OpenCode is started from a subfolder of the project, the write guard now resolves relative paths such as `../report.md` against that folder, so those deliverables are checked and internal folders such as `plans/` stay exempt.
+
+- A flood of warnings can no longer push a refusal out of the guard's output: refusals are listed first and the list is capped.
+
 ## 1.0.28 Release Scope
 
 - The README gets you started sooner and says who LitOpenCode is for: people who give OpenCode work that spans more than one sitting, such as a feature over a few sessions, a planned refactor, research they come back to, or a report or deck built from their notes. A short evening-and-morning sketch shows a session picked up the next day, and the requirements now name OpenCode 1.18 or 1.19, because OpenCode 2 loads plugins differently and is not supported yet. The images are unchanged.
