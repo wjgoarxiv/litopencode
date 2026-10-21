@@ -79,6 +79,12 @@
       "kind": "pinned",
       "occurrences": 1,
       "why": "The exact approved local release version assertion advances with package.json; historical migration fixtures retain their original versions."
+    },
+    {
+      "path": "test/windows-hardening.test.mjs",
+      "kind": "pinned",
+      "occurrences": 2,
+      "why": "The Windows command-plan input and expected quoted arguments name the current package install target."
     }
   ]
 }

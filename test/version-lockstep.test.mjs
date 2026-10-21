@@ -46,11 +46,25 @@ function runRepositoryCheckerFrom(cwd) {
   return spawnSync(process.execPath, [checkerPath], { cwd, encoding: "utf8" });
 }
 
+function containsVersion(text, version) {
+  return [version, version.replace(/\./gu, "\\.")].some((spelling) => {
+    const pattern = spelling.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+    return new RegExp(`(?<![\\d.])${pattern}(?!\\d|\\.\\d)`, "u").test(text);
+  });
+}
+
+test("version discovery distinguishes a release from a longer dependency version", () => {
+  assert.equal(containsVersion('"caniuse-lite": "^1.2.3001810"', "1.2.3"), false);
+  assert.equal(containsVersion("1.2.3.1", "1.2.3"), false);
+  assert.equal(containsVersion("11.2.3", "1.2.3"), false);
+  assert.equal(containsVersion("Install @litfamily/litopencode@1.2.3.", "1.2.3"), true);
+  assert.equal(containsVersion("/litopencode@1\\.2\\.3/", "1.2.3"), true);
+});
+
 function trackedVersionFiles(version) {
   const listing = spawnSync("git", ["ls-files", "-z"], { cwd: process.cwd(), encoding: "utf8" });
   assert.equal(listing.error, undefined, listing.error?.message);
   assert.equal(listing.status, 0, listing.stderr);
-  const escaped = version.replace(/\./gu, "\\.");
   return listing.stdout
     .split("\0")
     .filter(Boolean)
@@ -61,7 +75,7 @@ function trackedVersionFiles(version) {
       } catch {
         return false;
       }
-      return text.includes(version) || text.includes(escaped);
+      return containsVersion(text, version);
     })
     .sort();
 }

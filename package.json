@@ -1,6 +1,6 @@
 {
   "name": "@litfamily/litopencode",
-  "version": "1.0.29",
+  "version": "1.0.30",
   "description": "Workflow plugin for OpenCode: add lit to a prompt and the work is planned, built, checked and written down so the next session can pick it up.",
   "keywords": [
     "opencode",

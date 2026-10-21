@@ -6,6 +6,12 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.30 Release Scope
+
+- Support OpenCode 2 alongside OpenCode 1, including agent model routing, user-context delivery and standalone entry types.
+- Continue active lit workflows, add brainstorming and explicit review modes, and ship seamless cover rendering with seven-member family artwork.
+- Select Python versions covered by the office and audio locks, and harden Windows command launches, exit codes, tool discovery and PDF conversion.
+
 ## 1.0.29 Release Scope
 
 - The write guard now catches a paragraph that keeps defining a figure by negation. Two Korean definitional negations in one paragraph, list or table column, or three in any language, are refused, and reworded forms such as `~로 읽을 수 없음`, `~와는 다름`, `does not mean` or `must not be read as` count too; exactly two, unless both are Korean, draw a warning. The refusal carries the fix: say what the figure is first, then give the caveat once, for example "18,420 visits in total, including repeat visits". A limitation stated once, short table cells such as `해당 아님`, plain comparisons such as `~와 다르다`, code and quoted examples still pass. The lit-humanizer skill and its bundled rule teach the same habit.
