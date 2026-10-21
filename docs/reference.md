@@ -165,7 +165,9 @@ for an approved plan; `/review-work` checks the `DoneClaim` through a five-lane 
 | `/litwork` | Enter the bounded work loop. |
 | `/lit-plan` | Create a read-only implementation plan. |
 | `/start-work` | Execute an approved plan through `lit-implement`. |
-| `/review-work` | Review a draft plan or completed work. |
+| `/review-work` | Plan review after `lit-plan` or work review after `lit-loop` or `/start-work`, picked from what exists; `/review-work plan` or `/review-work work` forces one. |
+| `/litgoal` | Set and keep the finish line: one goal with checkable criteria on durable state. `lit-loop` and `/start-work` run toward it. |
+| `/lit-brainstorm` | Open a question into options, narrow them to a short list, and hand the pick to `deep-interview` or `lit-plan`. Chat: `lit brainstorm`, `lit brainstorming`, `lit ideation`, `lit ideate`, `lit idea`, `lit ideas`. It never builds. |
 | `/litresearch` or `/lit-research` | Run evidence-backed research with a sequential fallback. |
 | `/lit-handoff` | Create a resumable handoff; exact bare `handoff` also routes here. |
 | `/lit-recap` | Read a concise recap from local ledger and session context. |
@@ -181,10 +183,22 @@ bounded local behavior; they do not silently grant new host authority. Frontend 
 ships a canonical frontend library for its offline, read-only design references.
 
 The renamed routes are `/lit-crucible`, `/lit-init`, `/lit-commit`, `/lit-burnoff`,
-`/lit-burnoff-file`, `/lit-korean`, `/lit-fetch`, and `/lit-code`. Previous names remain
+`/lit-burnoff-file`, `/lit-korean`, `/lit-fetch`, `/lit-code`, and `/litgoal` (formerly
+`durable-litgoal`). Previous names remain
 compatibility redirects for one release and print one deprecation note. Install/update
 removes installer-owned old skill directories after verifying their replacements; user-owned
 files are preserved. See [migration notes](migration.md#skill-id-renames).
+
+### Repeating `lit`
+
+Typing `lit` on every message is safe. The first `lit` of a session sends the full activation. Another `lit`
+for the same discipline, such as a second `lit fix ...` while the first is running, sends a short "already
+active, continuing" note instead and leaves the existing plan, criteria and ledger alone. A different
+discipline (`lit plan ...` during a loop) sends that discipline's full activation once. `lit new ...` and
+`lit restart ...` start fresh. A bare `lit` or `lit continue` over an approved plan or an active `/start-work`
+record resumes it and never writes a new plan; a bare `lit` with no task and nothing in progress asks what to
+work on. A compaction, a new session or a restart of OpenCode forgets the active discipline, so the next `lit`
+is full again. `lit-loop`, `lit-plan` and `lit-humanizer` point to their installed skill instead of pasting it.
 
 ### Durable loop state
 
@@ -244,11 +258,11 @@ flowchart LR
 - <code>debugging</code>
 - <code>deep-interview</code>
 - <code>doctor-installer</code>
-- <code>durable-litgoal</code>
 - <code>frontend-ui-ux</code>
 - <code>readme-studio</code>
 - <code>lit-commit</code>
 - <code>lit-crucible</code>
+- <code>lit-brainstorm</code>
 - <code>lit-init</code>
 - <code>lit-comprehend</code>
 - <code>lit-handoff</code>
@@ -259,6 +273,7 @@ flowchart LR
 - <code>lit-pptx</code>
 - <code>lit-docx</code>
 - <code>lit-typographic-motion</code>
+- <code>litgoal</code>
 - <code>litresearch</code>
 - <code>litwork</code>
 - <code>lsp</code>
@@ -346,16 +361,114 @@ OpenCode's managed `opencode.jsonc` (or the custom root's `opencode.json`). Remo
 Project `.litopencode/` state is separate; preserve it for later resume or remove it only
 when discarding that project's ledger and receipts is intentional.
 
-The TUI panel entry lives in `tui.json` or `tui.jsonc`. `litopencode tui remove [--root <dir>]`
-deletes LitOpenCode's own entry from both files, keeps every other plugin and every comment, and
-copies each changed file to `<file>.litopencode-backup` first. `--dry-run` prints the same receipt
-and writes nothing.
+The TUI panel entry lives in `tui.json` or `tui.jsonc`, and on OpenCode 2 a pinned entry can also sit
+in `cli.json`. `litopencode tui remove [--root <dir>]` deletes LitOpenCode's own entry from all three
+files, keeps every other plugin and every comment, and copies each changed file to
+`<file>.litopencode-backup` first. It reads and checks every file before it writes any, so a malformed
+file or a comment that would be lost stops it with nothing changed. `--host v1` leaves `cli.json` alone.
+`--dry-run` prints the same receipt and writes nothing.
+
+## OpenCode 2
+
+LitOpenCode runs on OpenCode 1 (1.18.29 or later; the package declares `engines.opencode >=1.18.29`,
+which OpenCode 1 checks) and on OpenCode 2. The two can be installed side by side: OpenCode 1 keeps the
+`opencode` command, and OpenCode 2 (npm `@opencode/cli`) is run as `opencode2`. Both read the same
+`~/.config/opencode`, so one install serves both.
+
+**Install.** `litopencode install` looks for each host before it writes anything, without starting
+either one. It reads the npm package behind `opencode` and `opencode2` (`opencode-ai` is OpenCode 1,
+`@opencode/cli` is OpenCode 2; on Windows it reads the npm `.cmd` shim as text). An `opencode` with no npm
+package behind it (the curl installer, Homebrew, mise) is taken for OpenCode 1, so OpenCode 1 keeps its
+setup however it was installed; an `opencode` that is the same file as `opencode2` counts as OpenCode 2.
+Any `opencode2` counts as OpenCode 2, since OpenCode 1 has no `opencode2`. Before a real install runs
+`opencode plugin` on an `opencode` it only took for OpenCode 1, it asks `opencode --version`; a 2.x answer
+gives that host the OpenCode 2 setup instead (a dry run starts nothing, so it shows the first guess). When neither command is on PATH, it takes `tui.json`
+(OpenCode 1) and `cli.json` (OpenCode 2) as evidence, and with neither it keeps the OpenCode 1 setup.
+`--host v1` or `--host both` stops before anything runs when the only `opencode` is OpenCode 2, because
+`opencode plugin` would then change OpenCode 2's config. With `--host auto`, the default, it sets up
+every host it found; `--host v1`, `--host v2` or `--host both` overrides that. The dry-run receipt shows the
+result under `host`. For OpenCode 1 nothing changes: `opencode plugin` registers the package and the TUI
+entry goes into `tui.json`. For OpenCode 2 the installer:
+
+- keeps the single entry in the `plugin` list of `opencode.json(c)`, which both hosts read, and never
+  runs `opencode plugin` with the OpenCode 2 binary (OpenCode 2 installs the package itself the first
+  time it loads it);
+- removes any LitOpenCode entry from OpenCode 2's own `plugins` key, because OpenCode 2 refuses a second
+  plugin with the same id;
+- removes any LitOpenCode entry from `cli.json`, with a `cli.json.litopencode-backup` copy, because
+  OpenCode 2 loads the TUI of an active server plugin on its own and a pinned entry there would shadow it;
+- never writes the OpenCode 2 keys `permissions` or `policies` into the shared config: OpenCode 1 stops
+  at startup when it finds `permissions` there.
+
+After an install for both hosts, the first `opencode2` TUI start copies the `tui.json` plugin list into a
+new `cli.json`, LitOpenCode's entry included. The installer cannot stop that copy; doctor flags the
+entry, and running `litopencode install` or `litopencode tui remove` again takes it out.
+
+**Doctor.** `litopencode doctor` adds a `host` block (hosts found, the evidence files, and OpenCode 2's
+plugin update policy, read from the shared `autoupdate` setting), counts LitOpenCode entries across
+`plugin` and `plugins`, flags a stale `cli.json` entry, and warns when `permissions` sits in a config that
+OpenCode 1 also reads. Doctor never starts a host. On OpenCode 2 the `lsp` block adds that OpenCode 2
+accepts the `lsp` settings but does not run language servers.
+
+**What works the same.** The agents (with `lit-loop` as the default, and `build` and `plan` hidden), the
+five tools, bare `lit` activation, the static rules and the reader contract, the tool guards, the
+planner lock, bounded-authority progress, the automatic handoff and the skills under
+`~/.config/opencode/skills` all run on OpenCode 2. OpenCode 2 renamed two tools, so the permission rules
+it gets say `shell` for `bash` and `subagent` for `task`, and `write` and `patch` fall under `edit`. The
+last matching rule wins there, so `lit-plan` ends with denials for `edit`, `shell`, `subagent` and
+`execute` in every permission mode, and a permission hook denies them again whatever other rules say.
+`execute` is OpenCode 2's Code Mode tool, which runs model-written JavaScript with `fetch` and other
+tools; OpenCode 1 had nothing like it, and a planning agent must not get it. A tool denied that way is left
+out of the request. The five LitOpenCode tools sit on the model's own tool list, outside Code Mode, as
+they did on OpenCode 1, so `lit-plan` keeps them. Balanced and yolo
+modes, which widen the global permission on OpenCode 1, lead each LitOpenCode agent's own rules on
+OpenCode 2, because a plugin cannot change the global rules there. Per-agent request settings such as the
+reasoning effort are sent with each model request, since OpenCode 2 keeps an agent's own request
+settings but does not send them yet.
+
+**What is different on OpenCode 2.**
+
+- *Slash commands.* The installer writes the same `command/<id>.md` files on both hosts, and on OpenCode 2
+  such a file replaces a plugin command of the same name. So every lit command comes from its file and is
+  listed once. The plugin adds a command only when no file covers it (for example after
+  `opencode plugin add` without the installer). A command turn from a file carries no LitOpenCode mark on
+  OpenCode 2; one the plugin itself sends carries a mark with a one-time check that a typed prompt cannot
+  copy. A plugin command with an agent route, such as `/lit-crucible` or `/deep-interview` (`lit-plan`) or
+  `/start-work` (`lit-implement`), first switches the session to that agent, as the `agent:` line of
+  the command file does.
+- *Model routes.* OpenCode 2 runs a session that has no model of its own on the host's default model;
+  only a client that creates the session reads the agent's model, and the TUI does while
+  `opencode2 run` does not. So the first prompt of such a session switches it to its agent's route
+  (`lit-loop` when it names none), once that model is in the catalog. A model you picked, and a
+  delegated child, which the host already starts on its agent's model, stay as they are. As on OpenCode 1,
+  the OpenAI rows LitOpenCode routes to are added to the `openai` catalog when the host lacks one.
+- *Project data in the user message.* Local knowledge records, a start-work resume receipt and an
+  auto-handoff setting reply are added to the latest user message of the request, where OpenCode 1 had
+  them as parts of the user message. OpenCode 2's system parts are for instructions, so only LitOpenCode's
+  own activation text, the rules and the reader contract go there.
+- *Quoted prompts.* `opencode2 run "lit fix it"` sends the words inside double quotes, so a message that
+  is exactly one quoted string is read without the quotes. The server cannot tell that from a TUI prompt
+  typed entirely in quotes, which therefore activates too; on OpenCode 1 it stayed inert.
+- *Ignition mark.* OpenCode 2 has no hook that edits the finished answer, so the mark moves into the
+  TUI: the line under the prompt (`prompt.footer.status`) reads `🔥 LIT IGNITED · <discipline>` while the
+  latest prompt of the session is a lit prompt. On OpenCode 1 the mark stays where it was.
+- *Toasts.* The server cannot show toasts on OpenCode 2. The TUI raises the ignition toast itself when a
+  user message arrives with the lit mark the server writes into its metadata. The automatic-handoff
+  notices and the skill hint, which only the server knew about, are not shown there.
+- *TUI.* The mission panel sits in the session sidebar as before. OpenCode 2 passes no options to a TUI
+  that comes with a server plugin, and it keeps no todo list, so mission progress comes from the ledger,
+  the work record and the plan. The status band under the session and the home-screen line are drawn on
+  OpenCode 1 only.
+- *Updates.* There is no automatic self-update inside the plugin on OpenCode 2. Run
+  `opencode plugin update`, or let OpenCode 2's own update policy handle it.
 
 ## TUI mission panel
 
 OpenCode 1.18 loads TUI plugins listed in the `plugin` array of `tui.json` or `tui.jsonc`. The
-package exports its TUI module as `@litfamily/litopencode/tui` (`dist/tui.js`, plugin id
-`litopencode`), separate from the server plugin, as OpenCode requires.
+package exports its TUI module as `@litfamily/litopencode/tui` (`dist/host/tui.js`, plugin id
+`litopencode`), separate from the server plugin, as OpenCode requires. OpenCode 2 loads the same module
+by itself for the active server plugin (see OpenCode 2 above). The type declarations of `./server` and
+`./tui` describe each entry by its shape, so they resolve without either host's plugin package.
 
 What it draws:
 

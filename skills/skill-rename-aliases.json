@@ -11,5 +11,6 @@
     "korean-ai-slop-remover"
   ],
   "lit-fetch": "public-source-fetch",
-  "lit-code": "programming"
+  "lit-code": "programming",
+  "litgoal": "durable-litgoal"
 }

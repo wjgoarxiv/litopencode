@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- Negative fixture: the canvas is never cleared, so each frame keeps the trail of the frames drawn
+     before it. Sequential captures agree; a frame sought out of order does not (exit 18). -->
+<style>html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #0b0f14; }</style>
+<canvas id="c" width="2400" height="1200" style="display:block;width:1200px;height:600px"></canvas>
+<script src="/lit/loop-kit.js"></script>
+<script>
+const ctx = document.getElementById("c").getContext("2d");
+ctx.fillStyle = "#0b0f14";
+ctx.fillRect(0, 0, 2400, 1200);
+window.renderFrame = (t) => {
+  const a = LitLoop.TAU * t;
+  ctx.fillStyle = "#ff8a4c";
+  ctx.beginPath();
+  ctx.arc(1200 + 700 * Math.cos(a), 600 + 400 * Math.sin(a), 40, 0, LitLoop.TAU);
+  ctx.fill();
+};
+window.ready = true;
+</script>

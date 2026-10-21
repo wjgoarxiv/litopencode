@@ -229,6 +229,7 @@ export function loadTreatment(out) {
   if (!existsSync(file)) throw fail("treatment", `no treatment.json in ${out}; write it first (references/treatment.md)`);
   let parsed;
   try { parsed = JSON.parse(readFileSync(file, "utf8")); } catch (error) { throw fail("treatment", `treatment.json is not JSON (${error.message})`); }
+  if (parsed?.mode === "cover") throw fail("mode", "this is a cover treatment; render it with `render.mjs cover --out <dir>` (references/cover.md)");
   const result = validateTreatment(parsed);
   if (!result.ok) throw fail(result.field, result.detail);
   return { treatment: parsed, file };

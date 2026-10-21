@@ -42,6 +42,11 @@ function assertNoHtmlCommentArtifact(text, label) {
   assert.doesNotMatch(text, htmlCommentPattern, `${label} should not expose HTML comments or blank <!-- --> artifacts`);
 }
 
+function assertPointsToSkill(text, skill) {
+  assert.match(text, /skill name: lit-humanizer/u, "the command should name the installed lit-humanizer skill");
+  assert.ok(!text.includes(skill), "the command should point to the lit-humanizer skill, not paste its body");
+}
+
 function assertEmbeddedTextContract(surface, text) {
   assert.match(text, /## #contract\.activation/, `${surface} should include contract activation`);
   assert.match(text, /## #contract\.inputs/, `${surface} should include contract inputs`);
@@ -75,8 +80,8 @@ test("old Korean command redirects to the installed humanizer surface", async ()
     assert.match(aliasText, /Redirect to \/lit-humanizer/);
     assert.match(aliasText, /now routes to `lit-humanizer`/);
     assert.doesNotMatch(aliasText, /# Installed skill body/);
-    assert.ok(canonicalText.includes(skill), "canonical command should include the full lit-humanizer skill body");
-    assertEmbeddedTextContract("/lit-humanizer command", canonicalText);
+    assertPointsToSkill(canonicalText, skill);
+    assertEmbeddedTextContract("lit-humanizer skill", skill);
     assert.equal(detectChatActivationMode("/lit-korean lit"), undefined);
   });
 });
@@ -117,11 +122,11 @@ test("activates text naturalization without adding a rewriting tool", async () =
     assert.equal(output.parts.length, 1);
     assert.equal(output.parts[0].type, "text");
     assert.match(output.parts[0].text, /lit-korean/i);
-    assert.match(output.parts[0].text, /Korean prose/i);
+    assert.match(skill, /Korean prose/i);
     assert.match(output.parts[0].text, /Do not execute commands/i);
     assertNoHtmlCommentArtifact(output.parts[0].text, "/lit-korean hook output");
-    assertEmbeddedTextContract("/lit-korean hook", output.parts[0].text);
-    assert.ok(output.parts[0].text.includes(skill), "/lit-korean hook should include the full lit-humanizer skill body");
+    assertEmbeddedTextContract("lit-humanizer skill", skill);
+    assertPointsToSkill(output.parts[0].text, skill);
     assert.equal(output.parts[0].metadata.litopencode.command, "lit-humanizer");
     assert.equal(output.parts[0].metadata.litopencode.mode, "lit-humanizer");
     assert.deepEqual(await readLedgerEvents(dir), [
@@ -149,11 +154,11 @@ test("activates text neutralization alias without storing source prose", async (
 
     assert.equal(output.parts.length, 1);
     assert.match(output.parts[0].text, /text-neutralization/i);
-    assert.match(output.parts[0].text, /Korean prose/i);
-    assert.match(output.parts[0].text, /model-written prose|drafting residue/i);
+    assert.match(skill, /Korean prose/i);
+    assert.match(skill, /model-written prose|drafting residue/i);
     assertNoHtmlCommentArtifact(output.parts[0].text, "/text-neutralization hook output");
-    assertEmbeddedTextContract("/text-neutralization hook", output.parts[0].text);
-    assert.ok(output.parts[0].text.includes(skill), "/text-neutralization hook should include the full lit-humanizer skill body");
+    assertEmbeddedTextContract("lit-humanizer skill", skill);
+    assertPointsToSkill(output.parts[0].text, skill);
     assert.equal(output.parts[0].metadata.litopencode.command, "lit-humanizer");
     assert.deepEqual(await readLedgerEvents(dir), [
       {

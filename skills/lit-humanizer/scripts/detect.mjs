@@ -12,7 +12,7 @@ function contentFor(file) {
   if (file === '-') return readFileSync(0, 'utf8');
   if (['.docx', '.pptx'].includes(extname(file).toLowerCase())) {
     const extractor = resolve(here, 'extract_office_text.py');
-    const result = spawnSync('python3', [extractor, file], { encoding: 'utf8', timeout: 1500, maxBuffer: 16 * 1024 * 1024 });
+    const result = spawnSync(process.platform === 'win32' ? 'python' : 'python3', [extractor, file], { encoding: 'utf8', timeout: 1500, maxBuffer: 16 * 1024 * 1024 });
     if (result.error) throw result.error;
     if (result.status !== 0) throw new Error(result.stderr.trim() || `Office text extraction failed (${result.status})`);
     return result.stdout;

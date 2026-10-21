@@ -1,11 +1,10 @@
-import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { promisify } from "node:util";
 import { defaultOpenCodeConfigRoot } from "../state.ts";
 import { compareStableVersions, parseStableVersion, requestRegistryLatestVersion } from "./update-notifier.ts";
+import { execCommand } from "./command-plan.ts";
 import { readPackageMetadata } from "./json.ts";
 
 export const autoUpdatePackageName = "@litfamily/litopencode";
@@ -129,8 +128,6 @@ type AutoUpdateReceipt = {
   readonly failure?: AutoUpdateFailure;
 };
 
-const execFileAsync = promisify(execFile);
-
 /**
  * The staged CLI needs Node. Inside OpenCode the plugin runs on a Bun-compiled
  * host binary, and process.execPath names that binary rather than a Node
@@ -248,7 +245,7 @@ async function defaultRunCommand(
   args: readonly string[],
   options: AutoUpdateCommandOptions
 ): Promise<CommandOutput> {
-  return await execFileAsync(command, [...args], options);
+  return await execCommand(command, args, options);
 }
 
 async function bounded<T>(operation: () => Promise<T>, timeoutMs: number): Promise<T> {

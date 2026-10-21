@@ -2,6 +2,8 @@
 
 A film is not done when a command exits 0. It is done when a gate PASS, a valid treatment and at
 least two recorded look rounds agree, and the last round looked at the final render's own frames.
+A cover (`"mode": "cover"`) has its own stills, eight questions and done rules in `cover.md`; the
+`look` command and `gate.mjs --done` switch to them by themselves.
 
 ## The stills set
 

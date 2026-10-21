@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { findCommandOnPath } from "./host-detect.ts";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const cacheRoot = path.join(process.env.XDG_CACHE_HOME ?? path.join(os.homedir(), ".cache"), "litopencode", "office");
@@ -12,15 +13,19 @@ function cached(label: string, lock: string, marker: string): boolean {
   return existsSync(path.join(cacheRoot, `${label}-${digest}`, marker));
 }
 
+/** A venv keeps its interpreter in `Scripts` on Windows and in `bin` elsewhere. */
+export const venvPythonMarker = (platform: NodeJS.Platform = process.platform): string => (platform === "win32" ? "Scripts/python.exe" : "bin/python");
+
 export function inspectOfficeDependencies() {
-  const onPath = (name: string) => (process.env.PATH ?? "").split(path.delimiter).some((dir) => existsSync(path.join(dir, name)));
+  const onPath = (name: string) => findCommandOnPath(name) !== undefined;
+  const python = venvPythonMarker();
   return {
     pptx: {
       nodeReady: cached("node", "skills/lit-pptx/package-lock.json", "node_modules/pptxgenjs"),
-      pythonReady: cached("python-pptx", "skills/lit-pptx/requirements.lock", "bin/python")
+      pythonReady: cached("python-pptx", "skills/lit-pptx/requirements.lock", python)
     },
     docx: {
-      pythonReady: cached("python-docx", "skills/lit-docx/requirements.lock", "bin/python")
+      pythonReady: cached("python-docx", "skills/lit-docx/requirements.lock", python)
     },
     optional: { pandoc: onPath("pandoc"), xelatex: onPath("xelatex"), soffice: onPath("soffice") }
   };

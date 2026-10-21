@@ -17,6 +17,7 @@ import { pinnedSampleTimes } from "./engine/timing.mjs";
 import { checkStageRun, formatStageReport } from "./engine/stage/gate.mjs";
 import { soundChecks } from "./engine/sound.mjs";
 import { doneState, formatDone } from "./engine/look.mjs";
+import { coverGate, formatCoverReport } from "./engine/cover/gate.mjs";
 
 export const exportNames = ["film.mp4", "preview.webp", "preview.gif", "poster.png", "reduced-motion.png"];
 const isShot = (entry) => entry.kind === "line" || entry.kind === "scene";
@@ -569,15 +570,47 @@ export function completionState(dir) {
   return doneState(dir);
 }
 
+// `--cover <file>`: the cover gate on any encoded cover (.webp, .gif) or PNG frame folder. With the
+// capture folders it adds G0, G5 and G6; `--strict` exits 13 unless every gate reaches TARGET.
+// A cover output directory re-gates its own cover.webp with the folders its last render kept.
+export function runCoverGate(input, { frames, replay, masks, title, displayWidth, strict = false } = {}) {
+  const box = typeof title === "string" ? title.split(",").map(Number) : title;
+  const result = coverGate(input, { frames, replay, masks, title: box, glyph: box && masks ? { displayWidth } : null });
+  const report = formatCoverReport(result, { strict });
+  return { result, report, exitCode: result.pass && (!strict || result.target) ? EXIT.OK : EXIT.GATE_FAIL_QA };
+}
+
+function coverDirGate(root) {
+  const manifest = JSON.parse(readFileSync(path.join(root, "manifest.json"), "utf8"));
+  const file = [path.join(root, manifest.file), path.join(root, "withheld", manifest.file)].find((candidate) => existsSync(candidate));
+  if (!file) throw new Error(`the cover file ${manifest.file} is not in ${root}; render it again`);
+  const run = path.join(root, ".run", "cover");
+  const kept = (name) => (existsSync(path.join(run, name)) ? path.join(run, name) : undefined);
+  const treatment = JSON.parse(readFileSync(path.join(root, "treatment.json"), "utf8"));
+  return runCoverGate(file, { frames: kept("frames"), replay: kept("replay"), masks: kept("masks"), title: treatment.title?.box, strict: true });
+}
+
 function main(argv) {
   if (!argv.length || argv.includes("--help")) {
-    console.log("lit-typographic-motion gate\nUsage: node gate.mjs <output-dir> [--viewed N]\n       node gate.mjs --done <output-dir>   (0 DONE, 1 NOT DONE, 2 DONE_WITH_OPEN_ITEMS after round 3, 3 DONE_UNVIEWED)");
+    console.log("lit-typographic-motion gate\nUsage: node gate.mjs <output-dir> [--viewed N]\n       node gate.mjs --done <output-dir>   (0 DONE, 1 NOT DONE, 2 DONE_WITH_OPEN_ITEMS after round 3, 3 DONE_UNVIEWED)\n       node gate.mjs --cover <cover.webp|cover.gif|frames-dir> [--frames d --replay d --masks d --title x,y,w,h --display-width N] [--strict] [--json]");
     return 0;
   }
   if (argv[0] === "--done") {
     const state = completionState(argv[1]);
     console.log(formatDone(state));
     return state.code;
+  }
+  const value = (name) => { const i = argv.indexOf(`--${name}`); return i >= 0 ? argv[i + 1] : undefined; };
+  if (argv[0] === "--cover") {
+    const gated = runCoverGate(path.resolve(argv[1]), { frames: value("frames"), replay: value("replay"), masks: value("masks"), title: value("title"), displayWidth: value("display-width") ? Number(value("display-width")) : undefined, strict: argv.includes("--strict") });
+    const { kept, steps, durations, ...shown } = gated.result;
+    process.stdout.write(argv.includes("--json") ? `${JSON.stringify(shown, null, 2)}\n` : gated.report);
+    return gated.exitCode;
+  }
+  if (existsSync(path.join(argv[0], "manifest.json")) && JSON.parse(readFileSync(path.join(argv[0], "manifest.json"), "utf8")).mode === "cover") {
+    const gated = coverDirGate(path.resolve(argv[0]));
+    process.stdout.write(gated.report);
+    return gated.exitCode;
   }
   const viewedIndex = argv.indexOf("--viewed");
   const viewed = viewedIndex >= 0 ? Number(argv[viewedIndex + 1]) || 0 : undefined;

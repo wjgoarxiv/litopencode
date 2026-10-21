@@ -21,6 +21,7 @@ import {
   deepInterviewPromptInjection,
   frontendUiUxPromptInjection,
   gitMasterPromptInjection,
+  litBrainstormPromptInjection,
   litCruciblePromptInjection,
   initDeepPromptInjection,
   litGoalPromptInjection,
@@ -31,6 +32,7 @@ import {
   litCodePromptInjection,
   refactorPromptInjection,
   removeAiSlopsPromptInjection,
+  reviewModeForcedNote,
   reviewWorkPromptInjection,
   browserDrivePromptInjection,
   structuralSearchPromptInjection,
@@ -49,9 +51,10 @@ export type ChatActivationMode =
   | "start-work"
   | "review-work"
   | "lit-research"
-  | "lit-goal"
+  | "litgoal"
   | "lit-init"
   | "lit-crucible"
+  | "lit-brainstorm"
   | "lit-burnoff-file"
   | "lit-fetch"
   | "lit-humanizer"
@@ -76,6 +79,8 @@ const compoundWordBoundary = /^[A-Za-z0-9_-]$/;
 const recapWordCharacter = /^[A-Za-z0-9_\u{AC00}-\u{D7A3}\u{1100}-\u{11FF}\u{3130}-\u{318F}]$/u;
 const recapBoundedWords = Object.freeze(["recap", "litrecap", "리캡"] as const);
 const routeTriggerWords = Object.freeze(["lit", "litopencode", "litwork"] as const);
+// D2 route words for lit-brainstorm: `lit brainstorm ...` and its near forms.
+const brainstormRouteWords = Object.freeze(["brainstorm", "brainstorming", "ideation", "ideate", "idea", "ideas"] as const);
 
 // frontend-ui-ux is the one skill whose own name nobody types. The measured defect was that
 // "design a new settings page UI" surfaced nothing, so the capability was reachable only after the
@@ -202,8 +207,8 @@ function motionRouteContext(original: string): string {
   const gate = `node ${shellQuote(installedMotionScript("gate.mjs"))}`;
   const cue = typeLedCue(original.toLowerCase());
   return `
-This is a film request. After the workspace check, load lit-typographic-motion with OpenCode's native skill tool and write treatment.json in the film's output directory before any render. Path rule: the type path when the words themselves are the film, at 16:9; the stage path for every other film and every 9:16 film. Under lit, ask no questions; label every invented subject, line and default, and any generated sound, in the reply. Hand-encoded films are not the deliverable. Open the stills with the read tool and record each look round. Finish when --done exits 0; otherwise say plainly what it reports open.
-Commands: ${render} (film, stills, stage, sound, look, gate); ${gate} (<dir>, --done <dir>).${cue ? `\ntype-led cue found: ${cue}` : ""}
+This is a film request. After the workspace check, load lit-typographic-motion with OpenCode's native skill tool and write treatment.json in the film's output directory before any render. Path rule: the type path when the words themselves are the film, at 16:9; the stage path for every other film and every 9:16 film. Under lit, ask no questions; label every invented subject, line and default, and any generated sound, in the reply. Hand-encoded films are not the deliverable. Open the stills with the read tool and record each look round. Finish when --done exits 0; otherwise say plainly what it reports open. A README cover or banner loop takes cover mode (references/cover.md).
+Commands: ${render} (film, stills, stage, cover, sound, look, gate); ${gate} (<dir>, --cover <file>, --done <dir>).${cue ? `\ntype-led cue found: ${cue}` : ""}
 `;
 }
 const litSlashCommands = Object.freeze([
@@ -223,6 +228,7 @@ const litSlashCommands = Object.freeze([
   "litgoal",
   "lit-init",
   "lit-crucible",
+  "lit-brainstorm",
   "refactor",
   "lit-burnoff",
   "lit-code",
@@ -309,6 +315,17 @@ function containsLitRoute(words: readonly string[], ...route: readonly string[])
   return false;
 }
 
+// The brainstorm route is the word right after the FIRST standalone `lit` token. A path or file name
+// (`plans/lit-ideas.md`, `src/lit-idea.ts`) is not a `lit` token, and a later `lit idea` inside the
+// arguments of another route (`lit plan the lit ideas page`) is not the route word.
+const standaloneLitToken = new RegExp(`(?<![\\w./\\\\~@$-])(?:${routeTriggerWords.join("|")})(?!\\w)`, "u");
+const brainstormRouteAfterLit = new RegExp(`^(?:\\s+(?:${brainstormRouteWords.join("|")})|-brainstorm)(?![\\w/\\\\-]|\\.\\w)`, "u");
+
+function startsBrainstormRoute(raw: string): boolean {
+  const token = standaloneLitToken.exec(raw);
+  return token !== null && brainstormRouteAfterLit.test(raw.slice(token.index + token[0].length));
+}
+
 function startsWithStartWorkInvocation(raw: string, normalized: string): boolean {
   const rawStart = raw.trimStart();
   if (/^start-work(?:$|[\s,.:;!?])/u.test(rawStart)) return true;
@@ -343,6 +360,9 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
   const normalized = normalizedTriggerText(text);
   const words = routeWords(normalized);
   if (containsLitSlashCommandMention(raw)) return undefined;
+  // An explicit `lit brainstorm ...` invocation wins over every word-anywhere route below, so a later
+  // "refactor", "plan" or "dashboard" in the same sentence cannot steal the open question.
+  if (startsBrainstormRoute(raw)) return "lit-brainstorm";
   const workflowFamilyMode = detectWorkflowFamilyChatMode(raw);
   if (workflowFamilyMode !== undefined) return workflowFamilyMode;
   if (containsRenamedSkillTrigger(raw, "lit-crucible")) return "lit-crucible";
@@ -350,7 +370,7 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
   if (/^(?:litresearch|lit-research)(?:$|[\s,.:;!?])/u.test(raw.trimStart())) return "lit-research";
   if (startsWithStartWorkInvocation(raw, normalized)) return "start-work";
   if (containsCompoundBoundedWord(raw, "review-work")) return "review-work";
-  if (containsCompoundBoundedWord(raw, "litgoal") || containsCompoundBoundedWord(raw, "lit-goal")) return "lit-goal";
+  if (containsRenamedSkillTrigger(raw, "litgoal") || containsCompoundBoundedWord(raw, "lit-goal")) return "litgoal";
   if (containsRecapTrigger(raw)) return "lit-recap";
   if (containsCompoundBoundedWord(raw, "lit-comprehend")) return "lit-comprehend";
   if (containsCompoundBoundedWord(raw, "lit comprehend")) return "lit-comprehend";
@@ -388,7 +408,7 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
   if (!hasLitTrigger(raw)) return undefined;
   if (containsLitRoute(words, "review")) return "review-work";
   if (containsLitRoute(words, "research")) return "lit-research";
-  if (containsLitRoute(words, "goal")) return "lit-goal";
+  if (containsLitRoute(words, "goal")) return "litgoal";
   if (containsLitRoute(words, "plan")) return "lit-plan";
   if (
     (containsCompoundBoundedWord(raw, "start-work") || containsLitRoute(words, "start", "work")) &&
@@ -406,6 +426,7 @@ export function promptForChatActivationMode(mode: ChatActivationMode, triggerTex
     const uiMode = frontendUiUxModeForPrompt(raw);
     targetedPrompt += `\nSelected interface mode: ${uiMode}. Follow references/production.md for that mode's edit boundary and probe gate.`;
   }
+  if (mode === "review-work") targetedPrompt += reviewModeForcedNote(forcedReviewMode(routeWords(normalizedTriggerText(triggerText))) ?? "");
   if (mode === "lit-loop" && needsInterfaceHandoff(raw)) targetedPrompt += `\nInterface hand-off for this request: ${interfaceWorkHandoff}`;
   if ((mode === "lit-task" || mode === "lit-loop") && hasMotionVideoIntent(raw)) {
     return mode === "lit-task"
@@ -433,6 +454,18 @@ After the workspace check, use OpenCode's native skill tool to load ${skills.joi
   if (alias === undefined) return targetedPrompt;
   const oldName = renamedSkillAliases[alias].find((name) => containsCompoundBoundedWord(raw, name));
   return oldName === undefined ? targetedPrompt : `${skillRenameNote(alias, oldName)}\n${targetedPrompt}`;
+}
+
+// `lit review plan` / `lit review work` (and `review-work plan` / `review-work work`) force a review mode.
+function forcedReviewMode(words: readonly string[]): "plan" | "work" | undefined {
+  for (const mode of ["plan", "work"] as const) {
+    if (containsLitRoute(words, "review", mode)) return mode;
+  }
+  for (let index = 0; index + 2 < words.length; index += 1) {
+    const next = words[index + 2];
+    if (words[index] === "review" && words[index + 1] === "work" && (next === "plan" || next === "work")) return next;
+  }
+  return undefined;
 }
 
 export function frontendUiUxModeForPrompt(text: string): "build" | "polish" | "audit" | "harden" {
@@ -466,7 +499,7 @@ function canonicalChatPrompt(mode: ChatActivationMode): string {
       return reviewWorkPromptInjection;
     case "lit-research":
       return litResearchPromptInjection;
-    case "lit-goal":
+    case "litgoal":
       return litGoalPromptInjection;
     case "lit-init":
       return initDeepPromptInjection;
@@ -478,6 +511,8 @@ function canonicalChatPrompt(mode: ChatActivationMode): string {
       return litHumanizerPromptInjection;
     case "lit-crucible":
       return litCruciblePromptInjection;
+    case "lit-brainstorm":
+      return litBrainstormPromptInjection;
     case "refactor":
       return refactorPromptInjection;
     case "lit-burnoff":

@@ -52,10 +52,10 @@ Use LitOpenCode vocabulary in docs, config, runtime output, and issue reports:
 - npm package and OpenCode package-loading entry: `@litfamily/litopencode`; native namespace and binary: `litopencode`
 - activation commands/tools: `lit`, `litwork`, `start-work`, `review-work`, `lit-recap`, `lit-korean`, `text-neutralization`
 - durable loop: `lit-loop`
-- durable goal manager: `litgoal`
+- durable goal manager: `litgoal` (sets and keeps the finish line; `lit-loop` and `start-work` run toward it)
 - current planning/research workflow names: `lit-plan`, `lit-crucible`, `litresearch`, `start-work`, `review-work`
   - `lit-plan` creates a planning-only objective-achievable checklist; `lit-crucible` adversarially tests assumptions before handing surviving insights to `lit-plan`.
-  - `litresearch` runs the root-owned evidence workflow; `start-work` executes an approved plan through `lit-implement`; `review-work` reviews either a draft plan or completed work without inventing another workflow surface.
+  - `litresearch` runs the root-owned evidence workflow; `start-work` executes an approved plan through `lit-implement`; `review-work` runs plan review after `lit-plan` or work review after `lit-loop` or `start-work`, picked from what exists or forced with `lit review plan` / `lit review work`, without inventing another workflow surface.
 
 Legacy vocabulary must not appear in tracked files or release payloads. Do not introduce old package names, host claims, or environment prefixes into new product docs, tests, source, fixtures, or release artifacts.
 
@@ -72,7 +72,8 @@ Legacy vocabulary must not appear in tracked files or release payloads. Do not i
 ## Skill ID renames
 
 Use `lit-crucible`, `lit-init`, `lit-commit`, `lit-burnoff`, `lit-burnoff-file`,
-`lit-korean`, `lit-fetch`, and `lit-code`. The Unreleased changelog records the old-to-new
+`lit-korean`, `lit-fetch`, `lit-code`, and `litgoal` (formerly `durable-litgoal`, so the skill,
+the `/litgoal` command and the chat route now share one name). The Unreleased changelog records the old-to-new
 mapping. Old bare-word invocations select the new skill and inject exactly one line:
 ``Note: `<old>` was renamed to `<new>`; the old name is removed in the next minor.``
 Quoted text, code fences, and compound-word

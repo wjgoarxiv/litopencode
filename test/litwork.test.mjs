@@ -114,6 +114,7 @@ test("exposes unique lit and litwork command activation metadata", () => {
     "lit-init",
     "lit",
     "lit-comprehend",
+    "lit-brainstorm",
     "lit-goal",
     "lit-handoff",
     "lit-loop",
@@ -163,25 +164,26 @@ test("lit-plan activation hands approved plans to lit-implement", () => {
   assert.match(litPlanPromptInjection, /Do not start implementation yourself/);
 });
 
-test("lit-plan activation produces proportionate objective-achievable checklists", () => {
-  // Given: the OpenCode-native planning prompt exposed by /lit-plan and chat activation.
-  // When/Then: it requires an execution-ready contract without padding simple work.
-  assert.match(litPlanPromptInjection, /one bounded objective/i);
-  assert.match(litPlanPromptInjection, /explicit non-goals/i);
-  assert.match(litPlanPromptInjection, /action, output, and verification/i);
-  assert.match(litPlanPromptInjection, /dependencies and order/i);
-  assert.match(litPlanPromptInjection, /resolve material unknowns|resolved or gated unknowns/i);
-  assert.match(litPlanPromptInjection, /failure or decision branches/i);
-  assert.match(litPlanPromptInjection, /DoneClaim/i);
-  assert.match(litPlanPromptInjection, /proportionate/i);
-  assert.match(litPlanPromptInjection, /SDD-like gates/i);
-  assert.match(litPlanPromptInjection, /no padding/i);
+test("lit-plan activation produces proportionate objective-achievable checklists", async () => {
+  // Given: the planning prompt exposed by /lit-plan and chat activation, plus the installed skill it points to.
+  // When/Then: together they require an execution-ready contract without padding simple work.
+  const planText = `${litPlanPromptInjection}\n${await skillBody("lit-plan")}`;
+  assert.match(planText, /one bounded objective/i);
+  assert.match(planText, /explicit non-goals/i);
+  assert.match(planText, /action, output, and verification/i);
+  assert.match(planText, /dependencies and order/i);
+  assert.match(planText, /resolve material unknowns|resolved or gated unknowns/i);
+  assert.match(planText, /failure or decision branches/i);
+  assert.match(planText, /DoneClaim/i);
+  assert.match(planText, /proportionate/i);
+  assert.match(planText, /SDD-like gates/i);
+  assert.match(planText, /no padding/i);
 });
 
-test("review-work activation supports draft-plan review without weakening completed-work review", () => {
+test("review-work activation supports plan review without weakening work review", () => {
   // Given: the shared review-work command/chat prompt.
   // When/Then: it selects a review mode from the supplied artifact and never implements a draft.
-  assert.match(reviewWorkPromptInjection, /draft-plan review mode/i);
+  assert.match(reviewWorkPromptInjection, /plan review/i);
   assert.match(reviewWorkPromptInjection, /scope/i);
   assert.match(reviewWorkPromptInjection, /objective achievability/i);
   assert.match(reviewWorkPromptInjection, /checklist atomicity/i);
@@ -190,7 +192,7 @@ test("review-work activation supports draft-plan review without weakening comple
   assert.match(reviewWorkPromptInjection, /PASS.*ITERATE.*NEEDS-CONTEXT/i);
   assert.match(reviewWorkPromptInjection, /revise only when needed/i);
   assert.match(reviewWorkPromptInjection, /never implement/i);
-  assert.match(reviewWorkPromptInjection, /completed-work mode/i);
+  assert.match(reviewWorkPromptInjection, /work review/i);
   assert.match(reviewWorkPromptInjection, /five lanes/i);
 });
 
@@ -201,7 +203,8 @@ function composedSection(text, heading, nextHeading) {
   return text.slice(start, end);
 }
 
-test("lit-loop default completion guidance qualifies review depth by tier", () => {
+test("lit-loop default completion guidance qualifies review depth by tier", async () => {
+  const litLoopPromptInjection = await skillBody("workflow-loop");
   const completion = composedSection(litLoopPromptInjection, "## Completion Standard", "## Loop State Machine");
   const state = composedSection(litLoopPromptInjection, "## Loop State Machine", "## Applying the Loop to Documentation");
   const skills = composedSection(litLoopPromptInjection, "## Coordination With Skills", "## Failure Recovery");
@@ -360,7 +363,8 @@ test("injects lit-loop prompt through chat.message when explicit long-work terms
     assert.match(output.parts[1].text, /OpenCode does not expose a native goal primitive/);
     assert.match(output.parts[1].text, /# Continue or stop/);
     assertNoHtmlCommentArtifact(output.parts[1].text, "explicit long-work lit chat output");
-    assert.ok(output.parts[1].text.includes(workflowSkill), "explicit long-work lit should include the full workflow-loop skill body");
+    assert.ok(!output.parts[1].text.includes(workflowSkill), "explicit long-work lit should point to the workflow-loop skill, not paste it");
+    assert.match(output.parts[1].text, /skill name: workflow-loop/u);
     assert.ok(output.parts[1].text.split("\n").length > 70);
     const rawLedger = await fs.readFile(path.join(dir, ".litopencode", "litgoal", "lit-loop", "ledger.jsonl"), "utf8");
     assert.doesNotMatch(rawLedger, /please continue/);
@@ -475,7 +479,8 @@ test("injects planning-only lit-plan prompt when bare lit is typed in lit-plan m
     assert.match(output.parts[1].text, /misleading success output/i);
     assert.match(output.parts[1].text, /prompt injection/i);
     assertNoHtmlCommentArtifact(output.parts[1].text, "lit-plan chat output");
-    assert.ok(output.parts[1].text.includes(litPlanSkill), "lit-plan chat injection should include the full lit-plan skill body");
+    assert.ok(!output.parts[1].text.includes(litPlanSkill), "lit-plan chat injection should point to the lit-plan skill, not paste it");
+    assert.match(output.parts[1].text, /skill name: lit-plan/u);
     assert.equal(output.parts[1].metadata.litopencode.mode, "lit-plan");
   });
 });
@@ -674,8 +679,8 @@ test("routes bare static workflow skill names through chat activation", async ()
   assert.equal(detectChatActivationMode("please start-work the approved plan"), undefined);
   assert.equal(detectChatActivationMode("review-work"), "review-work");
   assert.equal(detectChatActivationMode("please review-work this package"), "review-work");
-  assert.equal(detectChatActivationMode("litgoal"), "lit-goal");
-  assert.equal(detectChatActivationMode("lit-goal"), "lit-goal");
+  assert.equal(detectChatActivationMode("litgoal"), "litgoal");
+  assert.equal(detectChatActivationMode("lit-goal"), "litgoal");
   assert.equal(detectChatActivationMode("start-workflow notes"), undefined);
   assert.equal(detectChatActivationMode("initialization deep dive"), undefined);
 
@@ -693,15 +698,15 @@ test("routes bare static workflow skill names through chat activation", async ()
     const litResearchSkill = await skillBody("litresearch");
     const startWorkSkill = await skillBody("start-work");
     const reviewWorkSkill = await skillBody("review-work");
-    const litGoalSkill = await skillBody("durable-litgoal");
+    const litGoalSkill = await skillBody("litgoal");
     const visualQaSkill = await skillBody("visual-qa");
     const cases = [
       ["lit-init", "lit-init", initDeepSkill],
       ["litresearch this package", "lit-research", litResearchSkill],
       ["start-work", "start-work", startWorkSkill],
       ["review-work", "review-work", reviewWorkSkill],
-      ["litgoal", "lit-goal", litGoalSkill],
-      ["lit-goal", "lit-goal", litGoalSkill],
+      ["litgoal", "litgoal", litGoalSkill],
+      ["lit-goal", "litgoal", litGoalSkill],
       ["visual-qa inspect the rendered page", "visual-qa", visualQaSkill]
     ];
 
@@ -782,7 +787,7 @@ test("natural keyword hook ignores slash commands and code-only mentions", async
   assert.equal(detectChatActivationMode("```\nlit review\n```"), undefined);
   assert.equal(detectChatActivationMode("split planning text"), undefined);
   assert.equal(detectChatActivationMode("lit research hydrate papers"), "lit-research");
-  assert.equal(detectChatActivationMode("lit goal define acceptance"), "lit-goal");
+  assert.equal(detectChatActivationMode("lit goal define acceptance"), "litgoal");
 });
 
 test("chat activation appends prompt even when durable ledger init fails", async () => {
@@ -868,7 +873,8 @@ test("/lit-plan command activates planning-only handoff instead of lit-loop exec
     assert.match(output.parts[0].text, /misleading success output/i);
     assert.match(output.parts[0].text, /prompt injection/i);
     assertNoHtmlCommentArtifact(output.parts[0].text, "/lit-plan command output");
-    assert.ok(output.parts[0].text.includes(litPlanSkill), "/lit-plan command should include the full lit-plan skill body");
+    assert.ok(!output.parts[0].text.includes(litPlanSkill), "/lit-plan command should point to the lit-plan skill, not paste it");
+    assert.match(output.parts[0].text, /skill name: lit-plan/u);
     assert.equal(output.parts[0].metadata.litopencode.mode, "lit-plan");
   });
 });

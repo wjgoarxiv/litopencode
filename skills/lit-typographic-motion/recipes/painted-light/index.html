@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Cover recipe "painted-light" (the default): a finished painting relit by a travelling window of
+     light. Worked example for one painting, a 1536x1024 line-up of five robots in panels under a
+     painted title. Everything that belongs to that painting sits in PAINTING below, in its own pixel
+     coordinates: measure your own base art and replace that block, keep the rest. The painting is
+     scaled into the cover, never cropped; at 2:1 a 3:2 painting is pillarboxed and the side wings
+     stay quiet. Any panel can be the hero: set PAINTING.hero, give that machine its own glow
+     anchors in PAINTING.glows, and point the base art's checkBox in assets.json at the same panel.
+     Every layer is drawn on one canvas from t alone. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #05080d; }
+  canvas { display: block; width: 1200px; height: 600px; }
+</style>
+</head>
+<body>
+<canvas id="cover" width="2400" height="1200"></canvas>
+<script>
+const PAINTING = {
+  src: "assets/base.png", width: 1536, height: 1024,
+  panels: [[13, 303], [320, 607], [623, 906], [921, 1208], [1224, 1526]], // x spans, left to right
+  panelTop: 148, panelBottom: 945,
+  hero: 0, // index into panels: the machine that stays lit, carries the beat glows and the comet
+  title: { box: [455, 32, 635, 88], lift: 1, maskAbove: 60 }, // painted letters; lift > 1 raises dark letters
+  // Glow anchors per panel index, measured on that machine: two eyes and one core. Only the hero's
+  // entry glows. A hero with no entry stops the page; [] runs it with no beat glows.
+  glows: { 0: [{ x: 88, y: 378, rx: 20, ry: 6, beat: "eye" }, { x: 122, y: 374, rx: 16, ry: 7, beat: "eye" }, { x: 85, y: 686, rx: 32, ry: 32, beat: "core" }] },
+  accent: { x: 902, y: 987, rx: 60, ry: 22 } // the accent word of the painted motto
+};
+
+const { TAU, clamp, fract, mix, ease, swell, cubicPulse, cdist, rng, makeNoise, loopNoise } = LitLoop;
+const W = 1200, H = 600, SCALE = H / PAINTING.height, LEFT = (W - PAINTING.width * SCALE) / 2;
+const ctx = document.getElementById("cover").getContext("2d");
+const toPainting = () => ctx.setTransform(2 * SCALE, 0, 0, 2 * SCALE, 2 * LEFT, 0);
+const toPage = () => ctx.setTransform(2, 0, 0, 2, 0, 0);
+const layer = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+const base = layer(PAINTING.width, PAINTING.height);
+const titleMask = layer(PAINTING.width, PAINTING.height);
+
+if (!PAINTING.panels[PAINTING.hero]) throw new Error(`PAINTING.hero ${PAINTING.hero} is not a panel index (0 to ${PAINTING.panels.length - 1})`);
+const heroGlows = PAINTING.glows[PAINTING.hero];
+if (!Array.isArray(heroGlows)) throw new Error(`PAINTING.glows has no entry for the hero panel ${PAINTING.hero}: measure that machine's eyes and core, or set glows[${PAINTING.hero}] = [] to run with no beat glows`);
+const [hx0, hx1] = PAINTING.panels[PAINTING.hero];
+
+// MACRO: a window of work light walks the dimmed panels once per loop. Its edges are short ramps
+// (24 painting px): a moving edge changes each pixel by many levels at once, which the lossy encoder
+// keeps; a wide soft edge changes each pixel by a level or two per frame, which it drops. The pool
+// spans the first to the last dimmed panel and is clipped around the hero, so a hero in the middle
+// stays lit while the window still walks every panel as one light.
+const dimmed = PAINTING.panels.filter((_, i) => i !== PAINTING.hero);
+const POOL = { x0: dimmed[0][0], x1: dimmed.at(-1)[1], half: 230, edge: 24, dim: 0.68, open: 0.04 };
+const windowAt = (t) => mix(POOL.x0 - 330, POOL.x1 + 330, fract(t + 0.18));
+const openness = (t, x) => 1 - ease.smooth(clamp((Math.abs(x - windowAt(t)) - POOL.half) / POOL.edge));
+function drawPool(t) {
+  const centre = windowAt(t), span = POOL.x1 - POOL.x0, at = (x) => clamp((x - POOL.x0) / span);
+  const shade = ctx.createLinearGradient(POOL.x0, 0, POOL.x1, 0);
+  const stops = [[POOL.x0, POOL.dim], [centre - POOL.half - POOL.edge, POOL.dim], [centre - POOL.half, POOL.open], [centre + POOL.half, POOL.open], [centre + POOL.half + POOL.edge, POOL.dim], [POOL.x1, POOL.dim]];
+  for (const [x, a] of stops) shade.addColorStop(at(x), `rgba(2, 5, 10, ${a})`);
+  const height = PAINTING.panelBottom - PAINTING.panelTop;
+  ctx.save();
+  ctx.beginPath();
+  if (hx0 > POOL.x0) ctx.rect(POOL.x0, PAINTING.panelTop, hx0 - POOL.x0, height);
+  if (hx1 < POOL.x1) ctx.rect(hx1, PAINTING.panelTop, POOL.x1 - hx1, height);
+  ctx.clip();
+  ctx.fillStyle = shade;
+  ctx.fillRect(POOL.x0, PAINTING.panelTop, span, height);
+  ctx.restore();
+}
+
+// MID: one scan band per panel, two passes per loop, offset by the panel's position. A band is a
+// 3 px leading line over two flat afterglow steps (0.10, 0.05): flat steps change pixels only at
+// their edges, and each step clears the encoder's threshold. A third, fainter step drifts.
+const BAND = { height: 64, steps: [0.10, 0.05] };
+function drawBands(t) {
+  ctx.globalCompositeOperation = "screen";
+  PAINTING.panels.forEach(([x0, x1], i) => {
+    const gain = i === PAINTING.hero ? 0.8 : 0.35 + 0.65 * openness(t, (x0 + x1) / 2);
+    const y = mix(PAINTING.panelTop - BAND.height, PAINTING.panelBottom, fract(2 * t - 0.11 * i));
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x0 + 2, PAINTING.panelTop, x1 - x0 - 4, PAINTING.panelBottom - PAINTING.panelTop);
+    ctx.clip();
+    const slab = BAND.height / BAND.steps.length;
+    BAND.steps.forEach((a, j) => { ctx.fillStyle = `rgba(255, 178, 122, ${a * gain})`; ctx.fillRect(x0, y + BAND.height - (j + 1) * slab, x1 - x0, slab); });
+    ctx.fillStyle = `rgba(255, 201, 160, ${0.32 * gain})`;
+    ctx.fillRect(x0, y + BAND.height - 3, x1 - x0, 3);
+    ctx.restore();
+  });
+  ctx.globalCompositeOperation = "source-over";
+}
+
+// SLOW: a comet laps the hero panel's chamfered border once per loop, linear and perpetual.
+const C = 10, corners = [[hx0, PAINTING.panelTop + C], [hx0 + C, PAINTING.panelTop], [hx1 - C, PAINTING.panelTop], [hx1, PAINTING.panelTop + C], [hx1, PAINTING.panelBottom - C], [hx1 - C, PAINTING.panelBottom], [hx0 + C, PAINTING.panelBottom], [hx0, PAINTING.panelBottom - C]];
+const legs = corners.map((p, i) => { const q = corners[(i + 1) % corners.length]; return { p, q, len: Math.hypot(q[0] - p[0], q[1] - p[1]) }; });
+const LAP = legs.reduce((sum, leg) => sum + leg.len, 0);
+function pointOnBorder(s) {
+  let d = ((s % LAP) + LAP) % LAP;
+  for (const leg of legs) { if (d <= leg.len) return [mix(leg.p[0], leg.q[0], d / leg.len), mix(leg.p[1], leg.q[1], d / leg.len)]; d -= leg.len; }
+  return corners[0];
+}
+function drawComet(t) {
+  const head = fract(t) * LAP, tail = 0.16 * LAP;
+  ctx.globalCompositeOperation = "screen";
+  ctx.lineCap = "round";
+  for (let s = 0; s < 6; s++) {
+    const length = tail * (1 - s / 7);
+    ctx.strokeStyle = `rgba(255, 122, 70, ${0.55 * (1 - s / 6)})`;
+    ctx.lineWidth = 9 - s;
+    ctx.beginPath();
+    for (let k = 0; k <= 24; k++) { const [x, y] = pointOnBorder(head - length + (length * k) / 24); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke();
+  }
+  const [tx, ty] = pointOnBorder(head);
+  const tip = ctx.createRadialGradient(tx, ty, 0, tx, ty, 22);
+  tip.addColorStop(0, "rgba(255, 241, 224, 1)"); tip.addColorStop(0.4, "rgba(255, 178, 122, 0.5)"); tip.addColorStop(1, "rgba(255, 122, 70, 0)");
+  ctx.fillStyle = tip;
+  ctx.fillRect(tx - 22, ty - 22, 44, 44);
+  ctx.globalCompositeOperation = "source-over";
+}
+
+// BEAT: the eyes breathe twice per loop with one blink, the core once, the accent word flares at
+// t = 0 and t = 0.5 with a symmetric pulse (an exponential tail would be a slow fade, and the pulse
+// at t = 0 puts the loop's keyframe reset under motion).
+function glow(x, y, rx, ry, alpha) {
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  g.addColorStop(0, `rgba(255, 240, 216, ${0.85 * alpha})`); g.addColorStop(0.3, `rgba(255, 99, 55, ${0.5 * alpha})`); g.addColorStop(1, "rgba(255, 99, 55, 0)");
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(rx, ry);
+  ctx.fillStyle = g;
+  ctx.fillRect(-1, -1, 2, 2);
+  ctx.restore();
+}
+function drawBeats(t) {
+  ctx.globalCompositeOperation = "screen";
+  const blink = 1 - cubicPulse(0.62, 0.018, t);
+  heroGlows.forEach((g, k) => {
+    const level = g.beat === "eye" ? (0.55 + 0.45 * swell(fract(2 * t - 0.06 * k))) * blink : 0.45 + 0.4 * swell(fract(t - 0.35));
+    glow(g.x, g.y, g.rx + 30, g.ry + 30, level);
+  });
+  const flare = Math.max(cubicPulse(0, 0.03, cdist(t, 0)), cubicPulse(0, 0.03, cdist(t, 0.5)));
+  glow(PAINTING.accent.x, PAINTING.accent.y, PAINTING.accent.rx, PAINTING.accent.ry, 0.18 + 0.5 * flare);
+  ctx.globalCompositeOperation = "source-over";
+}
+
+// MID: one fast skewed glint across the title, in overlay: the dark plate stays dark and only the
+// letters brighten. Screen would brighten a visible box; colour-dodge turns coloured letters red.
+function drawGlint(t) {
+  const p = LitLoop.window(t, 0.08, 0.11);
+  if (p < 0) return;
+  const [tx, ty, tw, th] = PAINTING.title.box;
+  const x = mix(tx - 40, tx + tw + 40, ease.smooth(p));
+  ctx.save();
+  ctx.globalCompositeOperation = "overlay";
+  ctx.filter = "blur(6px)";
+  ctx.globalAlpha = 0.9 * Math.sin(Math.PI * p);
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.moveTo(x, ty - 8); ctx.lineTo(x + 60, ty - 8); ctx.lineTo(x + 25, ty + th + 8); ctx.lineTo(x - 35, ty + th + 8);
+  ctx.fill();
+  ctx.restore();
+}
+
+// SLOW: motes rise one or two screens per loop, few, mostly over the plain wings (a mote over the
+// painting makes the encoder re-send the textured blocks around it).
+const draw = rng(11), noise = makeNoise(5);
+const motes = Array.from({ length: 50 }, (_, i) => ({ x: draw() * W, y: draw() * H, laps: draw() < 0.3 ? 2 : 1, r: 0.6 + draw() * 1.4, a: 0.25 + draw() * 0.45, i }));
+function drawWingsAndMotes(t) {
+  for (const [x, w, a] of [[LEFT, -LEFT, 0.08], [W - LEFT, LEFT, 0.03]]) {
+    const spill = ctx.createLinearGradient(x, 0, x + w, 0);
+    spill.addColorStop(0, `rgba(255, 120, 70, ${a})`); spill.addColorStop(1, "rgba(255, 120, 70, 0)");
+    ctx.fillStyle = spill;
+    ctx.fillRect(Math.min(x, x + w), 0, Math.abs(w), H);
+  }
+  for (const m of motes) {
+    const y = H + 20 - fract(m.y / H + m.laps * t) * (H + 40);
+    const x = m.x + 14 * loopNoise(noise, t, 1.7 * m.i, 1.1);
+    const lit = x >= LEFT && x <= W - LEFT ? 0.3 + 0.7 * openness(t, (x - LEFT) / SCALE) : 0.35;
+    ctx.fillStyle = `rgba(255, 214, 170, ${m.a * lit})`;
+    ctx.beginPath(); ctx.arc(x, y, m.r, 0, TAU); ctx.fill();
+  }
+}
+
+window.renderFrame = (t, { mask = false } = {}) => {
+  toPage();
+  ctx.fillStyle = mask ? "#000000" : "#05080d";
+  ctx.fillRect(0, 0, W, H);
+  toPainting();
+  if (mask) { ctx.drawImage(titleMask, 0, 0); return; }
+  ctx.drawImage(base, 0, 0);
+  drawPool(t);
+  drawBands(t);
+  drawComet(t);
+  drawBeats(t);
+  drawGlint(t);
+  toPage();
+  drawWingsAndMotes(t);
+};
+
+// The painting is decoded and drawn once. Dark painted title letters are lifted in place by a
+// luminance-keyed gain (only pixels above the plate's level move, so the plate stays dark), and the
+// title mask is the same letters, white on black, for the contrast and size gates.
+const art = new Image();
+art.src = PAINTING.src;
+art.decode().then(() => {
+  const b = base.getContext("2d", { willReadFrequently: true });
+  b.drawImage(art, 0, 0, PAINTING.width, PAINTING.height);
+  const [tx, ty, tw, th] = PAINTING.title.box;
+  const letters = b.getImageData(tx, ty, tw, th);
+  const mask = new ImageData(tw, th);
+  for (let p = 0; p < tw * th; p++) {
+    const o = 4 * p, Y = 0.2126 * letters.data[o] + 0.7152 * letters.data[o + 1] + 0.0722 * letters.data[o + 2];
+    const k = clamp((Y - 8) / 22), gain = 1 + (PAINTING.title.lift - 1) * k * k * (3 - 2 * k);
+    for (let c = 0; c < 3; c++) letters.data[o + c] = Math.min(255, Math.round(letters.data[o + c] * gain));
+    const on = Y > PAINTING.title.maskAbove ? 255 : 0;
+    mask.data[o] = mask.data[o + 1] = mask.data[o + 2] = on;
+    mask.data[o + 3] = 255;
+  }
+  b.putImageData(letters, tx, ty);
+  const m = titleMask.getContext("2d");
+  m.fillStyle = "#000000";
+  m.fillRect(0, 0, PAINTING.width, PAINTING.height);
+  m.putImageData(mask, tx, ty);
+  window.renderFrame(0);
+  window.ready = true;
+});
+</script>
+</body>
+</html>

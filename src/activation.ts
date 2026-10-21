@@ -20,6 +20,7 @@ import { autoHandoffSettingText, type AutoHandoffRouteMode } from "./auto-handof
 import { isReadOnlyWorkflowFamilyPlan } from "./workflow-families.ts";
 import { queryKnowledge } from "./knowledge.ts";
 import { activationDiscipline } from "./activation-probe.ts";
+import { decideReentry, type ActivationMemory } from "./activation-reentry.ts";
 import { micro, supportsMarkGlyphs } from "./lit-mark.ts";
 
 // Prompt modules preserve minimum-first, single-task or few-task planning, avoidable custom code review,
@@ -39,6 +40,7 @@ export {
   debuggingPromptInjection,
   deepInterviewPromptInjection,
   gitMasterPromptInjection,
+  litBrainstormPromptInjection,
   litCruciblePromptInjection,
   initDeepPromptInjection,
   litGoalPromptInjection,
@@ -52,6 +54,7 @@ export {
   browserDrivePromptInjection,
   structuralSearchPromptInjection,
   rulesPromptInjection,
+  reviewModeForcedNote,
   reviewWorkPromptInjection,
   startWorkChatPromptInjection,
   startWorkPromptInjection,
@@ -104,6 +107,10 @@ export type ChatMessageActivationOptions = {
   readonly onScientificVisualizationActivation?: (sessionID: string) => void;
   readonly onRootUserTurn?: (sessionID: string) => void | Promise<void>;
   readonly onSkillActivation?: (sessionID: string, skillId: string, appendedLit?: boolean) => void | Promise<void>;
+  /** Which discipline each session already runs, so a repeated lit continues it instead of restarting it. */
+  readonly activationMemory?: ActivationMemory;
+  /** A repeated lit that continues an active discipline: keeps the completion mark state, shows no new toast. */
+  readonly onSkillContinue?: (sessionID: string, skillId: string, appendedLit?: boolean) => void | Promise<void>;
   /** Consumes the skill a trusted command activation recorded for this session, if any. */
   readonly trustedInjectedSkill?: (sessionID: string) => string | undefined;
   /** Restores that skill after the root-turn reset; the command already showed its activation toast. */
@@ -215,7 +222,8 @@ export function createChatMessageActivationHook(
 
     const trigger = mode === "lit-handoff" ? "handoff" : mode === "lit-scientific-visualization" ? mode : "lit";
 
-    let activationText = promptForChatActivationMode(mode, nonEmptyTextParts.find((part) => detectChatActivationMode(part.text, agent) === mode)?.text);
+    const triggerText = nonEmptyTextParts.find((part) => detectChatActivationMode(part.text, agent) === mode)?.text;
+    let activationText = promptForChatActivationMode(mode, triggerText);
     if (mode === "start-work" && agent !== "lit-plan" && nonEmptyTextParts.length === 1) {
       const directive = parseStartWorkLifecycleDirective(nonEmptyTextParts[0].text, { chat: true });
       if (directive?.action === "resume") {
@@ -233,31 +241,51 @@ export function createChatMessageActivationHook(
       }
     }
 
+    const reentry = options.activationMemory === undefined
+      ? ({ kind: "full" } as const)
+      : await decideReentry({
+          memory: options.activationMemory,
+          projectRoot,
+          sessionID: input.sessionID,
+          mode,
+          text: triggerText ?? ""
+        });
+    const markMode = reentry.kind === "continue" ? reentry.mode : mode;
+    if (reentry.kind === "continue") activationText = reentry.text;
+    else if (reentry.kind === "resume") activationText = `${reentry.line}\n${activationText}`;
+    else if (reentry.kind === "confirm") activationText = `${activationText}\n${reentry.line}`;
+
     output.parts.push({
-      id: `prt_litopencode_${mode.replace("-", "_")}_${idSuffix(input.messageID ?? output.message.id)}`,
+      id: `prt_litopencode_${markMode.replace("-", "_")}_${idSuffix(input.messageID ?? output.message.id)}`,
       sessionID: input.sessionID,
       messageID: input.messageID ?? output.message.id,
       type: "text",
       text: activationText,
       metadata: {
         litopencode: {
-          mode,
+          mode: markMode,
           trigger,
-          source: "chat.message"
+          source: "chat.message",
+          ...(reentry.kind === "full" ? {} : { reentry: reentry.kind })
         }
       }
     });
 
-    await options.onSkillActivation?.(
-      input.sessionID, mode,
-      nonEmptyTextParts.some((part) => endsWithStandaloneLitInvocation(part.text))
-    );
+    const appendedLit = nonEmptyTextParts.some((part) => endsWithStandaloneLitInvocation(part.text));
+    if (reentry.kind === "continue") {
+      await options.onSkillContinue?.(input.sessionID, markMode, appendedLit);
+      return;
+    }
+    await options.onSkillActivation?.(input.sessionID, mode, appendedLit);
+    if (reentry.kind !== "confirm" && mode !== "lit-handoff" && mode !== "lit-scientific-visualization") {
+      options.activationMemory?.remember(input.sessionID, mode);
+    }
 
     if (mode === "lit-scientific-visualization") {
       options.onScientificVisualizationActivation?.(input.sessionID);
     }
 
-    if (mode === "lit-task" || mode === "lit-recap" || isReadOnlyWorkflowFamilyPlan(mode)) return;
+    if (mode === "lit-task" || mode === "lit-recap" || mode === "lit-brainstorm" || isReadOnlyWorkflowFamilyPlan(mode)) return;
 
     try {
       await operations.init();

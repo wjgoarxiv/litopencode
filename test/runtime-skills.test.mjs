@@ -32,7 +32,7 @@ const guardedPattern = new RegExp(guardedTokens.map((token) => "\\b" + token + "
 
 const expectedRuntimeSkillIds = [
   "workflow-loop",
-  "durable-litgoal",
+  "litgoal",
   "agent-roster",
   "lit-plan",
   "start-work",
@@ -46,6 +46,7 @@ const expectedRuntimeSkillIds = [
   "release-guardrails",
   "lit-init",
   "lit-crucible",
+  "lit-brainstorm",
   "refactor",
   "lit-burnoff",
   "lit-burnoff-file",
@@ -97,6 +98,7 @@ const expectedFeatureIds = [
   "guardrails",
   "lit-init",
   "lit-crucible",
+  "lit-brainstorm",
   "refactor",
   "lit-burnoff",
   "lit-burnoff-file",
@@ -274,7 +276,7 @@ test("text naturalization redirects to the static prose review contract", async 
 test("visible skills corpus covers runtime feature parity", async () => {
   const corpusExpectations = new Map([
     ["workflow-loop", ["planning-start-work-loop", "/litwork"]],
-    ["durable-litgoal", ["durable-ledger", "bounded-authority-lifecycle", "schema 3", ".litopencode/litgoal/lit-loop/ledger.jsonl"]],
+    ["litgoal", ["durable-ledger", "bounded-authority-lifecycle", "schema 3", ".litopencode/litgoal/lit-loop/ledger.jsonl"]],
     ["agent-roster", ["agent-roster", "Specialist agents"]],
     ["lit-plan", ["lit-plan", "/lit-plan"]],
     ["start-work", ["start-work", "/start-work"]],
@@ -288,6 +290,7 @@ test("visible skills corpus covers runtime feature parity", async () => {
     ["release-guardrails", ["guardrails", "check:pack-payload"]],
     ["lit-init", ["lit-init", "AGENTS.md"]],
     ["lit-crucible", ["lit-crucible", "adversarial planning"]],
+    ["lit-brainstorm", ["lit-brainstorm", "deep-interview", "lit-plan"]],
     ["refactor", ["refactor", "behavior-preserving"]],
     ["lit-burnoff", ["lit-burnoff", "AI-like artifacts"]],
     ["lit-burnoff-file", ["lit-burnoff-file", "tool.execute.after", "one logical change at a time"]],

@@ -137,7 +137,9 @@ litopencode install
 | `/litwork` | 제한된 작업 루프 진입 |
 | `/lit-plan` | 읽기 전용 구현 계획 작성 |
 | `/start-work` | 승인된 계획을 `lit-implement`로 실행 |
-| `/review-work` | 초안 계획 또는 완료 작업 검토 |
+| `/review-work` | `lit-plan` 뒤에는 계획 검토, `lit-loop`나 `/start-work` 뒤에는 작업 검토. 있는 것을 보고 고르며 `/review-work plan`, `/review-work work`로 직접 정할 수 있음 |
+| `/litgoal` | 끝나는 지점을 정하고 지킴: 확인 가능한 기준이 붙은 목표 하나를 디스크에 남김. `lit-loop`와 `/start-work`가 그 목표를 향해 일함 |
+| `/lit-brainstorm` | 열린 질문을 여러 선택지로 펼친 뒤 짧은 목록으로 좁히고, 고른 것을 `deep-interview`나 `lit-plan`에 넘김. 채팅에서는 `lit brainstorm`, `lit brainstorming`, `lit ideation`, `lit ideate`, `lit idea`, `lit ideas`. 직접 만들지는 않음 |
 | `/litresearch` 또는 `/lit-research` | 순차 대체 경로를 포함한 근거 기반 연구 |
 | `/lit-handoff` | 이어서 작업할 수 있는 핸드오프 작성 |
 | `/lit-recap` | 로컬 ledger와 세션 맥락으로 짧은 리캡 작성 |
@@ -149,6 +151,17 @@ litopencode install
 `/lsp`, `/lsp-setup`, `/rules`, `/deep-interview`, `/structural-search`,
 `/autoresearch`, `/autoconference`, `/wikify-*` 경로가 있습니다. 이 경로는 안내 또는 제한된
 로컬 동작을 추가합니다. 호스트 권한은 늘리지 않습니다.
+
+### `lit` 반복 입력
+
+메시지마다 `lit`를 붙여도 안전합니다. 세션의 첫 `lit`는 전체 활성화 안내를 보냅니다. 같은 discipline의 `lit`
+(예: 실행 중에 보낸 두 번째 `lit fix ...`)는 전체 안내 대신 "이미 활성, 이어서 진행" 짧은 메모만 보내며, 기존
+계획, 기준, ledger를 건드리지 않습니다. 다른 discipline(루프 중 `lit plan ...`)은 그 discipline의 전체
+활성화 안내를 한 번 보냅니다. `lit new ...`와 `lit restart ...`는 새로 시작합니다. 승인된 계획이나 진행 중인
+`/start-work` 기록이 있으면 단독 `lit` 또는 `lit continue`가 그 작업을 이어 가며 새 계획을 만들지 않습니다.
+작업 내용도 없고 진행 중인 것도 없는 단독 `lit`는 무엇을 할지 되묻습니다. 컴팩션, 새 세션, OpenCode 재시작
+뒤에는 활성 discipline을 잊으므로 다음 `lit`는 다시 전체 안내를 보냅니다. `lit-loop`, `lit-plan`,
+`lit-humanizer`는 스킬 본문을 붙이지 않고 설치된 스킬을 가리킵니다.
 
 ### Durable loop 상태
 
@@ -245,15 +258,104 @@ npm uninstall -g @litfamily/litopencode
 프로젝트의 `.litopencode/`는 별도 ledger와 receipt입니다. 나중에 재개할 계획이 없다면
 그 상태를 버려도 되는지 확인한 뒤 직접 정리합니다.
 
-TUI 패널 항목은 `tui.json`이나 `tui.jsonc`에 있습니다. `litopencode tui remove [--root <dir>]`는
-두 파일에서 LitOpenCode 항목만 지우고, 다른 플러그인과 주석은 그대로 둡니다. 바뀌는 파일은 먼저
-`<file>.litopencode-backup`으로 복사합니다. `--dry-run`은 같은 결과를 보여 주기만 하고 아무것도 쓰지 않습니다.
+TUI 패널 항목은 `tui.json`이나 `tui.jsonc`에 있고, OpenCode 2에서는 `cli.json`에 고정된 항목이 있을 수도
+있습니다. `litopencode tui remove [--root <dir>]`는 세 파일에서 LitOpenCode 항목만 지우고, 다른 플러그인과
+주석은 그대로 둡니다. 바뀌는 파일은 먼저 `<file>.litopencode-backup`으로 복사합니다. 쓰기 전에 모든 파일을
+읽고 확인하므로, 깨진 파일이나 지워질 주석이 있으면 아무것도 바꾸지 않고 멈춥니다. `--host v1`이면
+`cli.json`은 건드리지 않습니다. `--dry-run`은 같은 결과를 보여 주기만 하고 아무것도 쓰지 않습니다.
+
+## OpenCode 2
+
+LitOpenCode는 OpenCode 1(1.18.29 이상. 패키지가 `engines.opencode >=1.18.29`를 선언하고 OpenCode 1이 이를
+확인합니다)과 OpenCode 2에서 모두 돌아갑니다. 두 호스트를 함께 설치할 수 있습니다. OpenCode 1은 `opencode`
+명령을 그대로 쓰고, OpenCode 2(npm `@opencode/cli`)는 `opencode2`로 실행합니다. 둘 다 같은
+`~/.config/opencode`를 읽으므로 한 번 설치하면 양쪽에 적용됩니다.
+
+**설치.** `litopencode install`은 무엇을 쓰기 전에 호스트부터 찾고, 그때 어느 호스트도 실행하지 않습니다.
+`opencode`와 `opencode2` 뒤에 있는 npm 패키지를 읽습니다(`opencode-ai`는 OpenCode 1, `@opencode/cli`는 OpenCode 2.
+Windows에서는 npm `.cmd` 실행 파일을 글자로 읽습니다). 뒤에 npm 패키지가 없는 `opencode`(curl 설치 스크립트,
+Homebrew, mise)는 일단 OpenCode 1로 봅니다. 어떻게 설치했든 OpenCode 1 설정이 유지되도록 하기 위해서입니다.
+`opencode2`와 같은 파일인 `opencode`는 OpenCode 2로 보고, `opencode2`는 언제나 OpenCode 2로 봅니다. OpenCode 1에는
+`opencode2`가 없기 때문입니다. 실제 설치는 OpenCode 1로 짐작한 `opencode`에 `opencode plugin`을 부르기 전에
+`opencode --version`을 묻고, 2.x라고 답하면 그 호스트에 OpenCode 2 설정을 합니다(dry run은 아무것도 실행하지 않으므로
+처음 짐작을 보여 줍니다).
+PATH에 두 명령이 모두 없으면 `tui.json`(OpenCode 1)과 `cli.json`(OpenCode 2)을 근거로 삼고, 둘 다 없으면
+OpenCode 1 설정을 유지합니다. `--host v1`이나 `--host both`인데 `opencode`가 OpenCode 2뿐이면 아무것도 실행하기
+전에 멈춥니다. 그 상태에서 `opencode plugin`을 부르면 OpenCode 2 설정이 바뀌기 때문입니다.
+기본값인 `--host auto`는 찾은 호스트를 모두 설정하고, `--host v1`, `--host v2`, `--host both`로 직접 정할 수
+있습니다. dry-run 결과의 `host`에 판단이 나옵니다. OpenCode 1 쪽은 그대로입니다. `opencode plugin`이 패키지를
+등록하고 TUI 항목은 `tui.json`에 들어갑니다. OpenCode 2 쪽에서 설치 프로그램은 다음을 합니다.
+
+- 두 호스트가 함께 읽는 `opencode.json(c)`의 `plugin` 목록에 항목 하나만 둡니다. OpenCode 2 실행 파일로
+  `opencode plugin`을 부르지 않습니다. OpenCode 2는 처음 불러올 때 패키지를 직접 설치합니다.
+- OpenCode 2 전용 `plugins` 키에 있는 LitOpenCode 항목을 지웁니다. 같은 id의 플러그인이 둘이면 OpenCode 2가
+  뒤의 것을 거부하기 때문입니다.
+- `cli.json`의 LitOpenCode 항목을 지우고 `cli.json.litopencode-backup`을 남깁니다. OpenCode 2는 활성
+  서버 플러그인의 TUI를 스스로 불러오는데, 거기에 고정된 항목이 있으면 그것이 새 TUI를 가리기 때문입니다.
+- 공유 설정에 OpenCode 2 키 `permissions`나 `policies`를 절대 쓰지 않습니다. OpenCode 1은 그 자리에서
+  `permissions`를 보면 시작하지 않습니다.
+
+두 호스트에 설치한 뒤 `opencode2` TUI를 처음 열면 OpenCode 2가 `tui.json`의 플러그인 목록을 새 `cli.json`으로
+복사하고, 여기에 LitOpenCode 항목도 따라 들어갑니다. 설치 프로그램은 이 복사를 막을 수 없습니다. doctor가 그
+항목을 알려 주고, `litopencode install`이나 `litopencode tui remove`를 다시 실행하면 지워집니다.
+
+**Doctor.** `litopencode doctor`는 `host` 블록(찾은 호스트, 근거 파일, 공유 설정의 `autoupdate`에서 읽은
+OpenCode 2 플러그인 업데이트 방식)을 보여 주고, `plugin`과 `plugins`에 걸친 LitOpenCode 항목 수를 세며,
+`cli.json`에 남은 항목과 OpenCode 1도 읽는 설정에 들어간 `permissions`를 알려 줍니다. doctor는 호스트를
+실행하지 않습니다. OpenCode 2가 대상이면 `lsp` 블록에 OpenCode 2는 `lsp` 설정을 받아 두기만 하고 언어 서버를
+돌리지 않는다는 설명이 붙습니다.
+
+**똑같이 동작하는 것.** 에이전트(기본은 `lit-loop`, `build`와 `plan`은 숨김), 도구 다섯 개, 단독 `lit` 활성화,
+정적 규칙과 독자용 계약, 도구 가드, 플래너 잠금, bounded-authority 진행 기록, 자동 인수인계,
+`~/.config/opencode/skills`의 스킬이 모두 OpenCode 2에서 돌아갑니다. OpenCode 2는 도구 두 개의 이름을 바꿨기
+때문에 권한 규칙은 `bash` 대신 `shell`, `task` 대신 `subagent`를 쓰고, `write`와 `patch`는 `edit`에 들어갑니다.
+그곳에서는 마지막에 맞는 규칙이 이기므로 `lit-plan`은 어떤 권한 모드에서도 `edit`, `shell`, `subagent`,
+`execute` 거부로 끝나고, 권한 훅이 다른 규칙과 상관없이 한 번 더 거부합니다. `execute`는 OpenCode 2의 Code Mode
+도구로, 모델이 쓴 JavaScript를 `fetch`와 다른 도구와 함께 실행합니다. OpenCode 1에는 없던 도구이고 계획만 하는
+에이전트가 가져서는 안 됩니다. 이렇게 거부된 도구는 요청에서 빠집니다. LitOpenCode 도구 다섯 개는 OpenCode 1에서처럼
+Code Mode 밖, 모델의 도구 목록에 바로 있으므로 `lit-plan`도 계속 씁니다. OpenCode 1에서 전역 권한을 넓히는 balanced와 yolo
+모드는 OpenCode 2에서는 각 LitOpenCode 에이전트 규칙의 앞부분에 들어갑니다. 플러그인이 그곳의 전역 규칙을
+바꿀 수 없기 때문입니다. 추론 강도 같은 에이전트별 요청 설정은 모델 요청마다 함께 보냅니다. OpenCode 2는
+에이전트의 요청 설정을 저장만 하고 아직 보내지 않습니다.
+
+**OpenCode 2에서 달라지는 것.**
+
+- *슬래시 명령.* 설치 프로그램은 두 호스트에 같은 `command/<id>.md` 파일을 쓰고, OpenCode 2에서는 이 파일이
+  같은 이름의 플러그인 명령을 대신합니다. 그래서 모든 lit 명령은 파일에서 오고 목록에 한 번만 나옵니다.
+  플러그인은 파일이 없는 명령만 직접 추가합니다(예를 들어 설치 프로그램 없이 `opencode plugin add`만 한 경우).
+  OpenCode 2에서 파일로 실행한 명령 차례에는 LitOpenCode 표시가 붙지 않습니다. 플러그인이 직접 보낸 명령에는
+  한 번만 쓰는 확인값이 든 표시가 붙어, 손으로 입력한 프롬프트가 흉내 낼 수 없습니다. `/lit-crucible`과
+  `/deep-interview`(`lit-plan`), `/start-work`(`lit-implement`)처럼 에이전트가 정해진 플러그인 명령은 명령 파일의
+  `agent:` 줄과 같이 먼저 세션을 그 에이전트로 바꿉니다.
+- *모델 경로.* OpenCode 2는 자기 모델이 없는 세션을 호스트의 기본 모델로 돌립니다. 에이전트의 모델은 세션을
+  만드는 클라이언트만 읽는데, TUI는 읽고 `opencode2 run`은 읽지 않습니다. 그래서 그런 세션의 첫 프롬프트에서
+  세션을 에이전트의 경로로 바꿉니다(에이전트가 없으면 `lit-loop`). 그 모델이 카탈로그에 있을 때만 바꿉니다.
+  사용자가 고른 모델과, 호스트가 이미 에이전트 모델로 시작하는 하위 세션은 그대로 둡니다. OpenCode 1과 같이
+  LitOpenCode가 쓰는 OpenAI 모델이 호스트 카탈로그에 없으면 `openai` 카탈로그에 추가합니다.
+- *사용자 메시지로 가는 프로젝트 데이터.* 로컬 지식 기록, start-work 재개 영수증, 자동 인수인계 설정 응답은
+  요청의 마지막 사용자 메시지에 붙습니다. OpenCode 1에서도 사용자 메시지의 일부였습니다. OpenCode 2의 system
+  부분은 지시를 위한 자리라서, LitOpenCode의 활성화 문구와 규칙, 독자용 계약만 그곳에 들어갑니다.
+- *따옴표 프롬프트.* `opencode2 run "lit fix it"`은 단어를 큰따옴표로 감싸 보내므로, 메시지 전체가 따옴표 한 쌍이면
+  따옴표를 벗겨 읽습니다. 서버는 이것과 TUI에서 통째로 따옴표 안에 입력한 프롬프트를 구별하지 못해서 그런 입력도
+  활성화됩니다. OpenCode 1에서는 활성화되지 않았습니다.
+- *점화 표시.* OpenCode 2에는 끝난 답변을 고치는 훅이 없어서 표시가 TUI로 옮겨 갑니다. 세션의 마지막 프롬프트가
+  lit 프롬프트이면 프롬프트 아래 줄(`prompt.footer.status`)에 `🔥 LIT IGNITED · <discipline>`이 나옵니다.
+  OpenCode 1에서는 표시가 예전 자리에 그대로 있습니다.
+- *토스트.* OpenCode 2에서는 서버가 토스트를 띄울 수 없습니다. 서버가 사용자 메시지 메타데이터에 남긴 lit 표시를
+  TUI가 보고 점화 토스트를 직접 띄웁니다. 서버만 알던 자동 인수인계 알림과 스킬 힌트는 그곳에 나오지 않습니다.
+- *TUI.* 미션 패널은 전처럼 세션 사이드바에 있습니다. OpenCode 2는 서버 플러그인과 함께 오는 TUI에 옵션을
+  넘기지 않고 할 일 목록도 두지 않으므로, 미션 진행은 ledger와 작업 기록과 계획에서 읽습니다. 세션 아래 상태 띠와
+  홈 화면 한 줄은 OpenCode 1에서만 그립니다.
+- *업데이트.* OpenCode 2에서는 플러그인 안의 자동 업데이트가 없습니다. `opencode plugin update`를 실행하거나
+  OpenCode 2의 업데이트 방식에 맡기면 됩니다.
 
 ## TUI 미션 패널
 
 OpenCode 1.18은 `tui.json`이나 `tui.jsonc`의 `plugin` 배열에 적힌 TUI 플러그인을 불러옵니다.
-이 패키지는 TUI 모듈을 서버 플러그인과 따로 `@litfamily/litopencode/tui`(`dist/tui.js`, 플러그인 id
-`litopencode`)로 내보냅니다. OpenCode가 두 대상을 한 모듈에 섞는 것을 허용하지 않기 때문입니다.
+이 패키지는 TUI 모듈을 서버 플러그인과 따로 `@litfamily/litopencode/tui`(`dist/host/tui.js`, 플러그인 id
+`litopencode`)로 내보냅니다. OpenCode가 두 대상을 한 모듈에 섞는 것을 허용하지 않기 때문입니다. OpenCode 2는
+활성 서버 플러그인을 위해 같은 모듈을 스스로 불러옵니다(위 OpenCode 2 참고). `./server`와 `./tui`의 타입 선언은
+각 진입점을 모양으로만 적으므로, 어느 호스트의 플러그인 패키지 없이도 해석됩니다.
 
 화면에 그리는 것:
 
@@ -461,7 +563,7 @@ OpenCode는 세션이 바쁜 동안 들어온 `summarize` 호출을 줄 세웠�
 ## 스킬 이름 변경
 
 새 명령은 `/lit-crucible`, `/lit-init`, `/lit-commit`, `/lit-burnoff`, `/lit-burnoff-file`,
-`/lit-korean`, `/lit-fetch`, `/lit-code`입니다. 이전 이름은 한 릴리스 동안 새 명령으로
+`/lit-korean`, `/lit-fetch`, `/lit-code`, `/litgoal`(이전 `durable-litgoal`)입니다. 이전 이름은 한 릴리스 동안 새 명령으로
 연결되며, 이름 변경 안내가 한 줄 표시됩니다. 다음 마이너 버전에서 이전 이름을 제거합니다.
 설치·업데이트는 새 복사본을 검증한 뒤 설치 도구가 관리하는 이전 이름의 스킬 디렉터리를
 제거합니다. 사용자 소유 파일은 보존합니다. 자세한 내용은 [마이그레이션 안내](migration.md#skill-id-renames)를 참고하세요.

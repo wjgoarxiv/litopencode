@@ -6,6 +6,10 @@ with exit 16 (`BLOCKED_TREATMENT_INVALID`) naming the first field that fails. A 
 director's decision record: what the film is about, what the viewer sees in each beat, how it moves
 and sounds, and what would make it excellent. Load the path reference only after `path` is set.
 
+A README, hero, banner or cover loop is not a film and has no beats: its treatment sets
+`"mode": "cover"` and follows `cover.md` instead of this file. A film render refuses a cover
+treatment with exit 16, and the other way round.
+
 ## Fields
 
 "Normalized" below means NFC, lowercase, then every space and punctuation mark removed. Before any

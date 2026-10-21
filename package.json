@@ -25,6 +25,9 @@
   "homepage": "https://github.com/wjgoarxiv/litopencode#readme",
   "author": "LitOpenCode contributors",
   "type": "module",
+  "engines": {
+    "opencode": ">=1.18.29"
+  },
   "bin": {
     "litopencode": "bin/litopencode.cjs"
   },
@@ -35,12 +38,12 @@
       "import": "./dist/index.js"
     },
     "./server": {
-      "types": "./dist/server.d.ts",
-      "import": "./dist/server.js"
+      "types": "./dist/host/server.d.ts",
+      "import": "./dist/host/server.js"
     },
     "./tui": {
-      "types": "./dist/tui.d.ts",
-      "import": "./dist/tui.js"
+      "types": "./dist/host/tui.d.ts",
+      "import": "./dist/host/tui.js"
     }
   },
   "scripts": {
@@ -55,6 +58,7 @@
     "postpack": "node tools/readme-for-npm.mjs restore",
     "pretest": "npm run build",
     "qa:behavior-replacement": "node tools/run-behavior-replacement-probes.mjs",
+    "qa:cover-recipes": "node tools/qa-cover-recipes.mjs --negatives",
     "qa:installed-resource-tamper": "node tools/run-installed-resource-tamper-probe.mjs",
     "qa:negative-gate-matrix": "node tools/run-negative-gate-matrix.mjs",
     "qa:rules-glob-differential": "node tools/run-rules-glob-differential.mjs --check",
@@ -70,6 +74,7 @@
   },
   "devDependencies": {
     "@opencode-ai/plugin": "^1.17.6",
+    "@opencode/plugin": "2.0.32",
     "@types/node": "^24.12.2",
     "picomatch": "^4.0.5",
     "typescript": "^5.9.3"

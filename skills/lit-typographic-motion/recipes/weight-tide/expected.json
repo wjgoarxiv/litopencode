@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "note": "The decoded gate row this recipe reached when it shipped; tools/qa-cover-recipes.mjs renders it again and fails when median d or the moving share move more than 15 %, seamLocal leaves the cover TARGET, the file passes 2 MiB or the render exits non-zero. Measured 2026-10-20 on headless Chrome's software rung with CPU raster and libwebp 1.6.0.",
+  "row": {
+    "medianD": 0.004935,
+    "movingFrac": 1.0,
+    "longestStillSec": 0.0,
+    "spike": 1.237,
+    "seamLocal": 1.152,
+    "bytes": 1706392
+  },
+  "settings": {
+    "size": [
+      1000,
+      500
+    ],
+    "fps": 16,
+    "frames": 128,
+    "encode": {
+      "q": 58,
+      "edgeQ": 80,
+      "edgeFrames": 15,
+      "method": 4
+    }
+  },
+  "treatment": {
+    "mode": "cover",
+    "request": "Make a looping README cover for LitOpenCode out of its own name.",
+    "idea": "A tide of weight rolls through drifting rows of the name while the bold name in the middle never thins.",
+    "recipe": "weight-tide",
+    "recipeReason": "The name is the only material, and a variable weight axis can move it without moving it.",
+    "brandWord": "LITOPENCODE",
+    "aspect": "2:1",
+    "loopSec": 8,
+    "fps": 16,
+    "layers": {
+      "slow": "Rows drift one word length per loop, alternate rows opposite ways.",
+      "mid": "One weight swell rolls diagonally across every letter.",
+      "beat": "A cursor steps under each hero letter and carries back home."
+    },
+    "system": {
+      "rule": "One weight field, gain of a swell.",
+      "copies": "About eight hundred letters plus the hero word.",
+      "offset": "Each letter's phase comes from its x and y on screen."
+    },
+    "title": {
+      "box": [
+        0.17,
+        0.38,
+        0.66,
+        0.24
+      ],
+      "kind": "live"
+    },
+    "encode": {
+      "q": 58,
+      "edgeQ": 80,
+      "edgeFrames": 15
+    },
+    "ambition": "The wave reads by itself from one rule, and the drift keeps every letter moving through the encoder."
+  }
+}

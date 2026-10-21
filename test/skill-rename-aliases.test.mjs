@@ -15,7 +15,8 @@ const otherRenames = [
   ["remove-ai-slops", "lit-burnoff"],
   ["ai-slop-remover", "lit-burnoff-file"],
   ["public-source-fetch", "lit-fetch"],
-  ["programming", "lit-code"]
+  ["programming", "lit-code"],
+  ["durable-litgoal", "litgoal"]
 ];
 const humanizerAliases = ["lit-korean", "text-naturalization", "text-neutralization", "korean-ai-slop-remover"];
 const renames = [...otherRenames, ...humanizerAliases.map((alias) => [alias, "lit-humanizer"])];
@@ -41,14 +42,18 @@ for (const [oldId, newId] of renames) {
     const injected = output.parts.find((part) => part.metadata?.litopencode);
     assert.equal(injected?.metadata.litopencode.mode, newId);
     assert.equal(injected.text.split(note).length - 1, 1);
-    assert.match(injected.text, new RegExp(`skill_id: ["']?${newId}["']?`), "the canonical skill body must be embedded");
+    assert.match(
+      injected.text,
+      new RegExp(`skill_id: ["']?${newId}["']?|skill name: ${newId}\\b`),
+      "the canonical skill must be embedded or named for the skill tool"
+    );
     assert.equal(findLitOpenCodeCommand(oldId)?.id, newId);
     assert.ok(!litOpenCodeCommands.some(({ id }) => id === oldId));
     const slash = { parts: [] };
     await createCommandActivationHook(root)({ sessionID: "session", command: oldId, arguments: "" }, slash);
     assert.equal(slash.parts.filter((part) => part.text?.includes(note)).length, 1);
     assert.equal(slash.parts.at(-1).metadata.litopencode.mode, newId);
-    assert.match(slash.parts.at(-1).text, new RegExp(`skill_id: ["']?${newId}["']?`));
+    assert.match(slash.parts.at(-1).text, new RegExp(`skill_id: ["']?${newId}["']?|skill name: ${newId}\\b`));
   });
 }
 test("rename install/update removes managed old skill trees and installs redirect stubs", async (t) => {

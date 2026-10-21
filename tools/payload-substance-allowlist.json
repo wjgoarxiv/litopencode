@@ -20,7 +20,7 @@
     "comment-checker": "Comment intent, accuracy, necessity, maintenance checks, and the after-tool binding are fully described in one file.",
     "deep-interview": "The command and agent route, decision questions, approval state, and readiness output form a complete procedure.",
     "doctor-installer": "CLI doctor and install inspection, config roots, managed files, failure modes, and evidence are bounded without a corpus.",
-    "durable-litgoal": "The skill binds the packaged goal operations and ledger symbols, whose compiled runtime is present in the product payload.",
+    "litgoal": "The skill binds the packaged goal operations and ledger symbols, whose compiled runtime is present in the product payload.",
     "lit-commit": "Native command routing plus bounded Git inventory, isolation, diff, history, and remote safety are complete in the body.",
     "lit-crucible": "Parallel delegation, exploration, contradiction checks, synthesis, and planning handoff form a complete native procedure.",
     "lit-init": "Repository discovery, instruction placement, complexity decisions, conflict analysis, and verification are fully specified.",

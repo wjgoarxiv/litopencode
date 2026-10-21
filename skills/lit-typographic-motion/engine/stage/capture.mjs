@@ -46,6 +46,38 @@ export function stageFonts(skillRoot, state, pins) {
   return { css, files, families: [...new Set(faces.map((face) => face.family))] };
 }
 
+// Serve the stage origin from disk through request interception: the product's scripts and faces
+// under /lit/, every other path from inside `stageDir` only. Anything else is recorded, never fetched:
+// another origin in `blocked`, a path that leaves the directory or has no stage type in `refused`, a
+// file that is not there in `missing`. The stage and the cover browsers both use it.
+export async function serveStage(context, { stageDir, fonts, scripts }) {
+  const blocked = [];
+  const refused = [];
+  const missing = [];
+  const root = realpathSync(stageDir);
+  await context.route("**/*", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.origin !== stageOrigin) { blocked.push(url.href); return route.abort("blockedbyclient"); }
+    const pathname = decodeURIComponent(url.pathname);
+    if (Object.hasOwn(scripts, pathname)) return route.fulfill({ status: 200, contentType: contentTypes[".js"], body: scripts[pathname] });
+    if (pathname === "/lit/fonts.css") return route.fulfill({ status: 200, contentType: contentTypes[".css"], body: fonts.css });
+    if (pathname.startsWith("/lit/fonts/")) {
+      const file = fonts.files.get(pathname.slice("/lit/fonts/".length));
+      return file && existsSync(file) ? route.fulfill({ status: 200, contentType: contentTypes[path.extname(file)], body: readFileSync(file) }) : route.fulfill({ status: 404, body: "" });
+    }
+    const rel = pathname.replace(/^\/+/u, "") || "index.html";
+    if (rel.split("/").includes("..")) { refused.push(rel); return route.fulfill({ status: 404, body: "" }); }
+    const full = path.join(root, rel);
+    if (!existsSync(full)) { missing.push(rel); return route.fulfill({ status: 404, body: "" }); }
+    const real = realpathSync(full);
+    if (!insideDir(root, real)) { refused.push(rel); return route.fulfill({ status: 404, body: "" }); }
+    const type = contentTypes[path.extname(real).toLowerCase()];
+    if (!type) { refused.push(rel); return route.fulfill({ status: 404, body: "" }); }
+    return route.fulfill({ status: 200, contentType: type, body: readFileSync(real) });
+  });
+  return { blocked, refused, missing };
+}
+
 // Launch one stage browser. `profile` is a short directory under the run's .run/, removed on close.
 export async function openStage(chromium, { chromePath, profile, stageDir, width, height, fps, seed, fonts, extraInit }) {
   rmSync(profile, { recursive: true, force: true });
@@ -62,31 +94,7 @@ export async function openStage(chromium, { chromePath, profile, stageDir, width
     const line = String(error?.message ?? error).split("\n").find((part) => part.trim()) ?? String(error);
     throw Object.assign(new Error(`BLOCKED_NO_CHROME (10): Chrome failed to launch headless: ${line}; fix: check that Chrome can start headless in this sandbox`), { exitCode: 10 });
   }
-  const blocked = [];
-  const refused = [];
-  const missing = [];
-  const root = realpathSync(stageDir);
-  const kit = kitSource();
-  await context.route("**/*", async (route) => {
-    const url = new URL(route.request().url());
-    if (url.origin !== stageOrigin) { blocked.push(url.href); return route.abort("blockedbyclient"); }
-    const pathname = decodeURIComponent(url.pathname);
-    if (pathname === "/lit/stage-kit.js") return route.fulfill({ status: 200, contentType: contentTypes[".js"], body: kit });
-    if (pathname === "/lit/fonts.css") return route.fulfill({ status: 200, contentType: contentTypes[".css"], body: fonts.css });
-    if (pathname.startsWith("/lit/fonts/")) {
-      const file = fonts.files.get(pathname.slice("/lit/fonts/".length));
-      return file && existsSync(file) ? route.fulfill({ status: 200, contentType: contentTypes[path.extname(file)], body: readFileSync(file) }) : route.fulfill({ status: 404, body: "" });
-    }
-    const rel = pathname.replace(/^\/+/u, "") || "index.html";
-    if (rel.split("/").includes("..")) { refused.push(rel); return route.fulfill({ status: 404, body: "" }); }
-    const full = path.join(root, rel);
-    if (!existsSync(full)) { missing.push(rel); return route.fulfill({ status: 404, body: "" }); }
-    const real = realpathSync(full);
-    if (!insideDir(root, real)) { refused.push(rel); return route.fulfill({ status: 404, body: "" }); }
-    const type = contentTypes[path.extname(real).toLowerCase()];
-    if (!type) { refused.push(rel); return route.fulfill({ status: 404, body: "" }); }
-    return route.fulfill({ status: 200, contentType: type, body: readFileSync(real) });
-  });
+  const { blocked, refused, missing } = await serveStage(context, { stageDir, fonts, scripts: { "/lit/stage-kit.js": kitSource() } });
   await context.addInitScript({ content: `window.__litStageConfig = ${JSON.stringify({ seed: seed >>> 0, fps })};\n${clockSource()}` });
   if (extraInit) await context.addInitScript({ content: extraInit });
   const page = context.pages()[0] ?? await context.newPage();

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "note": "A slide-like page that must keep failing these gates at FLOOR on the decoded file, and no other FLOOR gate among G1-G4; tools/qa-cover-recipes.mjs --negatives passes it only when the render completed and was gated. Never tune a threshold so it passes.",
+  "mustFail": [
+    "G2.floor"
+  ],
+  "treatment": {
+    "loopSec": 9,
+    "fps": 20,
+    "encode": {
+      "q": 78,
+      "edgeQ": 78,
+      "edgeFrames": 0
+    }
+  }
+}

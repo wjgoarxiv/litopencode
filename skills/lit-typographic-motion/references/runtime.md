@@ -11,7 +11,10 @@
   Galmuri9 with its OFL text, MesloLGS NF with the Apache-2.0 notice, the Apache-2.0 text and the
   Vera/Arev notices; the official Pretendard Regular only if the lit-pptx Hangul pair is missing;
 - with `--audio`, a Python venv holding the hash-pinned librosa set from `requirements-audio.txt`
-  (`pip install --require-hashes --only-binary=:all:`).
+  (`pip install --require-hashes --only-binary=:all:`). The venv is built from the newest `python3.13`,
+  or `python3.12` on PATH, then `python3` or `python` if one of those is in that range; a
+  newer `python3`, such as 3.15, has no wheel for the pins and is passed over. `MOTION_PYTHON` names
+  one interpreter to use instead, and only that one.
 
 `litopencode install` attempts the same pre-warm and prints one receipt line; a failure never fails
 the install. A render never installs, fetches or repairs anything: it checks hashes and receipts and
@@ -20,7 +23,9 @@ stops with a named state.
 `litopencode motion-runtime status` and `litopencode doctor` report five probes on every run:
 Chrome (path and version), ffmpeg (version and the preview encoder rung: `libwebp_anim`, `img2webp`
 or GIF), the WebGL2 renderer string from a real headless probe, the software-GL or unknown-renderer
-warning, and the pre-warm state naming what is missing and the command that fixes it.
+warning, and the pre-warm state naming what is missing and the command that fixes it. A sixth line,
+`motion cover encoder`, names the encoder cover mode will use (`img2webp`, decoded with `dwebp`, or
+`gifski`, decoded with ffmpeg) or says that none is installed.
 
 ## Exit codes
 
@@ -38,6 +43,11 @@ warning, and the pre-warm state naming what is missing and the command that fixe
 | 18 | STAGE_NONDETERMINISTIC | a sample frame differs between the master and a fresh replay from 0; the message names the frame and the first region | remove the clock or random source the renderer does not drive |
 | 19 | STAGE_NETWORK_REQUEST | the page requested something outside the stage origin, or a stage file names an external URL | make the asset local |
 | 20 | SOUND_INVALID | the planned track is missing from the film, too long or short, too loud, or a generated bed starts silent | fix the track or its plan |
+| 21 | BLOCKED_NO_COVER_ENCODER | cover mode found neither img2webp with dwebp nor gifski with ffmpeg; checked before any capture | install libwebp (or gifski); a cover is never an MP4 (`cover.md`) |
+| 22 | BLOCKED_ASSET_MISSING | cover mode: `assets.json` lists a file that is not there, or the painted recipe lists no base art | supply or generate the art and list it; never draw a stand-in |
+
+Cover mode uses 13 and 16–19 too, with its own meanings for 17 and 18 (an unlisted raster; a frame
+that differs when sought out of order); `cover.md` has its table.
 
 ## Chrome, egress and the sandbox
 
@@ -64,6 +74,11 @@ warning, and the pre-warm state naming what is missing and the command that fixe
 - Three browsers run side by side: the master capture, a fresh replay for the determinism samples and
   a separate QA replay that hides text to measure ink. The master never changes a style.
 - Fonts come from this skill and the pre-warmed cache; an unwarmed cache stops with exit 14.
+- Cover mode (`cover.md`) launches the same software rung at device scale 2 with CPU raster
+  (`--disable-gpu-rasterization --disable-partial-raster`), serves `/lit/loop-kit.js` instead of the
+  stage kit, adds JetBrains Mono (bundled, `fonts/JetBrainsMono-wght-latin.woff2`) to `/lit/fonts.css`,
+  and injects an init script that makes every clock and entropy source throw. It runs three browsers
+  one after another: the master (frames, then title masks), a fresh replay, and a shuffled seek pass.
 
 ## Sound
 

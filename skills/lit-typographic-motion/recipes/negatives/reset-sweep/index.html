@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- NEGATIVE, never a recipe: a progress sweep that fills the frame over the loop and resets at the
+     seam. Everything moves steadily, so G2 and G3 pass their floors, but the jump back to empty is a
+     step far larger than its neighbours: the decoded file fails G4 (the seam). It must keep failing. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #0e1217; font-family: "Archivo", sans-serif; }
+  #fill { position: absolute; left: 0; top: 0; height: 600px; width: 0; background: #2f4a63; }
+  #word { position: absolute; left: 0; right: 0; top: 240px; text-align: center; font-size: 96px; font-weight: 900; color: #f3f5f8; }
+  body.mask { background: #000; }
+  body.mask #fill { visibility: hidden; }
+</style>
+</head>
+<body>
+<div id="fill"></div>
+<div id="word">LITSWEEP</div>
+<script>
+const fill = document.getElementById("fill");
+window.renderFrame = (t, { mask = false } = {}) => {
+  document.body.className = mask ? "mask" : "";
+  fill.style.width = `${(1200 * t).toFixed(3)}px`;
+};
+document.fonts.ready.then(() => { window.renderFrame(0); window.ready = true; });
+</script>
+</body>
+</html>

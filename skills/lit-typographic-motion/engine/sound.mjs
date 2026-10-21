@@ -243,7 +243,7 @@ export function muxTrack(videoFile, track, durationSec, target) {
   const result = spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-i", videoFile, "-i", track.file, "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
     "-af", `aresample=${RATE},apad,atrim=0:${durationSec.toFixed(6)},afade=t=in:d=${fadeSec},afade=t=out:st=${fadeOut}:d=${fadeSec}`,
     "-ac", "2", "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", target], { encoding: "utf8", timeout: 300000 });
-  if (result.status !== 0) throw Object.assign(new Error(`SOUND_INVALID (20): the ${track.mode} track could not be muxed: ${(result.stderr || "").trim().split("\n").at(-1)}`), { exitCode: SOUND_EXIT });
+  if (result.status !== 0) throw Object.assign(new Error(`SOUND_INVALID (20): the ${track.mode} track could not be muxed: ${(result.stderr || "").trim().split(/\r?\n/u).at(-1)}`), { exitCode: SOUND_EXIT });
 }
 
 // Decodes a film's audio stream (48 kHz stereo float) for the gate; null when there is none.

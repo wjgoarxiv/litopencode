@@ -101,8 +101,11 @@ const readmeImagePaths = [...new Set(["README.md", "README-Ko-KR.md", "README-np
     .map((target) => target.startsWith("./") ? path.posix.join(path.posix.dirname(file), target.slice(2)) : target.slice(readmeCdn.length))
     .filter((imagePath) => !githubOnlyReadmeMedia.test(imagePath) && imagePath !== githubOnlyDemoFilm)
 ))];
+// Both hosts load `./server` and `./tui` from dist/host, and OpenCode 2 runs the code under dist/v2.
+const requiredHostEntryPaths = ["dist/host/server.js", "dist/host/tui.js", "dist/v2/server.js", "dist/v2/tui.js"];
 const requiredPackagePaths = [
   ...new Set([...requiredReadmePaths, ...readmeImagePaths]),
+  ...requiredHostEntryPaths,
   "skills/skill-rename-aliases.json",
   "skills/managed-skill-manifest.json",
   ...requiredVendorPaths,
@@ -426,4 +429,14 @@ test("pack guard requires the one-release skill alias registry", () => {
   const result = runChecker(["--stdin"], JSON.stringify(packageReport(["package.json", "dist/index.js", ...incomplete])));
   assert.equal(result.status, 1);
   assert.match(result.stdout, /skills\/skill-rename-aliases\.json/u);
+});
+
+test("a package without the shared host entries or the OpenCode 2 code fails closed", () => {
+  for (const missingPath of requiredHostEntryPaths) {
+    const incomplete = requiredPackagePaths.filter((filePath) => filePath !== missingPath);
+    const result = runChecker(["--stdin"], JSON.stringify(packageReport(["package.json", "dist/index.js", ...incomplete])));
+    assert.equal(result.status, 1, missingPath);
+    assert.match(result.stdout, /pack payload guard failed: 1 required path missing/u);
+    assert.ok(result.stdout.split("\n").includes(missingPath), missingPath);
+  }
 });

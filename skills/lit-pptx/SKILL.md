@@ -43,7 +43,7 @@ Under `lit`, create a `.pptx` by default. Do not ask a theme, colour or font que
 
 ## #contract.procedure
 
-1. **Runtime.** Nothing to install by hand. The first `node <skill>/run.mjs compile …` installs the pinned Node lockfile into the LitOpenCode cache and prints one notice line; the first Python helper call does the same for its venv. `node <skill>/run.mjs doctor` reports readiness without installing. A failed first-use install (no network, no `npm`, no Python 3) is a capability failure: quote the error line and stop; never install anything globally or inside the skill.
+1. **Runtime.** Nothing to install by hand. The first `node <skill>/run.mjs compile …` installs the pinned Node lockfile into the LitOpenCode cache and prints one notice line; the first Python helper call does the same for its venv. `node <skill>/run.mjs doctor` reports readiness without installing. A failed first-use install (no network, no `npm`, no Python 3.10 to 3.14; the venv comes from the newest `python3.X` in that range, a newer `python3` such as 3.15 is passed over, and `LITOPENCODE_OFFICE_PYTHON` names one interpreter instead) is a capability failure: quote the error line and stop; never install anything globally or inside the skill.
 
 2. **Choose the direction first, and write the direction card.** Before the first slide is written, decide the look and record it. Follow `references/direction-step.md`:
    - Settle four facts and write any inference down: deck type, reader, delivery (presented or read) and language.

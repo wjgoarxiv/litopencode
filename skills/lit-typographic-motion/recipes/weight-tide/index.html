@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Cover recipe "weight-tide": type as material. Rows of the brand word in JetBrains Mono (a fixed
+     advance, so a weight change never reflows a line) drift one word length per loop, alternate rows
+     opposite ways, at low contrast. One weight field washes over every letter, its phase taken from
+     the letter's place on screen, so the wave appears by itself. The hero word on its knockout band
+     takes the same field over a narrower range and never thins; a cursor steps under its letters.
+     Change WORD and the colours; keep the rule. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #0e1319; }
+  #field { position: absolute; inset: 0; font: 100 30px/60px "JetBrains Mono", monospace; color: #1f2833; white-space: pre; }
+  .row { position: absolute; left: 0; height: 60px; }
+  #band { position: absolute; left: 0; right: 0; top: 228px; height: 144px; background: #0e1319; }
+  #hero { position: absolute; left: 0; right: 0; top: 228px; height: 144px; font: 330 112px/144px "JetBrains Mono", monospace; color: #f2f5f8; text-align: center; white-space: pre; }
+  #cursor { position: absolute; top: 352px; width: 67px; height: 8px; background: #ff7a3d; }
+  body.mask { background: #000; }
+  body.mask #field, body.mask #cursor { visibility: hidden; }
+  body.mask #band { background: #000; }
+  body.mask #hero { color: #fff; }
+</style>
+</head>
+<body>
+<div id="field"></div>
+<div id="band"></div>
+<div id="hero"></div>
+<div id="cursor"></div>
+<script>
+const WORD = "LITOPENCODE";
+const { fract, mix, ease, swell } = LitLoop;
+const W = 1200, H = 600, ADVANCE = 18, ROWS = 10;
+const UNIT = (WORD.length + 1) * ADVANCE; // one word and its space: the drift per loop
+const copies = Math.ceil((W + UNIT) / UNIT) + 1;
+
+// Every letter is its own span, built once; a frame only sets weights and row offsets.
+const field = document.getElementById("field");
+const rows = Array.from({ length: ROWS }, (_, r) => {
+  const row = document.createElement("div");
+  row.className = "row";
+  row.style.top = `${r * 60}px`;
+  const letters = [];
+  for (let c = 0; c < copies; c++) for (const ch of `${WORD} `) {
+    const span = document.createElement("span");
+    span.textContent = ch;
+    row.appendChild(span);
+    letters.push({ span, x: letters.length * ADVANCE, space: ch === " " });
+  }
+  field.appendChild(row);
+  return { row, letters, y: r * 60 + 30, dir: r % 2 ? -1 : 1 };
+});
+const hero = document.getElementById("hero");
+const heroLetters = [...WORD].map((ch) => { const span = document.createElement("span"); span.textContent = ch; hero.appendChild(span); return span; });
+const HERO_ADV = 0.6 * 112, heroLeft = (W - HERO_ADV * WORD.length) / 2;
+const cursor = document.getElementById("cursor");
+
+// The field: a swell that dwells at both ends, sharpened by gain, phase from screen position.
+const tide = (t, x, y) => ease.gain(swell(fract(t - (0.85 * x) / W - (0.35 * y) / H)), 2.4);
+
+window.renderFrame = (t, { mask = false } = {}) => {
+  document.body.className = mask ? "mask" : "";
+  for (const { row, letters, y, dir } of rows) {
+    const shift = dir > 0 ? -UNIT + fract(t) * UNIT : -fract(t) * UNIT;
+    row.style.transform = `translateX(${shift.toFixed(3)}px)`;
+    for (const letter of letters) if (!letter.space) letter.span.style.fontWeight = String(Math.round(mix(100, 800, tide(t, letter.x + shift, y))));
+  }
+  heroLetters.forEach((span, i) => { span.style.fontWeight = String(Math.round(mix(330, 800, tide(t, heroLeft + (i + 0.5) * HERO_ADV, 300)))); });
+  // Beat: the cursor dwells under each letter, steps on with outBack, and in the last slot carries
+  // back home, so t = 1 lands where t = 0 starts.
+  const slot = Math.floor(t * WORD.length), travel = (t * WORD.length - slot - 0.7) / 0.3;
+  const from = slot, to = (slot + 1) % WORD.length;
+  const at = travel <= 0 ? from : mix(from, to, ease.outBack(Math.min(1, travel)));
+  cursor.style.transform = `translateX(${(heroLeft + at * HERO_ADV + 2.5).toFixed(3)}px)`;
+};
+
+Promise.all([100, 330, 800].map((w) => document.fonts.load(`${w} 30px "JetBrains Mono"`))).then(() => { window.renderFrame(0); window.ready = true; });
+</script>
+</body>
+</html>

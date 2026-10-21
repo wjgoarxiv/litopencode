@@ -37,7 +37,7 @@ export type ScientificVisualizationDependencyReport = {
 
 function selectedInterpreter(): string {
   const explicit = process.env.LITOPENCODE_SCIENTIFIC_PYTHON?.trim();
-  return explicit && explicit.length > 0 ? explicit : "python3";
+  return explicit && explicit.length > 0 ? explicit : process.platform === "win32" ? "python" : "python3";
 }
 
 function unavailableReport(command: string): ScientificVisualizationDependencyReport {

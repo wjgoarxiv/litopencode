@@ -140,8 +140,8 @@
         "debugging",
         "deep-interview",
         "doctor-installer",
-        "durable-litgoal",
         "frontend-ui-ux",
+        "lit-brainstorm",
         "lit-burnoff",
         "lit-burnoff-file",
         "lit-code",
@@ -156,6 +156,7 @@
         "lit-recap",
         "lit-scientific-visualization",
         "lit-typographic-motion",
+        "litgoal",
         "litresearch",
         "litwork",
         "lsp",
@@ -176,8 +177,8 @@
         "workflow-loop"
       ],
       "inventory": {
-        "count": 45,
-        "sha256": "6d71d55ea7d0b88070304fc4435ccf86782f3245c7f2939617e94859f2b24d21"
+        "count": 46,
+        "sha256": "4772ec57302fbd2d33665feccab7268b64d891e0b52a9ac3befe5e725319be79"
       }
     },
     "p33": {
@@ -435,11 +436,12 @@
       }
     },
     "litgoal": {
-      "median": 2,
+      "median": 1,
       "closures": {
         "p27": 1,
         "p28": 2,
         "p31": 2,
+        "p32": 1,
         "p33": 1
       }
     },

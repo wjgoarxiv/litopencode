@@ -8,6 +8,7 @@ import { renamedSkillIds } from "../skill-renames.ts";
 // scripts/scaffold-plan.mjs, because the skill invokes that script by skill-root path and a script
 // that does not install cannot be invoked.
 export type ManagedSkillId =
+  | "lit-brainstorm"
   | "lit-comprehend"
   | "lit-handoff"
   | "lit-scientific-visualization"
@@ -55,6 +56,7 @@ if (managedSkillManifest.schemaVersion !== 1) {
 
 export function managedSkillDefinition(id: LitOpenCodeRuntimeSkillId): ManagedSkillDefinition | undefined {
   if (
+    id !== "lit-brainstorm" &&
     id !== "lit-comprehend" &&
     id !== "lit-handoff" &&
     id !== "lit-scientific-visualization" &&
@@ -137,8 +139,8 @@ export function isRecursivelyManagedSkill(id: LitOpenCodeRuntimeSkillId): id is 
 const skillDiscoveryDescriptions = Object.freeze({
   "workflow-loop":
     "Trigger when the user wants a multi-step LitOpenCode work loop started, resumed, or kept running — bare `lit`, `/lit`, `/litwork`, \"keep going\", \"continue the loop\" — or when a request needs goal binding, ordered execution, and ledger-backed progress across turns instead of one answer. Also trigger when one request hands over a whole feature, fix, or ticket to carry through to done — build it, add tests, verify against each acceptance condition and on the real user-facing path, clean up temporary artifacts, then report what changed (\"start to finish\", \"end to end\", \"see it through\", \"처음부터 끝까지\", \"끝까지 해줘\"). Do not trigger for a question, an explanation, or a one-line snippet.",
-  "durable-litgoal":
-    "Trigger when work needs an objective that outlives the current turn: binding a goal with checkable criteria, reading or appending the `.litopencode/litgoal` ledger, resuming a schema-3 bounded-authority work record, or answering \"what was I working on\" from durable state rather than chat memory.",
+  litgoal:
+    "Trigger when work needs a finish line that outlives the current turn — litgoal sets and keeps it, lit-loop and start-work run toward it: binding a goal with checkable criteria, reading or appending the `.litopencode/litgoal` ledger, resuming a schema-3 bounded-authority work record, or answering \"what was I working on\" from durable state rather than chat memory.",
   "agent-roster":
     "Trigger when deciding which OpenCode agent should do the work, and again the moment work is about to be split across several lanes at once — before delegating through the task tool, when a request fans out into planning, implementation, review, research, or verification lanes, or when the user asks which agents exist and what each is permitted to touch. Delegation here is depth-one, so lanes need non-overlapping slices, explicit per-lane state, and a completion claim that aggregates every lane's evidence rather than summarising it.",
   "lit-plan":
@@ -163,6 +165,8 @@ const skillDiscoveryDescriptions = Object.freeze({
     "Trigger before any release-shaped action — version bump, tag, publish, changelog, \"is this ready to ship\" — so vocabulary scanning, version lockstep, and a real dry-pack manifest run before the claim is made and publication stays behind explicit user approval.",
   "lit-init":
     "Trigger when a repository needs agent-facing guidance created or refreshed: \"set up AGENTS.md\", \"document this repo for agents\", onboarding an unfamiliar codebase, or a restructure that left directory guidance stale and misleading.",
+  "lit-brainstorm":
+    "Trigger when the question is still open and the user wants options before a decision — \"what could we call it\", \"any ideas for\", \"how else could we do this\", \"brainstorm\", \"ideation\", `lit idea`, `lit brainstorm` — so many different options are generated, clustered, scored against stated criteria, and narrowed to a short list with trade-offs before one hand-off to deep-interview or lit-plan. Do not trigger to plan a chosen thing, to interview toward one spec, or to implement.",
   "lit-crucible":
     "Trigger before planning when the approach itself is uncertain, contested, or expensive to reverse — competing designs, hidden coupling, a request to pressure-test assumptions or find what will go wrong — so independent read-only lanes attack the idea and only surviving evidence-backed insights reach lit-plan.",
   refactor:
@@ -206,7 +210,7 @@ const skillDiscoveryDescriptions = Object.freeze({
   "lit-pptx":
     "Select for a PowerPoint deck or presentation, including a bounded lit request for slides. Keep editable Markdown and PPTX together, run the QA gate, and inspect the render.",
   "lit-typographic-motion":
-    "Select for a new film or video. Write the treatment first, then render on the stage path (a captured page) or the type path (words alone), gate it and look at the frames; editing existing footage or embedding a video in a page is outside this route.",
+    "Select for a new film or video. Write the treatment first, then render on the stage path (a captured page) or the type path (words alone), gate it and look at the frames; a README cover loop takes cover mode. Editing existing footage or embedding a video in a page is outside this route.",
   "lit-docx":
     "Select for a Word report, proposal, or document, including a bounded lit report request. Keep editable Markdown and DOCX together; select publisher profiles when specified and inspect rendered pages.",
   "readme-studio":

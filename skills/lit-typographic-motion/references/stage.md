@@ -5,6 +5,9 @@ animator and the editor: you write one page that draws the film as a function of
 renderer captures it frame by frame, deterministically, then gates, checks and encodes it. The page
 is yours; the kit gives motion primitives, never ready-made scenes, objects or layouts.
 
+A README cover loop uses a different page contract: `cover/index.html` draws `renderFrame(t)` for a
+loop time the renderer seeks in any order, with the loop kit instead of this one (`cover.md`).
+
 ## Files
 
 - `<out>/treatment.json`: the treatment (see `treatment.md`).

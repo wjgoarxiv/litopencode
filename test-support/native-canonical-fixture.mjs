@@ -15,7 +15,7 @@ export async function importInstalledPalette({ root, env, project }, t) {
   delete pythonEnv.PYTHONPYCACHEPREFIX;
   const result = spawnSync(process.env.LITOPENCODE_SCIENTIFIC_PYTHON?.trim() || "python3", [
     "-c",
-    "import sys, json; sys.path.insert(0, sys.argv[1]); import color_palettes; print(json.dumps({'cache': color_palettes.__cached__, 'dont_write': sys.dont_write_bytecode, 'cache_prefix': sys.pycache_prefix}))",
+    "import sys, json; sys.path.insert(0, sys.argv[1]); import color_palettes; print(json.dumps({'cache': color_palettes.__spec__.cached, 'dont_write': sys.dont_write_bytecode, 'cache_prefix': sys.pycache_prefix}))",
     path.join(canonical, "assets")
   ], { cwd: project, env: pythonEnv, encoding: "utf8", timeout: 15000 });
   if (result.error?.code === "ENOENT") {

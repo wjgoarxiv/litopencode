@@ -206,7 +206,7 @@ test("doctor reports the TUI entry, the file it lives in, and a missing entry", 
 
 test("the package exposes the TUI module through exports['./tui'], which OpenCode's loader resolves", async () => {
   const manifest = JSON.parse(await fs.readFile("package.json", "utf8"));
-  assert.equal(manifest.exports["./tui"].import, "./dist/tui.js");
+  assert.equal(manifest.exports["./tui"].import, "./dist/host/tui.js");
   const module = await import("../dist/tui/mission-model.js");
   assert.equal(typeof module.buildMissionView, "function");
 });

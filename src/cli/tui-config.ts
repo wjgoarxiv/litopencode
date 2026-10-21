@@ -161,8 +161,10 @@ export async function backupTuiFiles(plan: TuiInstallPlan): Promise<void> {
   for (const write of plan.writes) await backup(write);
 }
 
-/** Removes LitOpenCode's own TUI entries, and only those, from tui.json and tui.jsonc. */
-export async function removeTuiPlugin(root: string, dryRun: boolean): Promise<TuiRemovalReport> {
+type TuiRemovalPlan = readonly { readonly write: PlannedWrite; readonly removed: number }[];
+
+/** Plans the removal of LitOpenCode's own TUI entries, and only those, from tui.json and tui.jsonc, without writing. */
+async function planTuiRemoval(root: string): Promise<TuiRemovalPlan> {
   const files = await Promise.all(tuiConfigCandidates(root).map(readTuiFile));
   const writes: { readonly write: PlannedWrite; readonly removed: number }[] = [];
   for (const file of files) {
@@ -173,6 +175,10 @@ export async function removeTuiPlugin(root: string, dryRun: boolean): Promise<Tu
     const kept = plugins.filter((_value, index) => !owned.includes(index));
     writes.push({ write: render(file, { ...file.config, plugin: kept }), removed: owned.length });
   }
+  return writes;
+}
+
+async function applyTuiRemoval(writes: TuiRemovalPlan, dryRun: boolean): Promise<TuiRemovalReport> {
   const reports: { path: string; removed: number; backup?: string }[] = [];
   for (const { write, removed } of writes) {
     if (dryRun) {
@@ -230,4 +236,84 @@ export async function inspectTuiPlugin(root: string, expected: string): Promise<
     entries,
     ok: present && entries === 1
   };
+}
+
+// OpenCode 2 keeps its terminal settings in one global cli.json, and its first TUI start copies the
+// tui.json plugin list there. A LitOpenCode entry in cli.json is loaded after the TUI the server plugin
+// brings and wins by id, so a stale pin would shadow the current TUI. OpenCode 2 loads LitOpenCode's TUI
+// from the server plugin on its own; the installer and `tui remove` therefore take LitOpenCode out of
+// cli.json, keeping every other entry, the comments and a backup.
+export const cliConfigFile = "cli.json";
+
+export type CliJsonCleanupPlan = {
+  readonly path: string;
+  readonly removed: number;
+  readonly write?: PlannedWrite;
+  readonly blocked?: string;
+};
+
+function cliEntryId(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    const pkg = (value as { package?: unknown }).package;
+    return typeof pkg === "string" ? pkg : "";
+  }
+  return "";
+}
+
+/** Plans the removal of LitOpenCode's own entries from the `plugins` list of cli.json, without writing. */
+export async function planCliJsonCleanup(root: string): Promise<CliJsonCleanupPlan> {
+  const file = path.join(path.resolve(root), cliConfigFile);
+  const current = await readTuiFile(file);
+  const plugins = Array.isArray(current.config?.plugins) ? (current.config.plugins as readonly unknown[]) : [];
+  const kept: unknown[] = [];
+  for (const value of plugins) {
+    const id = cliEntryId(value);
+    if (id !== "" && (isLitOpenCodeEntry(id) || (await isLitOpenCodePathEntry(root, id)))) continue;
+    kept.push(value);
+  }
+  const removed = plugins.length - kept.length;
+  if (removed === 0 || current.config === null) return { path: file, removed: 0 };
+  try {
+    return { path: file, removed, write: render(current, { ...current.config, plugins: kept }) };
+  } catch (error) {
+    if (!(error instanceof OpenCodeConfigCommentError)) throw error;
+    return { path: file, removed, blocked: error.message };
+  }
+}
+
+/** Writes a cli.json cleanup plan, backing the file up first. Returns the backup path. */
+export async function applyCliJsonCleanup(plan: CliJsonCleanupPlan): Promise<string | undefined> {
+  if (plan.write === undefined) return undefined;
+  const backupPath = await backup(plan.write);
+  await writeTextAtomically(plan.write.path, plan.write.text);
+  return backupPath;
+}
+
+/** The TUI part of an install that targets OpenCode 2 only: nothing to write in tui.json. */
+export function skippedTuiPlan(root: string): TuiInstallPlan {
+  return {
+    report: { path: tuiConfigCandidates(root)[0], alreadyPresent: false, changed: false, add: [], currentCount: 0, resultCount: 0, cleaned: [] },
+    writes: []
+  };
+}
+
+/**
+ * `tui remove`: takes LitOpenCode's own entries out of tui.json/tui.jsonc and, unless only OpenCode 1 is
+ * targeted, out of cli.json, each with a backup. Both files are read and planned first, so a malformed or
+ * comment-losing file refuses before anything is written. A dry run only counts.
+ */
+export async function removeTuiEntries(
+  root: string,
+  dryRun: boolean,
+  options: { readonly cliJson: boolean }
+): Promise<TuiRemovalReport & { readonly cliJson?: { readonly path: string; readonly removed: number; readonly backup?: string } }> {
+  const tuiPlan = await planTuiRemoval(root);
+  const cliPlan = options.cliJson ? await planCliJsonCleanup(root) : undefined;
+  if (cliPlan?.blocked !== undefined) throw new OpenCodeConfigCommentError(cliPlan.blocked);
+  const tui = await applyTuiRemoval(tuiPlan, dryRun);
+  if (cliPlan === undefined) return tui;
+  if (dryRun || cliPlan.write === undefined) return { ...tui, cliJson: { path: cliPlan.path, removed: cliPlan.removed } };
+  const backupPath = await applyCliJsonCleanup(cliPlan);
+  return { ...tui, cliJson: { path: cliPlan.path, removed: cliPlan.removed, ...(backupPath === undefined ? {} : { backup: backupPath }) } };
 }

@@ -48,6 +48,9 @@ const FORBIDDEN_PATH_RULES = [
 ];
 
 const MANAGED_MANIFEST_PATH = "skills/managed-skill-manifest.json";
+// OpenCode 1 and OpenCode 2 both load the package's `./server` and `./tui` exports from dist/host; OpenCode 2
+// runs the code under dist/v2.
+const REQUIRED_HOST_ENTRY_PATHS = ["dist/host/server.js", "dist/host/tui.js", "dist/v2/server.js", "dist/v2/tui.js"];
 const MAX_MANAGED_FILE_BYTES = 16 * 1024 * 1024;
 const REQUIRED_README_PATHS = [
   "README.md",
@@ -149,7 +152,7 @@ function canonicalPackagePath(id, definition, relativePath) {
 }
 
 function requiredManagedPaths({ skills, vendorFiles }) {
-  const required = [...REQUIRED_README_PATHS, MANAGED_MANIFEST_PATH, "skills/skill-rename-aliases.json"];
+  const required = [...REQUIRED_README_PATHS, ...REQUIRED_HOST_ENTRY_PATHS, MANAGED_MANIFEST_PATH, "skills/skill-rename-aliases.json"];
   for (const rawAsset of vendorFiles) {
     const asset = requireObject(rawAsset, "managed-skill manifest vendor asset");
     if (typeof asset.path !== "string" || typeof asset.sha256 !== "string") {

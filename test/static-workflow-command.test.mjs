@@ -158,7 +158,7 @@ test("activates lit-crucible and lit-init command hooks with concrete workflow g
   });
 });
 
-test("slash command activations include the matching static skill body", async () => {
+test("slash command activations carry the matching static skill, or point to it for lit-loop", async () => {
   await withTempDir(async (dir) => {
     const hook = createCommandActivationHook(dir);
     const output = { parts: [] };
@@ -166,7 +166,7 @@ test("slash command activations include the matching static skill body", async (
     const startWorkSkill = await skillBody("start-work");
     const reviewWorkSkill = await skillBody("review-work");
     const litResearchSkill = await skillBody("litresearch");
-    const litGoalSkill = await skillBody("durable-litgoal");
+    const litGoalSkill = await skillBody("litgoal");
     const litRecapSkill = await skillBody("lit-recap");
 
     await ensureCommandAliases(dir);
@@ -177,7 +177,8 @@ test("slash command activations include the matching static skill body", async (
     const litGoalAlias = await fs.readFile(path.join(dir, "command", "litgoal.md"), "utf8");
     const litRecapAlias = await fs.readFile(path.join(dir, "command", "lit-recap.md"), "utf8");
 
-    assert.ok(litworkAlias.includes(workflowSkill), "/litwork alias should include the full workflow-loop skill body");
+    assert.ok(!litworkAlias.includes(workflowSkill), "/litwork alias should point to the workflow-loop skill, not paste it");
+    assert.match(litworkAlias, /skill name: workflow-loop/u);
     assertNoHtmlCommentArtifact(litworkAlias, "/litwork alias");
     assert.ok(startWorkAlias.includes(startWorkSkill), "/start-work alias should include the full start-work skill body");
     assertNoHtmlCommentArtifact(startWorkAlias, "/start-work alias");
@@ -185,7 +186,7 @@ test("slash command activations include the matching static skill body", async (
     assertNoHtmlCommentArtifact(reviewWorkAlias, "/review-work alias");
     assert.ok(litResearchAlias.includes(litResearchSkill), "/lit-research alias should include the full litresearch skill body");
     assertNoHtmlCommentArtifact(litResearchAlias, "/lit-research alias");
-    assert.ok(litGoalAlias.includes(litGoalSkill), "/litgoal alias should include the full durable-litgoal skill body");
+    assert.ok(litGoalAlias.includes(litGoalSkill), "/litgoal alias should include the full litgoal skill body");
     assertNoHtmlCommentArtifact(litGoalAlias, "/litgoal alias");
     assert.ok(litRecapAlias.includes(litRecapSkill), "/lit-recap alias should include the full lit-recap skill body");
     assertNoHtmlCommentArtifact(litRecapAlias, "/lit-recap alias");
@@ -198,7 +199,8 @@ test("slash command activations include the matching static skill body", async (
     await hook({ command: "/lit-recap", sessionID: "session-lit-recap", arguments: "--brief" }, output);
 
     assert.equal(output.parts.length, 6);
-    assert.ok(output.parts[0].text.includes(workflowSkill), "/litwork hook should include the full workflow-loop skill body");
+    assert.ok(!output.parts[0].text.includes(workflowSkill), "/litwork hook should point to the workflow-loop skill, not paste it");
+    assert.match(output.parts[0].text, /skill name: workflow-loop/u);
     assertNoHtmlCommentArtifact(output.parts[0].text, "/litwork hook output");
     assert.ok(output.parts[1].text.includes(startWorkSkill), "/start-work hook should include the full start-work skill body");
     assertNoHtmlCommentArtifact(output.parts[1].text, "/start-work hook output");
@@ -206,7 +208,7 @@ test("slash command activations include the matching static skill body", async (
     assertNoHtmlCommentArtifact(output.parts[2].text, "/review-work hook output");
     assert.ok(output.parts[3].text.includes(litResearchSkill), "/litresearch hook should include the full litresearch skill body");
     assertNoHtmlCommentArtifact(output.parts[3].text, "/litresearch hook output");
-    assert.ok(output.parts[4].text.includes(litGoalSkill), "/litgoal hook should include the full durable-litgoal skill body");
+    assert.ok(output.parts[4].text.includes(litGoalSkill), "/litgoal hook should include the full litgoal skill body");
     assertNoHtmlCommentArtifact(output.parts[4].text, "/litgoal hook output");
     assert.ok(output.parts[5].text.includes(litRecapSkill), "/lit-recap hook should include the full lit-recap skill body");
     assertNoHtmlCommentArtifact(output.parts[5].text, "/lit-recap hook output");
@@ -214,7 +216,7 @@ test("slash command activations include the matching static skill body", async (
     assert.equal(output.parts[1].metadata.litopencode.mode, "start-work");
     assert.equal(output.parts[2].metadata.litopencode.mode, "lit-loop");
     assert.equal(output.parts[3].metadata.litopencode.mode, "lit-research");
-    assert.equal(output.parts[4].metadata.litopencode.mode, "lit-loop");
+    assert.equal(output.parts[4].metadata.litopencode.mode, "litgoal");
     assert.equal(output.parts[5].metadata.litopencode.mode, "lit-recap");
   });
 });

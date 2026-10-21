@@ -12,6 +12,7 @@ import {
   browserDrivePromptInjection,
   structuralSearchPromptInjection,
   litGoalPromptInjection,
+  litBrainstormPromptInjection,
   litCruciblePromptInjection,
   initDeepPromptInjection,
   litLoopPromptInjection,
@@ -22,6 +23,7 @@ import {
   litCodePromptInjection,
   refactorPromptInjection,
   removeAiSlopsPromptInjection,
+  reviewModeForcedNote,
   reviewWorkPromptInjection,
   scientificVisualizationPromptInjection,
   startWorkPromptInjection,
@@ -67,6 +69,7 @@ export type LitOpenCodeCommandId =
   | "lit-research"
   | "lit-init"
   | "lit-crucible"
+  | "lit-brainstorm"
   | "lit-burnoff-file"
   | "lit-fetch"
   | "refactor"
@@ -201,7 +204,7 @@ export const litOpenCodeCommands = Object.freeze([
     id: "review-work",
     slash: "/review-work",
     title: "LitOpenCode Review Work",
-    description: "Review a draft plan for objective achievability or completed work across five evidence lanes.",
+    description: "Plan review after lit-plan or work review after lit-loop or start-work, picked from what exists; /review-work plan or /review-work work forces one.",
     banner: activationBanner("review-work"),
     activationText: reviewWorkPromptInjection
   },
@@ -217,7 +220,7 @@ export const litOpenCodeCommands = Object.freeze([
     id: "litgoal",
     slash: "/litgoal",
     title: "LitOpenCode Goal",
-    description: "Bind a durable LitOpenCode goal before execution.",
+    description: "Set and keep the finish line: one goal with checkable criteria on durable state; lit-loop and start-work run toward it.",
     banner: activationBanner("litgoal"),
     activationText: litGoalPromptInjection
   },
@@ -263,6 +266,14 @@ export const litOpenCodeCommands = Object.freeze([
     banner: activationBanner("lit-crucible"),
     activationText: litCruciblePromptInjection,
     agent: "lit-plan"
+  },
+  {
+    id: "lit-brainstorm",
+    slash: "/lit-brainstorm",
+    title: "LitOpenCode Lit Brainstorm",
+    description: "Open an unsettled question into many options, narrow them to a short list with trade-offs, and hand the choice to deep-interview or lit-plan without implementing.",
+    banner: activationBanner("lit-brainstorm"),
+    activationText: litBrainstormPromptInjection
   },
   {
     id: "refactor",
@@ -423,6 +434,8 @@ function commandMode(command: LitOpenCodeCommand): string {
   if (command.id === "lit-burnoff-file" || command.id === "lit-fetch" || command.id === "lit-humanizer") return command.id;
   if (command.id === "lit-init") return "lit-init";
   if (command.id === "lit-crucible") return "lit-crucible";
+  if (command.id === "lit-brainstorm") return "lit-brainstorm";
+  if (command.id === "litgoal" || command.id === "lit-goal") return "litgoal";
   if (command.id === "refactor") return "refactor";
   if (command.id === "lit-burnoff") return "lit-burnoff";
   if (command.id === "lit-code") return "lit-code";
@@ -692,6 +705,7 @@ export function createCommandActivationHook(
     }
 
     let activationText = command.activationText;
+    if (command.id === "review-work") activationText += reviewModeForcedNote(input.arguments);
     if (command.id === "start-work") {
       const durablePlan = await resolveLatestDurablePlan(projectRoot);
       if (durablePlan !== undefined) {

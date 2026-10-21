@@ -35,12 +35,14 @@ Usage:
   node render.mjs perf   --brief <brief.json> --out <dir>
   node render.mjs gate   --out <dir> [--viewed N]
   node render.mjs stage  --out <dir> [--round 1|2|3] [--stills-only] [--detach]
+  node render.mjs cover  --out <dir> [--round 1|2|3] [--window t0,t1] [--detach]
   node render.mjs sound  --out <dir>
   node render.mjs look   --out <dir> --round 1|2|3 --answers <answers.json>
 Options: --samples N (master default 4) --shutter S (default 0.5) --scale 1..4 --word-timing (Tier 3, opt-in)
 Exit codes: 0 OK, 10 BLOCKED_NO_CHROME, 11 BLOCKED_NO_WEBGL2, 12 BLOCKED_NO_FFMPEG_FOR_VIDEO,
             13 GATE_FAIL_QA, 14 BLOCKED_DEPS_NOT_PREWARMED, 15 BLOCKED_FONT_FETCH, 16 BLOCKED_TREATMENT_INVALID,
-            17 STAGE_CONTRACT_ERROR, 18 STAGE_NONDETERMINISTIC, 19 STAGE_NETWORK_REQUEST, 20 SOUND_INVALID`;
+            17 STAGE_CONTRACT_ERROR, 18 STAGE_NONDETERMINISTIC, 19 STAGE_NETWORK_REQUEST, 20 SOUND_INVALID,
+            21 BLOCKED_NO_COVER_ENCODER, 22 BLOCKED_ASSET_MISSING`;
 
 const pageScripts = ["common.js", "gl.js", "lines.js", "passes.js", "post.js", "type.js", "scenes.js", "engine.js"];
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -107,7 +109,7 @@ export function planRun(brief, briefPath, args, state) {
     else {
       const target = path.join(args.runDir, "audio-grid.json");
       const result = spawnSync(venv.python, [path.join(skillRoot, "audio-analysis.py"), audioFile, target], { encoding: "utf8", timeout: 300000 });
-      if (result.status !== 0) warnings.push(`audio analysis failed; using text reading time: ${(result.stderr || result.error?.message || "").trim().split("\n").at(-1)}`);
+      if (result.status !== 0) warnings.push(`audio analysis failed; using text reading time: ${(result.stderr || result.error?.message || "").trim().split(/\r?\n/u).at(-1)}`);
       else {
         const grid = JSON.parse(readFileSync(target, "utf8"));
         if (grid.beatGrid.length >= 2 && grid.bpm >= 40 && grid.bpm <= 240) { audioTier = "librosa-beat-grid"; beatGrid = grid.beatGrid; bpm = grid.bpm; audio = grid; }
@@ -443,8 +445,8 @@ function rerender(out, briefPath, frames, samples, shutter, rung, tag) {
   const result = spawnSync(process.execPath, [fileURLToPath(import.meta.url), "frames", "--brief", briefPath, "--out", path.join(out, ".run", tag), "--plan", path.join(out, ".run", "plan.json"),
     "--frames", frames.join(","), "--samples", String(samples), "--shutter", String(shutter), "--rung", rung], { encoding: "utf8", timeout: 900000, maxBuffer: 16_000_000 });
   rmSync(path.join(out, ".run", tag), { recursive: true, force: true });
-  if (result.status !== 0) throw new Error(`determinism re-render (${rung}) failed: ${(result.stderr || result.error?.message || "").trim().split("\n").slice(-2).join(" ")}`);
-  return JSON.parse(result.stdout.trim().split("\n").at(-1)).hashes;
+  if (result.status !== 0) throw new Error(`determinism re-render (${rung}) failed: ${(result.stderr || result.error?.message || "").trim().split(/\r?\n/u).slice(-2).join(" ")}`);
+  return JSON.parse(result.stdout.trim().split(/\r?\n/u).at(-1)).hashes;
 }
 
 function determinism(out, briefPath, frames, engine, plan) {
@@ -480,9 +482,10 @@ function manifestFor(plan, engine, extra) {
 function lookMode(argv, out) {
   const round = Number(option(argv, "round", "0"));
   const entry = recordLook(out, round, option(argv, "answers") ? path.resolve(option(argv, "answers")) : undefined);
-  console.log(`look round ${entry.round} recorded on the ${entry.kind === "film" ? "final render" : "stills set"}: ${Object.keys(entry.frames).length} frame(s) viewed${entry.blocked ? " (no vision tool: nobody viewed the frames)" : ""}`);
+  console.log(`look round ${entry.round} recorded on the ${{ film: "final render", cover: "cover render" }[entry.kind] ?? "stills set"}: ${Object.keys(entry.frames).length} frame(s) viewed${entry.defects?.length ? `, ${entry.defects.length} defect(s) logged` : ""}${entry.blocked ? " (no vision tool: nobody viewed the frames)" : ""}`);
   if (entry.needsAnotherRound.length) console.log(`another round is needed (questions ${entry.needsAnotherRound.join(", ")})${entry.round >= 3 ? "; round 3 is the last, so deliver with these open items stated" : ""}`);
   else if (entry.kind === "stills") console.log("next: make the change you named, then render the film with the next --round");
+  else if (entry.kind === "cover" && entry.round === 1) console.log("next: make the change you named (check a logged defect with `cover --window t0,t1`), then render the cover with --round 2");
   else console.log("next: node gate.mjs --done <dir>");
   return EXIT.OK;
 }
@@ -531,10 +534,30 @@ async function stageMode(argv, out, viewed) {
   return gate.exitCode;
 }
 
+// `cover`: a README cover loop (engine/cover/). Every round is a full render gated on the decoded file;
+// `--window t0,t1` re-renders only the frames around a logged defect. A detached run reports through .run/.
+async function coverMode(argv, out) {
+  const round = Number(option(argv, "round", "1"));
+  if (!Number.isInteger(round) || round < 1 || round > 3) throw new Error("--round must be 1, 2 or 3");
+  if (argv.includes("--detach")) {
+    const { detachStage } = await import("./engine/stage/render.mjs");
+    const detached = detachStage(out, argv.slice(1), "cover");
+    console.log(`rendering the cover in the background (pid ${detached.pid}); the exit code lands in ${detached.exitFile}; log: ${detached.logFile}`);
+    return EXIT.OK;
+  }
+  const cover = await import("./engine/cover/render.mjs");
+  const span = option(argv, "window");
+  const result = span === undefined
+    ? await cover.renderCover(out, { round, log })
+    : await cover.renderCoverWindow(out, { round, window: span.split(",").map(Number), log });
+  process.stdout.write(result.report);
+  return result.code;
+}
+
 async function run(argv) {
   const mode = argv[0];
   if (!mode || mode === "--help" || argv.includes("--help")) { console.log(usage); return EXIT.OK; }
-  if (!["film", "stills", "sheet", "video", "perf", "gate", "frames", "stage", "sound", "look"].includes(mode)) { console.error(usage); return 2; }
+  if (!["film", "stills", "sheet", "video", "perf", "gate", "frames", "stage", "cover", "sound", "look"].includes(mode)) { console.error(usage); return 2; }
   const out = option(argv, "out") ? path.resolve(option(argv, "out")) : undefined;
   if (!out) throw new Error("--out <dir> is required");
   const viewed = argv.includes("--viewed") ? Number(option(argv, "viewed", "0")) || 0 : undefined;
@@ -544,6 +567,7 @@ async function run(argv) {
     return result.exitCode;
   }
   if (mode === "stage") return stageMode(argv, out, viewed);
+  if (mode === "cover") return coverMode(argv, out);
   if (mode === "sound") return soundMode(out);
   if (mode === "look") return lookMode(argv, out);
   let treatment = null;

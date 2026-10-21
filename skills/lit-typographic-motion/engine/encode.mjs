@@ -41,6 +41,6 @@ export async function encodePreview(runDir, frameDir, fps, count, encoder) {
     const files = Array.from({ length: count }, (_, k) => path.join(frameDir, `p${String(k).padStart(5, "0")}.png`));
     result = spawnSync("img2webp", ["-loop", "0", "-lossy", "-q", "78", "-m", "4", "-d", String(Math.round(1000 / fps)), ...files, "-o", target], { encoding: "utf8", timeout: 600000, maxBuffer: 16_000_000 });
   } else result = spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", String(fps), "-i", pattern, "-filter_complex", "[0:v]split[a][b];[a]palettegen=stats_mode=full[p];[b][p]paletteuse=dither=bayer:bayer_scale=4", "-loop", "0", target], { encoding: "utf8", timeout: 600000 });
-  if (result.status !== 0) throw new Error(`preview encode (${encoder}) failed: ${(result.stderr || result.error?.message || "").trim().split("\n").slice(-2).join(" ")}`);
+  if (result.status !== 0) throw new Error(`preview encode (${encoder}) failed: ${(result.stderr || result.error?.message || "").trim().split(/\r?\n/u).slice(-2).join(" ")}`);
   return target;
 }

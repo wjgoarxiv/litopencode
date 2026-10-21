@@ -559,7 +559,7 @@ test("packed artifact imports the plugin entry without installed dependencies", 
   await withTempDir(async (dir) => {
     await packAndExtract(dir);
     const manifest = JSON.parse(await fs.readFile(path.join(dir, "package", "package.json"), "utf8"));
-    assert.equal(manifest.exports["./server"].import, "./dist/server.js");
+    assert.equal(manifest.exports["./server"].import, "./dist/host/server.js");
 
     const result = run(process.execPath, [
       "--input-type=module",
@@ -840,14 +840,14 @@ test("installed packed binary writes opencode plugin config", async () => {
       [
         "process.env.XDG_CONFIG_HOME = " + JSON.stringify(emptyConfigHome) + ";",
         "const m = await import('@litfamily/litopencode/server');",
-        "const hooks = await m.default({});",
+        "const hooks = await m.default.server({});",
         "const config = {};",
         "await hooks.config(config);",
-        "console.log(typeof m.default + ':' + config.default_agent + ':' + config.agent['lit-loop'].mode + ':' + (config.agent['lit-loop'].model ?? 'none'));"
+        "console.log(typeof m.default.server + ':' + typeof m.default.setup + ':' + config.default_agent + ':' + config.agent['lit-loop'].mode + ':' + (config.agent['lit-loop'].model ?? 'none'));"
       ].join(" ")
     ], { cwd: consumer });
     assert.equal(serverImport.status, 0, serverImport.stderr);
-    assert.match(serverImport.stdout, /^function:lit-loop:all:openai\/gpt-6-astra\s*$/);
+    assert.match(serverImport.stdout, /^function:function:lit-loop:all:openai\/gpt-6-astra\s*$/);
 
     const result = run(
       path.join(consumer, "node_modules", ".bin", "litopencode"),
@@ -886,7 +886,7 @@ test("installed packed binary writes opencode plugin config", async () => {
       [
         "process.env.XDG_CONFIG_HOME = " + JSON.stringify(configuredConfigHome) + ";",
         "const m = await import('@litfamily/litopencode/server');",
-        "const hooks = await m.default({ directory: process.cwd(), worktree: process.cwd() });",
+        "const hooks = await m.default.server({ directory: process.cwd(), worktree: process.cwd() });",
         "const config = {};",
         "await hooks.config(config);",
         "console.log(JSON.stringify({ origin: import.meta.resolve('@litfamily/litopencode/server'), agents: Object.fromEntries(['lit-plan', 'lit-loop', 'lit-oracle', 'lit-librarian'].map((id) => [id, { model: config.agent[id].model, variant: config.agent[id].variant, edit: config.agent[id].permission?.edit, bash: config.agent[id].permission?.bash }])) }));"
@@ -894,7 +894,7 @@ test("installed packed binary writes opencode plugin config", async () => {
     ], { cwd: consumer });
     assert.equal(configuredServerImport.status, 0, configuredServerImport.stderr);
     const loaded = JSON.parse(configuredServerImport.stdout);
-    assert.match(loaded.origin, new RegExp(consumer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "/node_modules/@litfamily/litopencode/dist/server\\.js$"));
+    assert.match(loaded.origin, new RegExp(consumer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "/node_modules/@litfamily/litopencode/dist/host/server\\.js$"));
     assert.doesNotMatch(loaded.origin, new RegExp(process.cwd().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     for (const agentId of ["lit-plan", "lit-oracle"]) {
       assert.equal(loaded.agents[agentId].model, "openai/gpt-6-astra");

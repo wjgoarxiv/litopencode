@@ -133,7 +133,7 @@ This is static documentation for the LitOpenCode `deep-interview` feature. Do no
 
 Use it when a request cannot be planned as stated: the objective is broad, acceptance criteria are absent, the scope boundary is undefined, or several materially different implementations would all satisfy the words used. Also use it when the user asks to be interviewed, or asks explicitly that nothing be assumed.
 
-Do not use it when the request already names concrete targets and a checkable outcome, when the user has asked to go straight to work, when a plan or specification already exists, or when the conversation is open-ended exploration rather than work definition. Interviewing a well-specified request is a real cost with no return, and it reads as an inability to start.
+Do not use it when the request already names concrete targets and a checkable outcome, when the user has asked to go straight to work, when a plan or specification already exists, or when the conversation is open-ended exploration rather than work definition. Open brainstorming ("what could we do", "name this", "any ideas") belongs to `lit-brainstorm`, which hands a chosen direction that is still vague back here. Interviewing a well-specified request is a real cost with no return, and it reads as an inability to start.
 
 ## Explore Before You Ask
 

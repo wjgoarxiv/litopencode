@@ -1,3 +1,4 @@
+import { targetsV1 } from "./host-detect.ts";
 import type { InstallReport } from "./types.ts";
 import { shippedDefaultsSummary } from "./model-catalog.ts";
 
@@ -208,7 +209,8 @@ export function renderInstallReport(report: InstallReport): string {
     line("Native skills", report.nativeSkills.write.length + " managed / " + report.nativeSkills.preserve.length + " preserved"),
     ...nativeSkillsLinkLines(report),
     line("Plugin entries", report.plugin.currentCount + " -> " + report.plugin.resultCount),
-    line("TUI config", report.tui.path),
+    // OpenCode 2 loads the TUI with the server plugin, so an OpenCode 2-only install has no TUI file.
+    ...(report.host === undefined || targetsV1(report.host.mode) ? [line("TUI config", report.tui.path)] : []),
     ...section("Progress"),
     progressLine("Resolve package"),
     progressLine("Read OpenCode config"),

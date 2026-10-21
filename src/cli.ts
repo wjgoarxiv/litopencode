@@ -11,7 +11,7 @@ import { defaultOpenAiRoutes, legacyFastAliasHelp, modelEffortHelp, openaiModelH
 import { fetchPublicSource } from "./lit-fetch.ts";
 import { readPackageMetadata } from "./cli/json.ts";
 import { runMotionRuntime } from "./cli/motion-runtime.ts";
-import { removeTuiPlugin } from "./cli/tui-config.ts";
+import { removeTuiEntries } from "./cli/tui-config.ts";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -92,7 +92,8 @@ function helpText(): string {
     "            ships a per-channel capture playbook, and keeps blocked codes separate from fail codes.",
     "  lit-diagram-drawer creates conceptual, editorial, and technical diagrams with packaged type guides,",
     "                     local verifiers, bounded importers, and exports that never install tools.",
-    "  lit-typographic-motion directs films from a treatment: a captured stage page or the type engine.",
+    "  lit-typographic-motion directs films from a treatment: a captured stage page or the type engine,",
+    "                         and seamless README cover loops gated on the decoded WebP.",
     "  Typographic-motion engine adapted from mexicat/pdoom-video (MIT, Giacomo Magnanini), commit `ca251e3`.",
     "  Each skill resolves its own helpers inside its own installed tree; these skills add no command,",
     "  MCP, agent, authentication, or write authority.",
@@ -143,8 +144,11 @@ export async function runCli(argv: readonly string[] = process.argv.slice(2), op
       return { exitCode: 0, stdout: helpText() };
     }
     if (isLoopCommand(parsed.command)) return await runLoopCommand(parsed.command, parsed.loop, parsed.dryRun);
-    if (parsed.command === "doctor") return await doctor(parsed.root);
-    if (parsed.command === "tui") return { exitCode: 0, stdout: JSON.stringify(await removeTuiPlugin(parsed.root, parsed.dryRun), null, 2) };
+    if (parsed.command === "doctor") return await doctor(parsed.root, parsed.host);
+    if (parsed.command === "tui") {
+      const removed = await removeTuiEntries(parsed.root, parsed.dryRun, { cliJson: parsed.host !== "v1" });
+      return { exitCode: 0, stdout: JSON.stringify(removed, null, 2) };
+    }
     if (parsed.command === "fetch-public") {
       if (!parsed.fetchPublicUrl) return { exitCode: 2, stderr: "fetch-public requires a URL" };
       const output = await fetchPublicSource(parsed.fetchPublicUrl, {
@@ -165,7 +169,8 @@ export async function runCli(argv: readonly string[] = process.argv.slice(2), op
         parsed.permissionModeExplicit,
         parsed.permissionPrompt,
         options.installProgress,
-        parsed.outputStylePrompt
+        parsed.outputStylePrompt,
+        parsed.host
       );
     }
     return { exitCode: 2, stderr: `Unknown command: ${parsed.command}` };

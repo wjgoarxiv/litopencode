@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Cover recipe "orbit-loop": a system beside a still word. Three rings turn a whole number of laps
+     per loop (3, 2, 1), in alternating directions, each carrying a dot with a trail. A gate at twelve
+     o'clock flashes whenever a dot crosses it, and the crossing times, computed rather than detected,
+     light the cells of a ledger under the word: six crossings, six cells, so the ledger loops too.
+     The core breathes once per loop and rings on each of four bars. Change WORD and the colours. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #0c1015; }
+  canvas { position: absolute; inset: 0; width: 1200px; height: 600px; }
+  #word { position: absolute; left: 70px; top: 238px; font: 800 64px/80px "JetBrains Mono", monospace; letter-spacing: 0; color: #f1f4f7; white-space: pre; }
+  body.mask { background: #000; }
+  body.mask canvas { visibility: hidden; }
+  body.mask #word { color: #fff; }
+</style>
+</head>
+<body>
+<canvas id="orbit" width="2400" height="1200"></canvas>
+<div id="word">LITOPENCODE</div>
+<script>
+const { TAU, fract, mix, ease, cubicPulse, cdist } = LitLoop;
+const ctx = document.getElementById("orbit").getContext("2d");
+ctx.scale(2, 2);
+const CORE = [880, 300];
+const GATE = -Math.PI / 2;
+// One orbit rule, three copies: radius, laps per loop, direction, and where the dot starts.
+const RINGS = [
+  { r: 110, laps: 3, dir: 1, start: 0.3, colour: [255, 138, 76] },
+  { r: 185, laps: 2, dir: -1, start: 1.9, colour: [120, 200, 255] },
+  { r: 260, laps: 1, dir: 1, start: 4.1, colour: [196, 232, 92] }
+];
+const angle = (ring, t) => ring.start + ring.dir * TAU * ring.laps * t;
+// Every crossing of the gate in [0, 1), solved from the angle law: start + dir 2pi laps t = GATE + 2pi k.
+const crossings = RINGS.flatMap((ring, i) => Array.from({ length: ring.laps }, (_, k) => ({ ring: i, t: fract(((GATE - ring.start) / (ring.dir * TAU) + k) / ring.laps) }))).sort((a, b) => a.t - b.t);
+const LEDGER = { x: 72, y: 340, cell: 54, gap: 10 };
+const since = (t, at) => fract(t - at);
+// A lit cell falls back in four flat steps over 0.4 of the loop: big steps the encoder keeps.
+const cellLevel = (s) => (s < 0.4 ? Math.ceil(4 * (1 - s / 0.4)) / 4 : 0);
+
+window.renderFrame = (t, { mask = false } = {}) => {
+  document.body.className = mask ? "mask" : "";
+  ctx.clearRect(0, 0, 1200, 600);
+  if (mask) return;
+  // SLOW: dashed guide rings turn perpetually, one dash period per loop in alternate directions.
+  ctx.lineWidth = 3;
+  RINGS.forEach((ring, i) => {
+    ctx.setLineDash([10, 14]);
+    ctx.lineDashOffset = (i % 2 ? -1 : 1) * 24 * fract(t) * 4;
+    ctx.strokeStyle = "rgba(120, 140, 160, 0.55)";
+    ctx.beginPath(); ctx.arc(CORE[0], CORE[1], ring.r, 0, TAU); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  // MID: the dots and their fading arc trails.
+  RINGS.forEach((ring) => {
+    const a = angle(ring, t), [r, g, b] = ring.colour;
+    for (let s = 0; s < 20; s++) {
+      const a0 = a - ring.dir * 0.05 * s, a1 = a - ring.dir * 0.05 * (s + 1);
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.8 * (1 - s / 20)})`;
+      ctx.lineWidth = 9 - s * 0.35;
+      ctx.beginPath(); ctx.arc(CORE[0], CORE[1], ring.r, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+    }
+  });
+  // BEAT: the gate flashes on each crossing and the crossing dot swells.
+  const hit = Math.max(...crossings.map((c) => cubicPulse(0, 0.025, cdist(t, c.t))));
+  ctx.fillStyle = `rgba(255, 236, 200, ${0.35 + 0.65 * hit})`;
+  ctx.fillRect(CORE[0] - 4, CORE[1] - RINGS[2].r - 24, 8, RINGS[2].r - RINGS[0].r + 48);
+  RINGS.forEach((ring, i) => {
+    const a = angle(ring, t), [r, g, b] = ring.colour;
+    const pulse = Math.max(0, ...crossings.filter((c) => c.ring === i).map((c) => cubicPulse(0, 0.03, cdist(t, c.t))));
+    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx.beginPath(); ctx.arc(CORE[0] + ring.r * Math.cos(a), CORE[1] + ring.r * Math.sin(a), 11 + 7 * pulse, 0, TAU); ctx.fill();
+  });
+  // The core breathes once per loop and rings on each of four bars.
+  const breath = 0.5 - 0.5 * Math.cos(TAU * t);
+  ctx.fillStyle = `rgba(255, 170, 110, ${0.55 + 0.35 * breath})`;
+  ctx.beginPath(); ctx.arc(CORE[0], CORE[1], 34 + 8 * breath, 0, TAU); ctx.fill();
+  const bar = fract(4 * t), ring = ease.outExpo(bar);
+  ctx.strokeStyle = `rgba(255, 190, 140, ${0.7 * (1 - bar)})`;
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.arc(CORE[0], CORE[1], 40 + 60 * ring, 0, TAU); ctx.stroke();
+  // The ledger under the word: one cell per crossing, lit at its crossing time.
+  crossings.forEach((c, k) => {
+    const [r, g, b] = RINGS[c.ring].colour, level = cellLevel(since(t, c.t));
+    ctx.fillStyle = "#1a222c";
+    ctx.fillRect(LEDGER.x + k * (LEDGER.cell + LEDGER.gap), LEDGER.y, LEDGER.cell, 14);
+    if (level > 0) {
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${level})`;
+      ctx.fillRect(LEDGER.x + k * (LEDGER.cell + LEDGER.gap), LEDGER.y, LEDGER.cell, 14);
+    }
+  });
+};
+
+document.fonts.load('800 64px "JetBrains Mono"').then(() => { window.renderFrame(0); window.ready = true; });
+</script>
+</body>
+</html>

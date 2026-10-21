@@ -6,7 +6,7 @@ The README now opens with one cover. The rest of the artwork that used to sit ar
 
 ## Cover
 
-The README cover is a looping WebP: five armored robots power on in turn, and the LitOpenCode robot wakes. Readers who ask for reduced motion get [a still of the lit frame](./assets/cover-motion-still.webp). The editable, low-bandwidth vector version of the cover is [docs/assets/cover.svg](./assets/cover.svg). It stays in this repository and is not part of the npm package.
+The README cover is a looping WebP: seven armored robots power on in turn, and the LitOpenCode robot wakes. Readers who ask for reduced motion get [a still of the lit frame](./assets/cover-motion-still.webp). The editable, low-bandwidth vector version of the cover is [docs/assets/cover.svg](./assets/cover.svg). It stays in this repository and is not part of the npm package.
 
 The 1280×640 [social preview](./assets/social-preview.png) is built from the same cover for link cards. It is also left out of the npm package.
 
@@ -27,10 +27,10 @@ The navigation icons on the README come from Lucide, used under the [Lucide lice
 
 ## LITFAMILY
 
-![Five armored machines representing LitClaude, LitHermes, LitCodex, LitOpenCode and LitGrok](./assets/readme/litfamily-machines.png)
+![Seven armored machines representing LitClaude, LitHermes, LitCodex, LitOpenCode, LitGrok, LitMuse and LitGravity](./assets/readme/litfamily-machines.png)
 
-LitClaude · LitHermes · LitCodex · LitOpenCode · LitGrok.
-Five armored machines for five independent products, each working in its own host. The [LitFamily hub](https://github.com/wjgoarxiv/litfamily) has the install command for each one.
+LitClaude · LitHermes · LitCodex · LitOpenCode · LitGrok · LitMuse · LitGravity.
+Seven armored machines for seven independent products, each working in its own host. The [LitFamily hub](https://github.com/wjgoarxiv/litfamily) has the install command for each one.
 
 ## Ignition motion
 

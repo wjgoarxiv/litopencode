@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { hostChoices, isHostChoice, type HostChoice } from "./host-detect.ts";
 import { installModelEfforts, isInstallModelEffort, resolveModelRoute } from "./model-catalog.ts";
 import type { InstallModelEffort, InstallModelRoute, InstallModelSelection, InstallPermissionMode, LoopArgs, ModelPromptMode, ParsedArgs, PermissionPromptMode } from "./types.ts";
 
@@ -60,6 +61,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   let summary: string | undefined;
   let directive: string | undefined;
   let resolve: string | undefined;
+  let host: HostChoice = "auto";
 
   if (command === "--help" || command === "-h") {
     command = "help";
@@ -234,6 +236,15 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       index += 1;
       continue;
     }
+    if (arg === "--host") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--host requires a value");
+      const cleaned = cleanOption(value, "--host") ?? "";
+      if (!isHostChoice(cleaned)) throw new Error("--host must be one of " + hostChoices.join(", "));
+      host = cleaned;
+      index += 1;
+      continue;
+    }
     if (arg === "--yes") {
       yes = true;
       continue;
@@ -292,6 +303,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     modelPrompt: yes ? "never" : modelPrompt,
     outputStylePrompt: yes ? "never" : "auto",
     ...(tuiAction === undefined ? {} : { tuiAction }),
+    host,
     loop: {
       projectRoot,
       json: loopJson,

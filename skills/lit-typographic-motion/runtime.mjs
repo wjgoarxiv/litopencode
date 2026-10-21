@@ -8,6 +8,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpat
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { npmPlan, probePython, splitLines, supportedPython } from "./engine/command.mjs";
 
 export const skillRoot = path.dirname(fileURLToPath(import.meta.url));
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -148,9 +149,10 @@ function installNode(env, log) {
   try {
     copyFileSync(path.join(skillRoot, "package.json"), path.join(stage, "package.json"));
     copyFileSync(path.join(skillRoot, "package-lock.json"), path.join(stage, "package-lock.json"));
-    const npm = spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", ["ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"],
-      { cwd: stage, encoding: "utf8", timeout: 240000, env: { ...env, npm_config_update_notifier: "false" } });
-    if (npm.status !== 0) throw new Error(`npm ci failed: ${(npm.stderr || npm.error?.message || String(npm.status)).trim().split("\n").slice(-3).join(" ")}`);
+    const childEnv = { ...env, npm_config_update_notifier: "false" };
+    const plan = npmPlan(["ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], { env: childEnv });
+    const npm = spawnSync(plan.command, plan.args, { cwd: stage, encoding: "utf8", timeout: 240000, env: childEnv, shell: plan.shell, windowsHide: true });
+    if (npm.status !== 0) throw new Error(`npm ci failed (${npm.error ? npm.error.message : `exit ${npm.status}`}): ${splitLines((npm.stderr || "").trim()).slice(-3).join(" ")}`);
     writeFileSync(path.join(stage, "receipt.json"), JSON.stringify({ lockSha256: hashFile(path.join(skillRoot, "package-lock.json")) }) + "\n");
     rmSync(paths.node, { recursive: true, force: true });
     renameSync(stage, paths.node);
@@ -160,14 +162,11 @@ function installNode(env, log) {
   }
 }
 
-function pythonForAudio(env) {
-  const uv = spawnSync("uv", ["python", "find", "--no-python-downloads", "3.12"], { encoding: "utf8", timeout: 10000 });
-  for (const name of [env.MOTION_PYTHON, uv.status === 0 ? uv.stdout.trim() : undefined, "python3.12", "python3.11", "python3.13", "python3"]) {
-    if (!name) continue;
-    const version = spawnSync(name, ["-c", "import sys; print(sys.version_info.major, sys.version_info.minor)"], { encoding: "utf8", timeout: 10000 });
-    if (version.status === 0 && /^3 (?:11|12|13)$/u.test(version.stdout.trim())) return name;
-  }
-  throw new Error("Python 3.11-3.13 is required for the optional audio tier");
+/** The Python the audio venv is built from, picked like the office runtime's within the audio pins' range. */
+export function audioPython(env = process.env, probe = probePython) {
+  const picked = supportedPython({ min: 12, max: 13, override: env.MOTION_PYTHON, env, probe });
+  if (!picked.ok) throw new Error(`${picked.detail}. The optional audio tier needs Python 3.12 to 3.13; set MOTION_PYTHON to one.`);
+  return picked;
 }
 
 function installAudio(env, log) {
@@ -176,12 +175,12 @@ function installAudio(env, log) {
   mkdirSync(paths.base, { recursive: true });
   const stage = mkdtempSync(path.join(paths.base, ".audio-stage-"));
   try {
-    const created = spawnSync(pythonForAudio(env), ["-m", "venv", stage], { encoding: "utf8", timeout: 180000 });
+    const created = spawnSync(audioPython(env).command, ["-m", "venv", stage], { encoding: "utf8", timeout: 180000 });
     if (created.status !== 0) throw new Error(`audio venv creation failed: ${(created.stderr || created.error?.message || "").trim()}`);
     const python = path.join(stage, process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
     const pip = spawnSync(python, ["-m", "pip", "install", "--require-hashes", "--only-binary=:all:", "--no-deps", "-r", path.join(skillRoot, "requirements-audio.txt")],
       { encoding: "utf8", timeout: 900000, maxBuffer: 16_000_000 });
-    if (pip.status !== 0) throw new Error(`audio pin install failed: ${(pip.stderr || pip.error?.message || "").trim().split("\n").slice(-3).join(" ")}`);
+    if (pip.status !== 0) throw new Error(`audio pin install failed: ${splitLines((pip.stderr || pip.error?.message || "").trim()).slice(-3).join(" ")}`);
     writeFileSync(path.join(stage, "requirements.sha256"), hashFile(path.join(skillRoot, "requirements-audio.txt")) + "\n");
     rmSync(paths.audio, { recursive: true, force: true });
     renameSync(stage, paths.audio);

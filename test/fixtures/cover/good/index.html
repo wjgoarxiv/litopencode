@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Test cover: three speed layers on one canvas. Slow: thin bars drift one period per loop. Mid: a
+     lit span with hard edges sweeps across them once per loop. Beat: four markers flash in turn and
+     a cursor steps between them. The word is rasterized once into its own canvas and never moves. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<script src="/lit/loop-kit.js"></script>
+<style>html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #0b0f14; } canvas { display: block; width: 1200px; height: 600px; }</style>
+</head>
+<body>
+<canvas id="c" width="2400" height="1200"></canvas>
+<script>
+const { fract, ease, steps, cubicPulse, cdist } = LitLoop;
+const ctx = document.getElementById("c").getContext("2d");
+ctx.scale(2, 2);
+const word = document.createElement("canvas");
+word.width = 1080;
+word.height = 280;
+function setWord() {
+  const w = word.getContext("2d");
+  w.scale(2, 2);
+  w.fillStyle = "#ffffff";
+  w.font = "800 96px 'JetBrains Mono'";
+  w.textAlign = "center";
+  w.textBaseline = "middle";
+  w.fillText("LOOPKIT", 270, 72);
+}
+function plate(ground) {
+  ctx.fillStyle = ground;
+  ctx.fillRect(330, 230, 540, 140);
+  ctx.drawImage(word, 330, 230, 540, 140);
+}
+window.renderFrame = (t, { mask = false } = {}) => {
+  ctx.fillStyle = mask ? "#000000" : "#0b0f14";
+  ctx.fillRect(0, 0, 1200, 600);
+  if (mask) return plate("#000000");
+  const sweep = fract(t) * 1600 - 200;
+  for (let k = -1; k < 21; k++) {
+    const x = k * 60 + fract(t) * 60;
+    ctx.fillStyle = Math.abs(x - sweep) < 160 ? "#ff8a4c" : "#263240";
+    ctx.fillRect(x, 60, 10, 140);
+    ctx.fillRect(x, 400, 10, 140);
+  }
+  const p = steps(t, 4, 0.3, ease.outBack);
+  for (let i = 0; i < 4; i++) {
+    const on = cubicPulse(0, 0.06, cdist(t, i / 4));
+    ctx.fillStyle = `rgb(${Math.round(60 + 195 * on)}, 120, 200)`;
+    ctx.fillRect(360 + 160 * i, 215, 120, 8);
+  }
+  ctx.fillStyle = "#e8f1ff";
+  ctx.fillRect(360 + 640 * p - 6, 376, 12, 12);
+  plate("#0b0f14");
+};
+document.fonts.load("800 96px 'JetBrains Mono'").then(() => { setWord(); window.renderFrame(0); window.ready = true; });
+</script>
+</body>
+</html>

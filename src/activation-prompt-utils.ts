@@ -4,13 +4,14 @@ import { stripUserFacingHtmlCommentLines } from "./user-facing-markdown.ts";
 
 export type StaticSkillPromptId =
   | "workflow-loop"
-  | "durable-litgoal"
+  | "litgoal"
   | "lit-plan"
   | "start-work"
   | "review-work"
   | "litresearch"
   | "lit-init"
   | "lit-crucible"
+  | "lit-brainstorm"
   | "lit-burnoff-file"
   | "lit-fetch"
   | "refactor"
@@ -66,10 +67,16 @@ ${readStaticSkillBody(skillId)}
 </${modeTag}>`;
 }
 
-export function promptWithSkillBody(prompt: string, modeTag: string, skillId: StaticSkillPromptId): string {
+export function promptWithSkillPointer(prompt: string, modeTag: string, skillId: StaticSkillPromptId): string {
   const closeTag = `</${modeTag}>`;
   const closeIndex = prompt.lastIndexOf(closeTag);
   if (closeIndex === -1) return prompt;
-  const bodyBlock = ["", "# Installed skill body", "", readStaticSkillBody(skillId), ""].join("\n");
-  return `${prompt.slice(0, closeIndex).trimEnd()}${bodyBlock}${closeTag}`;
+  const pointer = [
+    "",
+    "# Installed skill",
+    "",
+    `The full ${skillId} skill is installed. Load it with OpenCode's native skill tool (skill name: ${skillId}) before you act, and follow it exactly, including any output template it defines.`,
+    ""
+  ].join("\n");
+  return `${prompt.slice(0, closeIndex).trimEnd()}${pointer}${closeTag}`;
 }

@@ -1,6 +1,7 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 import { fileURLToPath } from "node:url";
 import { createChatMessageActivationHook, showActivationToast } from "./activation.ts";
+import { createActivationMemory } from "./activation-reentry.ts";
 import { registerLitOpenCodeAgents } from "./agents.ts";
 import { createAutoHandoff } from "./auto-handoff-hooks.ts";
 import { createBoundedAuthorityEventHook } from "./bounded-authority-hooks.ts";
@@ -47,6 +48,8 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
     const logger = createLogger(loaded.paths);
     const getSession = createSessionLookup(input?.client);
     const ignitionState = createIgnitionState();
+    // The completion mark resets every root turn; which discipline a session runs must outlive the turn.
+    const activationMemory = createActivationMemory();
     const autoHandoff = createAutoHandoff({
       projectRoot: root,
       paths: loaded.paths,
@@ -78,6 +81,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       event: async (eventInput) => {
         if (eventInput.event.type === "session.deleted") {
           ignitionState.clear(eventInput.event.properties.info.id);
+          activationMemory.forget(eventInput.event.properties.info.id);
           trustedCommandActivations.delete(eventInput.event.properties.info.id);
         }
         await boundedAuthorityEvent(eventInput);
@@ -93,6 +97,10 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           ignitionState.resetDiscipline(sessionID);
         },
         onSkillActivation: recordSkillActivation,
+        activationMemory,
+        onSkillContinue: (sessionID, skillId, appendedLit = false) => {
+          ignitionState.activate(sessionID, skillId, !appendedLit);
+        },
         trustedInjectedSkill: (sessionID) => {
           const skillId = trustedCommandActivations.get(sessionID);
           trustedCommandActivations.delete(sessionID);
@@ -122,6 +130,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         await autoHandoff.systemTransform(transformInput, transformOutput);
       },
       "experimental.session.compacting": async (compactInput, compactOutput) => {
+        activationMemory.forget(compactInput.sessionID);
         await applyCompactionRuleReset(compactInput, compactOutput);
       },
       dispose: async () => {

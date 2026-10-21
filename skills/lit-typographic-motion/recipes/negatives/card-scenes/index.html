@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- NEGATIVE, never a recipe: three text cards, each fading in, holding and fading out. Each hold
+     stays under 2 s, so G3 passes its floor, but only the fades move: the decoded file fails G2
+     (moving share under 0.45). It must keep failing it. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #0f1318; font-family: "Archivo", sans-serif; }
+  .card { position: absolute; left: 150px; top: 150px; width: 900px; height: 300px; background: #e9edf2; color: #10141a; font-size: 72px; font-weight: 900; line-height: 300px; text-align: center; opacity: 0; }
+  body.mask { background: #000; }
+  body.mask .card { background: #000; color: #fff; }
+</style>
+</head>
+<body>
+<div class="card">LITCARD</div>
+<div class="card">ONE TOOL</div>
+<div class="card">EVERY DAY</div>
+<script>
+const cards = [...document.querySelectorAll(".card")];
+// Each card owns a third of the loop; on a 9 s loop that is 0.6 s in, a 1.8 s hold, 0.6 s out.
+window.renderFrame = (t, { mask = false } = {}) => {
+  document.body.className = mask ? "mask" : "";
+  cards.forEach((card, i) => {
+    const p = t * 3 - i;
+    const fade = 0.2;
+    const level = p < 0 || p >= 1 ? 0 : p < fade ? p / fade : p > 1 - fade ? (1 - p) / fade : 1;
+    card.style.opacity = mask ? (level > 0.5 ? "1" : "0") : level.toFixed(4);
+  });
+};
+document.fonts.ready.then(() => { window.renderFrame(0); window.ready = true; });
+</script>
+</body>
+</html>

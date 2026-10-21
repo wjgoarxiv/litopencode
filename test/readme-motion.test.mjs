@@ -74,8 +74,8 @@ test("README motion keeps centered outlined ASCII and the exact copyable native 
     assert.ok(content.includes(STILL_COVER), file + ": motion still is the reduced-motion source");
     assert.match(content, /<picture><source media="\(prefers-reduced-motion: reduce\)" srcset="[^"]+cover-motion-still\.webp" \/><img src="[^"]+cover-motion\.webp" width="100%" alt="[^"]+" \/><\/picture><\/p>/u);
     const expectedAlt = isEnglish(file)
-      ? "LitFamily motion cover: five armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."
-      : "LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상";
+      ? "LitFamily motion cover: seven armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."
+      : "LitFamily 모션 커버: 일곱 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상";
     assert.ok(content.includes('alt="' + expectedAlt + '"'), file + ": cover alt text is accurate and localized");
     assert.ok(content.includes('srcset="' + assets + '/cover-motion-still.webp"'), file);
     assert.ok(content.includes('src="' + assets + '/cover-motion.webp'), file);
@@ -156,10 +156,10 @@ test("README motion uses all three licensed Lucide icons for meaningful local de
 });
 
 test("README motion resources have exact approved bytes and are reachable from both languages", async () => {
-  assert.equal(digest(await fs.readFile("docs/assets/cover.webp")), "00b045cf08c00ed3c2b5205645689a035be8f56540a289f9b9a9cad6a7ef9251");
+  assert.equal(digest(await fs.readFile("docs/assets/cover.webp")), "cd82a5abc42e6e7aff2b08184767372174ad644cad74e1681ab7784ee4a712b3");
   const motionCover = await fs.readFile("docs/assets/cover-motion.webp");
   assert.ok(motionCover.length <= 2_621_440, "motion cover must stay under 2.5 MiB");
-  assert.equal(digest(motionCover), "9997081327cf54ae4a8e2a1dce308ea572f7895095f8542b0304e4327d7afa9f");
+  assert.equal(digest(motionCover), "9face3021a194db2d72c7f806a9751da5876c48e836cf3cd6b034d8100908b81");
   for (const [name, expected] of Object.entries(motionPins)) {
     assert.equal(digest(await fs.readFile(`${assetRoot}/${name}`)), expected, name);
     for (const file of githubReadmes) assert.ok((await text(brandPages[file])).includes(`./assets/readme/${name}`), `${brandPages[file]} links ${name}`);

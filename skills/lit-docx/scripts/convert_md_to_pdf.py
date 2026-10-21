@@ -204,6 +204,44 @@ def preflight_pdf_compile(publisher_name: str, publisher: dict, detected_locale:
         raise SystemExit(
             "Error: xeCJK.sty not found. Korean/CJK PDF output requires xeCJK from TeX Live."
         )
+    preflight_pdf_fonts(publisher_name, publisher, detected_locale)
+
+
+FONT_HINTS = {
+    "Pretendard": "install Pretendard from https://github.com/orioncactus/pretendard/releases for all users, "
+    "or set latex.cjk.main_font for this publisher in templates/registry.yaml to a Korean font you have",
+    "Times New Roman": "install the Microsoft core fonts (Debian/Ubuntu: ttf-mscorefonts-installer; "
+    "Windows and macOS ship it), or change docx.font.body.family in templates/registry.yaml",
+}
+FONT_HINT_DEFAULT = (
+    "install the font for all users and refresh the font cache (Linux: fc-cache -f), or change its family in templates/registry.yaml"
+)
+FONT_PROBE = "\\documentclass{article}\\usepackage{fontspec}\\setmainfont{%s}\\begin{document}x\\end{document}\n"
+
+
+def pdf_fonts(publisher_name: str, publisher: dict, detected_locale: str) -> list[tuple[str, str]]:
+    """The font families the template loads, each with the role that needs it."""
+    variables = template_variables({}, publisher_name, publisher, detected_locale, "submission")
+    fonts = [(variables["mainfont"], "body text")]
+    if variables["has-cjk"] == "true":
+        fonts.append((variables["cjk-main-font"], "Korean text"))
+    return fonts
+
+
+def font_is_missing(family: str, run=run_checked) -> bool:
+    """True when XeLaTeX itself reports that fontspec cannot find the family; any other failure is left to the compile."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        probe = Path(tmpdir) / "font-probe.tex"
+        probe.write_text(FONT_PROBE % family, encoding="utf-8")
+        result = run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", probe.name], workdir=probe.parent)
+    return result.returncode != 0 and "cannot be found" in result.stdout + result.stderr
+
+
+def preflight_pdf_fonts(publisher_name: str, publisher: dict, detected_locale: str, run=run_checked) -> None:
+    for family, role in pdf_fonts(publisher_name, publisher, detected_locale):
+        if font_is_missing(family, run):
+            hint = FONT_HINTS.get(family, FONT_HINT_DEFAULT)
+            raise SystemExit(f"BLOCKED: font '{family}' ({role} of publisher '{publisher_name}') is not installed, so XeLaTeX cannot build the PDF. Fix: {hint}.")
 
 
 def compile_latex_to_pdf(tex_path: Path, pdf_path: Path) -> str:

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "note": "The decoded gate row this recipe reached when it shipped; tools/qa-cover-recipes.mjs renders it again and fails when median d or the moving share move more than 15 %, seamLocal leaves the cover TARGET, the file passes 2 MiB or the render exits non-zero. Measured 2026-10-20 on headless Chrome's software rung with CPU raster and libwebp 1.6.0.",
+  "row": {
+    "medianD": 0.002325,
+    "movingFrac": 1.0,
+    "longestStillSec": 0.0,
+    "spike": 2.394,
+    "seamLocal": 1.492,
+    "bytes": 1576692
+  },
+  "settings": {
+    "size": [
+      1000,
+      500
+    ],
+    "fps": 25,
+    "frames": 200,
+    "encode": {
+      "q": 78,
+      "edgeQ": 90,
+      "edgeFrames": 20,
+      "method": 4
+    }
+  },
+  "treatment": {
+    "mode": "cover",
+    "request": "Make a looping README cover for LitOpenCode that shows a running system.",
+    "idea": "Three orbits cross one gate and every crossing lights a cell of the ledger under the name.",
+    "recipe": "orbit-loop",
+    "recipeReason": "A system with whole-number laps closes by itself and gives the beat events a cause.",
+    "brandWord": "LITOPENCODE",
+    "aspect": "2:1",
+    "loopSec": 8,
+    "fps": 25,
+    "layers": {
+      "slow": "Dashed guide rings turn one dash period per loop.",
+      "mid": "Three dots lap their rings three, two and one times.",
+      "beat": "The gate flashes and a ledger cell lights at each crossing; the core rings on four bars."
+    },
+    "system": {
+      "rule": "One orbit law, angle from laps and direction.",
+      "copies": "Three rings.",
+      "offset": "Each ring's start angle and direction."
+    },
+    "title": {
+      "box": [
+        0.05,
+        0.39,
+        0.375,
+        0.14
+      ],
+      "kind": "live"
+    },
+    "encode": {
+      "q": 78,
+      "edgeQ": 90,
+      "edgeFrames": 20
+    },
+    "ambition": "Every beat event has a visible cause, and the crossings are solved rather than detected."
+  }
+}

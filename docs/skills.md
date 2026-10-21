@@ -13,7 +13,9 @@ Add `lit` to a prompt, or type a slash command. These are the ones you'll use mo
 | `lit` at the end of a prompt, `/lit`, or `/litwork` | Start a task with a clear scope, build it, and record what was checked. |
 | `lit-plan` or `/lit-plan` | Prepare a plan before implementation. |
 | `/start-work <approved-plan>` | Execute an approved plan. |
-| `/review-work` | Review the change and its evidence. |
+| `/review-work` | Review a plan after `lit-plan`, or the finished work after `lit-loop` or `/start-work`. It picks from what exists; `/review-work plan` or `/review-work work` forces one. |
+| `lit brainstorm …`, `lit ideation …`, `lit idea …` or `/lit-brainstorm` | Open an unsettled question into options, narrow them to a short list, and hand the pick to `deep-interview` or `lit-plan`. It never builds. |
+| `/litgoal` | Set and keep the finish line. `lit-loop` and `/start-work` run toward it. |
 | `handoff` or `/lit-handoff` | Leave resumable context: the current result and the next step, for another session. |
 | `/lit-recap` | Read a short recap from local state. |
 | `/litresearch` or `/lit-research` | Research with a source for each claim. Helpers work in parallel when OpenCode allows it, and one after another when it doesn't. |
@@ -39,9 +41,9 @@ Each row shows what a skill produces, how to open it, and what you get.
 <td>Add <code>lit</code> to a request. The work goes Frame, Ground, Plan, Execute, Verify, Review, Recap.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/durable-litgoal.webp" width="240" alt="One goal with checkable criteria, kept on disk when OpenCode has no native goal." /></td>
-<td><code>durable-litgoal</code><br /><sub><code>/litgoal</code> · <code>/lit-goal</code></sub></td>
-<td>One goal with checkable criteria, kept on disk when OpenCode has no native goal.</td>
+<td><img src="./assets/skills/durable-litgoal.webp" width="240" alt="Sets and keeps the finish line: one goal with checkable criteria, kept on disk because OpenCode has no native goal. lit-loop and start-work run toward it." /></td>
+<td><code>litgoal</code><br /><sub><code>/litgoal</code> · <code>/lit-goal</code></sub></td>
+<td>Sets and keeps the finish line: one goal with checkable criteria, kept on disk because OpenCode has no native goal. <code>lit-loop</code> and <code>start-work</code> run toward it.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-plan.webp" width="240" alt="A checklist that stops at an approval gate. The lit-plan agent cannot edit files or run shell commands." /></td>
@@ -54,9 +56,9 @@ Each row shows what a skill produces, how to open it, and what you get.
 <td>Runs an approved plan one slice at a time, and stops if its approval or plan revision has gone out of date.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/review-work.webp" width="240" alt="Reviews the change from five angles, lists findings worst first, and marks each angle pass, fail or not run." /></td>
-<td><code>review-work</code><br /><sub><code>/review-work</code></sub></td>
-<td>Reviews the change from five angles, lists findings worst first, and marks each angle pass, fail or not run.</td>
+<td><img src="./assets/skills/review-work.webp" width="240" alt="Reviews a plan before start-work, or the finished work from five angles; lists findings worst first and marks each angle pass, fail or not run." /></td>
+<td><code>review-work</code><br /><sub><code>/review-work</code> · <code>/review-work plan</code> · <code>/review-work work</code></sub></td>
+<td>Two modes, picked from what exists or forced by you: plan review before <code>start-work</code>, work review after it. Work review checks from five angles, lists findings worst first, and marks each angle pass, fail or not run.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/litresearch.webp" width="240" alt="Researches in rounds and keeps a source for each claim, along with what is still uncertain." /></td>
@@ -211,7 +213,7 @@ Each row shows what a skill produces, how to open it, and what you get.
 <tr>
 <td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. It writes a treatment, then draws a stage page or sets the words in motion; the film passes its checks and a look-over before you get it. It is also in the skill picker." /></td>
 <td><code>lit-typographic-motion</code><br /><sub><code>skill picker</code></sub></td>
-<td>Ask for a video with <code>lit</code>. It writes a treatment, then draws a stage page or sets the words in motion; the film passes its checks and a look-over before you get it. It is also in the skill picker.</td>
+<td>Ask for a video with <code>lit</code>. It writes a treatment, then draws a stage page or sets the words in motion; the film passes its checks and a look-over before you get it. Ask for a README cover and you get a silent loop with no visible seam, checked on the WebP file itself. It is also in the skill picker.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/visual-qa.webp" width="240" alt="Looks at the real screen and shows you what it saw; it gets no permission to change files. Open it from the skill picker." /></td>

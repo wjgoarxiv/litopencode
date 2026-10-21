@@ -13,6 +13,8 @@ export type PackageMetadata = {
   readonly packageRoot: string;
 };
 
+import type { HostBinary, HostChoice, HostDetection, HostMode } from "./host-detect.ts";
+
 export type ParsedArgs = {
   readonly command?: string;
   readonly root: string;
@@ -30,6 +32,7 @@ export type ParsedArgs = {
   readonly outputStylePrompt: PermissionPromptMode;
   readonly loop: LoopArgs;
   readonly tuiAction?: string;
+  readonly host: HostChoice;
 };
 
 // Arguments for the evidence-ledger verbs. They address a project workspace, not the OpenCode
@@ -226,4 +229,12 @@ export type InstallReport = {
   readonly routes?: InstallRouteReport;
   readonly capabilities: OpenCodeHostCapabilities;
   readonly package: Pick<PackageMetadata, "name" | "version">;
+  readonly host?: {
+    readonly mode: HostMode;
+    readonly binaries: readonly HostBinary[];
+    readonly unplaced?: HostDetection["unplaced"];
+    readonly evidence: { readonly cliJson: boolean; readonly tuiJson: boolean };
+    readonly override?: string;
+  };
+  readonly cliJson?: { readonly path: string; readonly removed: number; readonly changed: boolean };
 };

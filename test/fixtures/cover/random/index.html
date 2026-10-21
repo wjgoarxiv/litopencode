@@ -1,0 +1,9 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- Negative fixture: a cover page that reads Math.random; the render must stop with exit 18 naming the call. -->
+<canvas id="c" width="2400" height="1200" style="width:1200px;height:600px"></canvas>
+<script>
+const ctx = document.getElementById("c").getContext("2d");
+window.renderFrame = (t) => { ctx.fillStyle = "#123"; ctx.fillRect(0, 0, 2400, 1200); ctx.fillStyle = "#fff"; ctx.fillRect(Math.random() * 2000, 500, 200, 200); };
+window.ready = true;
+</script>

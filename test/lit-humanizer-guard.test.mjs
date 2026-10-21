@@ -291,7 +291,7 @@ test("pre-write guard reports an unparsable apply_patch as unavailable and still
 const calloutPledge = "> **주의:** 이 표는 순위가 아닙니다.\n";
 
 test("every pledge seen in produced deliverables lands on its rule and tier, and the block-tier ones are refused before the write", async () => {
-  assert.equal(pledgeCases.pledges_observed.length, 26);
+  assert.equal(pledgeCases.pledges_observed.length, 33);
   for (const seen of pledgeCases.pledges_observed) {
     const hits = scanText(seen.text, shippedRules, "observed.md");
     assert.ok(hits.some((hit) => hit.rule === seen.rule && hit.severity === seen.severity),

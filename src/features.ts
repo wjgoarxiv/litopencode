@@ -20,6 +20,7 @@ export type LitOpenCodeFeatureId =
   | "guardrails"
   | "lit-init"
   | "lit-crucible"
+  | "lit-brainstorm"
   | "refactor"
   | "lit-burnoff"
   | "lit-burnoff-file"
@@ -195,19 +196,19 @@ export const litOpenCodeFeatures = Object.freeze([
   {
     id: "review-work",
     title: "Review Work",
-    summary: "Provides read-only draft-plan achievability review and five-lane completed-work review with evidence-backed verdicts.",
+    summary: "Provides read-only plan review after lit-plan and five-lane work review after lit-loop or start-work, picked from what exists or forced by the user, with evidence-backed verdicts.",
     bindings: [
       {
         kind: "command",
         id: "review-work",
         surface: "OpenCode command /review-work",
-        description: "Reviews either a draft plan or completed work without implementing the reviewed artifact."
+        description: "Runs plan review or work review, picked from what exists or forced with /review-work plan or /review-work work, without implementing the reviewed artifact."
       },
       {
         kind: "tool",
         id: "review-work",
         surface: "OpenCode tool review-work",
-        description: "Records review-work activation and exposes draft-plan or completed-work review guidance."
+        description: "Records review-work activation and exposes plan review and work review guidance."
       }
     ],
     verification: ["node --test test/litwork.test.mjs", "node --test test/runtime-skills.test.mjs"]
@@ -247,8 +248,14 @@ export const litOpenCodeFeatures = Object.freeze([
   {
     id: "durable-ledger",
     title: "Durable LitGoal Ledger",
-    summary: "Persists loop events under .litopencode/litgoal with atomic writes and temp-file recovery.",
+    summary: "Persists loop events under .litopencode/litgoal with atomic writes and temp-file recovery; litgoal sets and keeps the finish line there, and lit-loop and start-work run toward it.",
     bindings: [
+      {
+        kind: "command",
+        id: "litgoal",
+        surface: "OpenCode command /litgoal",
+        description: "Sets the finish line: one objective with checkable criteria kept on durable state for lit-loop and start-work to run toward."
+      },
       {
         kind: "tool",
         id: "litwork.status",
@@ -572,6 +579,33 @@ export const litOpenCodeFeatures = Object.freeze([
       }
     ],
     verification: ["node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs", "node --test test/static-workflow-command.test.mjs"]
+  },
+  {
+    id: "lit-brainstorm",
+    title: "Lit Brainstorm",
+    summary:
+      "Opens an unsettled question into many different options, narrows them to a short list with trade-offs, and hands the chosen one to deep-interview or lit-plan without implementing.",
+    bindings: [
+      {
+        kind: "config",
+        id: "skills/lit-brainstorm/SKILL.md",
+        surface: "LitOpenCode native-installed managed skill",
+        description: "Ships the divergent-to-convergent flow with lenses, scoring, session-note and hand-off references."
+      },
+      {
+        kind: "command",
+        id: "lit-brainstorm",
+        surface: "OpenCode command /lit-brainstorm",
+        description: "Makes Lit Brainstorm directly invocable; chat routes lit brainstorm, lit ideation, lit ideate, lit idea and lit ideas reach the same surface."
+      },
+      {
+        kind: "agent",
+        id: "optional idea lanes",
+        surface: "OpenCode task delegation",
+        description: "Optionally fans out up to four read-only lanes at depth one, each generating options through a different lens."
+      }
+    ],
+    verification: ["node --test test/lit-brainstorm.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
   },
   {
     id: "refactor",
@@ -1205,15 +1239,15 @@ export const litOpenCodeFeatures = Object.freeze([
   {
     id: "lit-typographic-motion",
     title: "Film director",
-    summary: "Native OpenCode film director: treatment first, a captured stage page or the type engine, generated sound, a numeric gate and recorded look rounds.",
+    summary: "Native OpenCode film director: treatment first, a captured stage page or the type engine, generated sound, a numeric gate and recorded look rounds; cover mode renders a silent, seamless README loop and gates the decoded WebP.",
     bindings: [
       { kind: "config", id: "skills/lit-typographic-motion/SKILL.md", surface: "OpenCode native skill picker", description: "Loads the managed motion skill and its engine and reference closure." },
       { kind: "hook", id: "lit-task motion-video intent", surface: "OpenCode chat.message activation", description: "Routes bounded film requests before slide and interface guidance with a neutral film context." },
-      { kind: "hook", id: "tool.execute.after", surface: "OpenCode tool.execute.after hook", description: "Records each read of a film's stills so the done check can confirm the frames were viewed." },
+      { kind: "hook", id: "tool.execute.after", surface: "OpenCode tool.execute.after hook", description: "Records each read of a film's or a cover's stills so the done check can confirm the frames were viewed." },
       { kind: "cli", id: "litopencode motion-runtime install|status", surface: "LitOpenCode runtime", description: "Pre-warms pinned dependencies and fonts outside the render session." },
-      { kind: "cli", id: "litopencode doctor", surface: "LitOpenCode doctor", description: "Reports Chrome, ffmpeg, WebGL2 tier, software warning, and pre-warm status." }
+      { kind: "cli", id: "litopencode doctor", surface: "LitOpenCode doctor", description: "Reports Chrome, ffmpeg, WebGL2 tier, software warning, pre-warm status and the cover encoder." }
     ],
-    verification: ["node --test test/lit-typographic-motion.test.mjs", "npm run check:managed-skill-manifest", "npm run check:pack-payload"]
+    verification: ["node --test test/lit-typographic-motion.test.mjs", "node --test test/motion-cover.test.mjs", "npm run check:managed-skill-manifest", "npm run check:pack-payload"]
   },
   {
     id: "lit-pptx",

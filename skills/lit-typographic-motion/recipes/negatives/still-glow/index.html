@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- NEGATIVE, never a recipe: a still picture with a faint breathing glow. The glow changes each
+     pixel by less than the encoder's threshold, so the decoded file barely moves: it fails G2 and
+     G3 (the whole loop reads as one hold). It must keep failing them. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #0d1116; font-family: "Archivo", sans-serif; }
+  #word { position: absolute; left: 0; right: 0; top: 240px; text-align: center; font-size: 96px; font-weight: 900; color: #f3f5f8; }
+  #glow { position: absolute; left: 350px; top: 150px; width: 500px; height: 300px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 140, 80, 0.35), rgba(255, 140, 80, 0)); }
+  body.mask { background: #000; }
+  body.mask #glow { visibility: hidden; }
+</style>
+</head>
+<body>
+<div id="glow"></div>
+<div id="word">LITGLOW</div>
+<script>
+const glow = document.getElementById("glow");
+window.renderFrame = (t, { mask = false } = {}) => {
+  document.body.className = mask ? "mask" : "";
+  glow.style.opacity = (0.92 + 0.08 * Math.sin(2 * Math.PI * t)).toFixed(4);
+};
+document.fonts.ready.then(() => { window.renderFrame(0); window.ready = true; });
+</script>
+</body>
+</html>

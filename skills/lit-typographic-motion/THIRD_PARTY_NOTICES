@@ -8,6 +8,9 @@ Fonts bundled in this skill (paths relative to this file):
 - VT323, fonts/VT323-Regular.ttf: SIL OFL 1.1, licence at fonts/VT323-OFL.txt
 - Silkscreen, fonts/Silkscreen-Regular.ttf and fonts/Silkscreen-Bold.ttf: SIL OFL 1.1, licence at fonts/Silkscreen-OFL.txt
 - EMS single-stroke SVG fonts (EMSAllure, EMSFelix, EMSOsmotron, EMSReadability, EMSTech), fonts/stroke/*.svg: SIL OFL 1.1, licence at fonts/stroke/OFL.txt, credits at fonts/stroke/CREDITS
+- JetBrains Mono, variable wght 100-800, Latin subset, fonts/JetBrainsMono-wght-latin.woff2 (unmodified file
+  files/jetbrains-mono-latin-wght-normal.woff2 of @fontsource-variable/jetbrains-mono 5.3.0; served to cover pages
+  only): SIL OFL 1.1, no Reserved Font Name, licence at fonts/JetBrainsMono-OFL.txt
 
 Fonts reused by path from the sibling lit-pptx skill:
 - Pretendard Regular and Bold, ../lit-pptx/pretendard-font/public/static/Pretendard-{Regular,Bold}.otf: SIL OFL 1.1, licence at ../lit-pptx/pretendard-font/LICENSE.txt

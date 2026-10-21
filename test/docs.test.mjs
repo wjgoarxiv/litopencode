@@ -46,7 +46,7 @@ const placeholderOnlyPattern = /\b(?:TODO|TBD|placeholder|stub)\b/i;
 const evidenceBoundaryPattern = /\b(?:blocked|hard stop|failure)\b/i;
 const canonicalSkillIds = [
   "workflow-loop",
-  "durable-litgoal",
+  "litgoal",
   "agent-roster",
   "lit-plan",
   "start-work",
@@ -61,6 +61,7 @@ const canonicalSkillIds = [
   "release-guardrails",
   "lit-init",
   "lit-crucible",
+  "lit-brainstorm",
   "refactor",
   "lit-burnoff",
   "lit-burnoff-file",
@@ -279,11 +280,11 @@ test("bilingual quick starts preserve executable package names and resolve the r
   const cover = await fs.readFile("docs/assets/cover.webp");
   assert.equal(cover.subarray(0, 4).toString("ascii"), "RIFF");
   assert.equal(cover.subarray(8, 12).toString("ascii"), "WEBP");
-  assert.equal(createHash("sha256").update(cover).digest("hex"), "00b045cf08c00ed3c2b5205645689a035be8f56540a289f9b9a9cad6a7ef9251");
+  assert.equal(createHash("sha256").update(cover).digest("hex"), "cd82a5abc42e6e7aff2b08184767372174ad644cad74e1681ab7784ee4a712b3");
   const still = await fs.readFile("docs/assets/cover-motion-still.webp");
   assert.equal(still.subarray(0, 4).toString("ascii"), "RIFF");
   assert.equal(still.subarray(8, 12).toString("ascii"), "WEBP");
-  assert.equal(createHash("sha256").update(still).digest("hex"), "048f141ad91425e1e41737e822f8d32ac865ada352a5edcc10a6a654130d01ce");
+  assert.equal(createHash("sha256").update(still).digest("hex"), "af5b3e711df388fed870d6c2065832ac01e2ba41c3b1bb28ee2aef1464d06c37");
   const npmAssets = "https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.29/docs/assets";
   const pages = [
     { file: "README.md", assets: "./docs/assets", english: true, github: true },
@@ -294,8 +295,8 @@ test("bilingual quick starts preserve executable package names and resolve the r
   for (const { file, assets, english, github } of pages) {
     const content = await readText(file);
     const alt = english
-      ? "LitFamily motion cover: five armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."
-      : "LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상";
+      ? "LitFamily motion cover: seven armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."
+      : "LitFamily 모션 커버: 일곱 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상";
     assert.ok(content.includes('<source media="(prefers-reduced-motion: reduce)" srcset="' + assets + '/cover-motion-still.webp" />'), file);
     assert.ok(content.includes('<img src="' + assets + '/cover-motion.webp" width="100%" alt="' + alt + '" />'), file);
     assert.doesNotMatch(content, /docs\/assets\/cover\.webp/u, file + ": the motion cover replaces the separate static robot cover");
@@ -734,7 +735,7 @@ test("docs describe the OpenCode-native workflow contract precisely", async () =
     "adversarial QA"
   ]);
   assertContainsAll(reviewWork, [
-    "draft-plan review mode",
+    "plan review mode",
     "objective achievability",
     "checklist atomicity",
     "acceptance/evidence",
@@ -1059,5 +1060,37 @@ test("every top-level skill declares where its limitations are written", async (
 
     const channel = body.match(/^limitations_channel:\s*(\S+)\s*$/mu)?.[1];
     assert.ok(allowedChannels.includes(channel), `${declaring} routes ${genre} limitations to "${channel}"`);
+  }
+});
+
+test("the landing pages and the reference say how OpenCode 1 and OpenCode 2 are supported side by side", async () => {
+  for (const file of ["README.md", "README-npm.md"]) {
+    const text = await readText(file);
+    assert.match(text, /OpenCode 1 \(1\.18\.29 or later\), OpenCode 2, or both side by side/u, file);
+    assert.doesNotMatch(text, /does not support it yet/u, file);
+  }
+  for (const file of ["README-Ko-KR.md", "README-npm-Ko-KR.md"]) {
+    const text = await readText(file);
+    assert.match(text, /OpenCode 1\(1\.18\.29 이상\)과 OpenCode 2/u, file);
+    assert.doesNotMatch(text, /아직 지원하지 않습니다/u, file);
+  }
+  const reference = await readText("docs/reference.md");
+  assert.match(reference, /^## OpenCode 2$/mu);
+  assertContainsAll(reference, ["`--host auto`", "`opencode2`", "prompt.footer.status", "🔥 LIT IGNITED", "cli.json", "`command/<id>.md`", "`permissions`", "`opencode plugin update`", "`execute`", "`--host v1`"]);
+  const referenceKo = await readText("docs/reference-Ko-KR.md");
+  assert.match(referenceKo, /^## OpenCode 2$/mu);
+  assertContainsAll(referenceKo, ["`--host auto`", "`opencode2`", "prompt.footer.status", "🔥 LIT IGNITED", "cli.json", "`command/<id>.md`", "`permissions`", "`execute`", "`--host v1`"]);
+});
+
+test("the GitHub and npm pages count the LitFamily as its seven members", async () => {
+  const members = ["LitClaude", "LitHermes", "LitCodex", "LitOpenCode", "LitGrok", "LitMuse", "LitGravity"];
+  for (const file of ["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md", "docs/brand.md", "docs/brand-Ko-KR.md"]) {
+    const content = await readText(file);
+    assert.doesNotMatch(content, /\bfive (?:armored|robots?|products|machines)\b|다섯 (?:로봇|중장갑|제품)/iu, `${file} still counts five`);
+  }
+  for (const file of ["docs/brand.md", "docs/brand-Ko-KR.md"]) {
+    const content = await readText(file);
+    for (const member of members) assert.ok(content.includes(member), `${file} names ${member}`);
+    assert.match(content, /\bseven\b|일곱/u, `${file} counts seven`);
   }
 });

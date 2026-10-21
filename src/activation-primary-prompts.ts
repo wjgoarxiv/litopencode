@@ -1,7 +1,7 @@
 import { activationBanner, activationProbeInstruction } from "./activation-probe.ts";
-import { promptWithSkillBody } from "./activation-prompt-utils.ts";
+import { promptWithSkillPointer } from "./activation-prompt-utils.ts";
 
-export const litLoopPromptInjection = promptWithSkillBody(`${activationBanner("lit-loop")}
+export const litLoopPromptInjection = promptWithSkillPointer(`${activationBanner("lit-loop")}
 <lit-loop-mode>
 LitOpenCode is active. Treat this as the host-adapted lit-loop injection for OpenCode.
 
@@ -121,7 +121,7 @@ Do not load skill documentation before inspecting the task and repository. Use t
 Do not create a durable plan, goal ledger, evidence tree, or subagent delegation for a self-contained task. Use the full lit-loop workflow when the user asks for durable tracking or the task clearly needs extended, multi-turn coordination.
 </lit-task-mode>`;
 
-export const litPlanPromptInjection = promptWithSkillBody(`${activationBanner("lit-plan")}
+export const litPlanPromptInjection = promptWithSkillPointer(`${activationBanner("lit-plan")}
 <lit-plan-mode>
 LitOpenCode lit-plan is active. Treat this as the host-adapted planning-only mode for OpenCode.
 
@@ -176,9 +176,18 @@ package readiness.
 
 Report the plan in chat with the bounded objective, non-goals, resolved or gated unknowns,
 ordered action/output/verification checklist, dependencies, acceptance evidence, decision
-branches, cleanup, risks, and final DoneClaim. Use the exact chat-safe ## TODOs and
-## Final verification template in the installed skill body: implementation and F rows start
-at column zero and are numbered consecutively. Do not persist durable state from lit-plan;
+branches, cleanup, risks, and final DoneClaim. Use this exact chat-safe template:
+implementation and F rows start at column zero and are numbered consecutively.
+
+## TODOs
+
+- [ ] 1. <title> — Action: <action>; Output: <output>; Verification: <verification>
+
+## Final verification
+
+- [ ] F1. <title> — Verification: <verification>
+
+Do not persist durable state from lit-plan;
 ask for explicit user confirmation to continue with start-work before any state-changing write.
 
 # Stop rule

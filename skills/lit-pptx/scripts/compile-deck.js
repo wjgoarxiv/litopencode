@@ -451,7 +451,7 @@ if (require.main === module) {
           // Run Python boilerplate engine for PPTX
           await new Promise((resolve, reject) => {
             const pyArgs = [pyScript, tmpAstPath, "--output", pptxPath];
-            execFile("python3", pyArgs, { cwd: scriptDir }, (error, stdout, stderr) => {
+            execFile(process.platform === "win32" ? "python" : "python3", pyArgs, { cwd: scriptDir }, (error, stdout, stderr) => {
               // Clean up temp file
               try { fs.unlinkSync(tmpAstPath); } catch (_) {}
               if (error) {
@@ -475,7 +475,7 @@ if (require.main === module) {
         // Optional: embed bundled fonts into the PPTX for a self-contained deck.
         if (embedFonts && pptxPath) {
           const { execFileSync } = require("child_process");
-          execFileSync("python3", [path.join(__dirname, "embed_fonts.py"), pptxPath], {
+          execFileSync(process.platform === "win32" ? "python" : "python3", [path.join(__dirname, "embed_fonts.py"), pptxPath], {
             stdio: "inherit",
           });
         }

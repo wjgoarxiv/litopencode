@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- NEGATIVE, never a recipe: the slide habit cover mode exists to stop. A title slams in, three
+     lines arrive one by one, and an end card holds. Most of the loop is a hold, so the decoded file
+     fails G2 (motion energy) and G3 (longest still run). It must keep failing them. -->
+<link rel="stylesheet" href="/lit/fonts.css">
+<style>
+  html, body { margin: 0; width: 1200px; height: 600px; overflow: hidden; background: #10141a; font-family: "Archivo", sans-serif; color: #f2f4f7; }
+  #title { position: absolute; left: 0; right: 0; top: 150px; text-align: center; font-size: 84px; font-weight: 900; }
+  .line { position: absolute; left: 0; right: 0; text-align: center; font-size: 30px; font-weight: 400; }
+  body.mask { background: #000; }
+  body.mask .line { visibility: hidden; }
+  body.mask #title { color: #fff; }
+</style>
+</head>
+<body>
+<div id="title">LITCARD</div>
+<div class="line" style="top: 300px">first line</div>
+<div class="line" style="top: 350px">second line</div>
+<div class="line" style="top: 400px">third line</div>
+<script>
+const lines = [...document.querySelectorAll(".line")];
+const title = document.getElementById("title");
+window.renderFrame = (t, { mask = false } = {}) => {
+  document.body.className = mask ? "mask" : "";
+  const slam = Math.min(1, t / 0.04);
+  title.style.transform = `scale(${(1.6 - 0.6 * slam).toFixed(4)})`;
+  lines.forEach((line, i) => { line.style.opacity = t > 0.12 + 0.1 * i ? "1" : "0"; });
+};
+document.fonts.ready.then(() => { window.renderFrame(0); window.ready = true; });
+</script>
+</body>
+</html>

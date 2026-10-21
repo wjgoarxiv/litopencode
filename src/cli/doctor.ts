@@ -27,7 +27,9 @@ import {
 import { inspectLspCapability } from "./lsp-capability.ts";
 import { probeMotionRuntime } from "./motion-runtime.ts";
 import { isLitOpenCodeEntry } from "./plugin-mutation.ts";
-import { inspectTuiPlugin } from "./tui-config.ts";
+import { inspectTuiPlugin, planCliJsonCleanup } from "./tui-config.ts";
+import { detectOpenCodeHosts, targetsV1, targetsV2, type HostChoice } from "./host-detect.ts";
+import { defaultOpenCodeConfigRoot } from "../state.ts";
 import {
   autoUpdateCheckPath,
   autoUpdateInstallLockPath,
@@ -200,7 +202,30 @@ export function doctorProjectRoot(cwd: string = process.cwd()): string {
   }
 }
 
-export async function doctor(root: string): Promise<CliResult> {
+/** OpenCode 2's update policy for plugins, read from the shared `autoupdate` setting and its opt-out variable. */
+export function openCode2UpdatePolicy(config: Record<string, unknown> | null, env: NodeJS.ProcessEnv = process.env): "auto" | "notify" | "off" {
+  const disabled = env.OPENCODE_DISABLE_AUTOUPDATE;
+  if (disabled !== undefined && disabled !== "" && disabled !== "0" && disabled.toLowerCase() !== "false") return "off";
+  const value = config?.autoupdate;
+  if (value === false) return "off";
+  if (value === "notify") return "notify";
+  return "auto";
+}
+
+async function litEntryCount(root: string, config: Record<string, unknown> | null, packageName: string): Promise<number> {
+  const entries = [
+    ...(Array.isArray(config?.plugin) ? config.plugin : []),
+    ...(Array.isArray(config?.plugins) ? config.plugins : [])
+  ];
+  let count = 0;
+  for (const entry of entries) {
+    const id = typeof entry === "object" && entry !== null && !Array.isArray(entry) ? (entry as { package?: unknown }).package : pluginEntryId(entry);
+    if (isLitOpenCodeEntry(id) || (typeof id === "string" && (await isLocalPackageEntry(root, id, packageName)))) count += 1;
+  }
+  return count;
+}
+
+export async function doctor(root: string, hostChoice: HostChoice = "auto"): Promise<CliResult> {
   const metadata = await readPackageMetadata();
   const loaded = await loadConfig(root);
   const openCodeLitConfigPath = litOpenCodeConfigFileForOpenCodeRoot(root);
@@ -250,6 +275,28 @@ export async function doctor(root: string): Promise<CliResult> {
     config: autoHandoffConfig.autoHandoff
   }).resolve();
   const hostCompaction = inspectHostCompactionPoint(hostConfig.config);
+  // Doctor never starts a host: it reads the npm package behind each command, and on a custom root only
+  // that root's config files.
+  const defaultRoot = path.resolve(root) === path.resolve(defaultOpenCodeConfigRoot());
+  const host = await detectOpenCodeHosts({
+    root,
+    override: hostChoice,
+    ...(defaultRoot ? {} : { resolvePackage: async () => undefined })
+  });
+  const forV1 = targetsV1(host.mode);
+  const forV2 = targetsV2(host.mode);
+  const pluginEntries = await litEntryCount(root, hostConfig.config, metadata.name);
+  const cliJson = await planCliJsonCleanup(root).then(
+    (plan) => ({ path: plan.path, stale: plan.removed }),
+    (error: unknown) => ({ path: path.join(path.resolve(root), "cli.json"), stale: 0, error: error instanceof Error ? error.message : String(error) })
+  );
+  const hostOnlyPresent = ["permissions", "policies"].filter((key) => hostConfig.config !== null && key in hostConfig.config);
+  const hostOnlyKeys = {
+    present: hostOnlyPresent,
+    breaksOpenCode1: forV1 && hostOnlyPresent.includes("permissions"),
+    note: "OpenCode 1 refuses to start when the shared opencode.json holds the OpenCode 2 `permissions` key. LitOpenCode never writes `permissions` or `policies`."
+  };
+  const openCode2Ok = !forV2 || (pluginEntries === 1 && cliJson.stale === 0);
   const autoHandoffWarnings = [...autoHandoff.warnings];
   if (autoHandoff.enabled && autoHandoff.percent !== null && hostCompaction.percent !== null && autoHandoff.percent >= hostCompaction.percent) {
     autoHandoffWarnings.push(
@@ -264,7 +311,19 @@ export async function doctor(root: string): Promise<CliResult> {
         package: metadata,
         capabilities: openCodeHostCapabilities(),
         hostLimits: { path: hostConfig.path, ...inspectHostLimits(hostConfig.config) },
-        lsp: inspectLspCapability(hostConfig.config),
+        host: {
+          mode: host.mode,
+          binaries: host.binaries,
+          ...(host.unplaced === undefined ? {} : { unplaced: host.unplaced }),
+          evidence: host.evidence,
+          ...(host.override === undefined ? {} : { override: host.override }),
+          updatePolicy: forV2 ? openCode2UpdatePolicy(hostConfig.config) : null,
+          note: "OpenCode 1 runs as `opencode` and OpenCode 2 as `opencode2` when both are installed; they share this config folder."
+        },
+        lsp: {
+          ...inspectLspCapability(hostConfig.config),
+          ...(forV2 ? { openCode2: "OpenCode 2 accepts the lsp settings but does not run language servers, so it reports no diagnostics from them." } : {})
+        },
         autoHandoff: {
           enabled: autoHandoff.enabled,
           percent: autoHandoff.percent,
@@ -321,8 +380,11 @@ export async function doctor(root: string): Promise<CliResult> {
           pinnedVersion: installPlugin.configured?.startsWith(`${metadata.name}@`) === true ? installPlugin.configured.slice(metadata.name.length + 1) : null
         }),
         install: {
-          ok: installPlugin.ok && commandAliases.ok && nativeSkills.ok,
+          ok: installPlugin.ok && commandAliases.ok && nativeSkills.ok && openCode2Ok && !hostOnlyKeys.breaksOpenCode1,
           plugin: installPlugin,
+          pluginEntries,
+          cliJson,
+          hostOnlyKeys,
           commandAliases,
           nativeSkills,
           tui

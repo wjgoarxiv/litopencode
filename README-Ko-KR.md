@@ -1,4 +1,4 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 다섯 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 일곱 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
 
 # LitOpenCode
 
@@ -34,7 +34,7 @@ LitOpenCode는 작업에 일정한 순서와 기억을 붙여 줍니다. 프롬�
 
 ## 빠르게 시작하기
 
-Node.js와 npm, 그리고 모델 제공자를 설정해 둔 [OpenCode](https://opencode.ai) 1.18 또는 1.19가 있으면 됩니다. LitOpenCode는 OpenCode 1용입니다. 플러그인 로딩 방식이 달라진 OpenCode 2는 아직 지원하지 않습니다. 설치는 명령 한 줄입니다.
+Node.js와 npm, 그리고 모델 제공자를 설정해 둔 [OpenCode](https://opencode.ai)가 있으면 됩니다. OpenCode 1(1.18.29 이상)과 OpenCode 2를 모두 쓸 수 있고, 둘을 함께 둘 때는 OpenCode 1을 `opencode`로, OpenCode 2를 `opencode2`로 실행합니다. 설치 프로그램이 있는 쪽을 찾아 각각 설정합니다. 설치는 명령 한 줄입니다.
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode install
@@ -183,7 +183,7 @@ flowchart LR
 
 ### 준비물
 
-Node.js와 npm, 그리고 모델 제공자에 로그인해 둔 OpenCode 1.18 또는 1.19입니다. OpenAI 제공자로 새로 설치하면 계획과 검토는 GPT-6 Astra가, 만들기는 GPT-6 Luna가 맡습니다. 다른 모델은 설치 중에 고를 수 있습니다.
+Node.js와 npm, 그리고 모델 제공자에 로그인해 둔 OpenCode 1(1.18.29 이상)과 OpenCode 2 가운데 하나 또는 둘 다입니다. OpenAI 제공자로 새로 설치하면 계획과 검토는 GPT-6 Astra가, 만들기는 GPT-6 Luna가 맡습니다. 다른 모델은 설치 중에 고를 수 있습니다.
 
 ### 설치 확인
 

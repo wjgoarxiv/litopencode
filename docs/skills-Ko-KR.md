@@ -13,7 +13,9 @@ LitOpenCode가 설치하는 것 전부를, 스킬마다 만들어 내는 결과�
 | 프롬프트 끝의 `lit`, `/lit`, `/litwork` | 범위가 분명한 작업을 시작해 구현하고, 확인한 내용을 기록합니다. |
 | `lit-plan` 또는 `/lit-plan` | 구현 전에 계획을 세웁니다. |
 | `/start-work <승인된 계획>` | 승인한 계획을 실행합니다. |
-| `/review-work` | 변경 내용과 근거를 검토합니다. |
+| `/review-work` | `lit-plan` 뒤에는 계획을, `lit-loop`나 `/start-work` 뒤에는 끝난 작업을 검토합니다. 있는 것을 보고 고르며 `/review-work plan`, `/review-work work`로 직접 정할 수 있습니다. |
+| `lit brainstorm …`, `lit ideation …`, `lit idea …` 또는 `/lit-brainstorm` | 아직 정하지 못한 질문을 여러 선택지로 펼친 뒤 짧은 목록으로 좁히고, 고른 것을 `deep-interview`나 `lit-plan`에 넘깁니다. 직접 만들지는 않습니다. |
+| `/litgoal` | 끝나는 지점을 정하고 지킵니다. `lit-loop`와 `/start-work`가 그 목표를 향해 일합니다. |
 | `handoff` 또는 `/lit-handoff` | 현재 결과와 다음 할 일을 다음 세션에 넘깁니다. |
 | `/lit-recap` | 로컬 기록을 짧게 요약해 보여 줍니다. |
 | `/litresearch` 또는 `/lit-research` | 주장마다 출처를 남기며 조사합니다. OpenCode가 허용하면 보조 에이전트가 나눠서 동시에 조사하고, 아니면 차례로 진행합니다. |
@@ -39,9 +41,9 @@ Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](./referenc
 <td>요청에 <code>lit</code>만 붙이세요. 작업이 틀 잡기, 근거 찾기, 계획, 실행, 검증, 리뷰, 정리 순서로 진행됩니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/durable-litgoal.webp" width="240" alt="OpenCode에 목표 기능이 없을 때, 확인 가능한 기준이 붙은 목표 하나를 디스크에 남깁니다." /></td>
-<td><code>durable-litgoal</code><br /><sub><code>/litgoal</code> · <code>/lit-goal</code></sub></td>
-<td>OpenCode에 목표 기능이 없을 때, 확인 가능한 기준이 붙은 목표 하나를 디스크에 남깁니다.</td>
+<td><img src="./assets/skills/durable-litgoal.webp" width="240" alt="끝나는 지점을 정하고 지킵니다. OpenCode에 목표 기능이 없으므로 확인 가능한 기준이 붙은 목표 하나를 디스크에 남기고, lit-loop와 start-work가 그 목표를 향해 일합니다." /></td>
+<td><code>litgoal</code><br /><sub><code>/litgoal</code> · <code>/lit-goal</code></sub></td>
+<td>끝나는 지점을 정하고 지킵니다. OpenCode에 목표 기능이 없으므로 확인 가능한 기준이 붙은 목표 하나를 디스크에 남기고, <code>lit-loop</code>와 <code>start-work</code>가 그 목표를 향해 일합니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-plan.webp" width="240" alt="승인 관문에서 멈추는 체크리스트를 만듭니다. lit-plan 에이전트는 파일 수정도, 셸 명령도 할 수 없습니다." /></td>
@@ -54,9 +56,9 @@ Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](./referenc
 <td>승인된 계획을 한 조각씩 실행하고, 승인이나 계획 버전이 낡았으면 멈춥니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/review-work.webp" width="240" alt="변경을 다섯 방향에서 검토해 심각한 문제부터 보여 주고, 방향마다 통과·실패·미실행을 적습니다." /></td>
-<td><code>review-work</code><br /><sub><code>/review-work</code></sub></td>
-<td>변경을 다섯 방향에서 검토해 심각한 문제부터 보여 주고, 방향마다 통과·실패·미실행을 적습니다.</td>
+<td><img src="./assets/skills/review-work.webp" width="240" alt="start-work 전에는 계획을, 끝난 뒤에는 변경을 다섯 방향에서 검토해 심각한 문제부터 보여 주고, 방향마다 통과·실패·미실행을 적습니다." /></td>
+<td><code>review-work</code><br /><sub><code>/review-work</code> · <code>/review-work plan</code> · <code>/review-work work</code></sub></td>
+<td>두 가지 모드가 있고, 있는 것을 보고 고르거나 직접 정합니다. <code>start-work</code> 전에는 계획 검토, 끝난 뒤에는 작업 검토입니다. 작업 검토는 변경을 다섯 방향에서 살펴 심각한 문제부터 보여 주고, 방향마다 통과·실패·미실행을 적습니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/litresearch.webp" width="240" alt="여러 차례에 걸쳐 조사하고, 주장마다 출처와 아직 불확실한 점을 함께 남깁니다." /></td>
@@ -211,7 +213,7 @@ Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](./referenc
 <tr>
 <td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="lit으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 무대 페이지를 그리거나 글자를 움직입니다. 영상은 검사와 눈으로 보는 확인을 거쳐 넘깁니다. 스킬 선택기에서도 열 수 있습니다." /></td>
 <td><code>lit-typographic-motion</code><br /><sub><code>skill picker</code></sub></td>
-<td><code>lit</code>으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 무대 페이지를 그리거나 글자를 움직입니다. 영상은 검사와 눈으로 보는 확인을 거쳐 넘깁니다. 스킬 선택기에서도 열 수 있습니다.</td>
+<td><code>lit</code>으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 무대 페이지를 그리거나 글자를 움직입니다. 영상은 검사와 눈으로 보는 확인을 거쳐 넘깁니다. README 커버를 요청하면 이음매가 보이지 않는 무음 루프를 만들고, 완성된 WebP 파일을 그대로 풀어 검사합니다. 스킬 선택기에서도 열 수 있습니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/visual-qa.webp" width="240" alt="실제 화면을 보고 본 것을 그대로 보여 줍니다. 파일을 고칠 권한은 받지 않습니다. 스킬 선택기에서 엽니다." /></td>

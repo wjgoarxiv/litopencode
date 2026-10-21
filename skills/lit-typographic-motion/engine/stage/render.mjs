@@ -402,15 +402,15 @@ export async function renderStage(out, { round = 1, stillsOnly = false } = {}) {
   }
 }
 
-// `render.mjs stage [--detach]`: a detached run writes its log and exit code under .run/ so a host
-// tool timeout never kills a long render.
-export function detachStage(out, args) {
+// `render.mjs stage|cover [--detach]`: a detached run writes its log and exit code under .run/ so a
+// host tool timeout never kills a long render.
+export function detachStage(out, args, mode = "stage") {
   const runDir = path.join(out, ".run");
   mkdirSync(runDir, { recursive: true });
   const logFile = path.join(runDir, "render.log");
   rmSync(path.join(runDir, "render-exit.json"), { force: true });
   const fd = openSync(logFile, "w");
-  const child = spawn(process.execPath, [path.join(skillRoot, "render.mjs"), "stage", ...args.filter((arg) => arg !== "--detach"), "--exit-file", path.join(runDir, "render-exit.json")], { detached: true, stdio: ["ignore", fd, fd] });
+  const child = spawn(process.execPath, [path.join(skillRoot, "render.mjs"), mode, ...args.filter((arg) => arg !== "--detach"), "--exit-file", path.join(runDir, "render-exit.json")], { detached: true, stdio: ["ignore", fd, fd] });
   child.unref();
   closeSync(fd);
   return { pid: child.pid, logFile, progressFile: path.join(runDir, "progress.json"), exitFile: path.join(runDir, "render-exit.json") };

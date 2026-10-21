@@ -5,17 +5,11 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { chromeFlagRungs } from "./constants.mjs";
+import { splitLines, which } from "./command.mjs";
 
 const macChrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
-export function which(name, env = process.env) {
-  for (const dir of (env.PATH ?? "").split(path.delimiter)) {
-    if (!dir) continue;
-    const candidate = path.join(dir, name);
-    if (existsSync(candidate)) return candidate;
-  }
-  return undefined;
-}
+export { which };
 
 export function findChrome(env = process.env) {
   if (env.CHROME_PATH) return existsSync(env.CHROME_PATH) ? { path: env.CHROME_PATH } : { missing: `CHROME_PATH does not exist: ${env.CHROME_PATH}` };
@@ -29,7 +23,7 @@ export function findChrome(env = process.env) {
 
 export function chromeVersion(executable) {
   const result = spawnSync(executable, ["--version"], { encoding: "utf8", timeout: 10000 });
-  return result.status === 0 ? result.stdout.trim() : `version unavailable (${(result.stderr || result.error?.message || "").split("\n")[0]})`;
+  return result.status === 0 ? result.stdout.trim() : `version unavailable (${splitLines(result.stderr || result.error?.message || "")[0]})`;
 }
 
 export async function loadPlaywright(cacheDir) {

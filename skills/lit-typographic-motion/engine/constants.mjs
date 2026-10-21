@@ -14,7 +14,9 @@ export const EXIT = Object.freeze({
   STAGE_CONTRACT_ERROR: 17,
   STAGE_NONDETERMINISTIC: 18,
   STAGE_NETWORK_REQUEST: 19,
-  SOUND_INVALID: 20
+  SOUND_INVALID: 20,
+  BLOCKED_NO_COVER_ENCODER: 21, // cover mode: neither img2webp + dwebp nor gifski on PATH
+  BLOCKED_ASSET_MISSING: 22 // cover mode: assets.json lists a file that is not there
 });
 
 export const FRAME = Object.freeze({ width: 1920, height: 1080, fps: 60 });
@@ -175,3 +177,29 @@ export const easeTokens = Object.freeze({
 
 export const engineCredit = "mexicat/pdoom-video ca251e3dddda422b364385eb484b5a3593a0990d (MIT)";
 export const engineCreditLine = "Typographic-motion engine adapted from mexicat/pdoom-video (MIT, Giacomo Magnanini), commit `ca251e3`.";
+
+// Cover mode (references/cover.md): the README cover loop and its gate on the decoded file. The
+// thresholds were calibrated on 2026-10-20 against eight earlier painted covers (all pass FLOOR),
+// four slide-like negatives (all fail FLOOR) and three pilot loops (all reach TARGET). A number
+// moves only with a new calibration table, never to let a cover through.
+export const COVER = Object.freeze({
+  maxBytes: 3 * 1024 * 1024, // G1 FLOOR
+  targetBytes: 2 * 1024 * 1024, // G1 TARGET
+  minSec: 6, maxSec: 12,
+  gridMs: 50, // metrics run on a grid of max(gridMs, shortest decoded frame)
+  stillEps: 0.0005, // mean |dY| per grid step (luma 0..1 at about 300 px wide) below this is still
+  floor: Object.freeze({ medianD: 0.0004, movingFrac: 0.45, stillSec: 2.0, seamLocal: 8 }),
+  target: Object.freeze({ medianD: 0.0015, movingFrac: 0.95, stillSec: 0.5, spike: 6, seamLocal: 2.0, seamLocalMin: 0.25 }),
+  minContrast: 4.5, // G5, WCAG ratio of the title against its own box
+  minCapPx: 24, displayWidth: 830, // G6: cap height at a full-width README column
+  artSsim: 0.9, artMinShare: 0.1, // frame 0 shows the base art
+  seekFrames: 16, seekLevels: 1, // frames re-rendered out of order, and the rasterizer's rounding
+  windowPadSec: 0.5, maxDefects: 3,
+  captureScale: 2,
+  fps: Object.freeze([16, 20, 25]),
+  aspects: Object.freeze({
+    "2:1": Object.freeze({ page: Object.freeze([1200, 600]), size: Object.freeze([1000, 500]) }),
+    "3:2": Object.freeze({ page: Object.freeze([1200, 800]), size: Object.freeze([960, 640]) })
+  }),
+  encode: Object.freeze({ q: 86, edgeQ: 97, edgeFrames: 15, method: 4 })
+});

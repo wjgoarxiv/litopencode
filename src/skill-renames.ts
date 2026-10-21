@@ -4,7 +4,7 @@ import type { LitOpenCodeRuntimeSkillId } from "./skills.ts";
 // One-release compatibility. Canonical catalogs contain only the keys of this map.
 export type RenamedSkillId = Extract<LitOpenCodeRuntimeSkillId,
   "lit-crucible" | "lit-init" | "lit-commit" | "lit-burnoff" |
-  "lit-burnoff-file" | "lit-humanizer" | "lit-fetch" | "lit-code"
+  "lit-burnoff-file" | "lit-humanizer" | "lit-fetch" | "lit-code" | "litgoal"
 >;
 
 type RenameValue = string | readonly string[];

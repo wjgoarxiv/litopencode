@@ -6,6 +6,7 @@ declare module "solid-js" {
   export function createMemo<T>(fn: () => T): Accessor<T>;
   export function createEffect(fn: () => void): void;
   export function onCleanup(fn: () => void): void;
+  export function createRoot<T>(fn: (dispose: () => void) => T): T;
 }
 
 declare module "@opentui/solid" {
