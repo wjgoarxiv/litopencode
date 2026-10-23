@@ -3037,7 +3037,7 @@
         },
         {
           "path": "templates/remotion/package-lock.json",
-          "sha256": "611af7ac6adf6d63219ee365a68571c2de4c923836b9d44412df2cce45b58d75"
+          "sha256": "8fb3fa7aba1a99516ca19f225b61bb7e881987ddfcbb6e206e6093692b0d6d21"
         },
         {
           "path": "templates/remotion/package.json",
