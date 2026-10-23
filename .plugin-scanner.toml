@@ -1,0 +1,4 @@
+# The test fixtures under test/ hold fake tokens and keys on purpose: the redaction and
+# lock-owner tests check that such values never reach a ledger, a log or a handoff.
+[scanner]
+ignore_paths = ["test/*"]

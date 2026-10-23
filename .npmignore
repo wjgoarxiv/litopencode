@@ -99,3 +99,4 @@ skills/lit-diagram-drawer/scripts/office-proof.py
 # Portable motion template source is an intentional managed asset.
 !skills/readme-studio/templates/remotion/src/
 !skills/readme-studio/templates/remotion/src/index.tsx
+.plugin-scanner.toml
