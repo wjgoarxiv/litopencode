@@ -3025,7 +3025,7 @@
         },
         {
           "path": "templates/hyperframes/package-lock.json",
-          "sha256": "2644db96a3d027c02e2ead8e37a0433b538aceb36db33faeca9dc51e6bbe2eab"
+          "sha256": "9c8fb05ae772defbd885e032a3ee04caf28bea3869e115a748c23e9808288a3c"
         },
         {
           "path": "templates/hyperframes/package.json",
@@ -3460,7 +3460,7 @@
         },
         {
           "path": "requirements-audio.txt",
-          "sha256": "31d4619e560e85a7fdb75cf91f4412e377eaaac13f7debd979b33570984bf52d"
+          "sha256": "771ab581292545d597b5a5e0f47efa399ecc5f1c5e710dd042a55e72702a7775"
         },
         {
           "path": "runtime.mjs",
