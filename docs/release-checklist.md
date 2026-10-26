@@ -6,6 +6,12 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.32 Release Scope
+
+- Add lit-hijack, lit-schematic and lit-adhd/lit-rewind, with workflow pause and resume, typed start-work and the parallel-lane, YOUR TURN and review-work looks on the status card.
+- Ship the lit-pptx, frontend-ui-ux, diagram and motion end states, ask for the look before a design build, and add the README gallery kept out of the package.
+- Harden lit-hijack and motion asset fetches (per-hop public-host checks pinned to the checked address, streaming caps) and the review fixes for tree paths, redactors, card text and the brief file.
+
 ## 1.0.31 Release Scope
 
 - Update the pinned motion dependencies: `certifi` for motion audio, and `hono` and `fast-uri` in the readme-studio template lockfiles, with the managed-skill manifest refreshed to match.
