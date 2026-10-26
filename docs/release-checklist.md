@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.31 Release Scope
+
+- Update the pinned motion dependencies: `certifi` for motion audio, and `hono` and `fast-uri` in the readme-studio template lockfiles, with the managed-skill manifest refreshed to match.
+
 ## 1.0.30 Release Scope
 
 - Support OpenCode 2 alongside OpenCode 1, including agent model routing, user-context delivery and standalone entry types.

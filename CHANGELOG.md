@@ -5,6 +5,10 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.31 - 2026-10-26
+
+- The motion and README cover tools pick up upstream fixes in their pinned dependencies: `certifi` 2026.10.19 for motion audio, and newer `hono` and `fast-uri` in the HyperFrames and Remotion template lockfiles. A fresh setup installs these versions; nothing else about how the skills run changes.
+
 ## 1.0.30 - 2026-10-22
 
 - OpenCode 2 is supported alongside OpenCode 1. The installer detects either host, and sessions started without a model use the agent’s configured route. Missing routed OpenAI models are added to the catalog. Knowledge notes, resume receipts and handoff replies arrive as user context, and the server and TUI type exports work without importing a host plugin package.
