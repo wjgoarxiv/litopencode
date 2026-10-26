@@ -35,7 +35,7 @@ Read the selected repository's instructions, current README, package manifests, 
 
 ## #contract.procedure
 
-1. Follow `references/production.md` to inventory claims, source paths, links, install command and license. Use `templates/facts.json`. Compare every claim with the actual cited source. The facts helper checks structure and path safety only; it does not read for semantic truth or verify badge endpoints.
+1. Follow `references/production.md` to inventory claims, source paths, links, install command and license. Use `templates/facts.json`. Compare every claim with the actual cited source. The facts helper checks structure and path safety only; it does not read for semantic truth or verify badge endpoints. Before any cover or typography work, unless the prompt names the cover look or leaves it to you ("you choose", "알아서", "아무거나"), ask the user to pick the visual direction with OpenCode's `question` tool: two to four directions (theme, ink and accent mood) drawn from the project's identity, the best fit first labelled `(Recommended)`, and keep the answer in the decision note. When the session cannot ask (a non-interactive `opencode run`, no `question` tool, or the permission is denied), take the recommended option and say so in one line of the reply.
 2. Anchor every lazy resource and helper to the exact native-selected SKILL.md, including installed paths with spaces. From the authorized repository:
 
    ```sh

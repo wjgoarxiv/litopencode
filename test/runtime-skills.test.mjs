@@ -47,6 +47,8 @@ const expectedRuntimeSkillIds = [
   "lit-init",
   "lit-crucible",
   "lit-brainstorm",
+  "lit-hijack",
+  "lit-adhd",
   "refactor",
   "lit-burnoff",
   "lit-burnoff-file",
@@ -66,6 +68,7 @@ const expectedRuntimeSkillIds = [
   "lit-handoff",
   "lit-scientific-visualization",
   "lit-diagram-drawer",
+  "lit-schematic",
   "lit-typographic-motion",
   "lit-pptx",
   "lit-docx",
@@ -99,6 +102,9 @@ const expectedFeatureIds = [
   "lit-init",
   "lit-crucible",
   "lit-brainstorm",
+  "lit-hijack",
+  "lit-adhd",
+  "workflow-stack",
   "refactor",
   "lit-burnoff",
   "lit-burnoff-file",
@@ -118,6 +124,7 @@ const expectedFeatureIds = [
   "lit-handoff",
   "lit-scientific-visualization",
   "lit-diagram-drawer",
+  "lit-schematic",
   "lit-typographic-motion",
   "lit-pptx",
   "lit-docx",
@@ -145,9 +152,9 @@ test("UI/UX chat activation stays bounded and routes dense detail lazily", async
     ["frontend-ui-ux", frontendUiUxPromptInjection],
     ["visual-qa", visualQaPromptInjection]
   ]) {
-    // Raised from 4096 when taste routing landed. The bound is ours, not the host's:
-    // it exists to keep dense detail in lazy references, and it still does.
-    assert.ok(Buffer.byteLength(prompt, "utf8") <= 4352, `${skillId} activation exceeds 4352 UTF-8 bytes`);
+    // Raised from 4096 when taste routing landed, and to 4608 when the ask-first look question landed.
+    // The bound is ours, not the host's: it keeps dense detail in lazy references, and it still does.
+    assert.ok(Buffer.byteLength(prompt, "utf8") <= 4608, `${skillId} activation exceeds 4608 UTF-8 bytes`);
     assert.match(prompt, /references\/complete-contract\.md/u);
     const detail = await fs.readFile(path.join("skills", skillId, "references", "complete-contract.md"), "utf8");
     assert.ok(Buffer.byteLength(detail, "utf8") >= 15_000, `${skillId} detailed contract was not preserved`);
@@ -291,6 +298,8 @@ test("visible skills corpus covers runtime feature parity", async () => {
     ["lit-init", ["lit-init", "AGENTS.md"]],
     ["lit-crucible", ["lit-crucible", "adversarial planning"]],
     ["lit-brainstorm", ["lit-brainstorm", "deep-interview", "lit-plan"]],
+    ["lit-hijack", ["lit-hijack", "hijack.mjs", ".litopencode/hijack"]],
+    ["lit-adhd", ["lit-adhd", "rewind.mjs", "workflow-stack"]],
     ["refactor", ["refactor", "behavior-preserving"]],
     ["lit-burnoff", ["lit-burnoff", "AI-like artifacts"]],
     ["lit-burnoff-file", ["lit-burnoff-file", "tool.execute.after", "one logical change at a time"]],

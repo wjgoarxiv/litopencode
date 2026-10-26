@@ -1,0 +1,57 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/lit/fonts.css">
+<link rel="stylesheet" href="/lit/style.css">
+<script src="/lit/style.js"></script>
+<script src="/lit/stage-kit.js"></script>
+<script type="importmap">{ "imports": { "three": "/lit/three/three.module.js", "three/addons/": "/lit/three/addons/" } }</script>
+<style>
+  html, body { margin: 0; background: #0c0e13; overflow: hidden; }
+  #world { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+</style>
+<canvas id="world" width="1920" height="1080"></canvas>
+<div class="lit-headline lit-ink" id="copy">지붕의 비가 사흘을 버틴다</div>
+<script type="module">
+  import * as THREE from "three";
+  import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+  import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+  const copy = document.getElementById("copy");
+  LitStage.text(copy);
+  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("world"), antialias: true, alpha: false, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1);
+  renderer.setSize(1920, 1080, false);
+  renderer.setClearColor(0x0c0e13, 1);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+  const camera = new THREE.PerspectiveCamera(32, 1920 / 1080, 0.1, 100);
+  camera.position.set(0, 1.4, 7);
+  camera.lookAt(0, 0.4, 0);
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  key.position.set(3, 6, 4);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.bias = -0.0004;
+  key.shadow.normalBias = 0.03;
+  scene.add(key);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.25 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -1;
+  floor.receiveShadow = true;
+  scene.add(floor);
+  const box = new THREE.Mesh(new RoundedBoxGeometry(1.6, 1.6, 1.6, 4, 0.18), new THREE.MeshStandardMaterial({ color: 0x0f7a82, roughness: 0.3, metalness: 0.2 }));
+  box.castShadow = true;
+  scene.add(box);
+  LitStage.define({
+    width: 1920, height: 1080, fps: 30, duration: 4.2,
+    render(t) {
+      LitStage.place(copy, LitStage.shot(t).layout, "type");
+      box.rotation.set(0.3 + t * 0.4, t * 0.9, 0);
+      box.position.y = 0.2 + Math.sin(t * 2) * 0.15;
+      renderer.render(scene, camera);
+    }
+  });
+</script>

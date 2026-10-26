@@ -23,6 +23,9 @@ import { SOUND_EXIT, muxTrack, resolveTrack, soundChecks } from "../sound.mjs";
 import { frameSize, keepFirstTreatment, loadTreatment } from "../treatment.mjs";
 import { inspectWarmState, pins, skillRoot } from "../../runtime.mjs";
 import { previewEncoderRung } from "../../probe.mjs";
+import { addToStills, boardRules, writeBoard } from "../board.mjs";
+import { readStyle, styleCss, styleScript } from "../styles.mjs";
+import { requirePlate } from "../blender.mjs";
 import { openStage, stageFonts } from "./capture.mjs";
 import { analyseQa, captureQa, qaPageSource } from "./qa.mjs";
 import { StageError, scanStage, stageSha } from "./scan.mjs";
@@ -111,6 +114,7 @@ export function prepareStage(out) {
   const stageDir = path.join(out, "stage");
   if (!existsSync(path.join(stageDir, "index.html"))) throw new StageError(17, "STAGE_CONTRACT_ERROR", `no stage page at ${path.join(stageDir, "index.html")}; write it first (references/stage.md)`);
   const scan = scanStage(stageDir);
+  const plate = requirePlate(treatment, stageDir);
   const state = inspectWarmState();
   if (state.blocked) throw exit(state.blocked.exit, state.blocked.name, `${state.blocked.detail}; fix: ${state.fix}`);
   const chrome = findChrome();
@@ -118,24 +122,59 @@ export function prepareStage(out) {
   const { width, height } = frameSize(treatment);
   const fps = treatment.fps ?? 60;
   const seed = Number.isSafeInteger(treatment.seed) ? treatment.seed >>> 0 : fnv1a32(treatment.request);
-  return { treatment, stageDir, scan, state, chromePath: chrome.path, width, height, fps, seed, fonts: stageFonts(skillRoot, state, pins) };
+  const style = readStyle(treatment.style);
+  const styleFiles = { "/lit/style.css": styleCss(style, treatment.format), "/lit/style.js": styleScript(style, treatment.format, treatment) };
+  return { treatment, stageDir, scan, state, chromePath: chrome.path, width, height, fps, seed, fonts: stageFonts(skillRoot, state, pins), style, styleFiles, rung: stageRung(treatment), plate, notices: [] };
 }
 
-// Opens a stage browser, loads the page and checks its contract against the treatment.
-async function openChecked(chromium, context, profile, extraInit) {
-  const stage = await openStage(chromium, { chromePath: context.chromePath, profile, stageDir: context.stageDir, width: context.width, height: context.height, fps: context.fps, seed: context.seed, fonts: context.fonts, extraInit });
+// A three.js world asks for the GPU rung; every other film is on the software rung, a Blender film too:
+// its world is the plate, and the page only draws type over it.
+export const stageRung = (treatment) => (treatment.depth === "3d" && treatment.render3d !== "blender" ? "gpu" : "swiftshader");
+
+const fellBack = (why) => `the 3D route asked for the GPU rung and ${why}; rendered on the software rung (SwiftShader), slower, same frames`;
+
+// Opens one browser on `rung`, loads the page and checks its contract against the treatment.
+async function openOnRung(chromium, context, profile, extraInit, rung) {
+  const stage = await (context.opener ?? openStage)(chromium, { chromePath: context.chromePath, profile, stageDir: context.stageDir, width: context.width, height: context.height, fps: context.fps, seed: context.seed, fonts: context.fonts, extraInit, styleFiles: context.styleFiles, rung });
   try {
     const { definition, webgl } = await stage.load(context.scan.rasters.map((raster) => `/${raster.rel}`));
     if (!definition) throw new StageError(17, "STAGE_CONTRACT_ERROR", "the page never called LitStage.define({ width, height, fps, duration, render }) or set window.litStage");
     if (definition.width !== context.width || definition.height !== context.height) throw new StageError(17, "STAGE_CONTRACT_ERROR", `the page defines ${definition.width}x${definition.height}; the treatment's ${context.treatment.format} needs ${context.width}x${context.height}`);
     if ((definition.fps ?? 60) !== context.fps) throw new StageError(17, "STAGE_CONTRACT_ERROR", `the page defines ${definition.fps} fps; the treatment renders at ${context.fps}`);
     if (!(Number.isFinite(definition.duration) && definition.duration > 0)) throw new StageError(17, "STAGE_CONTRACT_ERROR", "the page's duration must be a positive number of seconds");
-    if (webgl.failed) throw exit(EXIT.BLOCKED_NO_WEBGL2, "BLOCKED_NO_WEBGL2", "the page asked for a WebGL context and the software renderer gave none; fix: check SwiftShader availability");
     return { stage, definition, webgl };
   } catch (error) {
     await stage.close();
     throw error;
   }
+}
+
+// The GPU rung comes first when the context asks for it. When it cannot start, or gives the page no
+// WebGL, the whole round (every later browser too) takes the software rung and says so in a notice.
+// A page that breaks the stage contract is not retried: it would break the same way there.
+export async function openChecked(chromium, context, profile, extraInit) {
+  if (context.rung === "gpu") {
+    let opened;
+    try { opened = await openOnRung(chromium, context, profile, extraInit, "gpu"); }
+    catch (error) {
+      if (error?.exitCode !== undefined && error.exitCode !== EXIT.BLOCKED_NO_CHROME) throw error;
+      const line = String(error?.message ?? error).split("\n").find((part) => part.trim()) ?? "no detail";
+      context.rung = "swiftshader";
+      context.notices.push(fellBack(`it did not start (${line.slice(0, 160)})`));
+    }
+    if (opened) {
+      if (!opened.webgl.failed) return opened;
+      await opened.stage.close();
+      context.rung = "swiftshader";
+      context.notices.push(fellBack("the page got no WebGL there"));
+    }
+  }
+  const opened = await openOnRung(chromium, context, profile, extraInit, "swiftshader");
+  if (opened.webgl.failed) {
+    await opened.stage.close();
+    throw exit(EXIT.BLOCKED_NO_WEBGL2, "BLOCKED_NO_WEBGL2", "the page asked for a WebGL context and the software renderer gave none; fix: check SwiftShader availability");
+  }
+  return opened;
 }
 
 // Captures `frames` (sorted) in one browser by stepping every frame from 0. The stills round skips the
@@ -205,7 +244,7 @@ async function captureMaster(context, stage, frameCount, keep, previewSources, r
     const result = await job.promise;
     const record = detector.push(result.cells);
     hashes.set(job.frame, result.hash);
-    writeSync(logFd, JSON.stringify({ frame: job.frame, rgbaSha256: result.hash, p995L: result.p995L, transitions: { up: record.up, down: record.down, redUp: record.redUp, redDown: record.redDown }, fullStep: record.fullStep }) + "\n");
+    writeSync(logFd, JSON.stringify({ frame: job.frame, rgbaSha256: result.hash, p995L: result.p995L, p005L: result.p005L, busy: result.busy, transitions: { up: record.up, down: record.down, redUp: record.redUp, redDown: record.redDown }, fullStep: record.fullStep }) + "\n");
     await write(master.child, Buffer.from(result.rgba.buffer, result.rgba.byteOffset, result.rgba.byteLength));
     if (result.previewPng) writeFileSync(path.join(pvDir, `f${job.frame}.png`), result.previewPng);
     consumed += 1;
@@ -288,6 +327,25 @@ function previewSourceFrames(fps, frameCount) {
   return sources;
 }
 
+// The board round: the layout check (the text QA replay) runs on the page before any film is encoded,
+// its rows go to stills/check.json, and the storyboard is drawn with the verdict on it. `qa` is the
+// finished QA result when the full render already ran it.
+async function boardRound(out, context, chromium, runDir, stills, { frameCount, qa = null }) {
+  let result = qa;
+  if (!result) {
+    const opened = await openChecked(chromium, context, path.join(runDir, "sq"), qaPageSource());
+    try { result = analyseQa(await captureQa(opened.stage, context, frameCount), context); } finally { await opened.stage.close(); }
+  }
+  const rules = boardRules(result.checks);
+  writeFileSync(path.join(out, "stills", "check.json"), JSON.stringify({ rules }, null, 2) + "\n");
+  const beats = stills.files.filter((entry) => entry.kind === "beat");
+  const file = await writeBoard({ out, context, chromium, treatment: context.treatment, beatFiles: beats.map((entry) => path.join(out, entry.file)), rules });
+  const entry = { file: "stills/board.png", kind: "board", frames: beats.map((beat) => beat.frame) };
+  addToStills(out, entry);
+  stills.files = JSON.parse(readFileSync(path.join(out, "stills", "stills.json"), "utf8")).files;
+  return { qa: result, rules, file, failed: rules.filter((rule) => rule.status === "FAIL") };
+}
+
 // Moves the previous round's exports aside so a new render never mixes with them.
 function clearExports(out, runDir) {
   const previous = path.join(runDir, "previous-round");
@@ -322,6 +380,8 @@ export async function renderStage(out, { round = 1, stillsOnly = false } = {}) {
       stills = writeStillsSet(out, { width: context.width, height: context.height, fps: context.fps, frames, plan, round, pathName: "stage", beats: context.treatment.beats });
       resolveTrack(out, context.treatment, { frameCount, fps: context.fps, cuts: stageCuts(context) });
       writeFileSync(path.join(runDir, "stills-timing.json"), JSON.stringify({ frames: plan.all.length, totalSec: Number(((performance.now() - began) / 1000).toFixed(1)) }) + "\n");
+      const board = stillsOnly ? await boardRound(out, context, chromium, runDir, stills, { frameCount }) : null;
+      if (board) return { stillsOnly: true, stills, frameCount, board };
       if (noFfmpeg) throw exit(EXIT.BLOCKED_NO_FFMPEG_FOR_VIDEO, "BLOCKED_NO_FFMPEG_FOR_VIDEO", "ffmpeg not found on PATH; the stills and contact sheet were written; fix: install ffmpeg, or keep working from `stage --stills-only`, which needs no ffmpeg");
       return { stillsOnly: true, stills, frameCount };
     }
@@ -361,6 +421,7 @@ export async function renderStage(out, { round = 1, stillsOnly = false } = {}) {
     if (qaResult.missing.length) throw new StageError(17, "STAGE_CONTRACT_ERROR", `copy line never found on screen: ${qaResult.missing.map((line) => `"${line}"`).join(", ")}`);
     const frames = new Map([...plan.all].map((frame) => [frame, decodeRgba(master.kept.get(frame))]));
     stills = writeStillsSet(out, { width: context.width, height: context.height, fps: context.fps, frames, plan, round, pathName: "stage", beats: context.treatment.beats });
+    await boardRound(out, context, chromium, runDir, stills, { frameCount, qa: qaResult });
     const poster = posterPng(decodeRgba(master.kept.get(posterFrame)), context.width, context.height);
     writeFileSync(path.join(runDir, "poster.png"), poster.png);
     writeFileSync(path.join(runDir, "reduced-motion.png"), encodePng(context.width, context.height, decodeRgba(master.kept.get(stillFrame)), 4, 9, true));
@@ -385,10 +446,11 @@ export async function renderStage(out, { round = 1, stillsOnly = false } = {}) {
     const manifest = {
       schemaVersion: 1, path: "stage", format: context.treatment.format, resolution: [context.width, context.height], fps: context.fps, frameCount,
       durationSec: frameCount / context.fps, targetDurationSec: context.treatment.durationSec, seed: context.seed, craftRound: round,
-      chromeFlags: stage.flags, webgl, previewEncoder: preview?.encoder ?? null,
+      chromeFlags: stage.flags, rung: context.rung, renderer: webgl.renderer ?? null, ...(context.notices.length ? { warnings: [...context.notices] } : {}), webgl, previewEncoder: preview?.encoder ?? null,
       preview: preview ? { width: preview.width, height: preview.height, fps: preview.fps, bytes: preview.bytes } : null,
       posterFrame, posterSize: [poster.width, poster.height], stillFrame, determinismFrames: samples,
       timing: { ...master.timing, totalSec: Number(((performance.now() - began) / 1000).toFixed(1)) },
+      ...(context.plate ? { plate: { blender: context.plate.blender, engine: context.plate.engine, device: context.plate.device, samples: context.plate.samples, fps: context.plate.fps, frames: context.plate.frames.length } } : {}),
       sound, qa: { file: ".run/qa.json", samples: qaResult.samples.length, trackFrames: qaResult.trackFrames, allowedFaces: qaResult.allowedFaces },
       treatmentSha256: sha256(readFileSync(path.join(out, "treatment.json"))), stageSha256: stageSha(context.stageDir),
       stillsSha256: sha256(readFileSync(path.join(out, "stills", "stills.json"))), pageErrors: stage.errors.slice(0, 5), missingAssets: stage.missing.slice(0, 5),

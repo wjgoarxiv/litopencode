@@ -37,6 +37,8 @@
     }
     return out.map(([x0, y0, x1, y1]) => [Math.max(0, x0), Math.max(0, y0), Math.min(innerWidth, x1), Math.min(innerHeight, y1)]).filter(([x0, y0, x1, y1]) => x1 > x0 && y1 > y0);
   }
+  const firstFamily = (style) => String(style.fontFamily).split(",")[0].trim().replace(/^["']|["']$/gu, "");
+
   function runRoot(textNode) {
     const parent = textNode.parentElement;
     const marked = parent.closest("[data-lit-text]");
@@ -60,7 +62,7 @@
     for (const [root, nodes] of groups) {
       const range = document.createRange();
       const rects = [], elements = new Set();
-      let opacity = 1, fontSize = 0, weight = 400, scale = 1, gradient = false;
+      let opacity = 1, fontSize = 0, weight = 400, scale = 1, gradient = false, color = "", family = "";
       for (const node of nodes) {
         range.selectNodeContents(node);
         rects.push(...clipRects(node.parentElement, [...range.getClientRects()]));
@@ -69,11 +71,11 @@
         opacity = Math.min(opacity, opacityChain(el));
         const style = getComputedStyle(el);
         const size = parseFloat(style.fontSize), s = scaleOf(el);
-        if (size * s > fontSize * scale) { fontSize = size; scale = s; weight = Number(style.fontWeight) || 400; }
+        if (size * s > fontSize * scale) { fontSize = size; scale = s; weight = Number(style.fontWeight) || 400; color = style.color; family = firstFamily(style); }
         if (/text/u.test(style.webkitBackgroundClip || style.backgroundClip) || /url\(|gradient/u.test(style.fill)) gradient = true;
       }
       const text = nodes.map((node) => node.nodeValue).join("").replace(/\s+/gu, " ").trim();
-      runs.push({ text, norm: normalize(text), rects, opacity, fontSize, scale, weight, gradient, decor: root.closest("[data-lit-decor]") !== null, kind: root instanceof SVGElement ? "svg" : "dom", elements: [...elements] });
+      runs.push({ text, norm: normalize(text), rects, opacity, fontSize, scale, weight, gradient, color, family, decor: root.closest("[data-lit-decor]") !== null, kind: root instanceof SVGElement ? "svg" : "dom", elements: [...elements] });
     }
     for (const el of document.querySelectorAll("body *")) {
       for (const pseudo of ["::before", "::after"]) {
@@ -82,7 +84,7 @@
         const text = content.slice(1, -1).trim();
         if (!text) continue;
         const style = getComputedStyle(el, pseudo);
-        runs.push({ text, norm: normalize(text), rects: clipRects(el, [el.getBoundingClientRect()]), opacity: opacityChain(el), fontSize: parseFloat(style.fontSize), scale: scaleOf(el), weight: Number(style.fontWeight) || 400, gradient: false, decor: el.closest("[data-lit-decor]") !== null, kind: "pseudo", elements: [el] });
+        runs.push({ text, norm: normalize(text), rects: clipRects(el, [el.getBoundingClientRect()]), opacity: opacityChain(el), fontSize: parseFloat(style.fontSize), scale: scaleOf(el), weight: Number(style.fontWeight) || 400, gradient: false, color: style.color, family: firstFamily(style), decor: el.closest("[data-lit-decor]") !== null, kind: "pseudo", elements: [el] });
       }
     }
     for (const entry of window.__litStage.registered()) {
@@ -147,7 +149,16 @@
       probeFaces(families) {
         const box = document.createElement("div");
         box.style.cssText = "position:absolute;left:0;top:0;opacity:0;pointer-events:none";
-        families.forEach((family, i) => { const el = document.createElement("span"); el.dataset.litQaProbe = String(i); el.style.fontFamily = `"${family}"`; el.textContent = "Aa가"; box.appendChild(el); });
+        // Each family at every weight and width the page can ask for: a static instance reports the file's own
+        // family name (Archivo at 900 is "Archivo Black"), so one default-weight probe would call it foreign.
+        let i = 0;
+        for (const family of families) for (const weight of [400, 700, 900]) for (const stretch of [75, 100, 125]) {
+          const el = document.createElement("span");
+          el.dataset.litQaProbe = String(i++);
+          el.style.cssText = `font-family:"${family}";font-weight:${weight};font-stretch:${stretch}%`;
+          el.textContent = "Aa가";
+          box.appendChild(el);
+        }
         document.body.appendChild(box);
         return () => box.remove();
       },

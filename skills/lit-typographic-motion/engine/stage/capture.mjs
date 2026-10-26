@@ -12,12 +12,18 @@ export const stageHost = "lit.stage";
 export const stageOrigin = `http://${stageHost}`;
 const here = path.dirname(fileURLToPath(import.meta.url));
 const kitSource = () => readFileSync(path.join(here, "stage-kit.js"), "utf8");
+const threeRoot = path.join(here, "..", "vendor", "three");
 const clockSource = () => readFileSync(path.join(here, "clock.js"), "utf8");
 
-// The Wave 1 software rung (SwiftShader, CPU raster; keychain flags included) plus the stage flags.
-export function stageChromeFlags(width, height) {
-  const software = chromeFlagRungs().find((rung) => rung.name === "swiftshader").flags;
-  return [...software,
+// The stage's Chrome flags on one rung. "swiftshader" (the default) is the software rung: CPU raster,
+// the same pixels on every machine. "gpu" asks the platform's native ANGLE backend for WebGL, so a
+// three.js film draws in real time on the graphics card; page raster stays on the CPU, which keeps the
+// text and the capture path identical to the software rung.
+export function stageChromeFlags(width, height, rung = "swiftshader", platform = process.platform) {
+  const found = chromeFlagRungs(platform).find((candidate) => candidate.name === rung);
+  if (!found) throw new Error(`unknown Chrome rung "${rung}" (gpu or swiftshader)`);
+  const base = rung === "gpu" ? [...found.flags.filter((flag) => flag !== "--enable-gpu-rasterization"), "--disable-gpu-rasterization"] : found.flags;
+  return [...base,
     "--run-all-compositor-stages-before-draw", "--disable-checker-imaging", "--disable-new-content-rendering-timeout",
     "--disable-threaded-animation", "--disable-threaded-scrolling", "--disable-image-animation-resync", "--disable-lcd-text",
     "--force-color-profile=srgb", "--hide-scrollbars", "--mute-audio", "--force-device-scale-factor=1", `--window-size=${width},${height}`,
@@ -47,7 +53,7 @@ export function stageFonts(skillRoot, state, pins) {
 }
 
 // Serve the stage origin from disk through request interception: the product's scripts and faces
-// under /lit/, every other path from inside `stageDir` only. Anything else is recorded, never fetched:
+// under /lit/ (fonts, and the pinned three.js under /lit/three/), every other path from inside `stageDir` only. Anything else is recorded, never fetched:
 // another origin in `blocked`, a path that leaves the directory or has no stage type in `refused`, a
 // file that is not there in `missing`. The stage and the cover browsers both use it.
 export async function serveStage(context, { stageDir, fonts, scripts }) {
@@ -59,11 +65,18 @@ export async function serveStage(context, { stageDir, fonts, scripts }) {
     const url = new URL(route.request().url());
     if (url.origin !== stageOrigin) { blocked.push(url.href); return route.abort("blockedbyclient"); }
     const pathname = decodeURIComponent(url.pathname);
-    if (Object.hasOwn(scripts, pathname)) return route.fulfill({ status: 200, contentType: contentTypes[".js"], body: scripts[pathname] });
+    if (Object.hasOwn(scripts, pathname)) return route.fulfill({ status: 200, contentType: contentTypes[path.extname(pathname)] ?? contentTypes[".js"], body: scripts[pathname] });
     if (pathname === "/lit/fonts.css") return route.fulfill({ status: 200, contentType: contentTypes[".css"], body: fonts.css });
     if (pathname.startsWith("/lit/fonts/")) {
       const file = fonts.files.get(pathname.slice("/lit/fonts/".length));
       return file && existsSync(file) ? route.fulfill({ status: 200, contentType: contentTypes[path.extname(file)], body: readFileSync(file) }) : route.fulfill({ status: 404, body: "" });
+    }
+    if (pathname.startsWith("/lit/three/")) {
+      // The pinned three.js build and its two addons, JavaScript only; the licence and anything else is not served.
+      const sub = pathname.slice("/lit/three/".length);
+      const file = path.join(threeRoot, sub);
+      const ok = !sub.split("/").includes("..") && sub.endsWith(".js") && insideDir(threeRoot, file) && existsSync(file);
+      return ok ? route.fulfill({ status: 200, contentType: contentTypes[".js"], body: readFileSync(file) }) : route.fulfill({ status: 404, body: "" });
     }
     const rel = pathname.replace(/^\/+/u, "") || "index.html";
     if (rel.split("/").includes("..")) { refused.push(rel); return route.fulfill({ status: 404, body: "" }); }
@@ -79,10 +92,11 @@ export async function serveStage(context, { stageDir, fonts, scripts }) {
 }
 
 // Launch one stage browser. `profile` is a short directory under the run's .run/, removed on close.
-export async function openStage(chromium, { chromePath, profile, stageDir, width, height, fps, seed, fonts, extraInit }) {
+// `styleFiles` maps /lit/style.css and /lit/style.js to the film's house style, written per treatment.
+export async function openStage(chromium, { chromePath, profile, stageDir, width, height, fps, seed, fonts, extraInit, styleFiles = {}, rung = "swiftshader" }) {
   rmSync(profile, { recursive: true, force: true });
   mkdirSync(profile, { recursive: true });
-  const flags = stageChromeFlags(width, height);
+  const flags = stageChromeFlags(width, height, rung);
   let context;
   try {
     context = await chromium.launchPersistentContext(profile, {
@@ -94,7 +108,7 @@ export async function openStage(chromium, { chromePath, profile, stageDir, width
     const line = String(error?.message ?? error).split("\n").find((part) => part.trim()) ?? String(error);
     throw Object.assign(new Error(`BLOCKED_NO_CHROME (10): Chrome failed to launch headless: ${line}; fix: check that Chrome can start headless in this sandbox`), { exitCode: 10 });
   }
-  const { blocked, refused, missing } = await serveStage(context, { stageDir, fonts, scripts: { "/lit/stage-kit.js": kitSource() } });
+  const { blocked, refused, missing } = await serveStage(context, { stageDir, fonts, scripts: { "/lit/stage-kit.js": kitSource(), ...styleFiles } });
   await context.addInitScript({ content: `window.__litStageConfig = ${JSON.stringify({ seed: seed >>> 0, fps })};\n${clockSource()}` });
   if (extraInit) await context.addInitScript({ content: extraInit });
   const page = context.pages()[0] ?? await context.newPage();

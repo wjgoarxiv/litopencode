@@ -26,3 +26,20 @@ test("the shared detector sees a bearer credential after a C1 CSI sequence", () 
   assert.equal(containsSecret(`Bearer\t${credential}`), true);
   assert.equal(containsSecret(`Bearer\n${credential}`), true);
 });
+
+test("a JSON credential with a quoted key is a credential", async () => {
+  const { redact } = await import("../skills/lit-adhd/scripts/rewind.mjs");
+  for (const value of ['{"password": "hunter2hunter"}', '{"api_key":"abcd1234efgh5678"}', "{'client_secret': 'zz99yy88xx77'}", '"auth_token" : "q1w2e3r4t5y6"']) {
+    assert.equal(containsSecret(value), true, value);
+    assert.doesNotMatch(redact(value, { envValues: [], home: "/nohome" }), /hunter2hunter|abcd1234efgh5678|zz99yy88xx77|q1w2e3r4t5y6/u, value);
+  }
+  for (const prose of ['the "password" field is required', 'set "token" in the config']) assert.equal(containsSecret(prose), false, prose);
+});
+
+test("the brief redacts a secret environment value in its URL-encoded and base64 forms too", async () => {
+  const { redact } = await import("../skills/lit-adhd/scripts/rewind.mjs");
+  const secret = "p@ss word/42+xyz";
+  for (const form of [secret, encodeURIComponent(secret), Buffer.from(secret).toString("base64")]) {
+    assert.doesNotMatch(redact(`see https://x.example/?q=${form} now`, { envValues: [secret], home: "/nohome" }), new RegExp(form.replace(/[.*+?^${}()|[\]\\/]/gu, "\\$&"), "u"), form);
+  }
+});

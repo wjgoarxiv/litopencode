@@ -51,7 +51,8 @@ export function judgeCase(mustFail, { status, manifest }) {
 // Every negative shares this treatment; its expected.json sets the loop, the rate and the encode.
 const negativeTreatment = (over) => ({
   mode: "cover", request: "A slide-like negative rendered by the cover recipe QA.", idea: "Text states on a timeline that the decoded-file gate has to fail.",
-  recipe: "own", recipeReason: "A regression negative that must keep failing, never a recipe.", brandWord: "LITCARD", aspect: "2:1",
+  recipe: "own", recipeReason: "A regression negative that must keep failing, never a recipe.",
+  hero: "Cards and lines that change state.", beat: "Each card or line changes state on the timeline.", brandWord: "LITCARD", aspect: "2:1",
   layers: { slow: "Nothing moves slowly.", mid: "Nothing swells.", beat: "Cards and lines change state." },
   system: { rule: "Text states on a timeline.", copies: "One per card or line.", offset: "None." },
   title: { box: [0.1, 0.25, 0.8, 0.5], kind: "live" }, ambition: "It keeps failing its named gates.", ...over
@@ -82,7 +83,7 @@ function main() {
   const option = (name) => { const i = argv.indexOf(`--${name}`); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[i + 1] : undefined; };
   const outRoot = path.resolve(option("out") ?? mkdtempSync(path.join(os.tmpdir(), "ltm-cover-qa-")));
   const feather = option("feather");
-  const only = feather !== undefined ? [] : (option("only") ?? "painted-light,weight-tide,orbit-loop").split(",");
+  const only = feather !== undefined ? [] : (option("only") ?? "painted-light,weight-tide,orbit-loop,hero-3d").split(",");
   const rows = [];
   let failed = 0;
 
@@ -115,7 +116,7 @@ function main() {
   const cases = [];
   if (argv.includes("--negatives")) {
     for (const name of ["title-slam", "card-scenes", "still-glow", "reset-sweep"]) cases.push({ kind: "negative", name });
-    for (const recipe of ["painted-light", "weight-tide", "orbit-loop"]) {
+    for (const recipe of ["painted-light", "weight-tide", "orbit-loop", "hero-3d"]) {
       for (const id of Object.keys(readJson(path.join(skill, "recipes", recipe, "expected.json"))?.regressions ?? {})) cases.push({ kind: "regression", recipe, id });
     }
   }

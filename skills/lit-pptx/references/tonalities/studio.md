@@ -1,7 +1,7 @@
 # Studio
 
-Studio is a magazine spread. The 12-column grid is visible as fine column hairlines, titles live in
-a side rail or open a page at large size, splits are asymmetric, real numbers are set prominently on
+Studio is a magazine spread. The 12-column grid is visible as fine column hairlines, titles carry a
+bar in the left margin or open a page at display size, splits are asymmetric, real numbers are set prominently on
 tinted panels, and a dark ochre accent marks the one thing to look at. Pack file:
 `templates/tonalities/studio/pack.yaml`.
 
@@ -32,7 +32,7 @@ tinted panels, and a dark ochre accent marks the one thing to look at. Pack file
 
 ## Type
 
-Pretendard throughout. Compact ramp at density 10; display tracks tight (−2).
+Pretendard throughout. Compact ramp at density 10; display tracks tight (−2). Cover and statement titles take the hero step (60 pt) when their words fit; `hero: false` in the front matter turns it off. A figure is never larger than a title.
 
 ## Dials
 
@@ -52,9 +52,8 @@ title variety of the eight.
 | reference | side-rail |
 | definition | side-rail |
 
-An image slide takes the side rail: the picture across columns 5-12 and its facts and source in the
-rail under the title, an asymmetric split that differs from the bottom title Atlas or Paper would
-give the same slide.
+An image slide takes the side rail: the picture and its facts split unevenly in the body under the
+title.
 
 Treatments: side-rail, statement, top-plain-large, bottom-anchor, overlay. The statement is drawn
 `rules`: the sentence on the open page between a hairline above it and one under its support line
@@ -90,6 +89,8 @@ column-hairlines, numeral, rail-fill, colour-field, caption-band.
 
 ## Writing for Studio
 
+- Keep titles short: about 29 Korean glyphs per line at reading size and two lines at most; a longer
+  title moves the slide to another treatment.
 - Alternate: an image slide, a numbers slide, a text slide. Studio's variance rewards a deck whose
   slides genuinely differ in job.
 - `text-two-column` needs four to six groups with two or three sub-points each to fill both columns

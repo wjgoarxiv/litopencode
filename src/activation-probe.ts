@@ -5,6 +5,7 @@ export function activationDiscipline(skillId: string): string {
     case "lit-work":
     case "workflow-loop": return "lit-loop";
     case "lit-research": return "litresearch";
+    case "lit-rewind": return "lit-adhd";
     case "lit-goal":
     case "durable-litgoal": return "litgoal";
     case "lit-korean":

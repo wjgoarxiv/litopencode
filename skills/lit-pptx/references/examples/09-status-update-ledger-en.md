@@ -1,6 +1,6 @@
 ---
 tonality: ledger
-title: Finance system migration, week 40 status
+title: Finance migration, week 40 status
 subtitle: Cutover readiness, open defects and budget to date
 date: 2026-10-06
 department: Example Manufacturing finance programme
@@ -9,7 +9,7 @@ notice: Sample data for illustration only
 ---
 layout: cover-typographic
 
-# Finance system migration, week 40 status
+# Finance migration, week 40 status
 ---
 layout: kpi-row
 

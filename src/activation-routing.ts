@@ -22,6 +22,8 @@ import {
   frontendUiUxPromptInjection,
   gitMasterPromptInjection,
   litBrainstormPromptInjection,
+  litHijackPromptInjection,
+  litAdhdPromptInjection,
   litCruciblePromptInjection,
   initDeepPromptInjection,
   litGoalPromptInjection,
@@ -55,6 +57,8 @@ export type ChatActivationMode =
   | "lit-init"
   | "lit-crucible"
   | "lit-brainstorm"
+  | "lit-hijack"
+  | "lit-adhd"
   | "lit-burnoff-file"
   | "lit-fetch"
   | "lit-humanizer"
@@ -127,16 +131,46 @@ const structuralShape = /(?<![a-z])(?:call ?sites?|callsites?|declarations?|impo
 
 const uiIntentVerb = /(?<![a-z])(?:design|redesign|restyle|revamp|polish|lay\s?out|mock\s?up|build|create|make|implement|add|wire up)(?![a-z])|디자인|만들|제작|개편|다듬|꾸미|구현|추가/u;
 const uiIntentNoun = /(?<![a-z])(?:ui|ux|user interface|screen|page|layout|dashboard|modal|navbar|sidebar|stylesheet|css|design system|landing page|front[- ]?end|component|button|card|form|checkout|notification center|comparison table)(?![a-z])|화면|페이지|레이아웃|대시보드|컴포넌트|모달|사이드바|내비게이션|네비게이션|스타일시트|디자인 시스템|랜딩 페이지|프런트엔드|프론트엔드|버튼|카드|폼|체크아웃/u;
+// An English build request ("build a landing page for ...") reaches the interface route through the
+// generic verbs. A target that is not an interface (a hosted BI tool, a backend, an endpoint, a CLI,
+// a schema, a container image) named before the interface noun takes it back out; a design verb
+// ("design", "restyle", "polish" ...) is always an interface request. Hangul is left as it was.
+const uiDesignVerb = /(?<![a-z])(?:design|redesign|restyle|revamp|polish|lay\s?out|mock\s?up)(?![a-z])|디자인|개편|다듬|꾸미/u;
+const uiNonInterfaceTarget = /(?<![a-z])(?:grafana|kibana|datadog|metabase|looker|tableau|power\s?bi|back\s?end|api|endpoint|docker(?:\s?file|\s+image)?|cli|migration|schema)(?![a-z])/u;
+function hasUiBuildIntent(raw: string): boolean {
+  const verbs = raw.replace(/(?<![a-z])make\s+sure(?![a-z])/gu, " ");
+  if (!uiIntentVerb.test(verbs)) return false;
+  if (uiDesignVerb.test(verbs)) return true;
+  const noun = uiIntentNoun.exec(raw);
+  const target = uiNonInterfaceTarget.exec(raw);
+  return !(noun && target && target.index < noun.index);
+}
 const uiPolishCue = /\b(?:polish|tighten up|clean up the styling)\b|다듬/u;
 const uiAuditCue = /\b(?:audit|review this page read.only|just check|don't fix)\b|점검|검토만/u;
 const uiHardenCue = /\b(?:harden|stress.test|hold up under|robust to)\b|튼튼하게|견고하게/u;
 const uiReadOnlyCue = /\b(?:read.only|don't (?:touch|change|fix)|just (?:check|tell))\b|수정은 하지|건드리지 말|고치지는 말|목록만/u;
 const uiBuildCue = /\b(?:redesign|new layout|brand.new|add|implement|build|create|make|wire up)\b|새로|추가|구현|다시 짜|재구성/u;
 const diagramCreationIntent = /^\s*(?:lit[,:]?\s+)?(?:please\s+)?(?:create|draw|make|design|render|build)\b[^.!?\n]*\b(?:diagrams?|flowcharts?|architecture maps?)\b|^\s*(?:lit\s+)?[^.!?\n]*(?:다이어그램|흐름도|구성도|구조도)[^.!?\n]*(?:그려|만들어|제작해)/mu;
+// lit-schematic: a drawing of real hardware (P&ID, PFD, apparatus figure, isometric cutaway). A strong
+// noun names a drawing by itself; a weak one (schematic, isometric, apparatus) also needs a drawing or
+// making verb and no web-interface noun. A chart of data, a question about a drawing, a review of one,
+// or a report or deck about one is not a drawing request, and a whole interface that merely shows a
+// drawing belongs to frontend-ui-ux unless the user asked to draw. Hangul terms are bare substrings.
+const schematicStrongNoun = /(?<![a-z])p\s?&\s?i\s?ds?(?![a-z])|(?<![a-z])pfds?(?![a-z])|(?<![a-z])bfds?(?![a-z])|piping\s+(?:and|&)\s+instrumentation|process\s+flow\s+(?:diagram|sheet)s?|block\s+flow\s+diagrams?|(?<![a-z])plot\s+plans?(?![a-z])|equipment\s+layouts?|experimental\s+(?:set\s?up|apparatus)|(?<![a-z])cut\s?aways?(?![a-z])|컷어웨이|배관\s?계장도|계장도|공정\s?흐름도|공정도|모식도|장치도|실험\s?장치|피앤아이디|배치도|계통도|단면도/u;
+const schematicWeakNoun = /(?<![a-z])schematics?(?![a-z])|(?<![a-z])isometric(?![a-z])|(?<![a-z])apparatus(?![a-z])|사시도|개략도|아이소메트릭|도면/u;
+const schematicChartNoun = /차트|그래프|(?<![a-z])(?:charts?|graphs?|plots?(?!\s+plans?(?![a-z])))(?![a-z])/u;
+const schematicDrawVerb = /(?<![a-z])(?:draw|drawing|drew|sketch|sketching|illustrate|illustrating|render|rendering|redraw)(?![a-z])|그려|그리|그림|도식|작도/u;
+const schematicMakeVerb = /(?<![a-z])(?:make|making|create|creating|design|designing|build|lay\s?out)(?![a-z])|만들|만드/u;
+const schematicInterfaceNoun = /(?<![a-z])(?:dashboards?|landing\s?pages?|web\s?pages?|websites?|homepages?|web\s?apps?|apps?|screens?|admin\s?(?:panel|console)|user\s?interface|ui)(?![a-z])|대시보드|웹사이트|랜딩|페이지|화면|앱/u;
+const schematicInquiryCue = /(?<![a-z])(?:explain|how (?:do|to|can|does)|what is|what's|review|critique|audit|summari[sz]e|proofread)(?![a-z])|설명|알려|리뷰|검토|점검|요약|뭐야|무엇/u;
 // "turn X into a deck/report" also authors an Office file. Within the clause, a dot followed by a
 // non-space (notes.md, q3.v2.csv) is part of a file name and does not end the sentence.
 const officeAuthoringVerb = /(?<![a-z])(?:make|create|write|draft|prepare|produce|generate|convert|edit|build)(?![a-z])|(?<![a-z])turn(?=(?:[^.!?\n]|\.(?=\S))*?(?<![a-z])into(?![a-z])(?:[^.!?\n]|\.(?=\S))*?(?<![a-z])(?:slides?|decks?|presentations?|pptx?|reports?|documents?|docx|word)(?![a-z]))|만들|작성|써줘|제작|변환|편집/u;
 const reportNoun = /(?<![a-z])(?:reports?|documents?|docx|word)(?![a-z])|보고서|리포트|기획서|제안서|문서|워드/u;
+// A slide count beside a deck noun ("덱 10장", "a 10-slide launch deck") asks for the deck without a making verb.
+// The noun is narrower than slidesNoun: a bare 발표 beside "10장" is a talk or a photo set, not a deck.
+const slideCount = /\d+\s?장|(?<![a-z\d])\d+[\s-]?slides?(?![a-z])/u;
+const countedDeckNoun = /(?<![a-z])(?:slides?|decks?|presentations?|pptx?)(?![a-z])|발표자료|슬라이드|피피티|덱/u;
 const slidesNoun = /(?<![a-z])(?:slides?|decks?|presentations?|pptx?)(?![a-z])|발표자료|발표|슬라이드|피피티|덱/u;
 // A deliverable the user asked to receive as Markdown or plain text ("saved as report.md", "in Markdown",
 // "as plain text"). An input file such as "turn notes.md into slides" is not one. A named Office or PDF
@@ -165,6 +199,17 @@ export function hasMotionVideoIntent(raw: string): boolean {
   if (officeContainer.test(raw) && insertVideo.test(raw)) return false;
   if (videoAboutArtifact.test(raw)) return false;
   return true;
+}
+
+export function hasSchematicRequest(raw: string): boolean {
+  const strong = schematicStrongNoun.test(raw);
+  if (!strong && !schematicWeakNoun.test(raw)) return false;
+  if (schematicInquiryCue.test(raw) || schematicChartNoun.test(raw)) return false;
+  const draws = schematicDrawVerb.test(raw);
+  if (!strong && !(draws || schematicMakeVerb.test(raw))) return false;
+  if (!strong && uiContainer.test(raw)) return false;
+  if (schematicInterfaceNoun.test(raw) && !draws) return false;
+  return draws || !(reportNoun.test(raw) || slidesNoun.test(raw));
 }
 
 // The route context names the installed render and gate scripts by absolute path. The installed
@@ -207,8 +252,8 @@ function motionRouteContext(original: string): string {
   const gate = `node ${shellQuote(installedMotionScript("gate.mjs"))}`;
   const cue = typeLedCue(original.toLowerCase());
   return `
-This is a film request. After the workspace check, load lit-typographic-motion with OpenCode's native skill tool and write treatment.json in the film's output directory before any render. Path rule: the type path when the words themselves are the film, at 16:9; the stage path for every other film and every 9:16 film. Under lit, ask no questions; label every invented subject, line and default, and any generated sound, in the reply. Hand-encoded films are not the deliverable. Open the stills with the read tool and record each look round. Finish when --done exits 0; otherwise say plainly what it reports open. A README cover or banner loop takes cover mode (references/cover.md).
-Commands: ${render} (film, stills, stage, cover, sound, look, gate); ${gate} (<dir>, --cover <file>, --done <dir>).${cue ? `\ntype-led cue found: ${cue}` : ""}
+This is a film request. After the workspace check, load lit-typographic-motion with OpenCode's native skill tool and write treatment.json in the film's output directory before any render. Path rule: the type path when the words themselves are the film, at 16:9; the stage path for every other film and every 9:16 film. ${designChoiceFirst} One call covers path, style, format and register. Ask nothing else; label every invented subject, line and default, and any generated sound, in the reply. Hand-encoded films are not the deliverable. Open the stills with the read tool and record each look. Finish when --done exits 0, else say what it reports open. A README cover or banner loop takes cover mode (references/cover.md).
+Commands: ${render} (film, stills, stage, scaffold, styles, assets, blender, cover, sound, look, gate); ${gate} (<dir>, --cover <file>, --done <dir>, --out <dir>).${cue ? `\ntype-led cue found: ${cue}` : ""}
 `;
 }
 const litSlashCommands = Object.freeze([
@@ -229,6 +274,9 @@ const litSlashCommands = Object.freeze([
   "lit-init",
   "lit-crucible",
   "lit-brainstorm",
+  "lit-hijack",
+  "lit-adhd",
+  "lit-rewind",
   "refactor",
   "lit-burnoff",
   "lit-code",
@@ -326,6 +374,26 @@ function startsBrainstormRoute(raw: string): boolean {
   return token !== null && brainstormRouteAfterLit.test(raw.slice(token.index + token[0].length));
 }
 
+// The hijack route follows the brainstorm rule: the word right after the FIRST standalone `lit` token.
+// `lit debug the session hijack` and `how do attackers hijack a session cookie` stay with their own
+// routes because the route word is not adjacent to `lit`. The Hangul forms attach particles and verb
+// endings directly (하이재킹해줘, 하이잭해서), so they carry no trailing boundary.
+const hijackRouteAfterLit = new RegExp("^(?:\\s+hijack(?:ing)?|-hijack)(?![\\w/\\\\-]|\\.\\w)|^\\s+(?:하이재킹|하이잭)", "u");
+
+function startsHijackRoute(raw: string): boolean {
+  const token = standaloneLitToken.exec(raw);
+  return token !== null && hijackRouteAfterLit.test(raw.slice(token.index + token[0].length));
+}
+
+// `lit adhd` and `lit rewind` follow the same rule: the route word is the word right after the first `lit`.
+// `lit debug the adhd screening form` and `how to rewind a git branch` keep their own routes.
+const adhdRouteAfterLit = /^(?:\s+(?:adhd|rewind)|-(?:adhd|rewind))(?![\w/\\-]|\.\w)/iu;
+
+function startsAdhdRoute(raw: string): boolean {
+  const token = standaloneLitToken.exec(raw);
+  return token !== null && adhdRouteAfterLit.test(raw.slice(token.index + token[0].length));
+}
+
 function startsWithStartWorkInvocation(raw: string, normalized: string): boolean {
   const rawStart = raw.trimStart();
   if (/^start-work(?:$|[\s,.:;!?])/u.test(rawStart)) return true;
@@ -363,6 +431,11 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
   // An explicit `lit brainstorm ...` invocation wins over every word-anywhere route below, so a later
   // "refactor", "plan" or "dashboard" in the same sentence cannot steal the open question.
   if (startsBrainstormRoute(raw)) return "lit-brainstorm";
+  // Same precedence for `lit hijack ...`: porting a published technique outranks the plan, review and
+  // research words that its sources and targets usually contain.
+  if (startsHijackRoute(raw)) return "lit-hijack";
+  // Coming back to earlier work outranks the plan and research words a brief request may contain.
+  if (startsAdhdRoute(raw)) return "lit-adhd";
   const workflowFamilyMode = detectWorkflowFamilyChatMode(raw);
   if (workflowFamilyMode !== undefined) return workflowFamilyMode;
   if (containsRenamedSkillTrigger(raw, "lit-crucible")) return "lit-crucible";
@@ -404,7 +477,8 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
   const motion = hasMotionVideoIntent(raw);
   if (motion && !hasLitTrigger(raw)) return undefined;
   if (!motion && hasLitTrigger(raw) && uiContainer.test(raw) && insertVideo.test(raw) && motionVideoNoun.test(raw)) return "frontend-ui-ux";
-  if (!motion && uiIntentNoun.test(raw) && (uiIntentVerb.test(raw) || uiAuditCue.test(raw) || uiHardenCue.test(raw))) return "frontend-ui-ux";
+  const schematic = hasLitTrigger(raw) && hasSchematicRequest(raw);
+  if (!motion && !schematic && uiIntentNoun.test(raw) && (hasUiBuildIntent(raw) || uiAuditCue.test(raw) || uiHardenCue.test(raw))) return "frontend-ui-ux";
   if (!hasLitTrigger(raw)) return undefined;
   if (containsLitRoute(words, "review")) return "review-work";
   if (containsLitRoute(words, "research")) return "lit-research";
@@ -415,8 +489,11 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
     !endsWithStandaloneLitInvocation(raw)
   ) return undefined;
   if (agent === "lit-plan") return "lit-plan";
+  if (schematic) return "lit-task";
   return containsLitRoute(words, "loop") || explicitlyRequestsLongWork(raw) ? "lit-loop" : "lit-task";
 }
+
+const designChoiceFirst = `Before building, unless the prompt names the theme, style or preset or says "you choose", ask the user to pick it with OpenCode's question tool: two to four options, the recommended one first. In a non-interactive run with no question tool, take the recommended option and say so in one line.`;
 
 export function promptForChatActivationMode(mode: ChatActivationMode, triggerText = ""): string {
   const prompt = canonicalChatPrompt(mode);
@@ -425,27 +502,34 @@ export function promptForChatActivationMode(mode: ChatActivationMode, triggerTex
   if (mode === "frontend-ui-ux") {
     const uiMode = frontendUiUxModeForPrompt(raw);
     targetedPrompt += `\nSelected interface mode: ${uiMode}. Follow references/production.md for that mode's edit boundary and probe gate.`;
+    if (uiMode === "build") targetedPrompt += `\nNew page or screen: ${designChoiceFirst} Then, before any markup, lock the look with scripts/design-lock.mjs (one house style, one layout family, one signature moment; existing brand tokens win) and build only from the generated ui/tokens.css, ui/components.css and layout starter, as references/house-styles.md describes. Rich density is the default; calm only when the request asks for minimal or calm. The probe also checks the lock: fix HIGH findings, answer its LOOK questions on the screenshots, and report a missing capture as BLOCKED.`;
   }
   if (mode === "review-work") targetedPrompt += reviewModeForcedNote(forcedReviewMode(routeWords(normalizedTriggerText(triggerText))) ?? "");
   if (mode === "lit-loop" && needsInterfaceHandoff(raw)) targetedPrompt += `\nInterface hand-off for this request: ${interfaceWorkHandoff}`;
-  if ((mode === "lit-task" || mode === "lit-loop") && hasMotionVideoIntent(raw)) {
+  const schematic = mode === "lit-task" && hasSchematicRequest(raw);
+  if (schematic) {
+    targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
+After the workspace check, use OpenCode's native skill tool to load lit-schematic before drawing the requested physical schematic: a P&ID, PFD, apparatus figure or isometric cutaway. Resolve its scripts and references from the skill location returned by OpenCode. ${designChoiceFirst} Write the process truth and parts list first, build with the skill's kit, run its qa.mjs until QA PASS, render the PNG and open it. Under lit, when data is missing, draw a realistic example without asking and label every invented value in the reply. A cutaway asked as an animation is drawn there as a silent loop; a titled or narrated film goes to lit-typographic-motion. If the skill is unavailable, report that limit instead of claiming it ran.
+</lit-task-mode>`);
+  }
+  if (!schematic && (mode === "lit-task" || mode === "lit-loop") && hasMotionVideoIntent(raw)) {
     return mode === "lit-task"
       ? targetedPrompt.replace("</lit-task-mode>", `${motionRouteContext(triggerText)}</lit-task-mode>`)
       : `${targetedPrompt}\nFilm request:${motionRouteContext(triggerText)}`;
   }
-  if (mode === "lit-task" && diagramCreationIntent.test(raw)) {
+  if (mode === "lit-task" && !schematic && diagramCreationIntent.test(raw)) {
     targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
-After the workspace check, use OpenCode's native skill tool to load lit-diagram-drawer before authoring the requested conceptual diagram. This is the one narrowly relevant skill for this bounded task. Resolve resources from the skill location returned by OpenCode, follow its verification and export steps, and inspect the final PNG. If the skill is unavailable, report that limit instead of claiming it ran.
+After the workspace check, use OpenCode's native skill tool to load lit-diagram-drawer before authoring the requested conceptual diagram. This is the one narrowly relevant skill for this bounded task. Resolve resources from the skill location returned by OpenCode. ${designChoiceFirst} Follow its verification and export steps, and inspect the final PNG. If the skill is unavailable, report that limit instead of claiming it ran.
 </lit-task-mode>`);
   }
-  if (mode === "lit-task" && officeAuthoringVerb.test(raw) && markdownDeliverable.test(raw) && !officeFileFormat.test(raw) && (reportNoun.test(raw) || slidesNoun.test(raw))) {
+  if (mode === "lit-task" && !schematic && officeAuthoringVerb.test(raw) && markdownDeliverable.test(raw) && !officeFileFormat.test(raw) && (reportNoun.test(raw) || slidesNoun.test(raw))) {
     targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
 The requested deliverable is a Markdown or plain-text file, not an Office file. Write each named file as ordinary Markdown that a reader opens directly: headings, paragraphs, lists and tables, with no YAML front matter, no \`:::\` directive blocks and no tonality, layout or title-treatment keys. Do not build a DOCX or PPTX and do not load lit-docx or lit-pptx for it; their Markdown is converter source and belongs only beside a file that skill renders.
 </lit-task-mode>`);
-  } else if (mode === "lit-task" && officeAuthoringVerb.test(raw)) {
+  } else if (mode === "lit-task" && !schematic && (officeAuthoringVerb.test(raw) || (slideCount.test(raw) && countedDeckNoun.test(raw)))) {
     const skills = [reportNoun.test(raw) ? "lit-docx" : undefined, slidesNoun.test(raw) ? "lit-pptx" : undefined].filter(Boolean);
     if (skills.length > 0) targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
-After the workspace check, use OpenCode's native skill tool to load ${skills.join(" and ")} before drafting the requested Office deliverable. Resolve scripts and templates from the installed skill location. Under lit, create the editable ${skills.includes("lit-docx") ? "DOCX" : ""}${skills.length === 2 ? " and " : ""}${skills.includes("lit-pptx") ? "PPTX" : ""} with its Markdown source; unless the user selected a tonality, profile or template, choose its design direction (tonality) yourself and name it with two alternatives in the reply, without asking a style question. If facts are missing, complete a realistic example without asking or leaving placeholders; mark invented names and figures as sample assumptions in the file and reply. Run its QA and inspect rendered pages or slides. Report missing optional host tools honestly. If a skill is unavailable, report that limit instead of claiming it ran.
+After the workspace check, use OpenCode's native skill tool to load ${skills.join(" and ")} before drafting the requested Office deliverable. Resolve scripts and templates from the installed skill location. Under lit, create the editable ${skills.includes("lit-docx") ? "DOCX" : ""}${skills.length === 2 ? " and " : ""}${skills.includes("lit-pptx") ? "PPTX" : ""} with its Markdown source; unless the user selected a tonality, profile or template, rank its design direction (tonality) with two alternatives. ${designChoiceFirst} If facts are missing, complete a realistic example without asking or leaving placeholders; mark invented names and figures as sample assumptions in the file and reply. Run its QA and inspect rendered pages or slides. Report missing optional host tools honestly. If a skill is unavailable, report that limit instead of claiming it ran.
 </lit-task-mode>`);
   }
   const alias = (Object.keys(renamedSkillAliases) as RenamedSkillId[]).find(
@@ -481,7 +565,7 @@ export function frontendUiUxModeForPrompt(text: string): "build" | "polish" | "a
 
 function needsInterfaceHandoff(raw: string): boolean {
   if (/\b(?:cli|backend|api|server)[- ]only\b/u.test(raw)) return false;
-  return uiIntentVerb.test(raw) && (uiIntentNoun.test(raw) || /\b(?:web ?app|website)\b|웹앱|웹사이트|홈페이지/u.test(raw));
+  return hasUiBuildIntent(raw) && (uiIntentNoun.test(raw) || /\b(?:web ?app|website)\b|웹앱|웹사이트|홈페이지/u.test(raw));
 }
 
 function canonicalChatPrompt(mode: ChatActivationMode): string {
@@ -513,6 +597,10 @@ function canonicalChatPrompt(mode: ChatActivationMode): string {
       return litCruciblePromptInjection;
     case "lit-brainstorm":
       return litBrainstormPromptInjection;
+    case "lit-hijack":
+      return litHijackPromptInjection;
+    case "lit-adhd":
+      return litAdhdPromptInjection;
     case "refactor":
       return refactorPromptInjection;
     case "lit-burnoff":

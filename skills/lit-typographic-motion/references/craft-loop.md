@@ -2,7 +2,7 @@
 
 A film is not done when a command exits 0. It is done when a gate PASS, a valid treatment and at
 least two recorded look rounds agree, and the last round looked at the final render's own frames.
-A cover (`"mode": "cover"`) has its own stills, eight questions and done rules in `cover.md`; the
+A cover (`"mode": "cover"`) has its own stills, nine questions and done rules in `cover.md`; the
 `look` command and `gate.mjs --done` switch to them by themselves.
 
 ## The stills set
@@ -12,15 +12,21 @@ Every render, `--stills-only` or full, writes the same set:
 - `stills/beat-NN-mid.png`: the frame at each treatment beat's midpoint;
 - `stills/cut-NN-strip.png`: a strip of three frames around every cut (-6, 0, +6 frames);
 - `sheet/contact.png`: a 12-frame contact sheet across the whole film;
+- `stills/board.png` (stage path): the storyboard, one tile per shot with its number, time, layout,
+  hand-off and hero move, the shot's type zone outlined, the style and the layout check in the footer;
+  `stills/check.json` holds the check's rows. Open the board first: if a tile's composition is not
+  what the treatment promised, fix the page before looking at anything else;
 - `stills/stills.json`: the round, each file's SHA-256 and what each beat should show.
 
-A full render adds `poster.png`. Open these files with OpenCode's read tool; only images passed to the
+A full render adds `poster.png`. A treatment with `preview: true` is done at its board: a
+`--stills-only` render whose check passed, with a recorded round that opened the board, the contact
+sheet and every beat still; the reply gives the board and says the film renders on the user's go. Open these files with OpenCode's read tool; only images passed to the
 read tool count as viewed (LitOpenCode records each read of a film's stills). OCR or pixel statistics
 may go in `aids` but never count as looking.
 
-## The nine questions
+## The questions
 
-Answer each against a frame you opened. `observed` is at least one sentence naming a concrete
+Nine questions for a type film, eleven for a stage film (10 and 11 below). Answer each against a frame you opened. `observed` is at least one sentence naming a concrete
 visible detail in that frame; a bare yes or no is refused.
 
 1. "A stranger would say this film is for: <…>". Ask a fresh subagent that gets only the contact sheet
@@ -38,7 +44,14 @@ visible detail in that frame; a bare yes or no is refused.
 9. Could every copy line be pasted unchanged into a film about a different subject? If yes, rewrite
    the copy from `subject.specifics`.
 
-Another round is required after a "no" on 1, 2, 3, 5 or 6, a "yes" on 4, 8 or 9, or a nameable Q7.
+10. Stage film only. Is the film rich enough for its register? A rich film is layered, with every region
+    of the frame working and real labels on the parts; a minimal film has a few elements, none idle.
+    Answer from a beat midpoint and the board, naming a region that is empty or full.
+11. Stage film only. Does the turn land? At the shot `story.beat` names, what the film set up must
+    visibly break and change, so a stranger would notice it; answer from that shot's midpoint and the
+    shots around it.
+
+Another round is required after a "no" on 1, 2, 3, 5, 6, 10 or 11, a "yes" on 4, 8 or 9, or a nameable Q7.
 
 ## Recording a round
 
@@ -72,7 +85,7 @@ node render.mjs look --out <d> --round N --answers <answers.json>
 
 ## Done
 
-`node gate.mjs --done <d>` exits:
+`node gate.mjs --done <d>` (or `--done --out <d>`; with neither, the working directory, and when that folder holds no `treatment.json` the nearest folder above it, up to three levels, that does) exits:
 
 | Exit | Status | Meaning |
 | --- | --- | --- |
@@ -91,7 +104,7 @@ size, placement, timing or seeded randomness) or deliver with the failure stated
 - Keep the product's activation line where it is; below it, no second banner and no emoji.
 - Plain words, no internal names (no rule ids, no path or preset jargon).
 - One line on the defaults chosen.
-- A label on every invention (subject, name, facts, copy) and on generated sound.
+- A label on every invention (subject, name, facts, copy), on generated sound and on a Blender fallback.
 - One plain line on what was checked: flash safety, legibility, and the frames looked at.
 - Where the copy lives (the `COPY` object in `stage/index.html`, or the brief) and the one command
   that re-renders.

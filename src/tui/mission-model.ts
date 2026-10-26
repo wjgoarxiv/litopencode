@@ -18,7 +18,7 @@ export type TodoInput = { readonly content: string; readonly status: string };
 export type PlanChecklist = { readonly done: number; readonly total: number; readonly next?: string };
 
 /** This session's bounded work from work-schema-3.json: its status, recorded progress turns and plan. */
-export type WorkInput = { readonly status: string; readonly iterations: number; readonly plan?: PlanChecklist };
+export type WorkInput = { readonly status: string; readonly iterations: number; readonly plan?: PlanChecklist; readonly boundary?: boolean };
 
 export type ResearchStage = "decompose" | "wave" | "expand" | "verify" | "synthesis";
 
@@ -206,13 +206,15 @@ export function planChecklist(text: string): PlanChecklist | undefined {
  * Lenient read of work-schema-3.json for one session: undefined when it is absent, another session's,
  * cancelled, or not the schema-3 shape. Iterations count the recorded `work.progressed` turns.
  */
-export function readWorkState(raw: unknown, sessionID: string): { readonly status: string; readonly iterations: number; readonly planPath: string } | undefined {
+export function readWorkState(raw: unknown, sessionID: string): { readonly status: string; readonly iterations: number; readonly planPath: string; readonly boundary?: true } | undefined {
   if (!isRecord(raw) || raw.schemaVersion !== 3 || raw.sessionID !== sessionID) return undefined;
   const status = text(raw.status);
   if (status === "" || status === "cancelled") return undefined;
   const history = Array.isArray(raw.history) ? raw.history.filter(isRecord) : [];
   const plan = isRecord(raw.plan) ? text(raw.plan.path) : "";
-  return { status, iterations: history.filter((entry) => entry.type === "work.progressed").length, planPath: plan };
+  // A paused run holding a boundary waits for the user's typed approval.
+  const boundary = status === "paused" && isRecord(raw.pendingBoundary);
+  return { status, iterations: history.filter((entry) => entry.type === "work.progressed").length, planPath: plan, ...(boundary ? { boundary: true as const } : {}) };
 }
 
 type LedgerCriterion = { readonly id: string; readonly scenario: string; readonly status: string; readonly evidence: readonly { readonly kind: string; readonly ref: string; readonly at: string }[] };

@@ -143,8 +143,9 @@ test("GREEN: blur, backdrop-filter, blend modes, shadows, feGaussianBlur, canvas
 });
 
 test("GREEN: a pure-function page whose layers leave opacity 0 on a cut under a sine sway matches its replay", { skip: needsWarm }, () => {
-  const beats = [0, 3, 6, 9].map((t0, i) => ({ t0, t1: t0 + 3, purpose: ["open", "turn", "gather", "close"][i], onScreen: "the stalks gather", motion: "stalks sway and gather", sound: "pad" }));
-  const lines = ["지붕의 비가", "사흘을 버틴다", "처마 아래", "물길 보기", "안내는 현장에서 합니다", "빗물을", "한 곳에", "처마 아래에서", "다시 봐요"];
+  const shots = [["stage", "cut"], ["split", "wipe"], ["hero", "match"], ["split-alt", "end"]];
+  const beats = [0, 3, 6, 9].map((t0, i) => ({ t0, t1: t0 + 3, purpose: ["open", "turn", "gather", "close"][i], onScreen: "the stalks gather", motion: "stalks sway and gather", sound: "pad", layout: shots[i][0], hero: "the stalks gather", transition: shots[i][1] }));
+  const lines = ["지붕의 비가 사흘을 버틴다", "처마 아래 물길 보기", "빗물을 한 곳에", "처마 아래에서 다시 봐요"];
   const treatment = fixtureStageTreatment({ durationSec: 12, format: "9:16", beats, copy: { source: "invented", lines } });
   withRun("ltm-green-sway-", page("sway-gather.html"), { treatment }, (out) => {
     const result = stage(out, ["--round", "2"]);

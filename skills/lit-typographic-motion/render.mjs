@@ -34,8 +34,12 @@ Usage:
   node render.mjs video  --brief <brief.json> --out <dir> [--round 1|2|3] [--viewed N]
   node render.mjs perf   --brief <brief.json> --out <dir>
   node render.mjs gate   --out <dir> [--viewed N]
+  node render.mjs scaffold --out <dir>
   node render.mjs stage  --out <dir> [--round 1|2|3] [--stills-only] [--detach]
+  node render.mjs styles --out <dir> [--format 16:9|9:16]
   node render.mjs cover  --out <dir> [--round 1|2|3] [--window t0,t1] [--detach]
+  node render.mjs assets --out <dir> --url <https link of the product> [--cover]
+  node render.mjs blender --out <dir> [--final] [--detach]
   node render.mjs sound  --out <dir>
   node render.mjs look   --out <dir> --round 1|2|3 --answers <answers.json>
 Options: --samples N (master default 4) --shutter S (default 0.5) --scale 1..4 --word-timing (Tier 3, opt-in)
@@ -524,14 +528,56 @@ async function stageMode(argv, out, viewed) {
   }
   const stillsOnly = argv.includes("--stills-only");
   const result = await stage.renderStage(out, { round, stillsOnly });
-  for (const entry of result.stills.files) console.log(`${entry.kind === "sheet" ? "contact sheet" : "still"}: ${path.join(out, entry.file)}`);
+  for (const entry of result.stills.files) console.log(`${entry.kind === "sheet" ? "contact sheet" : entry.kind === "board" ? "storyboard" : "still"}: ${path.join(out, entry.file)}`);
   if (result.stillsOnly) {
-    console.log(`stills-only: open every still and the contact sheet, record the round with \`look --round ${round}\`, make the change, then render the film.`);
+    const failed = result.board?.failed ?? [];
+    if (failed.length) {
+      console.error(`BOARD_CHECK_FAIL (${EXIT.GATE_FAIL_QA}): ${failed.map((rule) => `${rule.id} ${rule.detail}`).join("; ")}. Fix the page, render --stills-only again, then look at the storyboard ${path.join(out, "stills", "board.png")} and every file in ${path.join(out, "stills")}`);
+      return EXIT.GATE_FAIL_QA;
+    }
+    console.log(`stills-only: board check PASS; open the storyboard ${path.join(out, "stills", "board.png")}, every still and the contact sheet, record the round with \`look --round ${round}\`, make the change, then render the film.`);
     return EXIT.OK;
   }
   const gate = runGate(out, { viewed });
   process.stdout.write(gate.report);
   return gate.exitCode;
+}
+
+// `scaffold`: the starting stage page from the treatment (engine/scaffold.mjs).
+async function scaffoldMode(out) {
+  const { scaffoldCommand } = await import("./engine/scaffold.mjs");
+  console.log(scaffoldCommand(out, { env: process.env }));
+  return EXIT.OK;
+}
+
+// `blender`: the offline Cycles rung (engine/blender.mjs). The final plate can take most of an hour, so
+// `--detach` runs it like a full stage render and reports through .run/.
+async function blenderMode(argv, out) {
+  const final = argv.includes("--final");
+  if (argv.includes("--detach")) {
+    const { detachStage } = await import("./engine/stage/render.mjs");
+    const detached = detachStage(out, argv.slice(1), "blender");
+    console.log(`rendering the plate in the background (pid ${detached.pid}); progress: ${detached.progressFile}; the exit code lands in ${detached.exitFile}; log: ${detached.logFile}`);
+    return EXIT.OK;
+  }
+  const { blenderCommand } = await import("./engine/blender.mjs");
+  const runDir = path.join(out, ".run");
+  const progress = (frame, frameCount) => {
+    mkdirSync(runDir, { recursive: true });
+    writeFileSync(path.join(runDir, "progress.json"), JSON.stringify({ phase: "plate", frame, frameCount, updatedAt: new Date().toISOString() }) + "\n");
+  };
+  const result = await blenderCommand({ out, final, env: process.env, log, progress: final ? progress : null });
+  console.log(result.message);
+  return result.code;
+}
+
+// `styles`: the style gallery, one board round per house style (engine/gallery.mjs).
+async function stylesMode(argv, out) {
+  const { stylesCommand } = await import("./engine/gallery.mjs");
+  const { renderStage } = await import("./engine/stage/render.mjs");
+  const result = await stylesCommand(out, { format: option(argv, "format", "16:9"), render: renderStage, log });
+  console.log(result.message);
+  return result.code;
 }
 
 // `cover`: a README cover loop (engine/cover/). Every round is a full render gated on the decoded file;
@@ -554,10 +600,17 @@ async function coverMode(argv, out) {
   return result.code;
 }
 
+async function assetsMode(argv) {
+  const { assetsCommand } = await import("./engine/assets.mjs");
+  const result = await assetsCommand(argv);
+  process.stdout.write(`${result.message}\n`);
+  return result.code;
+}
+
 async function run(argv) {
   const mode = argv[0];
   if (!mode || mode === "--help" || argv.includes("--help")) { console.log(usage); return EXIT.OK; }
-  if (!["film", "stills", "sheet", "video", "perf", "gate", "frames", "stage", "cover", "sound", "look"].includes(mode)) { console.error(usage); return 2; }
+  if (!["film", "stills", "sheet", "video", "perf", "gate", "frames", "stage", "scaffold", "styles", "cover", "assets", "blender", "sound", "look"].includes(mode)) { console.error(usage); return 2; }
   const out = option(argv, "out") ? path.resolve(option(argv, "out")) : undefined;
   if (!out) throw new Error("--out <dir> is required");
   const viewed = argv.includes("--viewed") ? Number(option(argv, "viewed", "0")) || 0 : undefined;
@@ -567,7 +620,11 @@ async function run(argv) {
     return result.exitCode;
   }
   if (mode === "stage") return stageMode(argv, out, viewed);
+  if (mode === "scaffold") return scaffoldMode(out);
+  if (mode === "styles") return stylesMode(argv, out);
   if (mode === "cover") return coverMode(argv, out);
+  if (mode === "assets") return assetsMode(argv);
+  if (mode === "blender") return blenderMode(argv, out);
   if (mode === "sound") return soundMode(out);
   if (mode === "look") return lookMode(argv, out);
   let treatment = null;

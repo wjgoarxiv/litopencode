@@ -47,7 +47,7 @@ test("status on an empty cache names every missing item and the command that fix
     for (const name of ["Galmuri9.ttf", "MesloLGS-NF-Regular.ttf", "Apache-2.0.txt"]) assert.ok(report.prewarm.missingFonts.includes(name), name);
     assert.equal(report.prewarm.fix, "litopencode motion-runtime install");
     assert.match(report.prewarm.audio.reason, /motion-runtime install --audio/u);
-    for (const key of ["chrome", "ffmpeg", "webgl2", "softwareWarning"]) assert.ok(key in report, key);
+    for (const key of ["chrome", "ffmpeg", "webgl2", "softwareWarning", "blender"]) assert.ok(key in report, key);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

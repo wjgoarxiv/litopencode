@@ -210,6 +210,10 @@ The command should not call `litwork` or `start-work` implicitly. If the recap r
 
 A recap is for the current user to understand the session. A handoff is for a future agent to continue work with enough detail to act. Recaps can be shorter and may rely on session context. Handoffs should be file-backed when requested, include more implementation detail, and name exact remaining tasks. If the user says “handoff,” do not satisfy it with a recap alone. If they say “brief recap,” do not write a handoff file.
 
+## Recap Versus lit-adhd
+
+A recap summarizes this session. To see the earlier sessions and branches of the worktree family and pick the work up again, use `lit-adhd` (alias `lit-rewind`): it is read-only like a recap, but it reads the OpenCode session store as well and ends with one recommended step the user can start by typing `go`.
+
 ## Verification and Review
 
 When changing recap behavior, run command tests, runtime catalog tests, and docs tests. If trigger matching changes, include non-trigger examples. If the format changes, update tests that assert headings. If read-only behavior changes, treat it as high risk and review carefully. A recap feature that writes state without explicit request violates its purpose.

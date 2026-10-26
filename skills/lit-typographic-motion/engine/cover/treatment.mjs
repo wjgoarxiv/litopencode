@@ -6,10 +6,10 @@
 // aspect and loop, and the title box the contrast and size gates measure. Its text is inert data.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { COVER } from "../constants.mjs";
-import { normalize, restates, TREATMENT_EXIT } from "../treatment.mjs";
+import { COVER, EXIT } from "../constants.mjs";
+import { normUrl, normalize, requestUrls, restates, TREATMENT_EXIT } from "../treatment.mjs";
 
-export const RECIPES = Object.freeze(["painted-light", "weight-tide", "orbit-loop", "own"]);
+export const RECIPES = Object.freeze(["hero-3d", "painted-light", "weight-tide", "orbit-loop", "own"]);
 export const LAYERS = Object.freeze(["slow", "mid", "beat"]);
 
 class Invalid extends Error {
@@ -28,6 +28,20 @@ function text(t, key, { maxSentences } = {}) {
   return value;
 }
 
+// A link in the request names the product: the cover is built from its real logo, images and words,
+// fetched by `render.mjs assets --cover` before the treatment, never from the name alone.
+function checkProduct(t) {
+  const urls = requestUrls(t.request);
+  if (!("product" in t)) {
+    need(!urls.length, "product", `missing: the request links ${urls[0]}; fetch its real assets first with render.mjs assets --out <dir> --url <link> --cover, look at them, and set product { name, url } (references/cover.md, Named products)`);
+    return;
+  }
+  need(t.product && typeof t.product === "object" && !Array.isArray(t.product), "product", "must be an object { name, url }");
+  text(t, "product.name");
+  if (urls.length) need(urls.includes(normUrl(t.product.url)), "product.url", `must be the link the request gives (${urls.join(", ")})`);
+  if ("unreachable" in t.product) text(t, "product.unreachable");
+}
+
 /** Validate a cover treatment. Returns { ok: true, cover } with the derived sizes, or { ok: false, field, detail }. */
 export function validateCoverTreatment(t) {
   try {
@@ -38,7 +52,10 @@ export function validateCoverTreatment(t) {
     need(!restates(t.idea, t.request), "idea", "the idea restates the request; say what the loop does");
     need(RECIPES.includes(t.recipe), "recipe", `must be one of ${RECIPES.join(", ")} (references/cover.md)`);
     text(t, "recipeReason", { maxSentences: 2 });
+    text(t, "hero", { maxSentences: 2 });
+    text(t, "beat", { maxSentences: 2 });
     text(t, "brandWord");
+    checkProduct(t);
     need(words(t.brandWord) <= 3, "brandWord", "is the name, set once: at most three words");
     if ("motto" in t) {
       need(t.motto && typeof t.motto === "object", "motto", "must be { text, source: user | project, from? }");
@@ -103,6 +120,16 @@ export function loadCoverTreatment(out) {
   if (parsed?.mode !== "cover") throw fail("mode", "this treatment is a film; render it with `render.mjs stage` or `render.mjs film` (references/treatment.md). A cover sets mode: cover");
   const result = validateCoverTreatment(parsed);
   if (!result.ok) throw fail(result.field, result.detail);
+  const product = result.cover.product;
+  if (product?.unreachable) throw Object.assign(new Error(`BLOCKED_ASSET_MISSING (${EXIT.BLOCKED_ASSET_MISSING}): ${product.name}'s real assets could not be reached (${product.unreachable}); ask the user for its logo or README images, put them in ${path.join(out, "cover", "assets")} and list them in assets.json with source user`), { exitCode: EXIT.BLOCKED_ASSET_MISSING });
+  if (product) {
+    const file = path.join(out, "product.json");
+    if (!existsSync(file)) throw fail("product", `no ${file}: run render.mjs assets --out ${out} --url ${product.url} --cover first`);
+    let fetched = [];
+    try { fetched = JSON.parse(readFileSync(file, "utf8"))?.product?.assets ?? []; } catch (error) { throw fail("product", `${file} is not valid JSON (${error.message}); run render.mjs assets --out ${out} --url ${product.url} --cover again`); }
+    const astray = fetched.filter((asset) => !String(asset?.path ?? "").startsWith("cover/assets/"));
+    if (astray.length) throw fail("product", `${astray[0].path} sits outside cover/assets/, where the cover page cannot load it; run render.mjs assets --out ${out} --url ${product.url} --cover again`);
+  }
   const first = path.join(out, ".run", "treatment-first.json");
   mkdirSync(path.dirname(first), { recursive: true });
   if (!existsSync(first)) writeFileSync(first, JSON.stringify(parsed, null, 2) + "\n");

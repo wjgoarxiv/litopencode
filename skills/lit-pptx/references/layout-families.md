@@ -72,7 +72,7 @@ pack is wrong.
 - **Behaviour.** The groups are split at the group boundary nearest half the height, so each column
   starts with a heading. Too little text leaves both columns short; this family needs about 14
   lines a column at density 10.
-- **Packs.** ledger, gazette, studio.
+- **Packs.** ledger, gazette, studio, computational-brutalism, bauhaus, riso, newsroom.
 
 ### summary-box-list
 
@@ -82,7 +82,7 @@ pack is wrong.
 - **Behaviour.** The conclusion is set bold at lead size in an outlined box across the body (gazette
   draws the outline); the groups run in two columns under it. Without a key-message the first point
   becomes the box.
-- **Packs.** gazette.
+- **Packs.** gazette, neo-brutalism, riso.
 
 ### sidebar-note
 
@@ -92,8 +92,8 @@ pack is wrong.
 - **Behaviour.** Main content on columns 1-8; the aside in a tinted box on columns 9-12, as tall as
   its text. An aside too short for its column first narrows to three columns at body size; if the
   main content still runs far past it, the aside stands across the top at lead size and the main
-  points run in two columns under it. Under a side title the aside stands in the rail.
-- **Packs.** chalk.
+  points run in two columns under it.
+- **Packs.** chalk, riso, newsroom.
 
 ### agenda
 
@@ -107,7 +107,7 @@ pack is wrong.
   number themselves by that position and show the part count, and in packs with an index display
   the section page repeats the agenda with the current part marked. Under kicker-numeral the
   numeral is the number of parts.
-- **Packs.** ledger, chalk, gazette.
+- **Packs.** ledger, chalk, gazette, neo-brutalism, bauhaus, riso.
 
 ### statement
 
@@ -116,7 +116,7 @@ pack is wrong.
 - **Behaviour.** Drawn under the statement treatment in the pack's statement device (see "Display
   slides"). Ledger and gazette have no statement treatment and do not list the family; there the
   line becomes a top title over an empty body, which is rarely what you want.
-- **Packs.** signal, atlas, chalk, paper, studio, night.
+- **Packs.** signal, atlas, chalk, paper, studio, night, computational-brutalism, neo-brutalism, bauhaus, riso, newsroom.
 
 ### quote
 
@@ -127,7 +127,7 @@ pack is wrong.
 - **Behaviour.** Under the statement treatment the quote itself becomes the title shape and the
   attribution its support line; the opening quotation mark keeps the label check from reading the
   quote as a sentence title. Under top-rule it is set at title size below the heading.
-- **Packs.** signal, chalk, paper.
+- **Packs.** signal, chalk, paper, computational-brutalism, neo-brutalism, bauhaus, riso, newsroom.
 
 ## Number and table families
 
@@ -139,11 +139,11 @@ pack is wrong.
   characters or fewer): `| 412만 건 | ...` over `| 계획 대비 +4.1% | ...`. Then two or three takeaways and
   the source strip.
 - **Behaviour.** Under a top title the figures run as a row of cards with labels and basis lines.
-  Under a side rail, on a narrow body, or when the visual is told to take the room, they run down the
+  On a narrow body, or when the visual is told to take the room, they run down the
   page as figure rows (value, label, basis). On the compact step a card row whose takeaways leave
   the body short becomes figure rows on seven columns with the takeaways beside. Values are never
   set above title size. A table that does not look like a KPI row falls back to `table-insight`.
-- **Packs.** ledger, signal, atlas, studio, night.
+- **Packs.** ledger, signal, atlas, studio, night, computational-brutalism, neo-brutalism, bauhaus, riso, newsroom.
 
 ### big-number
 
@@ -151,10 +151,10 @@ pack is wrong.
 - **Write it as.** A KPI table of one to four columns with a basis row, then three or four evidence
   points and the source strip.
 - **Behaviour.** Every pack sets a `display.number` device, so the figures stand on a panel seven
-  columns wide (five beside a rail): one row per figure, the value at title size, its label and
+  columns wide: one row per figure, the value at title size, its label and
   basis beside it. The panel is filled, tinted or outlined according to the pack and stays under
   half the page. The evidence runs beside the panel.
-- **Packs.** ledger, signal, studio, night.
+- **Packs.** ledger, signal, studio, night, neo-brutalism, bauhaus, riso, newsroom.
 
 ### table-insight
 
@@ -164,14 +164,14 @@ pack is wrong.
   enough that the slide would leave a band empty, they move under the table in two columns and the
   table's rows open up by up to one minimum row height each. Numbers are right-aligned in the pack's
   table style.
-- **Packs.** ledger, signal, chalk, paper, gazette.
+- **Packs.** ledger, signal, chalk, paper, gazette, computational-brutalism, neo-brutalism, bauhaus, riso, newsroom.
 
 ### ledger-table
 
 - **Holds.** A full-width table that is the message: an account, a plan, a schedule, a status list.
 - **Write it as.** Five to eight rows including a totals row (`합계` / `Total`, set bold), the caption,
   then three or four takeaways (they run under the table across the width).
-- **Packs.** ledger, gazette.
+- **Packs.** ledger, gazette, computational-brutalism.
 
 ### kpi-over-chart
 
@@ -180,7 +180,7 @@ pack is wrong.
   source and note lines.
 - **Behaviour.** Figures across the top, the chart under them to the floor. Without both a KPI table
   and a chart it falls back to `chart-insight`.
-- **Packs.** ledger, night.
+- **Packs.** ledger, night, newsroom.
 
 ### dashboard-grid
 
@@ -189,7 +189,7 @@ pack is wrong.
   takeaway and the source strip.
 - **Behaviour.** Two panels sit side by side, three run across, four form a two-by-two grid; the
   takeaways run under the grid. With fewer than two visuals it falls back to `chart-insight`.
-- **Packs.** ledger, night.
+- **Packs.** ledger, night, computational-brutalism.
 
 ### matrix-2x2
 
@@ -208,7 +208,7 @@ pack is wrong.
 - **Behaviour.** Each quadrant shows its item as a head and each detail on its own line. Takeaways
   stand in the last four columns beside the matrix (under it on a narrow body). Any other table shape
   falls back to `table-insight`.
-- **Packs.** ledger, gazette.
+- **Packs.** ledger, gazette, computational-brutalism.
 
 ### comparison
 
@@ -233,12 +233,11 @@ pack is wrong.
   Then the source strip.
 - **Behaviour.** When the points on both sides open with the same short label, the compact step
   draws a criteria column: the label once on the left, each side's text in its own column, one row
-  per criterion spread down the page. Under a top title this reads as a grid. Beside a side rail
-  the labels stand in the rail under the title, level with their rows, and the two sides take the
-  body; a label is a short name of three words at most, or the criteria stay inside the sides. A
+  per criterion spread down the page. The labels stand in the first column, level with their rows, and the two sides take the
+  rest of the body; a label is a short name of three words at most, or the criteria stay inside the sides. A
   comparison dense with figures takes the data role, otherwise the content role. Without columns,
   bold-headed entries are split half and half; a visual without columns sits beside the text.
-- **Packs.** all eight. The legacy name `summary` resolves here.
+- **Packs.** all thirteen. The legacy name `summary` resolves here.
 
 ## Chart families
 
@@ -251,13 +250,13 @@ pack is wrong.
   chart's values also appear as a small table under the takeaways when they fit (eight rows and four
   columns at most), else under the chart when the chart keeps at least 150 pt; takeaways too long
   for a third of the body take half.
-- **Packs.** ledger, signal, paper, studio, night.
+- **Packs.** ledger, signal, paper, studio, night, computational-brutalism, neo-brutalism, bauhaus, riso, newsroom.
 
 ### full-chart
 
 - **Holds.** A chart that needs the whole width: many categories, several series.
 - **Write it as.** The chart, then one or two takeaways and the source strip; they run under it.
-- **Packs.** ledger, signal, paper, night.
+- **Packs.** ledger, signal, paper, night, computational-brutalism, newsroom.
 
 ## Sequence families
 
@@ -269,14 +268,14 @@ pack is wrong.
   steps are takeaways and run under them.
 - **Behaviour.** On the compact step with a full-width body, each step is a row read across: numeral,
   step name, what happens. Up to four steps whose columns would stop high also run as rows.
-- **Packs.** signal, chalk.
+- **Packs.** signal, chalk, neo-brutalism, bauhaus, riso.
 
 ### step-diagram
 
 - **Holds.** A teaching sequence, each step with its own small worked value.
 - **Write it as.** As `process`; include the number or formula each step produces.
 - **Behaviour.** The same plan as `process`.
-- **Packs.** chalk.
+- **Packs.** chalk, computational-brutalism, neo-brutalism, bauhaus, riso.
 
 ### timeline
 
@@ -290,7 +289,7 @@ pack is wrong.
   under them. A single takeaway moves with the axis instead, the room shared over and under the
   pair; with a short title that still leaves a tall band under it (OF-109), so give a timeline two or
   three takeaways.
-- **Packs.** ledger, atlas, gazette, studio, night.
+- **Packs.** ledger, atlas, gazette, studio, night, bauhaus, riso, newsroom.
 
 ## Image and figure families
 
@@ -307,14 +306,14 @@ pack is wrong.
 - **Holds.** One image beside its explanation.
 - **Write it as.** The image, then four or five headed points and the source strip.
 - **Behaviour.** Image on seven columns, text on five.
-- **Packs.** signal, atlas, chalk, studio.
+- **Packs.** signal, atlas, chalk, studio, neo-brutalism, bauhaus, riso, newsroom.
 
 ### photo-grid
 
 - **Holds.** Two or three images seen together.
 - **Write it as.** Two or three image lines in a row (each with a caption), then one takeaway and the
   source strip. A fourth image is ignored. With one image it falls back to `image-split`.
-- **Packs.** atlas, studio.
+- **Packs.** atlas, studio, riso.
 
 ### figure-pair
 
@@ -323,7 +322,7 @@ pack is wrong.
   numbers, then the source strip.
 - **Behaviour.** The figures share the width equally at the same height; the text runs under them.
   With one figure it falls back to `figure-academic`.
-- **Packs.** atlas, paper.
+- **Packs.** atlas, paper, newsroom.
 
 ### figure-academic
 
@@ -338,7 +337,7 @@ pack is wrong.
 - **Write it as.** The visual, then four or five headed points and the source strip.
 - **Behaviour.** The visual takes five columns and the text seven. A slide whose only visual is a
   one-row KPI table is drawn as `big-number`.
-- **Packs.** signal, atlas, studio.
+- **Packs.** signal, atlas, studio, bauhaus.
 
 ### method
 
@@ -359,7 +358,7 @@ pack is wrong.
   long) and the terms run beside it; a figure at least twice as wide as tall runs across the body over
   its terms (two or three columns, the source closing the shortest) when it keeps 130 pt of height. A slide that holds a figure does not draw a
   formula line, so do not combine the two; put the formula in the figure's caption if both matter.
-- **Packs.** chalk, paper, night.
+- **Packs.** chalk, paper, night, computational-brutalism.
 
 ## References
 
@@ -369,7 +368,7 @@ pack is wrong.
 - **Write it as.** One bullet per entry, `- [1] ...`, sources first and definitions after.
 - **Behaviour.** One entry per row, rows spread down the page with rules between. A list longer than
   the body steps down to label size, then runs in two columns.
-- **Packs.** ledger, paper, gazette.
+- **Packs.** ledger, paper, gazette, computational-brutalism, newsroom.
 
 ## Covers
 
@@ -380,14 +379,14 @@ the pack's list, with a note.
 
 | Variant | Needs from the deck | What it draws | Packs |
 |---|---|---|---|
-| cover-typographic | nothing | Title large on the ground, subtitle and meta under it, drawn with the pack's cover device | ledger, signal, atlas, chalk, paper, gazette, night |
-| cover-split-field | nothing | Title in the left columns beside a colour field bleeding off the right edge | signal |
+| cover-typographic | nothing | Title large on the ground, subtitle and meta under it, drawn with the pack's cover device | ledger, signal, atlas, chalk, paper, gazette, night, bauhaus, computational-brutalism, neo-brutalism, newsroom, riso |
+| cover-split-field | nothing | Title in the left columns beside a colour field bleeding off the right edge | signal, bauhaus, neo-brutalism, riso |
 | cover-split-image | an image anywhere in the deck | Title on the left, the deck's first image filling the right side | atlas, paper, studio |
 | cover-full-image | an image anywhere in the deck | The first image full-bleed with the title on a dark panel | atlas |
 | cover-band | nothing | A deep band carrying the title, then the deck's parts (or its headline figures) across the page under it | gazette |
-| cover-numeral | a year in the title or the `date:` | The year at title size in the accent over the title | signal, chalk, studio, night |
-| cover-index | an agenda, or two or more sections | Title on the left, the part names listed on the right | ledger, paper, gazette |
-| cover-figures | a KPI table somewhere in the deck | Title over the deck's first row of headline figures (up to four) | ledger, night |
+| cover-numeral | a year in the title or the `date:` | The year at title size in the accent over the title | signal, chalk, studio, night, bauhaus, neo-brutalism, riso |
+| cover-index | an agenda, or two or more sections | Title on the left, the part names listed on the right | ledger, paper, gazette, computational-brutalism, newsroom |
+| cover-figures | a KPI table somewhere in the deck | Title over the deck's first row of headline figures (up to four) | ledger, night, computational-brutalism, newsroom |
 | cover-rail | nothing | A dark rail on the left holding organisation and date, the title beside it | chalk, studio |
 
 Never invent a number to enable `cover-numeral` or `cover-figures`; the figures come from the deck.
@@ -396,7 +395,7 @@ Never invent a number to enable `cover-numeral` or `cover-figures`; the figures 
 
 A section slide holds the `#` title (and may hold an image for `section-image`). It numbers itself
 by its position in the agenda when its title matches an agenda part or its description, and then
-shows the part count (`02 / 04`). In packs with `display.index` (ledger, paper, gazette)
+shows the part count (`02 / 04`). In packs with `display.index` (ledger, paper, gazette, newsroom)
 `section-rule` and `section-numeral` with an agenda become an index page: the part numeral over the
 part title on the left, the whole agenda on the right with this part marked. A section with no
 agenda behind it shows no numeral; it sets its title as a statement with a preview of the slides it
@@ -407,11 +406,11 @@ until the preview fits above the body floor.
 
 | Variant | What it draws | Packs |
 |---|---|---|
-| section-field | Title on a field-coloured ground | signal, atlas, paper, night |
-| section-numeral | Part number in the accent with the title | ledger, signal, chalk, studio, night |
+| section-field | Title on a field-coloured ground | signal, atlas, paper, night, bauhaus, neo-brutalism, riso |
+| section-numeral | Part number in the accent with the title | ledger, signal, chalk, studio, night, bauhaus, computational-brutalism, neo-brutalism, newsroom, riso |
 | section-rail | Dark rail with the part number, title beside it | chalk, studio |
 | section-image | The section slide's own image full-bleed with the title on a panel (needs an image on that slide) | atlas |
-| section-rule | Title over a hairline, or the index page | ledger, paper, gazette |
+| section-rule | Title over a hairline, or the index page | ledger, paper, gazette, computational-brutalism, newsroom |
 | section-band | Deep band; the deck's parts with this one marked, the title as a statement under the band | gazette |
 
 ## Closings
@@ -421,10 +420,10 @@ title. Write `layout: closing` for the pack's first closing, or name one.
 
 | Variant | Write it as | What it draws | Packs |
 |---|---|---|---|
-| closing-ask | One `Next step:` line and a table of asks (item, amount or date, owner) | Action rows keyed by the amount column (same unit; each row gets a bar for its share and the total closes the list) or else the date column; the next step on the floor in the pack's closing device; a next-step line that fits the box sets on one line across it, a longer one keeps the reading measure, set as narrow as keeps its line count so no line ends on a lone word | ledger, signal, atlas, chalk, paper, gazette |
-| closing-decision-box | One `결정할 것:` / `Decide:` line and a table of decisions | The decision bold at lead size in a box at the top, the table as action rows under it | ledger, gazette, night |
-| closing-statement | The `##` ask and one support line; no table or image | The ask set as a statement | signal, night |
-| closing-summary-list | Four to six one-line conclusions, or a visual plus points | Numbered conclusions spread down the page; with a visual, the visual on eight columns and the points in a box beside | chalk, paper, studio |
+| closing-ask | One `Next step:` line and a table of asks (item, amount or date, owner) | Action rows keyed by the amount column (same unit; each row gets a bar for its share and the total closes the list) or else the date column; the next step on the floor in the pack's closing device; a next-step line that fits the box sets on one line across it, a longer one keeps the reading measure, set as narrow as keeps its line count so no line ends on a lone word | ledger, signal, atlas, chalk, paper, gazette, bauhaus, computational-brutalism, neo-brutalism, newsroom, riso |
+| closing-decision-box | One `결정할 것:` / `Decide:` line and a table of decisions | The decision bold at lead size in a box at the top, the table as action rows under it | ledger, gazette, night, computational-brutalism, neo-brutalism |
+| closing-statement | The `##` ask and one support line; no table or image | The ask set as a statement | signal, night, bauhaus, neo-brutalism, newsroom, riso |
+| closing-summary-list | Four to six one-line conclusions, or a visual plus points | Numbered conclusions spread down the page; with a visual, the visual on eight columns and the points in a box beside | chalk, paper, studio, bauhaus, computational-brutalism, newsroom, riso |
 | closing-contact-split | A contact line and a table of asks | A field bleeding off the right and bottom edges holding each row's key and the total, starting where the rows' text ends (five to seven of twelve columns, never at the cost of a smaller row size); the asks down the left; the contact in a band that meets the field | atlas, studio |
 
 A totals row (`합계`, `Total`) is never read as an action row, and dash-only cells are left out of
@@ -446,11 +445,30 @@ though both are `cover-typographic`.
 | gazette | band | (no statement) | outline | box | yes |
 | studio | plain | rules (two hairlines on the open page) | tint | band | |
 | night | numeral | open | tint | band | |
+| computational-brutalism | drench (field over the page) | drench | outline | box | |
+| neo-brutalism | plate (field under the title) | drench | field | box | |
+| bauhaus | geometry (shapes in grid cells) | geometry (sentence left, shapes from column 10) | field | rules | |
+| riso | drench | drench | field | band | |
+| newsroom | band | rules | tint | rules | yes |
+
+Devices the earlier packs do not use:
+
+- `geometry` (bauhaus): the cover puts the title on the left half and an elementary composition on the
+  right half, each shape in its own grid cell (a square in the accent tint, a circle in the accent, a
+  bar in ink, a triangle in the field). A statement, a quote and a closing statement put the sentence
+  on the left and a narrower composition from column 10 to the edge. Content slides carry no geometry.
+- `drench` on a cover (computational-brutalism, riso): the field over the whole page, the title at
+  the cover step in up to three balanced lines, anchored low.
+- `plate` on a cover (neo-brutalism, as atlas): a field plate over a little under half the page, the
+  title on it in at most two lines. A statement is never set on a plate: a sentence on a plate that
+  covers less than half the page would leave the page above it open, so statements take `drench`.
+- Grid marks and hard offset shadows are pack keys, not devices (`decoration: grid-marks`, `shadow:`,
+  `edge-weight:`); `templates/tonalities/<id>/pack.yaml` states them and the sheet names them.
 
 ## How a deck keeps its variety
 
-The gate (OF-111) wants the content slides to differ in layout: the title zone (top, side, band,
-bottom, overlay, none) times the body's column partition (one, two-even, two-asym, three, grid,
+The gate (OF-111) wants the content slides to differ in layout: the title treatment (top-rule, side-rail, band,
+bottom-anchor, overlay, none) times the body's column partition (one, two-even, two-asym, three, grid,
 full-bleed). The count of distinct layouts must reach about 60 % of the content slides (capped at
 five), and no layout may cover more than 40 %. Agendas and references count as content slides
 here; covers, sections and closings do not.
@@ -460,7 +478,7 @@ the example decks in `examples/`:
 
 | Partition | Seen on |
 |---|---|
-| one | agenda, text-column, ledger-table, references-appendix; almost any family under side-rail |
+| one | agenda, text-column, ledger-table, references-appendix |
 | two-even | table-insight whose takeaways moved under the table |
 | two-asym | chart-insight and image-split under top or bottom titles, big-number, sidebar-note, asymmetric-feature, figure-academic |
 | grid | kpi-row cards, comparison criteria rows, matrix-2x2 under a top title, timeline, process and step-diagram, summary-box-list, text-two-column, photo-grid, figure-pair under bottom-anchor, method under band, kpi-over-chart |

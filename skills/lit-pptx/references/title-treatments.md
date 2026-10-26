@@ -1,13 +1,16 @@
 # Title treatments
 
-A title treatment answers four questions at once: where the title sits, how large it is set, what
-is drawn with it, and where the body starts. The engine knows eight treatments
+A title treatment decides how a slide's title looks: how large it is, what colour it takes and what
+comes with it (a rule, a band, a rail, a numeral, a panel). The engine knows eight
 (`scripts/lib/grid-resolver.js`, `TREATMENTS`). Each pack allows four or five of them, maps every
 slide role to one default, and the renderer may pick another allowed one per slide when that slide
-fills better under it. A deck therefore mixes several title looks, but every slide that uses one
-treatment puts its title in exactly the same frame.
+fills better under it. None of them moves the title: every content title sits in the slide grid's one
+title zone (`scripts/lib/slide-grid.js`: columns 1-10, y 36, 72 pt tall) and its body starts at y 120,
+whichever treatment and whichever tonality draws it; a statement sits in the display title zone. The
+deck gets its variety from three to five treatments for different slide jobs, and a reader never has
+to look for the title.
 
-This file covers the geometry of each treatment, which packs allow it, how a slide gets its
+This file covers what each treatment draws, which packs allow it, how a slide gets its
 treatment, the per-slide `title:` key, and what the gate checks.
 
 ## Titles name a topic
@@ -35,121 +38,65 @@ reports a sentence title as OF-114 HIGH under a tonality pack.
 
 ## The eight treatments
 
-Positions below are for the 16:9 canvas on the compact grid that density 10 uses: 24 pt side
-margins, 12 columns 54 pt wide with 24 pt gutters, so column *a* starts at 24 + 78(*a* − 1) pt and a
-span of *n* columns is 78*n* − 24 pt wide. The canvas is 960 x 540 pt; the content floor is y 486.
-On the 4:3 canvas the same column spans apply to its own grid. Sizes are steps of the compact ramp:
-title 26 pt, display 36 pt, cover 44 pt.
+Geometry is in points on the 16:9 canvas (12 columns, 24 pt margins, 78 pt pitch); the 4:3 canvas keeps
+the same y values. The density dial changes type and spacing inside the zones, never the zones. Glyph
+budgets are for Korean at the presented ramp, with the reading ramp in brackets; Latin text takes about
+twice as many characters.
 
-### top-rule
+| Treatment | Title | Comes with | Body | Fits | Budget |
+|---|---|---|---|---|---|
+| `top-rule` | the title zone, title size | a short accent rule or a full hairline 4 pt under the title's last line | y 120-486 | content and data pages that are read | two lines of about 23 glyphs (29) |
+| `top-plain-large` | the title zone, display size | nothing | y 120-486 | comparison, image-split, pages that open on one claim | one line of about 17 glyphs (two of 21) |
+| `side-rail` | the title zone, title size | a bar in the left margin: the page's full height in the rail colour when the pack fills its rail, else as tall as the title zone in the accent | y 120-486 | a chart or picture with its takeaways, a comparison with labelled criteria | as `top-rule` |
+| `band` | the title zone, title size, in the on-field colour | the field colour from the page's top edge to the title zone's foot (y 108) | y 120-486 | Korean briefing pages, data pages, a newspaper masthead | as `top-rule` |
+| `statement` | the display title zone (columns 1-9, y 132-348), display or hero size, centred | an optional support line in the support zone (y 372) | none: the text is the content | a pull quote, or a display-led deck the user asked for | three lines of about 15 glyphs |
+| `overlay` | a dark panel at the lower left over a full-bleed picture | the panel at 88 % opacity, a caption on it | none: the picture is the content | full-picture slides | two lines of about 15 glyphs |
+| `kicker-numeral` | the title zone, title size | the numeral at cover size in the aside zone right of the title (columns 11-12), in the accent colour; the part number, never an agenda's row count | y 120-486 | steps, numbered recommendations | as `top-rule` |
+| `bottom-anchor` | the title zone, title size | a heavy rule (2 to 4 pt) across the columns at the zone's foot | y 120-486 | chart-led, figure-led and big-picture slides | as `top-rule` |
 
-- **Geometry.** Title across columns 1-12 at y 36, set at title size, one or two lines; the frame is
-  exactly as tall as its lines. A rule sits 6 pt under the frame: a short accent bar one column wide
-  and 4 pt thick in packs that list `accent-rule`, otherwise a 0.75 pt hairline across the full
-  width. The body starts 18 pt under the rule, so a one-line title gives a body from about y 92.
-- **Budget.** Two lines at most. On 16:9 one line holds roughly 33 Hangul or 60 Latin characters.
-- **For.** The workhorse for content, data and reference slides that read top to bottom.
-- **Packs.** ledger, signal, chalk, paper, gazette.
+Over budget, the engine moves the slide to another allowed treatment and says so in a `note:` line;
+a `title:` key that asks for an over-budget treatment stops the compile, because a pinned choice
+that cannot hold the title is an authoring error. Shorten the title or pick another treatment.
 
-### top-plain-large
+Details that decide a choice:
 
-- **Geometry.** Title across columns 1-10 at y 36, at display size, no rule. One line takes a 54 pt
-  frame, two lines 102 pt (each with a little extra for descenders). The body starts 18 pt under it.
-- **Budget.** Two lines; about 21 Hangul or 38 Latin characters per line.
-- **For.** Slides read at a distance: image splits, comparisons, KPI rows and timelines in packs
-  built for rooms.
-- **Packs.** signal, atlas, studio, night.
+- **kicker-numeral.** The engine supplies the number; you never type it. On an `agenda` slide it is
+  never used: the rows are numbered, and a count beside the title read as a stray section number
+  (OF-119). On a content slide that follows a section slide it is that section's part number (taken
+  from the agenda position when the section title matches an agenda entry, otherwise counted).
+  Closings never take it, and a slide with no such number cannot be drawn under it, so slides before
+  the first section never show it. A deck with an agenda and no section therefore has one treatment
+  fewer to mix; open a part when OF-110 asks for a third.
+- **statement.** No table, chart or image on the slide and at most one text block besides the title.
+  A slide that breaks this falls back to another treatment. A statement is a pull quote or the one
+  framing line of a live pitch; a claim is not a slide title, so most decks need none. In ledger and
+  gazette a `statement` slide is drawn as the largest top title the pack has, and the compile log
+  notes it. Studio frames it between two hairlines on the open page (`display.statement: rules`).
+- **overlay.** Only on a slide with an image, and only in the `image-full` family, which takes no
+  other treatment. The image's alt text becomes the numbered caption. Contrast is judged on the
+  panel, never on the photograph.
+- **bottom-anchor.** The upper part must be a visual (chart, table, image or KPI row), or the slide
+  must hold at most one text block; a text-only slide with several blocks cannot take it. The visual
+  gets the body's full height under the title.
+- **side-rail.** What belongs beside the title (a comparison's criteria labels, a chart's takeaways,
+  the source and note) is set in the body, level with its rows. A bar in the left margin marks the
+  title; it carries no text.
 
-### side-rail
-
-- **Geometry.** Title in columns 1-4 from y 36, at title size, up to four lines; the frame keeps one
-  spare line so a rebalanced break never clips. Packs with `rail-fill` paint the rail from the
-  canvas edge to half a gutter past column 4 (in chalk the rail is the dark field with a white
-  title; elsewhere the light surface colour). Packs without it but with `hairline-rule` draw a
-  0.75 pt line at the rail edge instead. The body is columns 5-12, starting level with the title.
-- **Budget.** Four lines of a narrow measure: about 10 Hangul or 18 Latin characters a line.
-- **For.** A data slide with its takeaway, a definition or method page, an editorial text page.
-- **The rail under the title.** The rail carries what belongs beside the title: a comparison's
-  criteria labels, level with their rows; a chart's, table's, figure's or picture's takeaways; the
-  source and note at the rail's foot. A slide that would leave more than 40 % of the rail empty
-  takes another treatment unless the source pins `title: side-rail`, and the gate reports a pinned
-  rail left empty (OF-115).
-- **Packs.** ledger, atlas, chalk, paper, gazette, studio, night.
-
-### band
-
-- **Geometry.** A field-coloured band across the whole canvas from y 0 to 108. The title sits in it
-  across columns 1-11 at y 36, in the on-field colour. The body starts at y 120 on the compact step.
-- **Budget.** Two lines, a little narrower than top-rule.
-- **For.** Pages read like a document: Korean briefing pages, agenda pages, reference pages, and the
-  data pages of a dark keynote.
-- **Packs.** gazette, night.
-
-### statement
-
-- **Geometry.** The sentence or label itself is the slide: display size across columns 1-10, set in
-  balanced lines and centred on the body's vertical middle. Studio frames it between two hairlines
-  on the open page (its `display.statement: rules`). One support line may follow 24 pt below, in the
-  muted ink. There is no body zone.
-- **Budget.** Three lines.
-- **When it can be drawn.** No table, chart or image on the slide, and at most one text block
-  besides the title. A slide that breaks this falls back to another treatment.
-- **For.** Pull quotes and the one framing line of a live pitch. Since the user's verdict on
-  density, a claim is not a slide title; most decks need no statement at all.
-- **Packs.** signal, atlas, chalk, paper, studio, night. In ledger and gazette a `statement` slide is
-  drawn as the largest top title the pack has, and the compile log notes it.
-
-### overlay
-
-- **Geometry.** A picture fills the canvas edge to edge, cropped to its own proportions. A dark
-  panel at 88 % opacity covers the lower left, from the canvas edge to just past column 7 and from
-  y 324 to 516; the title sits in it at y 348, columns 1-7, in the on-field colour. Contrast is
-  judged on the panel, never on the photograph.
-- **Budget.** Two lines; about 19 Hangul or 34 Latin characters per line.
-- **When it can be drawn.** Only on a slide with an image, and only in the `image-full` family,
-  which takes no other treatment. The image's alt text becomes the numbered caption.
-- **Packs.** atlas, studio.
-
-### kicker-numeral
-
-- **Geometry.** A real number at cover size in the accent colour sits in columns 1-2 at y 36; the
-  title runs beside it in columns 3-12 at y 48, at title size. The body starts at y 120.
-- **Budget.** One line only.
-- **Where the number comes from.** The engine supplies it; you never type it. On an `agenda` slide it
-  is never used: the rows are numbered, and a count beside the title read as a stray section number
-  (OF-119). On a content slide that follows a section slide it is that
-  section's part number (taken from the agenda position when the section title matches an agenda
-  entry, otherwise counted). Closings never take it. A slide with no such number cannot be drawn
-  under kicker-numeral, so slides before the first section never show it. A deck with an agenda and
-  no section therefore has one treatment fewer to mix; open a part when OF-110 asks for a third.
-- **For.** The opening slide of a numbered part.
-- **Packs.** ledger, chalk, gazette, night.
-
-### bottom-anchor
-
-- **Geometry.** The title closes the page from below: columns 1-9 at title size, up to two lines,
-  its last line standing on the body floor (y 486), so a one-line title starts lower than a
-  two-line one. The 0.75 pt hairline across the width sits 12 pt above the title in packs that draw
-  hairlines, and the visual zone runs from y 36 down to 24 pt above the title: what a short title
-  does not use goes to the visual. The three columns beside the title stay empty by design.
-- **Budget.** Two lines; about 25 Hangul or 45 Latin characters per line.
-- **When it can be drawn.** The upper part must be a visual (chart, table, image or KPI row), or the
-  slide must hold at most one text block. A text-only slide with several blocks cannot take it.
-- **For.** Chart-led, figure-led and photo-led slides where the picture comes first.
-- **Packs.** ledger, signal, atlas, paper, studio.
+Never move a title by hand with a free box: the zone is the slide grid's, and a nudged title breaks
+the one place every theme keeps.
 
 ## Which packs allow what
 
-| Treatment | ledger | signal | atlas | chalk | paper | gazette | studio | night |
-|---|---|---|---|---|---|---|---|---|
-| top-rule | yes | yes | | yes | yes | yes | | |
-| top-plain-large | | yes | yes | | | | yes | yes |
-| side-rail | yes | | yes | yes | yes | yes | yes | yes |
-| band | | | | | | yes | | yes |
-| statement | | yes | yes | yes | yes | | yes | yes |
-| overlay | | | yes | | | | yes | |
-| kicker-numeral | yes | | | yes | | yes | | yes |
-| bottom-anchor | yes | yes | yes | | yes | | yes | |
+| Treatment | ledger | signal | atlas | chalk | paper | gazette | studio | night | computational-brutalism | neo-brutalism | bauhaus | riso | newsroom |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| top-rule | yes | yes | | yes | yes | yes | | | yes | | yes | | yes |
+| top-plain-large | | yes | yes | | | | yes | yes | yes | yes | | yes | |
+| side-rail | yes | | yes | yes | yes | yes | yes | yes | yes | | yes | yes | |
+| band | | | | | | yes | | yes | | yes | | yes | yes |
+| statement | | yes | yes | yes | yes | | yes | yes | yes | yes | yes | yes | yes |
+| overlay | | | yes | | | | yes | | | | | | |
+| kicker-numeral | yes | | | yes | | yes | | yes | | yes | yes | yes | yes |
+| bottom-anchor | yes | yes | yes | | yes | | yes | | yes | yes | yes | | yes |
 
 ## How a slide gets its treatment
 
@@ -164,7 +111,7 @@ The choice runs in three passes.
 
 1. **Resolver.** For every content slide the candidates are the pack's own title for the slide's
    family when its `structure:` map names one (Paper draws a comparison as a ruled table under
-   `top-rule`, Chalk sets its criteria on the board rail under `side-rail`; that title holds even when
+   `top-rule`, Chalk sets its criteria as row heads in the body under a `side-rail` title; that title holds even when
    the deck already leans on it, so two tonalities of one source differ in structure and not only in
    colour), else the pack's default for the slide's role; then the pack's other treatments that the family allows and that can be drawn on this
    slide (title within budget, numeral available, image present, statement conditions met).
@@ -237,23 +184,23 @@ deck-level checks concern titles:
   then compared with the name the compiler wrote on the shape (`title@side-rail`). A mismatch is
   HIGH. A deck of eight or more slides must use at least three treatments, and no more than the
   variance allows.
-- **OF-111.** Content slides vary their composition: the title zone times the body's column
+- **OF-111.** Content slides vary their composition: the title treatment times the body's column
   partition (one, two-even, two-asym, three, grid, full-bleed) must reach about 60 % of the
   content-slide count in distinct values (capped at five), and no one layout may cover more than
   40 % of the content slides.
-- **OF-113.** Every slide that uses a treatment keeps the same title frame (x, y, width, size).
-  A bottom title keeps its bottom edge instead of its top, which moves with the line count. Never
-  position a title by hand with `::: box`; the frame will drift and the check fails.
+- **OF-113.** Every content title keeps one frame and every statement keeps the display frame
+  (x, y, width, height within 1 pt), whatever its treatment. A title over a full-bleed picture keeps
+  its own panel. Never position a title by hand with `::: box`; the frame will drift and the check
+  fails.
 - **OF-114.** Titles and the cover subtitle are labels, as described at the top of this file.
-- **OF-115.** A bottom title whose last line ends more than 12 pt above the body floor, and a side
-  rail more than 40 % empty under its title, fail. What stands in the rail under the title is the
-  rail's: it neither changes the side-rail reading nor counts as a column of the body (OF-111).
-  A text or picture column of a two-column body fails too when its tallest empty band, from the top
-  of the pair down to where the longer column ends, passes 40 % of the body; a source strip at its
-  foot counts as a block but does not hide the band above it.
+- **OF-115.** A text or picture column of a two-column body fails when its tallest empty band, from
+  the top of the pair down to where the longer column ends, passes 40 % of the body (a source strip
+  at its foot counts as a block but does not hide the band above it). A takeaway column that stops
+  short of the visual beside it, a title panel taller than its text and a plate under an empty page
+  fail too.
 - **OF-116.** `node <skill>/run.mjs qa deck.pptx --sibling other.pptx` compares two tonalities of
-  one source: at least two content slides (one on a deck of fewer than four) must take another title
-  zone or column partition.
+  one source: every slide must place its title frame and its body's top-left corner in the same
+  spot. A tonality changes the look and never the place.
 - **OF-118.** A point that opens with a bold label and runs on in regular weight keeps a separator
   after the label (`**요약:** …`). The compiler adds the colon when the source leaves it out, so this
   fires on a label set by hand.
@@ -263,9 +210,11 @@ deck-level checks concern titles:
 
 - Let the roles do the work. A deck whose slides have real jobs (a table slide, a chart slide with a
   takeaway, an agenda, a process) gets its variety from the pack's role map without any `title:`.
-- A short title in a side rail reads as a design choice; a long one reads as a squeezed column.
-  Keep rail titles to eight Korean words or fewer.
-- Use bottom-anchor when the visual is the evidence and the label names it after the reader has
-  looked: a big chart, a photo pair, a KPI row.
+- Keep titles inside the two-line budget of the title zone; a longer one moves the slide to another
+  treatment, and a pinned one stops the compile.
+- Use bottom-anchor when the visual is the evidence and the heavy rule closes the label: a big
+  chart, a photo pair, a KPI row. A data slide with a takeaway reads best under it or side-rail.
+- A claim is not a title. It opens the body under a label; `statement` stays for pull quotes. A
+  sequence wants kicker-numeral only when the number is real, and Korean briefing pages use band.
 - Do not chase five treatments. Three or four that each mean something are better than five that
   vary for their own sake.

@@ -155,9 +155,19 @@ export function cellWidth(value: string): number {
   return width;
 }
 
+// Escape and control sequences (CSI, OSC, C1) from plan rows, todos, branches or commit text would act on
+// the terminal instead of being drawn, so they are removed before any record text reaches a cell.
+const terminalSequence = /\u001b\[[0-?]*[ -/]*[@-~]|\u001b\][^\u0007\u001b]*(?:\u0007|\u001b\\)?|\u001b[@-Z\\-_]|\u009b[0-?]*[ -/]*[@-~]|\u009d[^\u0007\u009c]*[\u0007\u009c]?/gu;
+const controlCharacter = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/gu;
+
+/** Record text without terminal escape sequences or control characters; tabs and newlines become spaces later. */
+export function stripControls(value: string): string {
+  return value.replace(terminalSequence, "").replace(controlCharacter, "");
+}
+
 /** Cuts `value` to at most `max` cells, ending in an ellipsis when anything was dropped. */
 export function truncateCells(value: string, max: number): string {
-  const clean = value.replace(/\s+/gu, " ").trim();
+  const clean = stripControls(value).replace(/\s+/gu, " ").trim();
   if (cellWidth(clean) <= max) return clean;
   if (max <= 0) return "";
   let out = "";

@@ -36,7 +36,7 @@ current period and the one number that matters. Pack file: `templates/tonalities
 
 Pretendard Regular and Bold throughout (A2Z display and numerals only with `faces: a2z`). At
 density 10 the compact ramp applies: body 13 pt, labels and table cells 11 pt, sources 9 pt, titles
-26 pt. Titles track slightly tight.
+26 pt. Titles track slightly tight. Cover and statement titles take the hero step (60 pt) when their words fit; `hero: false` in the front matter turns it off. A figure is never larger than a title.
 
 ## Dials
 

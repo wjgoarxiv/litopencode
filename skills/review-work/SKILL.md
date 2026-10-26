@@ -192,6 +192,8 @@ The following lanes belong to work review:
 4. **Security/provenance** - check prompt-injection handling, credential redaction, public-source boundaries, dependency changes, and clean-room wording.
 5. **Real-surface/docs** - probe the user-visible command, hook, CLI, package import, or docs surface that would expose the change.
 
+When a lane reaches its verdict, report it with the `review-work` tool: `action: "lane"`, `lane` one of `scope`, `tests`, `package`, `security`, `surface`, and `result` one of `pass`, `fail`, `blocked`. The OpenCode status card splits its top border into these five lanes and colours a stretch only after its report arrives, so the user watches real progress; a lane you skip stays dim. Report each lane once, after its evidence, never ahead of it. Use `blocked` when the lane could not run, which reads as a failure, not a pass.
+
 ## Review Posture
 
 `review-work` is adversarial but not hostile. The reviewer’s job is to protect the user from plausible false completion claims. A DoneClaim is a hypothesis: “these files changed, these tests prove the behavior, these risks remain, and cleanup is complete.” The review asks what would make that hypothesis false. It should prefer current evidence over confidence, direct local files over summaries, and user-visible probes over implementation intent.

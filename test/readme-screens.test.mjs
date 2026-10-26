@@ -218,3 +218,30 @@ test("the quick start carries a copyable install prompt for a coding agent", asy
     assert.match(prompt, file === "README.md" ? /restart OpenCode/u : /OpenCode를 다시 시작/u, `${file}: the agent reminds the user to restart OpenCode`);
   }
 });
+
+test("the What you can make gallery shows four real outputs as small WebP files kept out of the package", async () => {
+  // Each picture was rendered by the skill named in its caption on this host; the captions say how.
+  const shots = { "showcase-adhd-brief": "lit-adhd", "showcase-deck": "lit-pptx", "showcase-ui": "frontend-ui-ux", "showcase-pid": "lit-schematic" };
+  const headings = { "README.md": "## What you can make", "README-Ko-KR.md": "## 만들 수 있는 것" };
+  const ignore = await fs.readFile(".npmignore", "utf8");
+  for (const name of Object.keys(shots)) {
+    const bytes = await fs.readFile(`${assetRoot}/${name}.webp`);
+    assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", name);
+    assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", name);
+    assert.ok(bytes.length <= MAX_SCREEN_BYTES, `${name}.webp is ${bytes.length} bytes`);
+    assert.ok(!ignore.includes(`!${assetRoot}/${name}.webp`), `${name}.webp is shown only by the GitHub README, so .npmignore keeps it out`);
+  }
+  for (const readme of githubReadmes) {
+    const content = await fs.readFile(readme, "utf8");
+    const start = content.indexOf(`\n${headings[readme]}\n`);
+    assert.ok(start > 0, `${readme} has the gallery section`);
+    assert.ok(start < content.indexOf("\n## ", start + 1), `${readme}: the gallery is followed by another section`);
+    const section = content.slice(start, content.indexOf("\n## ", start + 1));
+    for (const [name, skill] of Object.entries(shots)) {
+      const tag = section.match(new RegExp(`<img src="\\./docs/assets/readme/${name}\\.webp" width="400" alt="([^"]{60,})" />`, "u"));
+      assert.ok(tag, `${readme}: ${name} is in the gallery with a full alt text`);
+      assert.ok(section.includes(`<b>${skill}</b>`), `${readme}: the gallery names ${skill}`);
+    }
+  }
+  for (const file of npmReadmes) assert.doesNotMatch(await fs.readFile(file, "utf8"), /showcase-/u, `${file} does not embed the gallery pictures`);
+});

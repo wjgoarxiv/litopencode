@@ -114,16 +114,12 @@ budget = (1 − SLO) × total requests in the window
 
 - **SLO** service level objective
   (1) 99.95% of checkout requests succeed over a rolling 28 days
-  (2) a request fails on a 5xx response or a response slower than 3 s
 - **Window** rolling 28 days
   (1) about 410M checkout requests at current volume
-  (2) recomputed every five minutes from the request log
 - **Budget** failed requests the window may hold
   (1) 0.05% of 410M, about 205,000 requests
-  (2) the May incident alone used 31% of one window
 - **Burn rate** speed of spending the budget
   (1) failed requests per hour divided by the hourly budget
-  (2) a burn rate of 1 spends the budget exactly at the window's end
 - **Alert** paging rule
   (1) page when the 1-hour burn rate exceeds 14 or the 6-hour rate exceeds 6
 - Source: Example Commerce SLO policy v3, February 2026

@@ -553,7 +553,17 @@ async function writeEvidenceLedger(projectRoot: string, state: EvidenceLedgerSta
     await removeIfPresent(tempFile);
     throw new LedgerIoError(`Failed to write goals.json: ${error instanceof Error ? error.message : String(error)}`);
   }
-  await fs.writeFile(paths.briefFile, renderEvidenceBrief(state), "utf8");
+  // The brief is replaced through a temp file and a rename, so a link planted at brief.md is swapped out,
+  // never written through.
+  goalsTempCounter += 1;
+  const briefTemp = path.join(paths.litLoopDir, `${goalsTempPrefix}${process.pid}-${goalsTempCounter}`);
+  try {
+    await fs.writeFile(briefTemp, renderEvidenceBrief(state), { encoding: "utf8", flag: "wx" });
+    await fs.rename(briefTemp, paths.briefFile);
+  } catch (error) {
+    await removeIfPresent(briefTemp);
+    throw new LedgerIoError(`Failed to write brief.md: ${error instanceof Error ? error.message : String(error)}`);
+  }
   return state;
 }
 

@@ -107,7 +107,7 @@ export function cpsFloor(text, kind = "line") {
   return unitCounts(text).C / limits.latinCharsPerSecond;
 }
 
-function keywordMatches(text, word) {
+export function keywordMatches(text, word) {
   if (/[a-z]/iu.test(word)) return new RegExp(`\\b${word}\\b`, "iu").test(text);
   return new RegExp(`(?:^|[^\\uAC00-\\uD7A3\\u1100-\\u11FF\\u3130-\\u318F])${word}`, "u").test(text);
 }

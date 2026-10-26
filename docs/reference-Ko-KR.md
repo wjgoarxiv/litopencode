@@ -140,6 +140,8 @@ litopencode install
 | `/review-work` | `lit-plan` 뒤에는 계획 검토, `lit-loop`나 `/start-work` 뒤에는 작업 검토. 있는 것을 보고 고르며 `/review-work plan`, `/review-work work`로 직접 정할 수 있음 |
 | `/litgoal` | 끝나는 지점을 정하고 지킴: 확인 가능한 기준이 붙은 목표 하나를 디스크에 남김. `lit-loop`와 `/start-work`가 그 목표를 향해 일함 |
 | `/lit-brainstorm` | 열린 질문을 여러 선택지로 펼친 뒤 짧은 목록으로 좁히고, 고른 것을 `deep-interview`나 `lit-plan`에 넘김. 채팅에서는 `lit brainstorm`, `lit brainstorming`, `lit ideation`, `lit ideate`, `lit idea`, `lit ideas`. 직접 만들지는 않음 |
+| `/lit-hijack` | 다른 사람이 공개한 작업의 기법 원리를 내 스킬이나 시스템에 옮김: 출처 기록, 라이선스 확인, 격차 분석, 원문 없는 명세, 분리된 구현, 동작 비교, 보고서. 각 단계의 완료는 동봉된 `hijack.mjs`가 판정함. 채팅에서는 `lit hijack`, `lit hijacking`, `lit 하이재킹`, `lit 하이잭` |
+| `/lit-adhd`, `/lit-rewind` | 하던 일을 이어서 시작: 이전 세션의 상태, 실제 진행 또는 아는 사실, 로드맵, 추천 한 단계를 읽기 전용으로 보여 줌. 동봉된 `rewind.mjs`가 수집함. 채팅에서는 `lit adhd`, `lit rewind`, 이어서 `go`가 30분간 준비된 단계를 따라감. `lit approve`와 `lit deny`는 대기 중인 경계에 답하고, `lit deny`는 실행을 끝냄. |
 | `/litresearch` 또는 `/lit-research` | 순차 대체 경로를 포함한 근거 기반 연구 |
 | `/lit-handoff` | 이어서 작업할 수 있는 핸드오프 작성 |
 | `/lit-recap` | 로컬 ledger와 세션 맥락으로 짧은 리캡 작성 |
@@ -405,6 +407,28 @@ OpenCode 1.18은 `tui.json`이나 `tui.jsonc`의 `plugin` 배열에 적힌 TUI �
     자리가 모자라면 남은 칩을 `+N`으로 접습니다.
   - 아래 테두리에는 context 사용량(75%부터 주황), 첫 lit 턴부터 지난 시간(`⟳ 7m`), git 브랜치가
     붙습니다.
+  - 나란히 도는 작업이 둘 이상이면 스킬 칩 줄 아래에 줄이 늘어납니다. `┬ 3 lanes in parallel` 다음에
+    작업마다 `├─`/`└─` 한 줄씩입니다(이 세션의 워크플로 스택 항목, 실행 중인 `task` 호출, 최근 15분
+    안에 스택이 움직인 같은 작업 공간의 다른 세션). 최대 네 줄이고 나머지는 `+N more`입니다. 줄마다 이름,
+    상태 단어(`working`, `paused`, `done`, `failed`, `idle`), 그리고 실제 총량이 있을 때만 게이지
+    (`[▉▉░░░░░░] 3/10`)가 붙습니다. 총량을 모르면 아는 것(단계, 걸린 시간)을 글로 쓰고 일하는 중이면 작은
+    펄스를 보여 줄 뿐 물음표는 쓰지 않습니다. 작업이 살아 있는 동안 카드는 가장 높았던 높이를 유지하고,
+    모두 가라앉으면 네 줄로 돌아옵니다.
+  - `lit-adhd`(별칭 `lit-rewind`)가 도는 동안 테두리, LIT 글자, 게이지가 같은 밝기의 색상환을 따라 돕니다.
+    1초에 네 번 색이 조금씩 바뀌고 깜박이지 않습니다. `motion: false`와 `NO_COLOR`에서는 꺼집니다. 이전
+    작업이 있는 작업 공간의 쉬는 세션은 `lit adhd to pick up where you left off`를 보여 주고, 그곳에서 처음 연
+    새 세션은 같은 문구로 토스트를 한 번 띄웁니다(v1 TUI만. v2 TUI에는 띠도 토스트도 없습니다).
+  - 카드의 모양은 한 번에 하나이고, `src/tui/mission-looks.ts`의 작은 목록에서 고릅니다. lit-adhd를 실행하는
+    길은 모두 되감기 모양이 됩니다. 채팅의 `lit adhd`/`lit rewind`, `/lit-adhd`/`/lit-rewind`(v2에 설치된 별칭
+    파일에서 온 것도 포함), 네이티브 `skill` 로드가 그렇습니다. 세션이 사용자를 기다리는 동안(권한 요청이나 질문,
+    또는 목표 결정, `BLOCKED:`로 시작하는 답, 경계에서 멈춘 타이핑 start-work 실행으로 끝난 쉬는 턴) 테두리가
+    주황빛이 되고 모서리에 `◆ YOUR TURN`이 뜹니다. 주황빛은 3초 호흡으로 천천히 바뀌고 깜박이지 않으며,
+    `motion: false`와 `NO_COLOR`에서는 멈춰 있고, 사용자가 입력하면 꺼집니다. `review-work`가 도는 동안에는
+    위 테두리가 다섯 갈래(scope, tests, package, security, surface)로 나뉘고 모서리에 `◇ REVIEW 2/5`처럼 보고된
+    수를 셉니다. 에이전트가 `review-work` 도구(`action: "lane"`, 갈래 이름, `pass`·`fail`·`blocked`)로 보고한
+    뒤에만 그 갈래가 켜집니다. 실패한 갈래는 오류 색이 되고, 보고되지 않은 갈래는 흐리게 남습니다. 목표가 끝나면
+    완료 불꽃이 한 번 터지고 카드가 가라앉으며, 평소 턴에서는 다시 터지지 않습니다. 릴리스 게시는 카드가 받는
+    신호가 없어서 불꽃도 없습니다.
 
   하위(subagent) 세션에서는 부모 세션의 카드를 `· in lane`과 함께 보여 주고, 홈 화면에는 띠가
   없습니다. 폭이 좁으면 줄마다 덜 중요한 것부터 덜어 냅니다. 단계 줄은 지금 하는 일과 다음 할 일
@@ -640,10 +664,14 @@ Install은 `<root>/skills`가 심볼릭 링크여도(예: `~/.config/opencode/sk
 
 ## 디자인 제작과 README
 
-OpenCode 네이티브 스킬 `frontend-ui-ux`는 충분한 구현 요청을 받으면 작업 화면을 만들고 렌더링을 확인합니다. 중요한 방향이 모호할 때만 질문하며 답변을 보존합니다. 검토·계획 요청은 읽기 전용입니다.
+OpenCode 네이티브 스킬 `frontend-ui-ux`는 충분한 구현 요청을 받으면 작업 화면을 만들고 렌더링을 확인합니다. 중요한 방향이 모호할 때만 질문하며 답변을 보존합니다. 검토·계획 요청은 읽기 전용입니다. 새 페이지나 화면은 `scripts/design-lock.mjs`로 룩(하우스 스타일, 레이아웃 계열, 시그니처 순간, 풍부 또는 차분한 밀도)을 먼저 고정합니다. 생성된 `design.lock.json`, `ui/tokens.css`, `ui/components.css`와 글꼴은 프로젝트에 놓이며, 글꼴은 sha256 확인 후 `lit-diagram-drawer`와 `lit-typographic-motion` 스킬에서 복사합니다. 락이 페이지 옆에 있으면 `scripts/probe.mjs`가 DS-001~DS-008과 LOOK-1~LOOK-6 질문을 더합니다. `--viewports`는 일부 뷰만 돌리며 승인하지 않습니다.
 
 네이티브 스킬 도구에서 `readme-studio`를 선택하면 실제 저장소 정보로 README와 표지를 제작합니다. 로컬 글꼴의 윤곽선, Remotion/HyperFrames 예제, 정적·동적 출력 절차가 함께 설치됩니다. 이미지 생성 도구가 없으면 `IMAGE_GENERATION_UNAVAILABLE`을 알리고 제공된 배경으로 이어갑니다. 공개 GitHub/npm 렌더링 검증은 별도 단계입니다. 전용 슬래시 명령은 없습니다.
 
+네이티브 스킬 `lit-typographic-motion`은 무대 영화에 이야기(`story`: 보는 사람의 기대, 반전, 반전이 떨어지는 샷, 결말)와 영화의 절반 이상에서 움직이는 주인공을 요구합니다. 요청에 링크가 있으면 제품이 필수입니다. `render.mjs assets --out <dir> --url <https 링크> [--cover]`가 페이지와 README를 신뢰할 수 없는 데이터로 읽어, 형식을 확인하고 크기를 제한한 이미지만(SVG는 정리, 배지는 제외) `stage/assets/` 또는 `cover/assets/`에 두며, 그 이미지를 한 번도 보여 주지 않는 영화는 `ASSET-USED` 게이트 행에서 실패합니다. 제품에 닿을 수 없으면 화면을 지어내지 않고 종료 코드 22로 사용자에게 묻습니다. `depth: "3d"`는 고정된 three.js r170(`/lit/three/`로 제공, 해시는 `THIRD_PARTY_NOTICES`)을 GPU 단계에서 쓰고, GPU가 시작되지 않으면 표시를 달아 SwiftShader로 내려갑니다. 사용자 그림이 없는 README 표지는 `hero-3d` 레시피를, `painted-light`는 사용자 그림이 있을 때만 씁니다. 영화는 기본적으로 풍부합니다(`register: rich`). 무대 영화는 화면을 채워야 하고(열두 구역 중 둘 넘게 비는 샷이 둘 이상이면 `RICH-FILL` 실패), 실제 이름의 촘촘한 라벨과 움직이는 카메라를 갖추며, 영화마다 겹겹의 점수(`sound.mode: score`; 킥·클랩·하이햇·퍼커션·베이스·코드·리드·fx·액센트 스템, 사이드체인, -16 LUFS, 이야기 박자에 떨어지는 드롭, 스템은 `sound/stems/`에 보관)를 받습니다. 차분하거나 미니멀한 영화를 요청할 때만 `minimal`이 됩니다. `render3d: "blender"`는 선택형 Cycles 플레이트 단계를 더하며(`render.mjs blender --out <dir> [--final] [--detach]`; `scaffold`가 `BLENDER:` 줄을 알리고, Blender가 없으면 표시를 달아 three.js로 내려갑니다), 보는 확인은 무대 경로에서 질문 11개(타입 경로와 표지는 9개)이며 영화가 자기 방식에 충분히 풍부한지, 반전이 닿는지를 묻습니다. `gate.mjs --done`은 폴더 위쪽에서 실행을 찾으므로 영화 폴더 안에서 `--out .`으로도 동작합니다. 트리트먼트 전에는 경로·스타일·형식·방식을 `question` 호출 한 번으로 묻고 규칙의 추천을 먼저 둡니다.
+
 개념·편집·기술 다이어그램은 `lit-diagram-drawer` 네이티브 스킬 선택기에서 제작하고 검증합니다. 제품 인터페이스는 `frontend-ui-ux`, 측정된 과학 데이터 그림은 `lit-scientific-visualization`을 사용합니다.
 
-`lit-docx`는 워드 보고서, `lit-pptx`는 파워포인트 발표자료를 만듭니다. `lit`과 함께 쓰면 요청한 형식의 네이티브 스킬을 선택하고, 마크다운 원본·품질 검사·렌더 확인을 유지합니다. 두 스킬은 만들기 전에 디자인 방향을 정하고 다른 후보 두 개와 함께 알려 줍니다. 발표자료는 Ledger, Signal, Atlas, Chalk, Paper, Gazette, Studio, Night 여덟 가지, 보고서는 Report, Brief, Manual, Proposal, Memo, Journal 여섯 가지 방향 중에서 고릅니다.
+실제 장비의 P&ID, PFD, 실험 장치 그림, 아이소메트릭 단면도는 `lit-schematic` 네이티브 스킬 선택기에서 제작하고 QA 스크립트와 렌더 확인으로 검증합니다. 범위가 분명한 도면 요청에 `lit`을 붙이면 그리기 전에 이 스킬을 불러오도록 안내합니다. 전용 슬래시 명령은 없습니다.
+
+`lit-docx`는 워드 보고서, `lit-pptx`는 파워포인트 발표자료를 만듭니다. `lit`과 함께 쓰면 요청한 형식의 네이티브 스킬을 선택하고, 마크다운 원본·품질 검사·렌더 확인을 유지합니다. 두 스킬은 만들기 전에 디자인 방향을 정하고 다른 후보 두 개와 함께 알려 줍니다. 발표자료는 Ledger, Signal, Atlas, Chalk, Paper, Gazette, Studio, Night, Computational Brutalism, Neo-Brutalism, Bauhaus, Riso, Newsroom 열세 가지, 보고서는 Report, Brief, Manual, Proposal, Memo, Journal 여섯 가지 방향 중에서 고릅니다.

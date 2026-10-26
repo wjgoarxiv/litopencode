@@ -14,6 +14,8 @@ export function coverTreatment(overrides = {}) {
     idea: "Thin bars drift under a sweeping lit span while four markers flash beneath a fixed word.",
     recipe: "own",
     recipeReason: "A test system that keeps one rule, three layers and a still word.",
+    hero: "Twenty-two thin bars in two strips.",
+    beat: "Four markers flash and a cursor steps between them once per loop.",
     brandWord: "LOOPKIT",
     aspect: "2:1",
     loopSec: 6,
@@ -49,8 +51,8 @@ export function coverAnswers(overrides = {}) {
   return {
     viewed: ["stills/sheet.png", "stills/poster.png", "stills/seam.png"],
     change: "Narrow the light edge from 60 to 24 painting pixels so the encoder keeps it.",
-    answers: [1, 2, 3, 4, 5, 6, 7, 8].map((q) => ({
-      q, verdict: q <= 5 ? "yes" : "no", frame: q === 2 ? "stills/seam.png" : "stills/sheet.png",
+    answers: [1, 2, 3, 4, 5, 6, 7, 8, 9].map((q) => ({
+      q, verdict: q <= 5 || q === 9 ? "yes" : "no", frame: q === 2 ? "stills/seam.png" : "stills/sheet.png",
       observed: `Question ${q}: the orange span sits over a different group of bars in every tile of the sheet.`
     })),
     ...overrides

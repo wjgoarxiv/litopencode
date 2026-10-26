@@ -7,53 +7,16 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { PEAK_CEILING_DBFS, RATE, TARGET_LUFS, dbfs, integratedLoudness, samplePeakDbfs, wavBytes } from "./loudness.mjs";
+import { accentsFor } from "./accents.mjs";
+import { writeScore } from "./score.mjs";
 import { mulberry32, fnv1a32 } from "./text.mjs";
 
+// The meter, the sample peak and the WAV writer live in loudness.mjs; the gate and the tests still read them here.
+export { RATE, accentsFor, integratedLoudness, samplePeakDbfs, wavBytes };
 export const SOUND_EXIT = 20;
-export const RATE = 48000;
-const TARGET_LUFS = -16;
-const PEAK_CEILING_DBFS = -2;
 const fadeSec = 0.05;
 
-// ---- ITU-R BS.1770-4: K-weighting at 48 kHz, 400 ms blocks with 75 % overlap, -70 LUFS absolute and
-// -10 LU relative gates ----
-const shelf = { b: [1.53512485958697, -2.69169618940638, 1.19839281085285], a: [1, -1.69065929318241, 0.73248077421585] };
-const highPass = { b: [1, -2, 1], a: [1, -1.99004745483398, 0.99007225036621] };
-function biquad(input, { b, a }) {
-  const out = new Float64Array(input.length);
-  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-  for (let i = 0; i < input.length; i++) {
-    const x = input[i];
-    const y = b[0] * x + b[1] * x1 + b[2] * x2 - a[1] * y1 - a[2] * y2;
-    x2 = x1; x1 = x; y2 = y1; y1 = y;
-    out[i] = y;
-  }
-  return out;
-}
-export function integratedLoudness(channels, rate = RATE) {
-  if (rate !== RATE) throw new Error("the loudness meter's K-weighting coefficients are for 48 kHz");
-  const weighted = channels.map((channel) => biquad(biquad(channel, shelf), highPass));
-  const block = Math.round(0.4 * rate), hop = Math.round(0.1 * rate);
-  const blocks = [];
-  for (let start = 0; start + block <= weighted[0].length; start += hop) {
-    let sum = 0;
-    for (const channel of weighted) { let s = 0; for (let i = start; i < start + block; i++) s += channel[i] * channel[i]; sum += s / block; }
-    blocks.push(sum);
-  }
-  const loudness = (z) => -0.691 + 10 * Math.log10(z);
-  const absolute = blocks.filter((z) => loudness(z) > -70);
-  if (absolute.length === 0) return -Infinity;
-  const relativeGate = loudness(absolute.reduce((s, z) => s + z, 0) / absolute.length) - 10;
-  const gated = absolute.filter((z) => loudness(z) > relativeGate);
-  return loudness(gated.reduce((s, z) => s + z, 0) / gated.length);
-}
-
-const dbfs = (value) => (value > 0 ? 20 * Math.log10(value) : -Infinity);
-export function samplePeakDbfs(channels) {
-  let peak = 0;
-  for (const channel of channels) for (const v of channel) peak = Math.max(peak, Math.abs(v));
-  return dbfs(peak);
-}
 // The longest run of 50 ms windows under `floorDb` RMS inside [0, untilSec).
 export function quietestStretchSec(channels, rate, untilSec = 3, floorDb = -50) {
   const win = Math.round(0.05 * rate), end = Math.min(channels[0].length, Math.round(untilSec * rate));
@@ -88,12 +51,6 @@ const palettes = {
   pulse: { pad: (f, t) => 0.35 * Math.sin(2 * Math.PI * f * t), arp: true, pulse: 0.6, noise: 0 },
   air: { pad: (f, t) => 0.5 * Math.sin(2 * Math.PI * f * t) + 0.12 * Math.sin(2 * Math.PI * 1.5 * f * t), pulse: 0.25, noise: 0.08 }
 };
-
-// Accent words a beat's `sound` field may carry.
-export function accentsFor(beat) {
-  const text = String(beat.sound ?? "").toLowerCase();
-  return { hit: /\bhits?\b|\bimpact\b|\bboom\b|\bstab\b/u.test(text), rise: /\brise\b|\briser\b|\bswell\b|\bbuild\b/u.test(text), cadence: /\bcadence\b|\bresolve\b|\bfinal chord\b/u.test(text), thin: /\bthin(?:s|ned)?\b|\bsparse\b|\bpared back\b/u.test(text) };
-}
 
 // cuts[i] is the film time where beat i starts on screen (the render's own cut times).
 export function buildBed(treatment, { frameCount, fps, cuts }) {
@@ -207,15 +164,6 @@ export function buildBed(treatment, { frameCount, fps, cuts }) {
   return { pcm, cues, stats: { samples: length, durationSec: duration, lufs: Number(integratedLoudness(decoded).toFixed(2)), peakDbfs: Number(samplePeakDbfs(decoded).toFixed(2)), palette: sound.palette, key: sound.key, tempo: sound.tempo } };
 }
 
-export function wavBytes(pcm, rate = RATE, channels = 2) {
-  const data = Buffer.from(pcm.buffer, pcm.byteOffset, pcm.byteLength);
-  const header = Buffer.alloc(44);
-  header.write("RIFF", 0); header.writeUInt32LE(36 + data.length, 4); header.write("WAVEfmt ", 8);
-  header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(channels, 22); header.writeUInt32LE(rate, 24);
-  header.writeUInt32LE(rate * channels * 2, 28); header.writeUInt16LE(channels * 2, 32); header.writeUInt16LE(16, 34); header.write("data", 36); header.writeUInt32LE(data.length, 40);
-  return Buffer.concat([header, data]);
-}
-
 // Writes <out>/sound.wav and <out>/sound-cues.json for a generated bed; returns the stats.
 export function writeBed(out, treatment, timing) {
   const bed = buildBed(treatment, timing);
@@ -230,6 +178,10 @@ export function resolveTrack(out, treatment, timing, briefAudio) {
   const mode = treatment.sound.mode;
   if (mode === "none") return { mode };
   if (mode === "generated") return { mode, ...writeBed(out, treatment, timing), label: "generated" };
+  if (mode === "score") {
+    const summary = writeScore({ treatment, frameCount: timing.frameCount, fps: timing.fps, cuts: timing.cuts, dir: out });
+    return { mode, file: summary.file, label: "score", lufs: summary.lufs, peakDbfs: summary.peakDbfs, key: summary.key, tempo: summary.tempo, palette: summary.genre };
+  }
   const named = treatment.sound.file ?? briefAudio;
   const file = named ? path.resolve(out, named) : null;
   if (!file || !existsSync(file)) throw Object.assign(new Error(`SOUND_INVALID (20): the ${mode} track ${named ?? "(none named)"} is missing`), { exitCode: SOUND_EXIT });

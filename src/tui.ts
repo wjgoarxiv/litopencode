@@ -10,9 +10,12 @@ import { jsx } from "@opentui/solid/jsx-runtime";
 import { buildMissionView, lastMission, leadingNotice, missionNotices, type MissionNotice, type MissionView } from "./tui/mission-model.ts";
 import { idleMotion, motionTiming, planMotion, sampleMotion, type MotionState } from "./tui/mission-motion.ts";
 import { chipBudget, chipLine, homeLine, missionPanel, paletteFromTheme, panelWidth, type Line, type MissionPalette } from "./tui/mission-text.ts";
-import { createLedgerReader, createWorkReader, missionProjectRoot, readCardInput, readLatestResearchRun, readMissionInput, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
+import { adhdSuggestDue, createLedgerReader, createWorkReader, earlierWorkWindowMs, hasEarlierWork, messageTimes, missionProjectRoot, wayBackDue, readCardInput, readLatestResearchRun, readMissionInput, readThreadSources, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
 import { chipShimmer, idleChipMotion, planChipMotion, type ChipMotion } from "./tui/mission-skills.ts";
 import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "./tui/mission-band.ts";
+import { activeSkillLook, turnGlow, waitingOnYou } from "./tui/mission-looks.ts";
+import { rainbowActive, rainbowAllowed, rainbowAt, rainbowShows, rainbowTickMs } from "./tui/mission-rainbow.ts";
+import { threadLineCount, threadsOf } from "./tui/mission-threads.ts";
 
 export const litOpenCodeTuiPluginId = "litopencode";
 
@@ -36,7 +39,7 @@ const refreshEvents = [
   "question.rejected"
 ] as const;
 
-type SessionEntry = { view: MissionView; card: CardInput; motion: MotionState; chipMotion: ChipMotion };
+type SessionEntry = { view: MissionView; card: CardInput; motion: MotionState; chipMotion: ChipMotion; reserve: number; rainbowSeen?: number; lastPromptAt?: number; waiting: boolean };
 
 function spanFor(segment: Line[number]): unknown {
   return jsx("span", {
@@ -63,6 +66,10 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
   let pollTimer: ReturnType<typeof setInterval> | undefined;
   let liveTimer: ReturnType<typeof setInterval> | undefined;
+  let bandTimer: ReturnType<typeof setInterval> | undefined;
+  const suggested = new Set<string>();
+  const suggestedDays = new Map<string, string>();
+  const colorAllowed = rainbowAllowed(motionEnabled, process.env.NO_COLOR);
 
   const state = (): MissionStateSource => api.state as unknown as MissionStateSource;
   const palette = (): MissionPalette => paletteFromTheme(api.theme.current as unknown as Record<string, unknown>, api.theme.mode());
@@ -78,6 +85,30 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   function isChildSession(sessionID: string): boolean {
     const session = api.state.session.get(sessionID) as { readonly parentID?: string } | undefined;
     return typeof session?.parentID === "string" && session.parentID !== "";
+  }
+
+  // lit-adhd plays the rainbow and a working lane without a real total plays a pulse; both step at 4 Hz
+  // and only while they are on screen, and neither runs under reduced motion or NO_COLOR.
+  function rainbowOn(entry: SessionEntry, now: number): boolean {
+    return colorAllowed && rainbowShows(rainbowActive(entry.view, entry.card.chips, entry.card.busy), entry.rainbowSeen, entry.lastPromptAt, now);
+  }
+
+  function bandStepping(entry: SessionEntry): boolean {
+    if (!colorAllowed) return false;
+    if (entry.waiting || rainbowOn(entry, Date.now())) return true;
+    return entry.card.threads?.some((row) => row.status === "working" && row.done === undefined) === true;
+  }
+
+  function syncBandTimer(): void {
+    const needed = [...sessions.values()].some(bandStepping);
+    if (needed && bandTimer === undefined) bandTimer = setInterval(() => {
+      setClock(Date.now());
+      syncBandTimer();
+    }, rainbowTickMs);
+    if (!needed && bandTimer !== undefined) {
+      clearInterval(bandTimer);
+      bandTimer = undefined;
+    }
   }
 
   function anyMoving(now: number): boolean {
@@ -118,16 +149,46 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
       .catch(() => undefined);
   }
 
+  // The card keeps the tallest lane count it reached while lanes are live or a turn runs, and drops back to
+  // four rows only once everything has settled, so the prompt does not jump between repaints.
+  function holdRows(held: number, rows: number, busy: boolean): number {
+    if (rows > 0) return Math.max(held, rows);
+    return busy ? held : 0;
+  }
+
+  // One toast per session, for a fresh root session in a workspace that has earlier work to pick up.
+  function suggestAdhd(sessionID: string): void {
+    if (suggested.has(sessionID) || isChildSession(sessionID)) return;
+    suggested.add(sessionID);
+    const source = state();
+    const created = (api.state.session.get(sessionID) as { readonly time?: { readonly created?: unknown } } | undefined)?.time?.created;
+    const now = Date.now();
+    if (source.session.messages(sessionID).length > 0 || typeof created !== "number" || now - created > 2 * 60_000) return;
+    const root = missionProjectRoot(source.path);
+    if (root === undefined || !hasEarlierWork(root, sessionID, now, earlierWorkWindowMs) || !adhdSuggestDue(suggestedDays, root, now)) return;
+    api.ui.toast({ variant: "info", title: "🔥 LIT", message: "Earlier work here. Say lit adhd to pick up where you left off.", duration: toastMs });
+  }
+
   function refresh(sessionID: string): void {
     const now = Date.now();
     const source = state();
     const root = missionProjectRoot(source.path);
     const ledger = readLedger(root);
-    const next = buildMissionView(readMissionInput(source, sessionID, ledger, now, { work: readWork(root, sessionID), research: readLatestResearchRun(root) }));
-    const card = readCardInput(source, sessionID);
+    const work = readWork(root, sessionID);
+    const next = buildMissionView(readMissionInput(source, sessionID, ledger, now, { work, research: readLatestResearchRun(root) }));
+    const threads = threadsOf(readThreadSources(source, sessionID, root, now), now);
+    const times = messageTimes(source, sessionID);
+    const card: CardInput = {
+      ...readCardInput(source, sessionID),
+      ...(threads === undefined ? {} : { threads }),
+      ...(wayBackDue(times.lastAt, now, hasEarlierWork(root, sessionID, now, earlierWorkWindowMs)) ? { earlier: true } : {})
+    };
     const entry = sessions.get(sessionID);
     const viewChanged = entry === undefined || JSON.stringify(entry.view) !== JSON.stringify(next);
-    if (!viewChanged && JSON.stringify(entry.card) === JSON.stringify(card)) return;
+    const rainbowSeen = rainbowActive(next, card.chips, card.busy) ? now : entry?.rainbowSeen;
+    const waiting = waitingOnYou(next, card.busy, { asked: card.asked === true, userSpokeLast: card.userSpokeLast === true, blockedReply: card.blockedReply === true, boundary: work?.boundary === true });
+    const promptMoved = entry?.lastPromptAt !== times.lastPromptAt;
+    if (!viewChanged && !promptMoved && JSON.stringify(entry.card) === JSON.stringify(card) && entry.rainbowSeen === rainbowSeen && entry.waiting === waiting) return;
     if (entry !== undefined && viewChanged) {
       const notices = missionNotices(entry.view, next);
       const notice = leadingNotice(notices);
@@ -139,12 +200,17 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
       view: next,
       card,
       motion: viewChanged ? planMotion(entry?.view, next, now, entry?.motion ?? idleMotion, motionEnabled) : entry.motion,
-      chipMotion: planChipMotion(entry?.card.chips, card.chips, now, entry?.chipMotion ?? idleChipMotion, motionEnabled)
+      chipMotion: planChipMotion(entry?.card.chips, card.chips, now, entry?.chipMotion ?? idleChipMotion, motionEnabled),
+      reserve: holdRows(entry?.reserve ?? 0, threadLineCount(threads), card.busy),
+      ...(rainbowSeen === undefined ? {} : { rainbowSeen }),
+      ...(times.lastPromptAt === undefined ? {} : { lastPromptAt: times.lastPromptAt }),
+      waiting
     });
     setClock(now);
     setRevision(revision() + 1);
     ensureFrames();
     syncLiveTick();
+    syncBandTimer();
   }
 
   function refreshTracked(): void {
@@ -156,7 +222,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   // Ledger writes from a terminal or another session fire no TUI event, so an active mission
   // re-reads goals.json (one lstat while unchanged) every two seconds. Idle sessions do not poll.
   function syncPoll(): void {
-    const active = [...sessions.values()].some((entry) => entry.view.active);
+    const active = [...sessions.values()].some((entry) => entry.view.active || entry.card.threads !== undefined);
     if (active && pollTimer === undefined) pollTimer = setInterval(refreshTracked, ledgerPollMs);
     if (!active && pollTimer !== undefined) {
       clearInterval(pollTimer);
@@ -175,6 +241,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     queueMicrotask(() => {
       refresh(sessionID);
       syncPoll();
+      suggestAdhd(sessionID);
     });
   }
 
@@ -219,6 +286,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     if (refreshTimer !== undefined) clearTimeout(refreshTimer);
     if (pollTimer !== undefined) clearInterval(pollTimer);
     if (liveTimer !== undefined) clearInterval(liveTimer);
+    if (bandTimer !== undefined) clearInterval(bandTimer);
     sessions.clear();
   });
 
@@ -327,6 +395,13 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
                   frame: snapshot.frame,
                   chips: snapshot.card.chips,
                   busy: snapshot.card.busy,
+                  motion: motionEnabled,
+                  reserve: snapshot.reserve,
+                  ...(snapshot.card.threads === undefined ? {} : { threads: snapshot.card.threads }),
+                  ...(snapshot.card.earlier === true ? { earlier: true } : {}),
+                  ...(snapshot.waiting ? { turn: { glow: turnGlow(snapshot.now, colorAllowed) } } : {}),
+                  ...(rainbowOn(snapshot, snapshot.now) ? { rainbow: rainbowAt(snapshot.now) } : {}),
+                  ...(snapshot.card.lanes !== undefined && activeSkillLook(snapshot.view, snapshot.card.chips, snapshot.card.busy) === "review" ? { lanes: snapshot.card.lanes } : {}),
                   ...(shimmer === undefined ? {} : { shimmer }),
                   figures: { contextPercent: snapshot.card.contextPercent, ...(snapshot.card.branch === undefined ? {} : { branch: snapshot.card.branch }), inLane: snapshot.inLane },
                   ...(last === undefined ? {} : { last })

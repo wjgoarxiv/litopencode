@@ -20,6 +20,8 @@ export type RuntimePaths = {
   knowledgeDir: string;
   knowledgeClaimsFile: string;
   autoHandoffFile: string;
+  workflowStackDir: string;
+  adhdDir: string;
   opencodeConfigFile: string;
 };
 
@@ -61,6 +63,8 @@ export function createRuntimePaths(projectRoot: string): RuntimePaths {
     knowledgeDir: path.join(runtimeDir, "knowledge"),
     knowledgeClaimsFile: path.join(runtimeDir, "knowledge", "claims.jsonl"),
     autoHandoffFile: path.join(runtimeDir, "auto-handoff.json"),
+    workflowStackDir: path.join(runtimeDir, "workflow-stack"),
+    adhdDir: path.join(runtimeDir, "adhd"),
     opencodeConfigFile: path.join(root, "opencode.json")
   };
 }

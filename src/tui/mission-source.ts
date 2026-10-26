@@ -15,7 +15,10 @@ import {
   type TodoInput,
   type WorkInput
 } from "./mission-model.ts";
+import { isLaneResult, isReviewLane, type LaneReports, type ReviewLane, type LaneResult } from "./mission-looks.ts";
 import { readSkillUse, skillChips, type SkillChip, type SkillUse } from "./mission-skills.ts";
+import { isRealCount, type ThreadRow, type ThreadSource } from "./mission-threads.ts";
+import { readSiblingStacksSync, readStackSync, type WorkflowStack } from "../workflow-stack.ts";
 
 const ledgerByteLimit = 1024 * 1024;
 
@@ -103,7 +106,7 @@ export function createWorkReader(): (root: string | undefined, sessionID: string
     if (work === undefined) return undefined;
     const inside = work.planPath !== "" && path.isAbsolute(work.planPath) && !path.relative(path.resolve(root), work.planPath).startsWith("..");
     const plan = inside ? readPlan(work.planPath) : undefined;
-    return { status: work.status, iterations: work.iterations, ...(plan === undefined ? {} : { plan }) };
+    return { status: work.status, iterations: work.iterations, ...(plan === undefined ? {} : { plan }), ...(work.boundary === true ? { boundary: true } : {}) };
   };
 }
 
@@ -266,7 +269,52 @@ export function readMissionInput(state: MissionStateSource, sessionID: string, l
   };
 }
 
-export type CardInput = { readonly chips: readonly SkillChip[]; readonly busy: boolean; readonly contextPercent: number | null; readonly branch?: string };
+export type CardInput = {
+  readonly chips: readonly SkillChip[];
+  readonly busy: boolean;
+  readonly contextPercent: number | null;
+  readonly branch?: string;
+  /** Two or more lanes of work, from the stack, `task` calls and sibling sessions. */
+  readonly threads?: readonly ThreadRow[];
+  /** Another session here moved lately, so an idle card can name `lit adhd`. */
+  readonly earlier?: boolean;
+  /** The lanes review-work has reported since its latest start; present once a review ran here. */
+  readonly lanes?: LaneReports;
+  /** OpenCode holds a permission request or a question for this session. */
+  readonly asked?: boolean;
+  /** The last message is the user's. */
+  readonly userSpokeLast?: boolean;
+  /** The last reply opens with `BLOCKED:`. */
+  readonly blockedReply?: boolean;
+};
+
+/** A completed `review-work` call with action `lane`: one lane's reported result. */
+export function readLaneReport(part: unknown): { readonly lane: ReviewLane; readonly result: LaneResult } | undefined {
+  if (!isRecord(part) || part.type !== "tool" || part.tool !== "review-work" || !isRecord(part.state) || part.state.status !== "completed") return undefined;
+  const input = isRecord(part.state.input) ? part.state.input : {};
+  if (input.action !== "lane" || !isReviewLane(input.lane) || !isLaneResult(input.result)) return undefined;
+  return { lane: input.lane, result: input.result };
+}
+
+/**
+ * True when the reply's first line of prose opens with `BLOCKED:`. The ignition mark comes first on the
+ * host (a fenced LIT block from experimental.text.complete, and the model's `LIT IGNITED` line), so those
+ * lines and blank ones are passed over; anything else ends the search.
+ */
+export function opensBlocked(parts: readonly unknown[]): boolean {
+  const text = parts.map((part) => (isRecord(part) && part.type === "text" && typeof part.text === "string" ? part.text : "")).join("\n");
+  let fenced = false;
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("```")) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced || trimmed === "" || trimmed.includes("LIT IGNITED")) continue;
+    return /^BLOCKED:/u.test(trimmed);
+  }
+  return false;
+}
 
 /**
  * What the band card shows beside the mission: the session's skill chips, whether a turn is running,
@@ -277,21 +325,174 @@ export function readCardInput(state: MissionStateSource, sessionID: string): Car
   const messages = state.session.messages(sessionID);
   const uses: SkillUse[] = [];
   let since: number | undefined;
+  // A new review start clears the lanes, so the border shows only this review's reports.
+  let lanes: Partial<Record<ReviewLane, LaneResult>> | undefined;
   for (const message of messages) {
     const at = num(message.time?.created);
     if (message.role === "user") since = at;
     for (const part of state.part(message.id)) {
+      const report = readLaneReport(part);
+      if (report !== undefined) {
+        lanes = { ...lanes, [report.lane]: report.result };
+        continue;
+      }
       const use = readSkillUse(part, at);
       if (use !== undefined) uses.push(use);
+      const action = isRecord(part) && isRecord(part.state) && isRecord(part.state.input) ? part.state.input.action : undefined;
+      if (use?.name === "review-work" && action !== "status" && action !== "lane") lanes = {};
     }
   }
   const status = state.session.status(sessionID)?.type;
   const busy = status === "busy" || status === "retry";
   const branch = state.vcs?.branch?.trim();
+  const last = messages.at(-1);
+  const asked = state.session.permission(sessionID).length > 0 || state.session.question(sessionID).length > 0;
   return {
     chips: skillChips(uses, { since, busy }),
     busy,
     contextPercent: contextPercent(state, messages),
-    ...(branch === undefined || branch === "" ? {} : { branch })
+    ...(branch === undefined || branch === "" ? {} : { branch }),
+    ...(lanes === undefined ? {} : { lanes }),
+    ...(asked ? { asked } : {}),
+    ...(last?.role === "user" ? { userSpokeLast: true } : {}),
+    ...(last?.role === "assistant" && opensBlocked(state.part(last.id)) ? { blockedReply: true } : {})
   };
+}
+
+export const earlierWorkWindowMs = 7 * 24 * 60 * 60_000;
+const siblingFreshMs = 15 * 60_000;
+const siblingMax = 6;
+const taskLingerMs = 30_000;
+const recentAssistantMessages = 3;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function countsOf(done: number | undefined, total: number | undefined): { readonly done?: number; readonly total?: number } {
+  return isRealCount(done, total) ? { done, total } : {};
+}
+
+function taskSources(state: MissionStateSource, sessionID: string, now: number): { readonly sources: ThreadSource[]; readonly children: ReadonlySet<string> } {
+  const sources: ThreadSource[] = [];
+  const children = new Set<string>();
+  const assistants = state.session.messages(sessionID).filter((message) => message.role === "assistant").slice(-recentAssistantMessages);
+  for (const message of assistants) {
+    for (const part of state.part(message.id)) {
+      if (part.type !== "tool" || part.tool !== "task" || !isRecord(part.state)) continue;
+      const toolState = part.state;
+      const status = toolState.status;
+      const time = isRecord(toolState.time) ? toolState.time : {};
+      const start = typeof time.start === "number" ? time.start : undefined;
+      const end = typeof time.end === "number" ? time.end : undefined;
+      if (status !== "running" && status !== "completed" && status !== "error") continue;
+      if (status !== "running" && (end === undefined || now - end > taskLingerMs)) continue;
+      const input = isRecord(toolState.input) ? toolState.input : {};
+      const metadata = isRecord(toolState.metadata) ? toolState.metadata : {};
+      const child = typeof metadata.sessionId === "string" ? metadata.sessionId : undefined;
+      if (child !== undefined) children.add(child);
+      const todos = child === undefined ? [] : state.session.todo(child).filter((todo) => todo.status !== "cancelled");
+      const done = todos.filter((todo) => todo.status === "completed").length;
+      const name = typeof input.description === "string" && input.description.trim() !== "" ? input.description.trim() : typeof input.subagent_type === "string" ? input.subagent_type : "subagent";
+      // A running task last moved when its own session did; its start time alone would read a long, busy run as idle.
+      const moved = child === undefined ? undefined : lastActivity(state, child);
+      sources.push({
+        kind: "task",
+        name,
+        status: status === "running" ? "working" : status === "completed" ? "done" : "failed",
+        ...countsOf(done, todos.length),
+        ...(start === undefined ? {} : { startedAt: start }),
+        touchedAt: end ?? (start === undefined && moved === undefined ? now : Math.max(start ?? 0, moved ?? 0))
+      });
+    }
+  }
+  return { sources, children };
+}
+
+/** The latest time any message of a session was created or completed, if it has one. */
+function lastActivity(state: MissionStateSource, sessionID: string): number | undefined {
+  let latest: number | undefined;
+  for (const message of state.session.messages(sessionID)) {
+    for (const at of [message.time?.created, (message.time as { readonly completed?: unknown } | undefined)?.completed]) {
+      if (typeof at === "number" && Number.isFinite(at) && (latest === undefined || at > latest)) latest = at;
+    }
+  }
+  return latest;
+}
+
+function stackSources(stack: WorkflowStack | undefined): ThreadSource[] {
+  return (stack?.frames ?? []).map((frame) => ({
+    kind: "stack" as const,
+    name: frame.skill,
+    status: frame.status === "active" ? ("working" as const) : ("paused" as const),
+    ...countsOf(frame.done, frame.total),
+    ...(frame.phase === undefined ? {} : { phase: frame.phase }),
+    touchedAt: frame.at
+  }));
+}
+
+function siblingSource(stack: WorkflowStack): ThreadSource {
+  const top = stack.frames.find((frame) => frame.status === "active") ?? stack.frames[stack.frames.length - 1];
+  return {
+    kind: "session",
+    name: `${top.skill} · ${stack.sessionID.slice(-4)}`,
+    status: top.status === "active" ? "working" : "paused",
+    ...countsOf(top.done, top.total),
+    ...(top.phase === undefined ? {} : { phase: top.phase }),
+    touchedAt: stack.updatedAt
+  };
+}
+
+/**
+ * The lanes beside this session's own mission: its workflow stack frames, its running `task` calls and
+ * the stacks of other sessions in the workspace that moved in the last fifteen minutes. Only counts
+ * that are real totals are carried; the input of a tool call is read for its description alone.
+ */
+export function readThreadSources(state: MissionStateSource, sessionID: string, root: string | undefined, now: number): ThreadSource[] {
+  const tasks = taskSources(state, sessionID, now);
+  if (root === undefined) return tasks.sources;
+  const siblings = readSiblingStacksSync(root, sessionID, { now, freshMs: siblingFreshMs, max: siblingMax }).filter((stack) => !tasks.children.has(stack.sessionID));
+  return [...stackSources(readStackSync(root, sessionID)), ...tasks.sources, ...siblings.map(siblingSource)];
+}
+
+/**
+ * Whether earlier work exists for the band's idle hint and the one suggestion: another session here
+ * touched its workflow stack within `withinMs`.
+ */
+/** When the session's last message and its last user prompt were created, from the reactive store. */
+export function messageTimes(state: MissionStateSource, sessionID: string): { readonly lastAt?: number; readonly lastPromptAt?: number } {
+  let lastAt: number | undefined;
+  let lastPromptAt: number | undefined;
+  for (const message of state.session.messages(sessionID)) {
+    const created = message.time?.created;
+    if (typeof created !== "number") continue;
+    if (lastAt === undefined || created > lastAt) lastAt = created;
+    if (message.role === "user" && (lastPromptAt === undefined || created > lastPromptAt)) lastPromptAt = created;
+  }
+  return { ...(lastAt === undefined ? {} : { lastAt }), ...(lastPromptAt === undefined ? {} : { lastPromptAt }) };
+}
+
+/** The way back in is offered after this long without a message in the session. */
+export const adhdBreakMs = 30 * 60_000;
+
+/** The idle card names lit adhd in a fresh session or after a break, only when earlier work exists. */
+export function wayBackDue(lastActivityAt: number | undefined, now: number, earlier: boolean): boolean {
+  return earlier && (lastActivityAt === undefined || now - lastActivityAt >= adhdBreakMs);
+}
+
+function localDay(at: number): string {
+  const date = new Date(at);
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+
+/** At most one start suggestion per workspace per local day; records the day when it answers true. */
+export function adhdSuggestDue(days: Map<string, string>, root: string, now: number): boolean {
+  const day = localDay(now);
+  if (days.get(root) === day) return false;
+  days.set(root, day);
+  return true;
+}
+
+export function hasEarlierWork(root: string | undefined, sessionID: string, now: number, withinMs: number): boolean {
+  return root !== undefined && readSiblingStacksSync(root, sessionID, { now, freshMs: withinMs, max: 1 }).length > 0;
 }

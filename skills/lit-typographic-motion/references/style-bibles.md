@@ -81,6 +81,24 @@ about payment systems, design systems and workflows that want nothing terminal-l
 - Avoid: a rainbow ramp, bloom on the gradient itself, glitch as texture, a flow so fast that held
   type smears under motion blur.
 
+## House styles on the stage path
+
+The stage path takes the same four-way choice as data: `styles/<id>.json` fixes palette, faces, type
+scale per format, motion tokens, hand-offs, beds and bans, and the validator, the page and the QA all
+read that one file. The pick, first hit wins: the request names the style; the project's
+`motion-house.json` (written beside the output folder by the first film that passes its gate); a
+keyword row (the table above, plus `paper` for 따뜻한, 밝은, 종이, 손그림, 포근한, 아기자기, warm, cozy,
+bright, paper, handmade, hand-drawn); the genre (`explainer` takes `paper`, `brand-mood` takes `tidal`);
+`swiss-signal`. The type path has no engine preset for `paper`, so it skips that row.
+
+- `paper`: warm paper ground `#F3EEE5`, ink `#1D1B18`, clay signal `#B0452A`, blue accent `#2B5D8E`;
+  Pretendard throughout; hand-offs `cut`, `match`, `wipe`, `iris`, `push`. For explainers and warm,
+  legible films.
+- Each style also names the genre its score takes: `swiss-signal` house, `tidal` deep-house,
+  `terminalcore` tech-house, `paper` garage (`sound.md`).
+- The other three keep the palettes above on the stage path, with the type scale and motion tokens in
+  their data files. `render.mjs styles --out <d>` renders one demo board per style.
+
 ## Originality rules for every preset
 
 Invent this brief's own visual idea for each shot. Never reuse another film's palette values, scene

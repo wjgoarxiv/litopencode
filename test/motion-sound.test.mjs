@@ -7,7 +7,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { buildBed, integratedLoudness, quietestStretchSec, readWavStereo, resolveTrack, samplePeakDbfs, soundChecks, wavBytes } from "../skills/lit-typographic-motion/engine/sound.mjs";
 import { inspectAudio } from "../skills/lit-typographic-motion/runtime.mjs";
-import { stageTreatment, typeTreatment, writeTreatment } from "../test-support/motion-treatment.mjs";
+import { bedTreatment, typeTreatment, writeTreatment } from "../test-support/motion-treatment.mjs";
 
 const render = path.resolve("skills", "lit-typographic-motion", "render.mjs");
 const warmed = process.env.MOTION_TEST_XDG_CACHE_HOME;
@@ -16,7 +16,7 @@ const tmp = (prefix) => fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 const timing = (t, fps = 60) => ({ frameCount: Math.round(t.durationSec * fps), fps, cuts: t.beats.map((beat) => beat.t0) });
 
 test("the generated bed is deterministic, exactly as long as the film, under -2 dBFS and near -16 LUFS", () => {
-  const t = stageTreatment();
+  const t = bedTreatment();
   const a = buildBed(t, timing(t)), b = buildBed(t, timing(t));
   assert.equal(createHash("sha256").update(wavBytes(a.pcm)).digest("hex"), createHash("sha256").update(wavBytes(b.pcm)).digest("hex"));
   assert.equal(a.pcm.length / 2, Math.round((960 * 48000) / 60));
@@ -27,7 +27,7 @@ test("the generated bed is deterministic, exactly as long as the film, under -2 
 });
 
 test("each timbre palette, key and tempo gives a different bed", () => {
-  const t = stageTreatment();
+  const t = bedTreatment();
   const hashes = new Set();
   for (const sound of [{ palette: "glass" }, { palette: "warm" }, { palette: "pulse" }, { palette: "air" }, { palette: "warm", key: "F# major" }, { palette: "warm", tempo: 120 }]) {
     const bed = buildBed({ ...t, sound: { ...t.sound, ...sound } }, timing(t));
@@ -37,7 +37,7 @@ test("each timbre palette, key and tempo gives a different bed", () => {
 });
 
 test("the cue sheet lines every accent up with its cut and states the delta", () => {
-  const t = stageTreatment();
+  const t = bedTreatment();
   const bed = buildBed(t, timing(t));
   const hits = bed.cues.filter((cue) => cue.kind === "hit");
   assert.deepEqual(hits.map((cue) => cue.beat), [0, 2], "beats 0 and 2 ask for a hit");
@@ -51,7 +51,7 @@ test("the in-code BS.1770-4 meter agrees with ffmpeg ebur128 within 0.5 LU", { s
   const dir = tmp("ltm-lufs-");
   try {
     for (const palette of ["glass", "pulse"]) {
-      const t = stageTreatment({ sound: { ...stageTreatment().sound, palette } });
+      const t = bedTreatment({ sound: { ...bedTreatment().sound, palette } });
       const bed = buildBed(t, timing(t));
       const file = path.join(dir, `${palette}.wav`);
       fs.writeFileSync(file, wavBytes(bed.pcm));
@@ -64,7 +64,7 @@ test("the in-code BS.1770-4 meter agrees with ffmpeg ebur128 within 0.5 LU", { s
 });
 
 test("a generated bed never starts silent: no stretch under -50 dBFS longer than 1.5 s in the first 3 s", () => {
-  const t = stageTreatment();
+  const t = bedTreatment();
   const bed = buildBed(t, timing(t));
   const channels = [Float64Array.from({ length: bed.pcm.length / 2 }, (_, i) => bed.pcm[2 * i] / 32768), Float64Array.from({ length: bed.pcm.length / 2 }, (_, i) => bed.pcm[2 * i + 1] / 32768)];
   assert.ok(quietestStretchSec(channels, 48000) <= 1.5);
@@ -74,7 +74,7 @@ test("a generated bed never starts silent: no stretch under -50 dBFS longer than
 test("a planned supplied or authored track that is missing exits 20", () => {
   const dir = tmp("ltm-missing-");
   try {
-    const t = stageTreatment({ sound: { mode: "supplied", plan: "the user's track", file: "nowhere.wav" } });
+    const t = bedTreatment({ sound: { mode: "supplied", plan: "the user's track", file: "nowhere.wav" } });
     assert.throws(() => resolveTrack(dir, t, timing(t)), (error) => error.exitCode === 20 && /SOUND_INVALID \(20\): the supplied track nowhere\.wav is missing/u.test(error.message));
     writeTreatment(dir, t);
     const cli = spawnSync(process.execPath, [render, "sound", "--out", dir], { encoding: "utf8" });
@@ -97,10 +97,10 @@ test("the gate names a planned track that never reached the film", { skip: hasFf
 test("the sound subcommand writes the bed and its cue sheet from the treatment", () => {
   const dir = tmp("ltm-soundcmd-");
   try {
-    writeTreatment(dir, stageTreatment());
+    writeTreatment(dir, bedTreatment());
     const result = spawnSync(process.execPath, [render, "sound", "--out", dir], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /sound: generated bed .*sound\.wav \(warm, D minor, 90 BPM; -1[5-7]\.\d+ LUFS/u);
+    assert.match(result.stdout, /sound: generated bed .*sound\.wav \(warm, F major, 96 BPM; -1[5-7]\.\d+ LUFS/u);
     const cues = JSON.parse(fs.readFileSync(path.join(dir, "sound-cues.json"), "utf8"));
     assert.equal(cues.mode, "generated");
     assert.deepEqual(cues.cuts, [0, 4, 8, 12]);

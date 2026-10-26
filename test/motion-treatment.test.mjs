@@ -63,7 +63,7 @@ test("the stage path needs a drawn subject device and two counting kinds", () =>
 });
 
 test("the type path needs user words or a type-led cue, and never takes 9:16", () => {
-  const noCue = stageTreatment({ path: "type", visualDevices: [] });
+  const noCue = stageTreatment({ path: "type", style: "swiss-signal", visualDevices: [] });
   assert.equal(fieldOf(noCue), "path");
   const portrait = typeTreatment({ format: "9:16" });
   assert.equal(fieldOf(portrait), "path");
@@ -97,7 +97,9 @@ test("inventions must name the invented subject", () => {
 });
 
 test("generated sound needs a documented palette, key and tempo; silence needs a reason", () => {
-  assert.equal(fieldOf(stageTreatment({ sound: { mode: "generated", plan: "bed", palette: "orchestra", key: "D minor", tempo: 90 } })), "sound");
+  const calm = { request: "미니멀한 분위기로 하루 동안 물을 모으는 빗물 정원을 설명하는 영상 만들어줘 lit", register: "minimal" };
+  assert.equal(fieldOf(stageTreatment({ ...calm, sound: { mode: "generated", plan: "bed", palette: "orchestra", key: "D minor", tempo: 90 } })), "sound");
+  assert.equal(fieldOf(stageTreatment({ ...calm, sound: { mode: "generated", plan: "bed", palette: "warm", key: "F major", tempo: 96 } })), undefined);
   assert.equal(fieldOf(stageTreatment({ sound: { mode: "none", plan: "no sound" } })), "sound");
   assert.equal(fieldOf(stageTreatment({ sound: { mode: "none", plan: "no sound", mutedByDesign: true } })), undefined);
   assert.equal(fieldOf(stageTreatment({ sound: { mode: "supplied", plan: "the user's track" } })), "sound");

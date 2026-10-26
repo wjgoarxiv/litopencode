@@ -1,4 +1,4 @@
-// One cover browser: the stage path's software rung and stage flags at device scale 2, the cover
+// One cover browser: the stage path's software rung (the GPU rung for a 3D hero) and stage flags at device scale 2, the cover
 // page served from disk on the stage origin (engine/stage/capture.mjs serveStage, so no socket
 // listens), the loop kit at /lit/loop-kit.js, the product faces plus JetBrains Mono at
 // /lit/fonts.css, and the cover init script before any page script. The renderer SEEKS: it calls
@@ -23,9 +23,9 @@ const stageDir = path.join(here, "..", "stage");
  * software GL (canvas fillText, and DOM text at changing weights) came out one level apart on a
  * handful of pixels between them; CPU raster gives the same pixels every time.
  */
-export function coverChromeFlags(width, height, scale) {
-  const flags = stageChromeFlags(width, height).map((flag) => (flag === "--force-device-scale-factor=1" ? `--force-device-scale-factor=${scale}` : flag));
-  return [...flags, "--disable-gpu-rasterization", "--disable-partial-raster"];
+export function coverChromeFlags(width, height, scale, rung = "swiftshader") {
+  const flags = stageChromeFlags(width, height, rung).map((flag) => (flag === "--force-device-scale-factor=1" ? `--force-device-scale-factor=${scale}` : flag));
+  return [...new Set([...flags, "--disable-gpu-rasterization", "--disable-partial-raster"])];
 }
 
 /** The stage faces plus JetBrains Mono, a variable face with a real wght axis (100-800). */
@@ -60,8 +60,8 @@ export async function waitForCoverReady(tab, pageFailed, timeout = 60000) {
  * Launch a cover browser on `coverDir` and load its index.html. `page` is the CSS size; screenshots
  * are `scale` times that. Returns { frame(t, { mask }), capture(), close(), flags }.
  */
-export async function openCover(chromium, { chromePath, profile, coverDir, page: [width, height], scale, fonts }) {
-  const flags = coverChromeFlags(width, height, scale);
+export async function openCover(chromium, { chromePath, profile, coverDir, page: [width, height], scale, fonts, rung = "swiftshader" }) {
+  const flags = coverChromeFlags(width, height, scale, rung);
   let context;
   try {
     context = await chromium.launchPersistentContext(profile, {

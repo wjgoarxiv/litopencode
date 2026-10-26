@@ -26,13 +26,13 @@ const secretShapeAlternatives = [
   String.raw`(?<![A-Za-z0-9_])eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?![A-Za-z0-9_])`,
   String.raw`\b(?:authorization|proxy-authorization)\s*:\s*\S+\s+\S+`,
   String.raw`\b(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}(?=$|[^A-Za-z0-9._~+/=-])`,
-  String.raw`\b(?:password|passwd|secret|token|api[_-]?key|access[_-]?token)\s*[:=]\s*[^\s,;]{8,}`,
-  String.raw`\b[A-Za-z][A-Za-z0-9]*(?:[_-][A-Za-z0-9]+)*[_-](?:token|secret|key)(?:[_-][A-Za-z0-9]+)*\s*[:=]\s*[^\s,;]{8,}`,
-  String.raw`\b_?auth(?:[_-]?token)?\s*[:=]\s*[^\s,;]{8,}`,
+  String.raw`\b(?:password|passwd|secret|token|api[_-]?key|access[_-]?token)["']?\s*[:=]\s*[^\s,;]{8,}`,
+  String.raw`\b[A-Za-z][A-Za-z0-9]*(?:[_-][A-Za-z0-9]+)*[_-](?:token|secret|key)(?:[_-][A-Za-z0-9]+)*["']?\s*[:=]\s*[^\s,;]{8,}`,
+  String.raw`\b_?auth(?:[_-]?token)?["']?\s*[:=]\s*[^\s,;]{8,}`,
   String.raw`(?<![A-Za-z0-9+.-])(?:[A-Za-z][A-Za-z0-9+.-]*:)?\/\/[^/?#\s]+@`
 ] as const;
-const shortKeyValueSecretShape = /(?<![A-Za-z0-9_])(?:password|passwd|passphrase|secret|token|api[_-]?key|access[_-]?token|auth[_-]?token|[A-Za-z][A-Za-z0-9]*(?:[_-][A-Za-z0-9]+)*[_-](?:password|passwd|passphrase|secret|token|key)(?:[_-][A-Za-z0-9]+)*)\s*=\s*(?:"[^"\r\n]+"|'[^'\r\n]+'|[^\s,;]+)/iu;
-const shortUppercaseColonSecretShape = /(?<![A-Za-z0-9_])(?:PASSWORD|PASSWD|PASSPHRASE|SECRET|TOKEN|API[_-]?KEY|ACCESS[_-]?TOKEN|AUTH[_-]?TOKEN|[A-Z][A-Z0-9]*(?:[_-][A-Z0-9]+)*[_-](?:PASSWORD|PASSWD|PASSPHRASE|SECRET|TOKEN|KEY)(?:[_-][A-Z0-9]+)*)\s*:\s*(?:"[^"\r\n]+"|'[^'\r\n]+'|[^\s,;]+)/u;
+const shortKeyValueSecretShape = /(?<![A-Za-z0-9_])(?:password|passwd|passphrase|secret|token|api[_-]?key|access[_-]?token|auth[_-]?token|[A-Za-z][A-Za-z0-9]*(?:[_-][A-Za-z0-9]+)*[_-](?:password|passwd|passphrase|secret|token|key)(?:[_-][A-Za-z0-9]+)*)["']?\s*=\s*(?:"[^"\r\n]+"|'[^'\r\n]+'|[^\s,;]+)/iu;
+const shortUppercaseColonSecretShape = /(?<![A-Za-z0-9_])(?:PASSWORD|PASSWD|PASSPHRASE|SECRET|TOKEN|API[_-]?KEY|ACCESS[_-]?TOKEN|AUTH[_-]?TOKEN|[A-Z][A-Z0-9]*(?:[_-][A-Z0-9]+)*[_-](?:PASSWORD|PASSWD|PASSPHRASE|SECRET|TOKEN|KEY)(?:[_-][A-Z0-9]+)*)["']?\s*:\s*(?:"[^"\r\n]+"|'[^'\r\n]+'|[^\s,;]+)/u;
 
 /** The guarded credential shape. Exported so a consumer can read it, never widen it. */
 export const secretShape = new RegExp(`(?:${secretShapeAlternatives.join("|")})`, "iu");

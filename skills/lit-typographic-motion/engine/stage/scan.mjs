@@ -3,7 +3,7 @@
 // elements and APIs, flipbooks and animated rasters, and a raster budget overrun (exit 17). The same
 // rules also run live in the page (clock.js); this scan names the file and line first.
 import { createHash } from "node:crypto";
-import { lstatSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 
 export const STAGE_CONTRACT = 17;
@@ -15,6 +15,22 @@ export const contentTypes = Object.freeze({
   ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
   ".gif": "image/gif", ".wav": "audio/wav", ".woff": "font/woff", ".woff2": "font/woff2", ".ttf": "font/ttf", ".otf": "font/otf", ".json": "application/json"
 });
+// The Blender plate (stage/plate/, and the preview stills in stage/plate-preview/): frames the runner wrote
+// and plate.json lists by name and size. They are not page rasters. Returns { ...plate.json, dir } when every
+// listed frame is there as listed, else null.
+export function readPlate(stageDir, sub = "plate") {
+  const file = path.join(stageDir, sub, "plate.json");
+  if (!existsSync(file)) return null;
+  let plate;
+  try { plate = JSON.parse(readFileSync(file, "utf8")); } catch { return null; }
+  if (!Array.isArray(plate.frames)) return null;
+  const listed = plate.frames.every((f) => {
+    const full = path.join(stageDir, sub, String(f.name));
+    return path.basename(String(f.name)) === f.name && existsSync(full) && statSync(full).size === f.bytes;
+  });
+  return listed ? { ...plate, dir: sub } : null;
+}
+
 export const rasterLimits = Object.freeze({ files: 24, bytes: 8 * 1024 * 1024, sameSizeFlipbook: 10 });
 // XML namespace identifiers are names, not requests.
 const namespaceUris = /https?:\/\/www\.w3\.org\/(?:2000\/svg|1999\/xlink|1999\/xhtml|XML\/1998\/namespace|2000\/xmlns\/?|1998\/Math\/MathML)/gu;
@@ -113,9 +129,12 @@ export function scanStage(stageDir) {
   if (!files.includes("index.html")) throw contract("stage/index.html is missing");
   const rasters = [];
   let rasterBytes = 0;
+  const plates = ["plate", "plate-preview"].map((sub) => readPlate(stageDir, sub)).filter(Boolean);
+  const plated = new Set(plates.flatMap((plate) => plate.frames.map((f) => `${plate.dir}/${f.name}`)));
   for (const rel of files) {
     const ext = path.extname(rel).toLowerCase();
     const full = path.join(stageDir, rel);
+    if (rel === "scene.py" || plated.has(rel)) continue;
     if (!Object.hasOwn(contentTypes, ext)) throw contract(`${rel}: ${ext || "extensionless"} files are not served on the stage`);
     if (rasterExtensions.has(ext)) {
       const bytes = readFileSync(full);

@@ -2,7 +2,7 @@
 
 A LitOpenCode deck is drawn from a tonality pack: palette roles, a type ramp, the title treatments
 the pack allows, the layout families it lists, its cover, section and closing variants, and two
-dials. Eight packs ship in `templates/tonalities/`. The engine never guesses a look on its own, so
+dials. Thirteen packs ship in `templates/tonalities/`. The engine never guesses a look on its own, so
 the first decision of every build is which pack to compile under. This file is the procedure for
 making that decision quickly, recording it, and telling the user what was chosen.
 
@@ -42,7 +42,7 @@ can correct it later.
 
 | Fact | What to settle | Why it matters |
 |---|---|---|
-| Deck type | One of the eight types below, or the nearest one | Gives the starting candidate order |
+| Deck type | One of the thirteen types below, or the nearest one | Gives the starting candidate order |
 | Delivery | Spoken in a room, sent ahead and read alone, or both | Read decks favour Gazette and Ledger; stage decks favour Signal and Night |
 | Room | Lit office, screen share, dark hall, printed handout | A dark hall pulls Night forward; print rules Night out |
 | Language | Korean, English or mixed | Korean glyphs take about twice the width of Latin letters, which tightens title budgets |
@@ -50,18 +50,23 @@ can correct it later.
 ## Step 2: start from the deck type
 
 Each deck type has an ordered shortlist. The first entry wins when no signal in step 3 moves it.
-All eight packs default to density 10; the variance shown is each pack's own default.
+All thirteen packs default to density 10; the variance shown is each pack's own default.
 
 | Deck type | First choice | Second | Third |
 |---|---|---|---|
 | Pitch or proposal (투자·제안) | signal (v6) | studio (v8) | atlas (v7) when the product is physical and photographed |
+| Launch, demo day or campaign (런칭·데모데이·캠페인) | neo-brutalism (v7) | signal (v6) | studio (v7) |
+| Engineering or developer review (아키텍처·인프라·장애 리뷰) | computational-brutalism (v7) | night (v6) for a stage | ledger (v5) when it is read alone |
 | Management review (경영·사업 실적) | ledger (v5) | gazette (v4) when circulated in Korean before the meeting | night (v6) when presented on a stage screen |
 | Research talk (연구 발표) | paper (v5) | night (v6) for a large dark auditorium | chalk (v6) for a tutorial-style talk |
 | Lecture or training (강의·교육) | chalk (v6) | paper (v5) | studio (v8) for a public lecture with images |
+| Design or culture lecture (디자인·건축·전시·워크숍) | bauhaus (v7) | studio (v8) | atlas (v7) when the works are the deck |
 | Data review (데이터·지표 리뷰) | night (v6) | ledger (v5) | paper (v5) when the review is a written analysis |
 | Image-led showcase (제품·현장·포트폴리오) | atlas (v7) | studio (v8) | signal (v6) for a launch moment |
 | Korean reading brief (보고서형 덱) | gazette (v4) | ledger (v5) | none |
 | Status update (주간·월간 보고) | ledger (v5) | gazette (v4) | night (v6) |
+| Community, culture or education programme (커뮤니티·문화·교육 프로그램) | riso (v7) | studio (v7) | bauhaus (v7) for a design programme |
+| Data story for the public (주민·독자 대상 데이터 브리핑) | newsroom (v6) | gazette (v4) when it is read alone | ledger (v5) |
 
 A request that fits none of these takes the nearest type, and the card says "other, treated as
 status update" or similar.
@@ -75,6 +80,7 @@ in this order; ties keep the deck-type order, so the same source always lands on
 | Rule | Fires when | Move |
 |---|---|---|
 | Named by the user | The brief or an earlier turn names a tonality | Use it. Still write the card and still name two alternatives |
+| Named by style | 네오 브루탈리즘, neo-brutalism; 컴퓨테이셔널 브루탈리즘, computational brutalism, 레트로 퓨처, terminal look; 바우하우스, Bauhaus; 리소, risograph, zine; 뉴스룸, data journalism, explainer | That pack, as if named. A bare 브루탈리즘 or brutalist takes neo-brutalism for a pitch or launch and computational-brutalism for a technical deck, and the card says which reading it took |
 | Legacy template named | The brief names AZURE-PRO, AZURE-A2Z, BOILERPLATE-PRETENDARD or BOILERPLATE-A2Z | Compile with `--template` as named; offer two tonalities as alternatives |
 | Read, not presented | "미리 배포", "보고서", "sent ahead", "for the board pack" | gazette to the front for Korean, ledger otherwise |
 | Table-heavy | 30 % or more of slides hold a table | ledger or gazette up one place |
@@ -85,6 +91,12 @@ in this order; ties keep the deck-type order, so the same source always lands on
 | Citations | numbered references, DOIs, a references slide | paper up one place |
 | Teaching shape | definitions, equations, or a how-it-works sequence of three or more steps | chalk or paper up one place |
 | Dark room | keynote hall, demo day, stage | night up one place |
+| Technical metrics | units, versions or identifiers (p99, rps, v3, endpoint names) on a third of the content slides | computational-brutalism up one place |
+| Young or consumer audience | stated in the brief, or a sign-up or launch ask | neo-brutalism up one place |
+| Works and makers | works, makers, periods or schools as the subject, on a third of the content slides | bauhaus up one place |
+| Programme facts | participants, sessions, dates and places for a community or a class, on a third of the content slides | riso up one place |
+| Readers outside the field | charts with one point each for residents, members or the press | newsroom up one place |
+| Sensitive reader | a board, investor committee, finance or public-sector reader, or a topic such as loss, safety or HR | neo-brutalism, computational-brutalism, bauhaus and riso drop out |
 | Missing carrier | the pack has no family or title that can carry a planned slide | drop that pack from the shortlist |
 
 The last rule overrides taste. The packs differ in what they can draw:
@@ -186,7 +198,7 @@ word. `node <skill>/run.mjs compile` prints the dials it used on its first line
 
 Two neighbouring keys are not dials but belong to the same decision:
 
-- `canvas: 4:3` switches every pack to its 4:3 grid (all eight list both canvases);
+- `canvas: 4:3` switches every pack to its 4:3 grid (all thirteen list both canvases);
 - `faces: a2z` (or `--faces a2z`) switches the display and numeral faces to A2Z. Pretendard is the
   default in every pack, and A2Z is used only when the user asks for it.
 
@@ -245,5 +257,8 @@ reply still names two tonalities as alternatives.
 - `layout-families.md`: what each family holds and what the source must contain for it.
 - `density-and-fill.md`: the density steps, readable floors, fill policies and what to write per
   slide so the gate passes on substance rather than padding.
-- `examples/`: twelve compiled decks across all eight packs, each passing
-  `node <skill>/run.mjs qa`.
+- `examples/`: seventeen compiled decks across all thirteen packs, each passing
+  `node <skill>/run.mjs qa`. The newest five are Korean decks: `13-engineering-review-computational-brutalism-ko.md`
+  (alternatives night, ledger), `14-launch-pitch-neo-brutalism-ko.md` (signal, studio),
+  `15-design-lecture-bauhaus-ko.md` (studio, atlas), `16-community-programme-riso-ko.md` (studio,
+  bauhaus) and `17-public-data-briefing-newsroom-ko.md` (gazette, ledger).

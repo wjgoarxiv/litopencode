@@ -95,6 +95,15 @@ skills/lit-diagram-drawer/**/*.jpg
 skills/lit-diagram-drawer/**/*.jpeg
 skills/lit-diagram-drawer/**/*.webp
 skills/lit-diagram-drawer/scripts/office-proof.py
+skills/lit-schematic/**/*.png
+skills/lit-schematic/**/*.jpg
+skills/lit-schematic/**/*.jpeg
+skills/lit-schematic/**/*.webp
+skills/lit-schematic/**/*.gif
+skills/lit-schematic/**/*.mp4
+skills/lit-schematic/**/*.pdf
+skills/lit-schematic/.work/
+skills/lit-schematic/evidence/
 
 # Portable motion template source is an intentional managed asset.
 !skills/readme-studio/templates/remotion/src/

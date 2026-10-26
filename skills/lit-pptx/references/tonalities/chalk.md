@@ -32,7 +32,7 @@ a warm rust accent for the thing being taught. Pack file: `templates/tonalities/
 ## Type
 
 Pretendard throughout. Compact ramp at density 10. Surfaces take a 6 pt radius; chalk is the only light pack
-with rounded corners (night, on its dark ground, is the other).
+with rounded corners (night, on its dark ground, is the other). Cover and statement titles take the hero step (60 pt) when their words fit; `hero: false` in the front matter turns it off. A figure is never larger than a title.
 
 ## Dials
 
@@ -51,10 +51,11 @@ Density 10, variance 6: up to four of its four treatments.
 | reference | top-rule |
 | definition | side-rail |
 
-Treatments: kicker-numeral, top-rule, side-rail, statement. The side rail is the board itself
-(`rail: field`): a dark rail with the title in white. The statement is drawn `drench`, on the field
-over the whole page. Top-rule draws the short rust accent bar. A comparison sets its criteria on the
-board rail under a `side-rail` title (`structure: comparison: side-rail`), kept even when the deck
+Treatments: kicker-numeral, top-rule, side-rail, statement. The side rail is the board colour
+(`rail: field`): a full-height bar in the left margin beside the title. The kicker numeral stands
+right of the title, in the accent. The statement is drawn `drench`, on the field
+over the whole page. Top-rule draws the short rust accent bar. A comparison sets its criteria as row
+heads in the body under a `side-rail` title (`structure: comparison: side-rail`), kept even when the deck
 already leans on the rail. The agenda draws no numeral (OF-119), so a chalk deck whose only kicker
 was its agenda needs a step or sidebar slide under `kicker-numeral` to keep three treatments
 (OF-110); a sidebar note set across the top adds a top-title grid slide that can push that
@@ -93,7 +94,7 @@ means the slide needs more worked detail.
   a bullet. Give the main column enough material (five groups with two sub-points is about right at
   density 10).
 - A `method` slide wants the formula as one plain line, then four or five terms each with one or two
-  sub-points. Under side-rail the formula runs across the eight body columns and the terms in two
+  sub-points. The formula runs across the body's columns and the terms in two
   columns under it. Do not add a figure to the same slide; with a figure the formula line is not
   drawn.
 - Number step heads in the text (`- **1. 목표 온도 강하**`) and give each step the value it produces.

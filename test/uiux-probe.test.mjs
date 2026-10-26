@@ -24,7 +24,7 @@ test('UI probe static fallback reports static defects and leaves rendered rules 
   assert.equal(result.manifest.browser_version, null);
   assert.ok(result.findings.some((finding) => finding.rule === 'SLOP-058'));
   assert.ok(result.findings.some((finding) => finding.rule === 'CF-503'));
-  assert.ok(result.findings.every((finding) => finding.viewport === 'static' && finding.tier === 'derived' && /^(CF|RS|SLOP)-\d{3}$/u.test(finding.rule)));
+  assert.ok(result.findings.every((finding) => finding.viewport === 'static' && finding.tier === 'derived' && /^(CF|RS|SLOP|DS)-\d{3}$/u.test(finding.rule)));
   assert.ok(result.manifest.not_verified.some((entry) => entry.rule === 'CF-201'));
 });
 

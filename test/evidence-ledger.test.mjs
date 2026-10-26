@@ -730,3 +730,17 @@ test("CLI help and transitions describe read-only status, atomic add_criterion, 
     assert.equal(JSON.parse(resolved.stdout).blocker.resolved, true);
   });
 });
+
+test("the ledger brief is replaced, never written through a planted link", async () => {
+  await withProject(async (dir) => {
+    const paths = createRuntimePaths(dir);
+    await fs.mkdir(path.dirname(paths.briefFile), { recursive: true });
+    const outside = path.join(dir, "outside.txt");
+    await fs.writeFile(outside, "keep\n", "utf8");
+    await fs.symlink(outside, paths.briefFile);
+    await seedGoal(dir);
+    assert.equal(await fs.readFile(outside, "utf8"), "keep\n", "the link target is untouched");
+    assert.ok((await fs.lstat(paths.briefFile)).isFile(), "the brief is a regular file now");
+    assert.match(await fs.readFile(paths.briefFile, "utf8"), /prove the ledger/);
+  });
+});

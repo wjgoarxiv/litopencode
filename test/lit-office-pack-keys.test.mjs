@@ -12,7 +12,7 @@ import { parse } from "yaml";
 const allowed = {
   "lit-pptx": {
     avoid: "mirrors the Avoid list of references/tonalities/<id>.md, which the model reads while writing; the engine has no switch for it",
-    "table.style": "names the table style the reference describes; header, header-ink, rules, banding and totals draw it"
+    "table.style": "names the table style the reference describes; header, header-ink, rules, banding and totals draw it (the hard-edge packs set those directly and name none)"
   },
   "lit-docx": {}
 };
@@ -49,7 +49,7 @@ function unread(skill, packFiles) {
 test("every deck tonality pack key is read by the deck engine or allowed with a reason", () => {
   const root = "skills/lit-pptx/templates/tonalities";
   const packs = readdirSync(root).map((id) => join(root, id, "pack.yaml"));
-  assert.equal(packs.length, 8);
+  assert.equal(packs.length, 13);
   assert.deepEqual(unread("lit-pptx", packs), []);
 });
 
@@ -64,6 +64,6 @@ test("the allowed keys still exist, so the list cannot outlive them", () => {
   const deck = readdirSync("skills/lit-pptx/templates/tonalities")
     .map((id) => parse(readFileSync(join("skills/lit-pptx/templates/tonalities", id, "pack.yaml"), "utf8")));
   for (const dotted of Object.keys(allowed["lit-pptx"])) {
-    assert.ok(deck.every((pack) => dotted.split(".").reduce((node, key) => node?.[key], pack) !== undefined), dotted);
+    assert.ok(deck.some((pack) => dotted.split(".").reduce((node, key) => node?.[key], pack) !== undefined), dotted);
   }
 });

@@ -3,6 +3,9 @@
   "origin": "authored defaults; not measurements of an external design",
   "spacing": {"base": 8, "micro": 4, "sectionDesktop": [80,128], "sectionMobile": [40,64]},
   "type": {"displayDesktop": [56,104], "displayMobile": [36,56], "latinLeading": [0.95,1.05], "koreanLeading": [1.12,1.25], "bodyLeading": [1.5,1.7]},
+  "density": {"default": "rich", "calm_only_when": "the request asks for a minimal, calm, quiet or restrained page, or scripts/design-lock.mjs init --density calm; calm restores 64 to 128 px sections, a flat canvas and no glow"},
+  "palette": {"paper": "#f5f3eb", "ink": "#18272b", "accent": "#c64d2e", "accent_2": "#1d6b68", "mist": "#b7d8c7"},
+  "work_surfaces": {"applies_to": "screens people work in repeatedly (admin consoles, analytics views, settings, internal tools) rather than pages read once", "first_viewport": "the working content and primary controls; no hero headline, tagline or illustration block above them", "pixel_art": "a small accent at most, never the primary visual anchor", "lock": "these screens lock the graphite house style, not this palette"},
   "composition": ["deliberate line breaks", "compact display leading", "terminal micro-labels", "thin boundaries", "atmospheric fields", "intentional asymmetry"],
   "pixel_illustration": {
     "default_when_brief_unspecified": true,

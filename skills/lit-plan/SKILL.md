@@ -294,6 +294,8 @@ The handoff should be short enough to execute and precise enough to audit. It sh
 
 Avoid plans that contain hidden release approval. “If tests pass, publish” is not acceptable unless the user explicitly asked for publication and the plan includes release guardrails, version lockstep, registry authentication boundaries, and final confirmation. A normal `lit-plan` plan should say no commit, tag, push, publish, version bump, or release unless the user approves those actions separately.
 
+A plan written from a `lit-hijack` spec (`.litopencode/hijack/<slug>/SPEC.md`) cites SPEC sections (`M1`, `M2`) and target files in its rows and references. Keep the run's captured sources out of the plan: the implementer works from the spec alone, and the hijack build gate fails a plan that names them. The plan stays in the row grammar above, so the same gate can check it.
+
 ## Planning Review Checklist
 
 - One bounded objective is restated in OpenCode or package terms.

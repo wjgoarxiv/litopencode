@@ -33,7 +33,7 @@ Pack file: `templates/tonalities/gazette/pack.yaml`.
 
 ## Type
 
-Pretendard throughout. Compact ramp at density 10 (body 13 pt, tables 11 pt).
+Pretendard throughout. Compact ramp at density 10 (body 13 pt, tables 11 pt). Cover and statement titles take the hero step (60 pt) when their words fit; `hero: false` in the front matter turns it off. A figure is never larger than a title.
 
 ## Dials
 

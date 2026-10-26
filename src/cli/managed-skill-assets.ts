@@ -9,10 +9,13 @@ import { renamedSkillIds } from "../skill-renames.ts";
 // that does not install cannot be invoked.
 export type ManagedSkillId =
   | "lit-brainstorm"
+  | "lit-hijack"
+  | "lit-adhd"
   | "lit-comprehend"
   | "lit-handoff"
   | "lit-scientific-visualization"
   | "lit-diagram-drawer"
+  | "lit-schematic"
   | "lit-pptx"
   | "lit-typographic-motion"
   | "lit-docx"
@@ -57,10 +60,13 @@ if (managedSkillManifest.schemaVersion !== 1) {
 export function managedSkillDefinition(id: LitOpenCodeRuntimeSkillId): ManagedSkillDefinition | undefined {
   if (
     id !== "lit-brainstorm" &&
+    id !== "lit-hijack" &&
+    id !== "lit-adhd" &&
     id !== "lit-comprehend" &&
     id !== "lit-handoff" &&
     id !== "lit-scientific-visualization" &&
     id !== "lit-diagram-drawer" &&
+    id !== "lit-schematic" &&
     id !== "lit-pptx" &&
     id !== "lit-typographic-motion" &&
     id !== "lit-docx" &&
@@ -167,6 +173,10 @@ const skillDiscoveryDescriptions = Object.freeze({
     "Trigger when a repository needs agent-facing guidance created or refreshed: \"set up AGENTS.md\", \"document this repo for agents\", onboarding an unfamiliar codebase, or a restructure that left directory guidance stale and misleading.",
   "lit-brainstorm":
     "Trigger when the question is still open and the user wants options before a decision — \"what could we call it\", \"any ideas for\", \"how else could we do this\", \"brainstorm\", \"ideation\", `lit idea`, `lit brainstorm` — so many different options are generated, clustered, scored against stated criteria, and narrowed to a short list with trade-offs before one hand-off to deep-interview or lit-plan. Do not trigger to plan a chosen thing, to interview toward one spec, or to implement.",
+  "lit-hijack":
+    "Trigger when the user wants the technique in someone else's published work — an X post or article, a repo, a gist, a blog post, a PDF, a transcript — ported into their own skill or system: \"hijack this\", \"port this technique\", `lit hijack`, `lit 하이재킹` — so it is captured with provenance, licence-gated, compared with the target, written as a source-free spec, built apart, and proven on the real surface. Do not trigger to find sources, to brainstorm options, or to copy source text.",
+  "lit-adhd":
+    "Trigger when the user lost the thread or comes back to earlier work — \"where was I\", \"pick up where we left off\", \"what is still open\", several half-finished sessions — via `lit adhd` or `lit rewind`: a read-only brief with one next step that `go` follows.",
   "lit-crucible":
     "Trigger before planning when the approach itself is uncertain, contested, or expensive to reverse — competing designs, hidden coupling, a request to pressure-test assumptions or find what will go wrong — so independent read-only lanes attack the idea and only surviving evidence-backed insights reach lit-plan.",
   refactor:
@@ -207,6 +217,8 @@ const skillDiscoveryDescriptions = Object.freeze({
     "Trigger only for explicit `/lit-scientific-visualization`, an exact bare `lit-scientific-visualization` message, or native selection by the exact `lit-scientific-visualization` id.",
   "lit-diagram-drawer":
     "Select this skill from OpenCode's native skill picker when the user needs an architecture map, workflow, schema, decision path, schedule, or conceptual chart. Route product pages and interface layouts to frontend-ui-ux; route measured scientific data and statistical figures to lit-scientific-visualization. Do not claim a slash command or bare-chat route.",
+  "lit-schematic":
+    "Select from OpenCode's native skill picker when the reader must see real hardware: a P&ID, PFD or equipment layout, a journal apparatus figure, or an isometric cutaway of a vessel or exchanger; a bounded lit drawing request directs the model to load it. Route abstract boxes-and-arrows to lit-diagram-drawer and measured-data plots to lit-scientific-visualization. Do not claim a slash command or bare-id chat route.",
   "lit-pptx":
     "Select for a PowerPoint deck or presentation, including a bounded lit request for slides. Keep editable Markdown and PPTX together, run the QA gate, and inspect the render.",
   "lit-typographic-motion":
@@ -216,7 +228,7 @@ const skillDiscoveryDescriptions = Object.freeze({
   "readme-studio":
     "Select by native skill name for factual README writing and local cover composition. Inspect actual session image capability; never infer generation support or authorize publication from selection.",
   "frontend-ui-ux":
-    "Trigger the moment interface work is described, not after it starts — \"design a settings page\", \"redesign the dashboard\", \"build a login screen\", or any making verb aimed at a UI, screen, layout, component, or stylesheet — so compact direction and existing tokens shape the authorized build. Evolve the contract with implementation and inspect renders; review and plan intent remains read-only. Also on the exact `frontend-ui-ux` id. The SKILL.md reference router names which of the sixteen shipped reference documents answers which question.",
+    "Trigger the moment interface work is described, not after it starts — \"design a settings page\", \"redesign the dashboard\", \"build a login screen\", or any making verb aimed at a UI, screen, layout, component, or stylesheet — so compact direction and existing tokens shape the authorized build. Evolve the contract with implementation and inspect renders; review and plan intent remains read-only. Also on the exact `frontend-ui-ux` id. The SKILL.md reference router names which shipped reference document answers which question. A new page or screen locks one house style, layout family and signature moment first (references/house-styles.md); the look is rich unless the request asks for minimal or calm.",
   "visual-qa":
     "Trigger when a rendered surface needs to be checked rather than described — an explicit `visual-qa` request, or verifying that an interface change actually looks and behaves right. Selection does not make a browser callable: the shipped capture playbook names the exact blocked code per unavailable channel, and a blocked check reported honestly outranks an unproven pass.",
   autoresearch:

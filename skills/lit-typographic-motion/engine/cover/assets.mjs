@@ -1,9 +1,10 @@
 // The cover's asset list, `<out>/assets.json`. Every raster the cover page can load (base art, logo,
-// wordmark, texture) is listed with its path, role, source (user: supplied; generated: made for this
-// cover and labelled so in the reply) and SHA-256, and the renderer checks the list before the first
-// capture. The art is supplied or generated, never replaced by a drawn stand-in: a listed file that
-// is missing stops the run as BLOCKED_ASSET_MISSING (exit 22), and so does the painted-light recipe
-// with no base art listed. After the render, decoded frame 0 must show the base art (artCheck).
+// wordmark, texture) is listed with its path, role, source (user: supplied; fetched: taken from the
+// product's own pages by `render.mjs assets --cover`; generated: made for this cover and labelled so
+// in the reply) and SHA-256, and the renderer checks the list before the first capture. The art is
+// supplied, fetched or generated, never replaced by a drawn stand-in: a listed file that is missing
+// stops the run as BLOCKED_ASSET_MISSING (exit 22), and so does the painted-light recipe with no
+// user-supplied base art listed. After the render, decoded frame 0 must show the base art (artCheck).
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -35,7 +36,7 @@ export function checkAssets({ out, treatment, rasters, coverDir = "cover" }) {
       if (!entry || typeof entry !== "object") throw badEntry(at, "must be an object");
       if (typeof entry.path !== "string" || !entry.path.startsWith(`${coverDir}/`) || entry.path.split("/").includes("..")) throw badEntry(`${at}.path`, `must be a path inside ${coverDir}/, relative to the output directory`);
       if (!ASSET_ROLES.includes(entry.role)) throw badEntry(`${at}.role`, `must be one of ${ASSET_ROLES.join(", ")}`);
-      if (!["user", "generated"].includes(entry.source)) throw badEntry(`${at}.source`, "must be user (supplied) or generated");
+      if (!["user", "fetched", "generated"].includes(entry.source)) throw badEntry(`${at}.source`, "must be user (supplied), fetched (by render.mjs assets --cover) or generated");
       if (!/^[0-9a-f]{64}$/u.test(entry.sha256 ?? "")) throw badEntry(`${at}.sha256`, "must be the file's SHA-256 (64 hex digits)");
       if ("box" in entry && !isBox(entry.box)) throw badEntry(`${at}.box`, "must be [x, y, w, h] as fractions of the cover, inside it");
       if (entry.role === "base-art" && !entry.box) throw badEntry(`${at}.box`, "base art needs the box it fills on the cover");
@@ -52,8 +53,10 @@ export function checkAssets({ out, treatment, rasters, coverDir = "cover" }) {
       if (sha256(readFileSync(real)) !== asset.sha256) throw stop(EXIT.STAGE_CONTRACT_ERROR, "STAGE_CONTRACT_ERROR", `${asset.path} no longer matches its sha256 in assets.json; list it again after changing it`);
     }
   }
-  if (treatment.recipe === "painted-light" && !assets.some((asset) => asset.role === "base-art")) {
-    throw stop(EXIT.BLOCKED_ASSET_MISSING, "BLOCKED_ASSET_MISSING", "the painted-light recipe relights a painting, and assets.json lists no base-art; supply the painting or generate it and list it, never draw a stand-in");
+  // The painted recipe relights a painting the user supplied. Without one the cover takes hero-3d
+  // (or weight-tide, orbit-loop) instead of a stand-in painting drawn for the occasion.
+  if (treatment.recipe === "painted-light" && !assets.some((asset) => asset.role === "base-art" && asset.source === "user")) {
+    throw stop(EXIT.BLOCKED_ASSET_MISSING, "BLOCKED_ASSET_MISSING", "the painted-light recipe relights a painting, and assets.json lists no base-art with source user: a painting the user supplied; without one, take hero-3d (or weight-tide, orbit-loop), never draw or generate a stand-in");
   }
   const listed = new Set(assets.map((asset) => asset.path));
   for (const raster of rasters) {

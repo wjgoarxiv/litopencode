@@ -65,12 +65,18 @@
   new MutationObserver((list) => { for (const m of list) for (const node of m.addedNodes) inspect(node); }).observe(document, { childList: true, subtree: true });
 
   // ---- canvas: WebGL keeps its drawing buffer for capture; 2D text calls are listed for the QA ----
-  const webgl = { requested: false, failed: false };
+  const webgl = { requested: false, failed: false, renderer: null };
   const nativeGetContext = HTMLCanvasElement.prototype.getContext;
   HTMLCanvasElement.prototype.getContext = function (type, attributes, ...rest) {
     const isGl = /webgl/iu.test(String(type));
     const ctx = nativeGetContext.call(this, type, isGl ? { ...(attributes ?? {}), preserveDrawingBuffer: true } : attributes, ...rest);
-    if (isGl) { webgl.requested = true; if (!ctx) webgl.failed = true; }
+    if (isGl) {
+      webgl.requested = true;
+      if (!ctx) webgl.failed = true;
+      else if (!webgl.renderer) {
+        try { const info = ctx.getExtension("WEBGL_debug_renderer_info"); webgl.renderer = info ? String(ctx.getParameter(info.UNMASKED_RENDERER_WEBGL)) : String(ctx.getParameter(ctx.RENDERER)); } catch { webgl.renderer = null; }
+      }
+    }
     return ctx;
   };
   const canvasTexts = new Set();

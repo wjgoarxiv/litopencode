@@ -19,6 +19,7 @@ const commands = {
   embed: ["python", "scripts/embed_fonts.py"],
   learn: ["python", "scripts/learn_template.py"],
   validate: ["python", "scripts/validate_pptx.py"],
+  render: ["python", "scripts/render_pages.py"],
 };
 
 // Windows: Node refuses to spawn a .cmd shim without a shell (spawn EINVAL) and a bare name never
@@ -76,6 +77,6 @@ if (command === "doctor") {
   const env = kind === "node" ? { ...process.env, NODE_PATH: path.join(nodeRoot, "node_modules") } : { ...process.env, PYTHONDONTWRITEBYTECODE: "1" };
   run(binary, [path.join(root, script), ...args], { env, cwd: process.cwd() });
 } else {
-  console.error("Usage: node run.mjs <compile|qa|embed|learn|validate|doctor> [arguments]");
+  console.error("Usage: node run.mjs <compile|qa|embed|learn|validate|render|doctor> [arguments]");
   process.exit(2);
 }

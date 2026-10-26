@@ -121,6 +121,12 @@ The second line is the important one. It means the slide is short because the so
 no policy can help. Add the facts the slide is missing (next section) or move the content to a
 family that suits its amount; `layout-families.md` lists what each family expects.
 
+The title treatment never buys the body room: every treatment draws in the slide grid's one title
+zone over the same body (y 120-486), so a short body is filled by its own layout, never by moving the
+title. The engine never pads cards with filler. Decoration (the pack's list plus the deck's
+`decoration:` kinds) adds texture and structure to a full slide; it never stands in for missing
+content.
+
 Some families also spread on their own when the body is short: headed points become rows, agenda
 rows spread down to the floor, timeline room is shared above and below the axis, table takeaways
 move under the table, references spread with rules. These moves never add words.
@@ -231,9 +237,9 @@ takeaway is a bare claim (`늘었음`) with no figure.
 
 ### Numbers stay honest
 
-- No hero numerals. The engine caps every number it sets (KPI values, big-number panels, cover
-  figures, closing keys, section numerals) at the title size of the ramp; do not try to get around
-  that with a `box` or `shape`.
+- No hero numerals. The hero step belongs to cover, section and statement titles that fit it. The engine
+  caps every number it sets (KPI values, big-number panels, cover figures, closing keys, section
+  numerals) at the title size of the ramp; do not try to get around that with a `box` or `shape`.
 - A figure is never larger than the title, and a figure without a basis is not a KPI.
 - Signed deltas carry their sign and unit (`+4.1%`, `−3.6%`, `+0.5%p`, `▲ 12%`). In signal, where
   the accent is red, losses keep the ink colour and rely on the `▼` sign.

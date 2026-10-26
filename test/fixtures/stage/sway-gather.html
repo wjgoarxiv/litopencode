@@ -3,19 +3,15 @@
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="/lit/fonts.css">
+  <link rel="stylesheet" href="/lit/style.css">
+  <script src="/lit/style.js"></script>
   <script src="/lit/stage-kit.js"></script>
   <style>
     * { box-sizing: border-box; }
-    html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #fff7e8; }
-    body { color: #234c3d; font-family: "Pretendard", sans-serif; }
+    html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #0c0e13; }
+    body { color: #0f7a82; font-family: "Pretendard", sans-serif; }
     svg { position: absolute; inset: 0; width: 1080px; height: 1920px; }
     .copy { position: absolute; inset: 0; }
-    .line { position: absolute; left: 100px; width: 880px; text-align: center; line-height: 1.3; font-weight: 700; margin: 0; }
-    .eyebrow { top: 208px; font-size: 35px; font-weight: 400; }
-    .title { top: 298px; font-size: 88px; letter-spacing: -3px; }
-    .second { top: 412px; }
-    .note { top: 1620px; font-size: 34px; font-weight: 400; letter-spacing: -1px; }
-    .label { top: 1525px; font-size: 42px; }
   </style>
 </head>
 <body>
@@ -23,28 +19,28 @@
     <defs>
       <clipPath id="frameClip"><rect id="frameReveal" x="185" y="620" width="710" height="860" rx="355" /></clipPath>
       <g id="stalk">
-        <path d="M0 0 C-14 -125 12 -235 0 -405" fill="none" stroke="#234c3d" stroke-width="16" stroke-linecap="round" />
+        <path d="M0 0 C-14 -125 12 -235 0 -405" fill="none" stroke="#0f7a82" stroke-width="16" stroke-linecap="round" />
         <path d="M-3 -145 C-145 -177 -160 -298 -140 -320 C-51 -291 -18 -216 -3 -145Z" fill="#638565" />
         <path d="M0 -80 C133 -131 152 -218 137 -239 C62 -220 12 -159 0 -80Z" fill="#8da47a" />
         <g class="head">
           <path d="M0 -376 C-121 -373 -145 -468 -122 -546 L-52 -500 L0 -575 L52 -500 L122 -546 C145 -468 121 -373 0 -376Z" fill="currentColor" />
           <path d="M-122 -546 C-105 -451 -67 -394 0 -376 C-38 -421 -53 -467 -52 -500Z" fill="#fff7e8" opacity=".22" />
-          <path d="M122 -546 C105 -451 67 -394 0 -376 C38 -421 53 -467 52 -500Z" fill="#234c3d" opacity=".1" />
+          <path d="M122 -546 C105 -451 67 -394 0 -376 C38 -421 53 -467 52 -500Z" fill="#0f7a82" opacity=".1" />
         </g>
       </g>
     </defs>
-    <circle cx="1060" cy="55" r="250" fill="#dbe6cc" opacity=".45" />
+    <circle cx="1060" cy="55" r="250" fill="#16222b" opacity=".45" />
     <circle cx="-40" cy="1850" r="270" fill="#eeb94a" opacity=".1" />
-    <g clip-path="url(#frameClip)"><rect id="panel" x="185" y="620" width="710" height="860" fill="#dbe6cc" /></g>
-    <ellipse id="shadow" cx="540" cy="1450" rx="245" ry="24" fill="#234c3d" opacity=".08" />
+    <g clip-path="url(#frameClip)"><rect id="panel" x="185" y="620" width="710" height="860" fill="#16222b" /></g>
+    <ellipse id="shadow" cx="540" cy="1450" rx="245" ry="24" fill="#0f7a82" opacity=".08" />
     <g id="cluster">
-      <g id="back"><path d="M-340 -350 L0 -265 L340 -350 L118 178 L-110 178Z" fill="#ecd8b7" /></g>
+      <g id="back"><path d="M-340 -350 L0 -265 L340 -350 L118 178 L-110 178Z" fill="#1c2a33" /></g>
       <g id="stalks"></g>
       <g id="front">
-        <path d="M-340 -350 L85 -80 L-110 178Z" fill="#f6e5c9" />
-        <path d="M340 -350 L-85 -80 L118 178Z" fill="#e8cfaa" />
-        <path d="M-98 77 Q0 54 102 77" stroke="#234c3d" stroke-width="20" fill="none" />
-        <path d="M0 77 C-119 -12 -160 125 0 77 C119 -12 160 125 0 77 M0 77 L-55 170 M0 77 L70 157" stroke="#234c3d" stroke-width="13" fill="none" stroke-linecap="round" />
+        <path d="M-340 -350 L85 -80 L-110 178Z" fill="#233845" />
+        <path d="M340 -350 L-85 -80 L118 178Z" fill="#2c4656" />
+        <path d="M-98 77 Q0 54 102 77" stroke="#0f7a82" stroke-width="20" fill="none" />
+        <path d="M0 77 C-119 -12 -160 125 0 77 C119 -12 160 125 0 77 M0 77 L-55 170 M0 77 L70 157" stroke="#0f7a82" stroke-width="13" fill="none" stroke-linecap="round" />
       </g>
     </g>
     <path id="underline" d="M388 583 Q540 604 692 583" stroke="#ea786b" stroke-width="7" fill="none" stroke-linecap="round" />
@@ -53,30 +49,17 @@
   <script>
     // Every value is a pure function of t. Layers leave opacity 0 on the 6 s cut while a sine sway
     // rotates the stalks; the replay matched the master only when it captured every frame too.
-    const COPY = {
-      hook: ["지붕의 비가", "사흘을 버틴다"],
-      shop: "처마 아래",
-      event: "물길 보기",
-      details: "안내는 현장에서 합니다",
-      highlight: ["빗물을", "한 곳에"],
-      close: ["처마 아래에서", "다시 봐요"]
-    };
-    const scenes = [
-      [['title', COPY.hook[0]], ['title second', COPY.hook[1]]],
-      [['eyebrow', COPY.shop], ['title', COPY.event], ['note', COPY.details]],
-      [['title', COPY.highlight[0]], ['title second', COPY.highlight[1]]],
-      [['title', COPY.close[0]], ['title second', COPY.close[1]], ['label', COPY.event], ['note', COPY.details]]
-    ].map(lines => {
+    const COPY = ["지붕의 비가 사흘을 버틴다", "처마 아래 물길 보기", "빗물을 한 곳에", "처마 아래에서 다시 봐요"];
+    const scenes = COPY.map((text, i) => {
       const scene = document.createElement('section');
       scene.className = 'copy';
-      lines.forEach(([style, text]) => {
-        const line = document.createElement('p');
-        line.className = `line ${style}`;
-        line.textContent = text;
-        scene.appendChild(line);
-        LitStage.text(line);
-      });
+      const line = document.createElement('p');
+      line.className = 'lit-headline lit-ink';
+      line.textContent = text;
+      scene.appendChild(line);
       document.querySelector('#copy').appendChild(scene);
+      LitStage.place(line, LitTimeline.beats[i].layout);
+      LitStage.text(line);
       return scene;
     });
     const ns = 'http://www.w3.org/2000/svg';

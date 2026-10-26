@@ -13,6 +13,9 @@ import {
   structuralSearchPromptInjection,
   litGoalPromptInjection,
   litBrainstormPromptInjection,
+  litHijackPromptInjection,
+  litAdhdPromptInjection,
+  adhdSessionNote,
   litCruciblePromptInjection,
   initDeepPromptInjection,
   litLoopPromptInjection,
@@ -38,6 +41,7 @@ import {
   parseStartWorkLifecycleDirective
 } from "./bounded-authority-hooks.ts";
 import type { BoundedAuthorityOptions } from "./bounded-authority.ts";
+import { startTypedWork, typedStartArgument } from "./start-work-typed.ts";
 import { autoHandoffSettingText, type AutoHandoffRouteMode } from "./auto-handoff.ts";
 import {
   formatResolvedPlanNotice,
@@ -70,6 +74,9 @@ export type LitOpenCodeCommandId =
   | "lit-init"
   | "lit-crucible"
   | "lit-brainstorm"
+  | "lit-hijack"
+  | "lit-adhd"
+  | "lit-rewind"
   | "lit-burnoff-file"
   | "lit-fetch"
   | "refactor"
@@ -276,6 +283,30 @@ export const litOpenCodeCommands = Object.freeze([
     activationText: litBrainstormPromptInjection
   },
   {
+    id: "lit-hijack",
+    slash: "/lit-hijack",
+    title: "LitOpenCode Lit Hijack",
+    description: "Port the mechanism in someone else's published work into your own skill or system: capture with provenance, licence gate, gap, source-free spec, separate build, parity proof and report.",
+    banner: activationBanner("lit-hijack"),
+    activationText: litHijackPromptInjection
+  },
+  {
+    id: "lit-adhd",
+    slash: "/lit-adhd",
+    title: "LitOpenCode Lit Adhd",
+    description: "Pick up where you left off: a read-only brief of earlier sessions in this worktree family with status, real progress, a roadmap and one recommended next step you follow with go.",
+    banner: activationBanner("lit-adhd"),
+    activationText: litAdhdPromptInjection
+  },
+  {
+    id: "lit-rewind",
+    slash: "/lit-rewind",
+    title: "LitOpenCode Lit Rewind",
+    description: "Alias for /lit-adhd.",
+    banner: activationBanner("lit-rewind"),
+    activationText: litAdhdPromptInjection
+  },
+  {
     id: "refactor",
     slash: "/refactor",
     title: "LitOpenCode Refactor",
@@ -435,6 +466,8 @@ function commandMode(command: LitOpenCodeCommand): string {
   if (command.id === "lit-init") return "lit-init";
   if (command.id === "lit-crucible") return "lit-crucible";
   if (command.id === "lit-brainstorm") return "lit-brainstorm";
+  if (command.id === "lit-hijack") return "lit-hijack";
+  if (command.id === "lit-adhd" || command.id === "lit-rewind") return "lit-adhd";
   if (command.id === "litgoal" || command.id === "lit-goal") return "litgoal";
   if (command.id === "refactor") return "refactor";
   if (command.id === "lit-burnoff") return "lit-burnoff";
@@ -583,6 +616,7 @@ export function createCommandActivationHook(
       }
     }
 
+    let typedStartNote: string | undefined;
     if (command.id === "start-work") {
       if (/^save-plan(?:\s|$)/u.test(input.arguments.trim())) {
         const request = parsePlanSaveArgument(input.arguments);
@@ -664,6 +698,18 @@ export function createCommandActivationHook(
         });
         return;
       }
+      if (directive === undefined && !lifecycleIntent) {
+        const planArgument = typedStartArgument(`start-work ${input.arguments}`.trim());
+        if (planArgument !== undefined) {
+          const started = await startTypedWork({
+            projectRoot,
+            sessionID: input.sessionID,
+            ...(planArgument === "" ? {} : { plan: planArgument }),
+            ...(options.boundedAuthority === undefined ? {} : { options: options.boundedAuthority })
+          });
+          if (started.quiet !== true) typedStartNote = started.text;
+        }
+      }
       if (directive !== undefined) {
         let lifecycleText: string;
         try {
@@ -712,6 +758,8 @@ export function createCommandActivationHook(
         activationText = `${command.activationText}\n\n${formatResolvedPlanNotice(durablePlan)}`;
       }
     }
+    if (command.id === "lit-adhd" || command.id === "lit-rewind") activationText = `${activationText}\n${adhdSessionNote(input.sessionID)}`;
+    if (typedStartNote !== undefined) activationText = `${typedStartNote}\n${activationText}`;
 
     output.parts.push({
       id: `prt_litopencode_${command.id.replace(/-/g, "_")}_activation`,

@@ -13,7 +13,7 @@ Use only what the user owns or supplied; everything else is unlicensed until pro
 Say so, then pick a neutral system a brand can replace in one token pass.
 
 - Build on semantic tokens only, so a later palette swap touches no component.
-- One neutral ramp, one accent, no logotype; set the product name in the body face as the wordmark.
+- One neutral ramp, one accent role and a second accent role that the lock's tokens name (`--accent`, `--accent-2`), no logotype; set the product name in the body face as the wordmark.
 - Record an omission id naming what is missing: mark, palette, typeface, imagery, voice.
 - Never invent a logo, tagline, or brand story and present it as the user's.
 
@@ -23,7 +23,7 @@ Convert each adjective into three or more numeric commitments, or drop it.
 
 - Precise: tabular figures, 4 px grid, 1 px hairline borders, 120 ms transitions.
 - Warm: radii 12 px or greater, body line-height 1.6, photography over iconography.
-- Serious: one accent hue, elevation capped at two levels, motion under 200 ms.
+- Serious: one accent hue (a calm lock), elevation capped at two levels, motion under 200 ms.
 
 ## Specifying a generated reference image
 

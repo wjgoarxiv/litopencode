@@ -4,6 +4,7 @@
 import { createHash } from "node:crypto";
 import { parentPort } from "node:worker_threads";
 import { auditCells, flashGeometryFor, linearLut } from "../flash.mjs";
+import { busyShare } from "../fill.mjs";
 import { areaResize, decodePng, encodePng } from "../png.mjs";
 
 function toRgba(image) {
@@ -16,14 +17,20 @@ function toRgba(image) {
   return out;
 }
 
-// p99.5 of linear luminance, the near-black statistic MO-D-03 reads.
-function p995(rgba) {
+// The 0.5 % and 99.5 % points of linear luminance. MO-D-03 reads the upper one (near-black), and
+// FLAT-FRAME reads the spread between them: a frame of one flat colour, light or dark, has almost none.
+function spread(rgba) {
   const bins = new Uint32Array(1024);
   for (let i = 0; i < rgba.length; i += 4) bins[Math.min(1023, Math.floor((0.2126 * linearLut[rgba[i]] + 0.7152 * linearLut[rgba[i + 1]] + 0.0722 * linearLut[rgba[i + 2]]) * 1024))]++;
-  const target = (rgba.length / 4) * 0.995;
-  let acc = 0;
-  for (let b = 0; b < 1024; b++) { acc += bins[b]; if (acc >= target) return (b + 1) / 1024; }
-  return 1;
+  const total = rgba.length / 4;
+  const high = total * 0.995, low = total * 0.005;
+  let acc = 0, p005 = null, p995 = 1;
+  for (let b = 0; b < 1024; b++) {
+    acc += bins[b];
+    if (p005 === null && acc >= low) p005 = b / 1024;
+    if (acc >= high) { p995 = (b + 1) / 1024; break; }
+  }
+  return { p005: p005 ?? 0, p995 };
 }
 
 parentPort.on("message", ({ id, png, width, height, preview }) => {
@@ -36,7 +43,8 @@ parentPort.on("message", ({ id, png, width, height, preview }) => {
     const rgba = toRgba(image);
     const cells = auditCells(rgba, width, height, flashGeometryFor(width, height));
     const hash = createHash("sha256").update(rgba).digest("hex");
-    const out = { id, hash, p995L: Number(p995(rgba).toFixed(5)), cells };
+    const { p005, p995 } = spread(rgba);
+    const out = { id, hash, p995L: Number(p995.toFixed(5)), p005L: Number(p005.toFixed(5)), busy: Number(busyShare(rgba, width, height).toFixed(4)), cells };
     if (preview) out.previewPng = encodePng(preview.width, preview.height, areaResize(rgba, width, height, preview.width, preview.height, 4), 4, 1);
     const copy = rgba.byteOffset === 0 && rgba.byteLength === rgba.buffer.byteLength ? new Uint8Array(rgba.buffer) : Uint8Array.from(rgba);
     out.rgba = copy;

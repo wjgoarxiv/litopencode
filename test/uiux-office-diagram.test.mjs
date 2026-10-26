@@ -15,9 +15,16 @@ test('diagram craft checks preserve a clean simple node', () => {
 test('diagram craft checks flag group ratio, accents, case and label width', () => {
   const clustered = codes(`<rect data-group-id="first" x="0" y="40" width="160" height="140"/><rect data-group-id="second" x="165" y="40" width="200" height="140"/>${node('a', 10, 80)}${node('b', 100, 80)}${node('c', 175, 80)}${node('d', 265, 80)}`);
   assert.match(clustered, /CLUSTER_GAP_RATIO/);
-  const accents = codes(`${node('a', 10, 80, '#e11d48')}${node('b', 110, 80, '#16a34a')}${node('c', 210, 80, '#2563eb')}${node('d', 310, 80, '#d97706')}`);
-  assert.match(accents, /ACCENT_COUNT/);
+  const accents = codes(`${node('a', 10, 80, '#e11d48')}${node('b', 110, 80, '#16a34a')}${node('c', 210, 80, '#2563eb')}${node('d', 310, 80, '#d97706')}${node('e', 410, 80, '#7c3aed')}${node('f', 510, 80, '#0d9488')}`);
+  assert.match(accents, /ACCENT_COUNT OF-202 6 maximum=5/);
   const labels = result(`${node('a', 50, 80)}<text data-node-for="a" x="55" y="115" font-size="16">Review Of The Example Process</text>`);
   assert.match(labels.advisories.join('\n'), /LABEL_CASE/);
   assert.match(labels.issues.join('\n'), /LABEL_OVERFLOW/);
+});
+
+test('diagram accent check passes three to five families and neutrals are not counted', () => {
+  const five = codes(`${node('a', 10, 80, '#e11d48')}${node('b', 110, 80, '#16a34a')}${node('c', 210, 80, '#2563eb')}${node('d', 310, 80, '#d97706')}${node('e', 410, 80, '#7c3aed')}${node('n', 510, 80, '#e5e7eb')}`);
+  assert.doesNotMatch(five, /ACCENT_COUNT/);
+  const three = codes(`${node('a', 10, 80, '#e11d48')}${node('b', 110, 80, '#16a34a')}${node('c', 210, 80, '#2563eb')}`);
+  assert.doesNotMatch(three, /ACCENT_COUNT/);
 });

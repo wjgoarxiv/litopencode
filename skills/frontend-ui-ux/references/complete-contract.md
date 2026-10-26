@@ -151,7 +151,7 @@ Useful evidence is falsifiable: an exact file hash, an exact command, an explici
 
 For corpus verification, resolve the helper from the selected installed skill, never from the project cwd: set `FRONTEND_SKILL_FILE` to its absolute `SKILL.md` path, set `FRONTEND_SKILL_ROOT` to the physical directory containing that file, then run `node "$FRONTEND_SKILL_ROOT/scripts/verify-canonical-corpus.mjs" --json`. Beta2 and `litfamily.design-contract/v1beta1` remain evidence-eligible; alpha returns `LEGACY_SCHEMA_V1ALPHA1`. Keep the dataset separate from the canonical library and imported scripts inert.
 
-Eighteen authored reference documents ship inside this skill under `skills/frontend-ui-ux/references/`. Each is hash-pinned in the managed manifest and installed with the skill. Open by question, not by curiosity: a reference nobody can find is a reference that does not exist.
+Nineteen authored reference documents ship inside this skill under `skills/frontend-ui-ux/references/`. Each is hash-pinned in the managed manifest and installed with the skill. Open by question, not by curiosity: a reference nobody can find is a reference that does not exist.
 
 | Reference | Question it answers |
 | --- | --- |
@@ -173,6 +173,7 @@ Eighteen authored reference documents ship inside this skill under `skills/front
 | [evidence-review.md](references/evidence-review.md) | How is the independent review pass coupled through the contract hash and evidence schema rather than shared assumptions? |
 | [craft-floor.md](references/craft-floor.md) | Which CF and RS values should the live probe measure, and what remains review-only? |
 | [slop-register.md](references/slop-register.md) | Which numbered visual/functional signatures does the probe or reviewer need to inspect? |
+| [house-styles.md](references/house-styles.md) | Which house style, layout family and signature moment does a new build lock, which kit classes may it use, and which DS rules and LOOK questions does the probe apply? |
 
 Supporting shipped assets: [design-contract-v1beta2.json](schemas/design-contract-v1beta2.json) is the canonical evidence-eligible shape; [design-contract-v1beta1.json](schemas/design-contract-v1beta1.json) remains the compatible evidence-eligible shape; [design-contract-v1alpha1.json](schemas/design-contract-v1alpha1.json) is retained for migration diagnostics. `scripts/uiux.mjs` provides the validator and retrieval entry point, `scripts/design-contract.mjs` owns executable rules, and `data/` contains the packaged offline records with their license, provenance, and notice.
 

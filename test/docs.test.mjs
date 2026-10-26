@@ -62,6 +62,8 @@ const canonicalSkillIds = [
   "lit-init",
   "lit-crucible",
   "lit-brainstorm",
+  "lit-hijack",
+  "lit-adhd",
   "refactor",
   "lit-burnoff",
   "lit-burnoff-file",

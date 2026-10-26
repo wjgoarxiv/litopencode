@@ -13,6 +13,7 @@ import { chromeVersion, findChrome, launchLadder, loadPlaywright, which } from "
 import { splitLines } from "./engine/command.mjs";
 import { inspectWarmState } from "./runtime.mjs";
 import { coverEncoder } from "./engine/cover/render.mjs";
+import { findBlender } from "./engine/blender.mjs";
 
 export function previewEncoderRung(ffmpeg, env = process.env) {
   if (ffmpeg) {
@@ -21,6 +22,15 @@ export function previewEncoderRung(ffmpeg, env = process.env) {
   }
   if (which("img2webp", env)) return "img2webp";
   return ffmpeg ? "gif" : "none";
+}
+
+// Blender is optional: found, it is the offline Cycles rung for high-quality 3D films; absent, those films
+// take the three.js world on the GPU rung. Either way this is information, never a failure.
+export function blenderProbe(env = process.env) {
+  const found = findBlender({ env });
+  return found
+    ? { ok: true, path: found.path, source: found.source }
+    : { ok: false, detail: "optional; not found (LITOPENCODE_BLENDER, /Applications/Blender.app, blender on PATH); high-quality 3D films use the three.js GPU rung" };
 }
 
 export async function probe(env = process.env) {
@@ -34,7 +44,8 @@ export async function probe(env = process.env) {
     webgl2: { ok: false, renderer: null, flags: [], detail: "" },
     softwareWarning: null,
     prewarm,
-    coverEncoder: coverEncoder(env)
+    coverEncoder: coverEncoder(env),
+    blender: blenderProbe(env)
   };
   if (!chrome.path) report.webgl2.detail = "not probed: Chrome is missing";
   else if (prewarm.deps.length) report.webgl2.detail = `not probed: the pinned driver is not pre-warmed; run ${prewarm.fix}`;
@@ -68,6 +79,7 @@ export function formatProbe(report) {
     `motion webgl2: ${report.webgl2.ok ? `${report.webgl2.renderer} (rung ${report.webgl2.rung}: ${report.webgl2.flags.join(" ")})` : report.webgl2.detail}`,
     `motion software-gl: ${report.softwareWarning}`,
     `motion cover encoder: ${report.coverEncoder.name === "none" ? `none; cover renders stop with exit 21; fix: ${report.coverEncoder.fix}` : `${report.coverEncoder.name} (the gate decodes with ${report.coverEncoder.decoder})`}`,
+    `motion blender: ${report.blender.ok ? `${report.blender.path} (${report.blender.source})` : report.blender.detail}`,
     `motion prewarm: ${p.ready ? `ready in ${p.cache} (Hangul body: ${p.hangul})` : `missing ${missing.join(", ")}; run ${p.fix}`}; audio: ${p.audio.ready ? "ready" : p.audio.reason}; word timing: ${p.wordTiming.reason}`
   ].join("\n");
 }

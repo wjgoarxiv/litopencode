@@ -34,7 +34,7 @@ is dark from cover to closing. Pack file: `templates/tonalities/night/pack.yaml`
 ## Type
 
 Pretendard throughout. Compact ramp at density 10; display tracks tight (−2). On a
-dark ground thin light type below 18 pt is avoided, which is why Night never uses a light weight.
+dark ground thin light type below 18 pt is avoided, which is why Night never uses a light weight. Cover and statement titles take the hero step (60 pt) when their words fit; `hero: false` in the front matter turns it off. A figure is never larger than a title.
 
 ## Dials
 

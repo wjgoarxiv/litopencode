@@ -19,13 +19,13 @@ Run the deterministic probe before making a holistic judgment. A visible signatu
 | ID | Probe signal and review question | Cheaper fix |
 | --- | --- | --- |
 | SLOP-008 | Heading text or gradient stops in the 260–310° hue band with at least 50/255 channel spread, without a declared brand reason. | Use the chosen palette. |
-| SLOP-009 | A gradient is clipped into text. | Use a solid readable text colour. |
-| SLOP-010 | Recurring chromatic large-blur halos are MEDIUM; a single glow stays under CF-404. | Remove the glow. |
+| SLOP-009 | Gradient text as a reflex: a violet stop, more than one clipped element, or a stop below 4.5:1 (3:1 at 24px or larger) against its surface. One considered gradient headline passes. | Use a solid readable text colour, or one headline with legible stops. |
+| SLOP-010 | Three or more recurring chromatic large-blur halos are MEDIUM; one or two glows stay under CF-404. | Keep a glow for one surface that earns it. |
 | SLOP-011 | A faint floating sphere or blob has no content referent. | Remove it or give it a real purpose. |
 | SLOP-012 | Repeating dot/grid texture accompanies another decorative reflex without data behind it. | Remove the texture. |
 | SLOP-013 | Noise or ornament makes the information hierarchy harder to read. | Strip the decoration first. |
 | SLOP-014 | Glass blur appears because the component library offers it, with no reason. | Use an opaque surface. |
-| SLOP-015 | Repeated coloured edge stripes or pseudo-borders on rounded cards. | Use the card's actual border or remove the stripe. |
+| SLOP-015 | Three or more coloured edge stripes or pseudo-borders on rounded cards; two inset stripes already count. | Use the card's actual border or remove the stripe. |
 
 ## Type and colour
 
@@ -37,7 +37,7 @@ Run the deterministic probe before making a holistic judgment. A visible signatu
 | SLOP-019 | Too many unrelated type roles appear in one view. | Reuse a named role. |
 | SLOP-020 | All-caps labels spread beyond a deliberate small role. | Use sentence case. |
 | SLOP-021 | Gray text loses contrast on a coloured surface; CF-201 owns the ratio. | Correct the text/background pair. |
-| SLOP-022 | Several accent hue clusters appear; CF-205 owns the count. | Reserve one accent for interaction. |
+| SLOP-022 | More than four accent hue clusters appear (more than one under a calm lock); CF-205 owns the count. | Give each hue a role: interaction, second accent, status. |
 | SLOP-023 | Pure black or white base fills flatten a page meant to have a tonal surface. | Use the chosen near-neutral surface. |
 
 ## Motion and micro-labels

@@ -113,6 +113,17 @@ lit notes.md를 금요일 팀 회의용 발표자료 10장으로 만들어줘
 
 이 밖에도 디버깅, 리팩터링, 코드 정리, 커밋, 언어 서버, 세션을 시작할 때와 파일을 고칠 때 저장소 규칙을 읽어 오는 `/rules`, 화면 작업, 브라우저 자동화, 프로젝트 위키가 있습니다. 스킬마다 만들어 내는 결과의 그림은 [스킬 갤러리](./docs/skills-Ko-KR.md)에서 볼 수 있습니다.
 
+## 만들 수 있는 것
+
+아래 그림은 모두 맥 한 대에서 LitOpenCode가 만든 결과이고, 그림 아래에 만든 스킬을 적었습니다. 꾸며 낸 화면은 없습니다. 발표자료와 화면, 도면의 숫자는 가상의 하이드레이트 실험실을 위한 예시 값이며, 각 결과물 안에도 그렇게 적혀 있습니다.
+
+<table>
+<tr><td width="50%" valign="top"><img src="./docs/assets/readme/showcase-adhd-brief.webp" width="400" alt="OpenCode 대화창에 뜬 lit-adhd 브리핑. 첫 줄은 1 session · 0 waiting on you · 0 active · next: F1. Plan compliance audit이고, 그 아래에 한 줄짜리 Ended 표, 체크 표시가 붙은 끝난 커밋과 now, later 계획 단계가 이어지는 Roadmap, 상자에 담긴 Recommended next step이 있습니다. 아래쪽 LIT 카드에는 작업 지도와 lit-adhd 칩이 있고, 위 테두리에 REWIND 표시가 있습니다." /><br /><b>lit-adhd</b> · 돌아왔을 때 읽는 브리핑<br /><sub>스킬에 들어 있는 스크립트가 실제 워크트리 묶음의 세션, 커밋, 계획을 읽었습니다. 그 답을 로컬 시험용 모델이 OpenCode에 넘겼고, OpenCode는 이를 색으로 그리며 LIT 카드는 되감기 모양으로 바뀝니다.</sub></td><td width="50%" valign="top"><img src="./docs/assets/readme/showcase-deck.webp" width="400" alt="하이드레이트 장치를 다룬 computational-brutalism 스타일 9장 발표자료의 모음 그림. 어두운 표지, KPI 행, 세 번의 실험의 압력 강하를 그린 네이티브 선 그래프, 결과 표, 두 단 비교, 번호 붙은 네 단계, 어두운 질문 슬라이드, 승인 상자, 부록이 보입니다." /><br /><b>lit-pptx</b> · 9장, computational brutalism<br /><sub>이 페이지를 위해 쓴 슬라이드 원고를 스킬의 엔진이 컴파일했습니다. 그래프는 PowerPoint에서 고칠 수 있고, 발표자료 검사에서 심각한 문제는 나오지 않았습니다.</sub></td></tr>
+<tr><td width="50%" valign="top"><img src="./docs/assets/readme/showcase-ui.webp" width="400" alt="하이드레이트 장치의 실험 모니터 화면. 옆 메뉴, 반응기 압력과 액체 온도, 기체 흡수량, 유도 시간을 보여 주는 숫자 카드 네 장, 30분에 유도 표시가 있는 압력 강하 선 그래프, 색 점으로 상태를 나타낸 경보 목록, 제어 루프 패널이 있습니다." /><br /><b>frontend-ui-ux</b> · 실험 모니터 화면<br /><sub>정해 둔 하우스 스타일대로 만든 뒤, 스킬의 점검 도구가 너비 1440, 768, 390, 320 픽셀로 열어 보고 승인했습니다.</sub></td><td width="50%" valign="top"><img src="./docs/assets/readme/showcase-pid.webp" width="400" alt="CO2 하이드레이트 생성 장치의 A3 P&amp;ID. 가스 실린더에서 레귤레이터, 필터, 질량 유량 제어기, 밸브를 거쳐 재킷 교반 반응기로 들어가는 라인, 물 탱크와 공급 펌프, 온도 제어기가 붙은 글리콜 칠러 루프, 후드 배기로 가는 배압 벤트와 안전밸브, ISA 계기 기호, 범례, 표제란이 있습니다." /><br /><b>lit-schematic</b> · A3 한 장짜리 P&amp;ID<br /><sub>이 페이지를 위해 쓴 빌드 파일을 스킬의 P&amp;ID 도구로 그렸습니다. 기호 24개, ISA 태그, 라인 번호, 표제란이 있고 도면 검사를 통과했습니다.</sub></td></tr>
+</table>
+
+다른 스킬의 결과 그림은 [스킬 갤러리](./docs/skills-Ko-KR.md)에서 볼 수 있습니다.
+
 ## 이런 분께 맞습니다
 
 이미 OpenCode로 한 번에 끝나지 않는 일을 하는 분께 어울립니다. 몇 세션에 걸쳐 만드는 기능, 계획을 세워 진행하는 리팩터링, 며칠에 걸쳐 이어 가는 조사, 메모로 만드는 보고서나 발표자료 같은 일입니다. 바꾼 내용을 확인하고 검토까지 마친 뒤에야 끝냈다고 보는 분께도 잘 맞습니다.

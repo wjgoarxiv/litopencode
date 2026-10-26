@@ -2,7 +2,7 @@
 
 This guide turns motion into a small, testable part of the interface. Start with one sentence naming the page, target components, and out-of-scope areas; follow it with labeled sections in implementation order. Specify the stack, visual tokens, layers, timing, viewport behavior, reduced-motion behavior, assets, and performance limits before describing a page. Name exact files or components so the implementation does not invent unrelated sections. A page brief may name component families such as hero, pricing, footer, or dashboard before detailing the chosen one.
 
-All values below are starting defaults. Keep the page calm when motion does not explain hierarchy, state, or cause and effect.
+All values below are starting defaults. The rich default layers motion on separate layers so it explains hierarchy, state, or cause and effect; a lock that records calm density (asked for by the brief) keeps the page still. Flash limits and reduced-motion behavior are absolute in both.
 
 ## 1. Stack, tokens, and composition
 
@@ -51,7 +51,7 @@ When a brief explicitly requests scroll-driven choreography, implement a visible
 
 ## 3. Motion and resource budgets
 
-**Do:** Give each section one entrance sequence and no more than two simultaneously moving elements. Give the hero one principal scroll or entrance effect and one animated headline. Keep controls responsive while decorative motion runs.
+**Do:** Give each section one entrance sequence and no more than four simultaneously moving elements, each on its own layer (two under a calm lock). Give the hero one principal scroll or entrance effect and one animated headline. Keep controls responsive while decorative motion runs.
 
 **Don't:** animate the headline, background, cards, icons, and navigation at once. Remove any motion whose absence does not change comprehension or feedback.
 

@@ -2,6 +2,10 @@
 
 This is the authored rule sheet for the interface probe. `scripts/probe-thresholds.json` is the executable value register. Keep a changed number in that one file, then update this explanation and its fixture; never adjust a value after reading an A/B judge result. DET means the browser can inspect a signal. JUDG needs a reviewer, even when the browser offers a count. The probe records `not_verified` for a signal it cannot observe. A clean source search is never a rendered PASS.
 
+## Design lock rules
+
+When `design.lock.json` sits beside the page (or `--lock` names one), the probe also runs the DS-* lock rules, listed with their severities in `references/house-styles.md` and registered in `scripts/probe-lock.mjs`, records the lock under `manifest.design_lock`, and prints LOOK-1 to LOOK-6 with the 1440, 390 and 320 screenshots. Answer the LOOK questions by eye, fix the two worst answers and probe again; two look rounds at most. Without a lock the probe records DS-001 in `not_verified`.
+
 ## Typography
 
 | Rule | Working decision |
@@ -24,7 +28,7 @@ This is the authored rule sheet for the interface probe. `scripts/probe-threshol
 | CF-202 | Focused and unfocused styles must differ. Native `outline-style: auto` passes. A custom ring needs 2px and 3:1; an inadequate indicator is MEDIUM, no change is HIGH. The probe focuses a control without clicking or pressing it. |
 | CF-203 | APCA is advisory alongside the WCAG pair: body Lc 75/90, other text 60/75, large text 45/60, UI 30. It cannot block alone. |
 | CF-204 | Sample imagery or gradients behind glyphs when same-origin pixels are available. Cross-origin paint remains `not_verified`. |
-| CF-205 | At most one high-saturation interactive accent cluster per view. Count filled emphasis surfaces of at least 24×24px, not every coloured border. Review decides whether separate status hues are justified. |
+| CF-205 | At most four high-saturation hue clusters per view (the rich default: an accent, a second accent and status hues); one when the lock records calm density. Count filled emphasis surfaces of at least 24×24px, not every coloured border. Review decides whether separate status hues are justified. |
 | CF-206 | Hues within 15 degrees serve one semantic colour. |
 | CF-207 | Status has text, icon or pattern as well as colour; absence of a second channel is HIGH. |
 | CF-301 | Spacing values at least 4px sit within 1px of a 4px multiple. One to three distinct off-scale values are LOW; more than three are MEDIUM. Skip auto margins. |
@@ -41,7 +45,7 @@ This is the authored rule sheet for the interface probe. `scripts/probe-threshol
 | CF-401 | For a rounded child that traces its parent's content box, compare each corner with outer radius minus padding; allow the rule register's tolerance. Skip icon-sized children and heavily padded parents. |
 | CF-402 | A border plus a near-zero-blur edge shadow redraws the same edge. A soft ambient shadow is acceptable. |
 | CF-403 | A hard offset shadow needs a recorded visual register; otherwise flag it for review. |
-| CF-404 | A primary action should not carry a chromatic, large-blur halo. Parse blur, colour and offset rather than banning all shadows. |
+| CF-404 | A primary action should not carry a chromatic, large-blur halo. A glow on a decorative `ui-glow` surface is not a control halo; three or more recurring glows fall under SLOP-010. Parse blur, colour and offset rather than banning all shadows. |
 | CF-405 | Photo outlines should be thin and low saturation, not a loud accent border. |
 | CF-406 | Modal scrims use a solid or near-solid veil, not backdrop blur by reflex. |
 | CF-407 | Grids, radial halos, marquees and stripe pseudo-elements are reviewer cues unless tied to content. |

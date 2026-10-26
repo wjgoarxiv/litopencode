@@ -115,6 +115,9 @@ test("exposes unique lit and litwork command activation metadata", () => {
     "lit",
     "lit-comprehend",
     "lit-brainstorm",
+    "lit-hijack",
+    "lit-adhd",
+    "lit-rewind",
     "lit-goal",
     "lit-handoff",
     "lit-loop",
@@ -154,7 +157,7 @@ test("exposes unique lit and litwork command activation metadata", () => {
   for (const command of litOpenCodeCommands) {
     assert.equal(command.banner, `🔥 LIT IGNITED · ${activationDiscipline(command.id)} 🔥`);
     assert.ok(command.activationText.includes(`🔥 **LIT IGNITED · ${activationDiscipline(command.id)}** 🔥`));
-    assert.match(command.activationText, /lit-loop|start-work|review-work|litresearch|litgoal|lit-plan|init deep|lit-crucible|lit-handoff|scientific-visualization|refactor|lit-burnoff|lit-code|debugging|lit-commit|lsp|rules|deep-interview|lit-comprehend|browser-drive/i);
+    assert.match(command.activationText, /lit-loop|start-work|review-work|litresearch|litgoal|lit-plan|init deep|lit-crucible|lit-handoff|scientific-visualization|refactor|lit-burnoff|lit-code|debugging|lit-commit|lsp|rules|deep-interview|lit-comprehend|browser-drive|lit-adhd/i);
   }
 });
 

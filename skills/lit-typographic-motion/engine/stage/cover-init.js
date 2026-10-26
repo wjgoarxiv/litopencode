@@ -23,7 +23,18 @@
   CoverDate.UTC = RealDate.UTC;
   Object.defineProperty(window, "Date", { value: CoverDate, writable: true, configurable: true });
   Object.defineProperty(Performance.prototype, "now", { value: refuse("performance.now", fromT), writable: true, configurable: true });
-  Math.random = refuse("Math.random", "use LitLoop.rng(seed) for layout and t for motion");
+  // Building a scene before window.ready may draw ids from Math.random (three.js names every object it
+  // makes): that phase gets a fixed-seed sequence, the same in every browser. Once the page is ready,
+  // frames are drawn in any order, so a call then is misuse.
+  const refusedRandom = refuse("Math.random", "use LitLoop.rng(seed) for layout and t for motion");
+  let seed = 0x9e3779b9;
+  Math.random = function random() {
+    if (window.ready === true) return refusedRandom();
+    seed = (seed + 0x6d2b79f5) | 0;
+    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
   window.requestAnimationFrame = refuse("requestAnimationFrame", "the renderer calls renderFrame(t); a cover page runs no loop of its own");
   window.setInterval = refuse("setInterval", "the renderer calls renderFrame(t); a cover page runs no loop of its own");
   if (window.crypto) Object.defineProperty(window.crypto, "getRandomValues", { value: refuse("crypto.getRandomValues", "use LitLoop.rng(seed)"), configurable: true });

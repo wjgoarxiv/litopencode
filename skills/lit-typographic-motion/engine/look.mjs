@@ -22,8 +22,14 @@ export const LOOK_QUESTIONS = Object.freeze([
   "Is any element on screen without a job in its beat?",
   "Could every copy line be pasted unchanged into a film about a different subject?"
 ]);
+// A stage film is also asked whether it is as full as its register asks and whether its turn lands.
+export const STAGE_LOOK_QUESTIONS = Object.freeze([
+  ...LOOK_QUESTIONS,
+  "Is the film rich enough for its register (rich: layered, every region of the frame working; minimal: a few elements, none idle)?",
+  "Does the turn land: at the turn shot, does what the film set up visibly break and change, so a stranger would notice it?"
+]);
 // A "no" here means another round; for the others a "yes" does (Q7: a nameable gap).
-const noMeansRevise = new Set([1, 2, 3, 5, 6]);
+const noMeansRevise = new Set([1, 2, 3, 5, 6, 10, 11]);
 // A cover is looked at for motion, the seam and damage, never for beats (references/cover.md).
 export const COVER_LOOK_QUESTIONS = Object.freeze([
   "Is something moving in every half-second window (the sheet's plot never lies flat on the red dashes)?",
@@ -33,9 +39,10 @@ export const COVER_LOOK_QUESTIONS = Object.freeze([
   "Are all three speed layers visible: a slow perpetual layer, a mid swell, beat events?",
   "Does anything read as a slide, a card swap, a title fade or an end card, or does light wash in place instead of travelling as an edge?",
   "Is any glyph, glint or glow damaged: a colour block, a dark disc, a visible box?",
-  "Would a skilled motion designer add or remove something? Name it."
+  "Would a skilled motion designer add or remove something? Name it.",
+  "Does the hero act its beat once per loop: one clear action, at the beat's time, not a wobble?"
 ]);
-const coverNoMeansRevise = new Set([1, 2, 3, 4, 5]);
+const coverNoMeansRevise = new Set([1, 2, 3, 4, 5, 9]);
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const shaFile = (file) => sha256(readFileSync(file));
 const readJson = (file, fallback = null) => (existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : fallback);
@@ -107,7 +114,8 @@ export function recordLook(out, round, answersFile) {
   const set = currentSet(out);
   if (set.stills.round !== round) throw new LookError(`the latest stills set was rendered with --round ${set.stills.round}; look at the set of round ${round}`);
   const cover = set.kind === "cover";
-  const questions = cover ? COVER_LOOK_QUESTIONS : LOOK_QUESTIONS;
+  const stageFilm = !cover && readJson(path.join(out, "treatment.json"))?.path === "stage";
+  const questions = cover ? COVER_LOOK_QUESTIONS : stageFilm ? STAGE_LOOK_QUESTIONS : LOOK_QUESTIONS;
   const blocked = input.blocked === "no-vision-tool";
   const viewed = [...new Set([...(Array.isArray(input.viewed) ? input.viewed : []), ...(Array.isArray(input.answers) ? input.answers.map((answer) => answer?.frame).filter((frame) => frame && frame !== "sound-cues.json") : [])])];
   const unknown = viewed.filter((frame) => typeof frame !== "string" || !set.files.includes(frame.replace(/^\.\//u, "")));
@@ -146,9 +154,10 @@ export function recordLook(out, round, answersFile) {
   return entry;
 }
 
-// Every image the last round must have viewed: poster, contact sheet, every beat midpoint and strip.
+// Every image the last round must have viewed: poster, contact sheet, storyboard, every beat midpoint
+// and strip.
 export function requiredFrames(set) {
-  return set.files.filter((file) => /(?:^|\/)poster\.png$|sheet\/contact\.png$|stills\/beat-\d+-mid\.png$|stills\/cut-\d+-strip\.png$/u.test(file));
+  return set.files.filter((file) => /(?:^|\/)poster\.png$|sheet\/contact\.png$|stills\/board\.png$|stills\/beat-\d+-mid\.png$|stills\/cut-\d+-strip\.png$/u.test(file));
 }
 
 function imageReads(out) {
@@ -207,14 +216,62 @@ export function coverDoneState(out) {
   return result("DONE", 0);
 }
 
+// A film whose treatment asks for a preview (`preview: true`) is done at its board: a stills-only
+// render whose layout check passed, looked at, storyboard included. The full render waits for the user.
+function previewDone(out, { reasons, labels, result }) {
+  const stills = readJson(path.join(out, "stills", "stills.json"));
+  if (!stills) { reasons.push("no board yet: render with `stage --stills-only`"); return result("NOT DONE", 1); }
+  if (!stills.files.some((entry) => entry.kind === "board")) reasons.push("the stills set has no storyboard (stills/board.png); render with `stage --stills-only` again");
+  const check = readJson(path.join(out, "stills", "check.json"));
+  if (check) {
+    const failed = check.rules.filter((rule) => rule.status === "FAIL").map((rule) => rule.id);
+    if (failed.length) reasons.push(`the board check failed (${failed.join(", ")}); fix the page and render the board again`);
+  } else reasons.push("the board check result (stills/check.json) is missing");
+  const rounds = readJson(path.join(out, "look.json"), { rounds: [] }).rounds;
+  const last = rounds.at(-1);
+  if (!last) reasons.push("no look round on the board: open the storyboard and the stills with the read tool and record round 1");
+  else {
+    if (last.manifestSha256 !== shaFile(path.join(out, "stills", "stills.json"))) reasons.push("the look round was recorded before the latest board; look again and record it");
+    const required = stills.files.filter((entry) => ["board", "sheet", "beat"].includes(entry.kind)).map((entry) => entry.file);
+    const skipped = required.filter((file) => !Object.hasOwn(last.frames ?? {}, file));
+    if (skipped.length && !last.blocked) reasons.push(`the round did not view: ${skipped.join(", ")}`);
+    if (last.host === "opencode" && !last.blocked) {
+      const reads = imageReads(out);
+      const notRead = Object.entries(last.frames ?? {}).filter(([file, sha]) => !reads.some((read) => read.file === file && read.sha256 === sha)).map(([file]) => file);
+      if (notRead.length) reasons.push(`not opened with the read tool: ${notRead.join(", ")}`);
+    }
+  }
+  if (reasons.length) return result("NOT DONE", 1);
+  labels.push(`this is the storyboard preview (${path.join(out, "stills", "board.png")}); the film is not rendered yet, and the user can say go to render it`);
+  return last.blocked === "no-vision-tool" ? result("DONE_UNVIEWED", 3) : result("DONE", 0);
+}
+
+// The run a done call means. `given` is the directory named by a path or `--out` (empty or missing: the
+// working directory, which is what an unset or empty shell variable leaves). When that folder holds no
+// treatment.json, the nearest ancestor within three levels that does is the run, so the check also works
+// from the film's stage/ or stills/ folder.
+export function findRunDir(given, cwd = process.cwd()) {
+  const start = path.resolve(cwd, typeof given === "string" && given !== "" ? given : ".");
+  let dir = start;
+  for (let level = 0; level <= 3; level++) {
+    if (existsSync(path.join(dir, "treatment.json"))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return start;
+}
+
 // Status: DONE (0), NOT DONE (1), DONE_WITH_OPEN_ITEMS (2, round 3 spent), DONE_UNVIEWED (3).
 export function doneState(dir) {
-  const out = path.resolve(dir);
+  const out = findRunDir(dir);
   if (isCoverRun(out)) return coverDoneState(out);
   const reasons = [], open = [];
-  const result = (status, code) => ({ status, code, done: code === 0, reasons, open, downgraded });
+  const labels = [];
+  const result = (status, code) => ({ status, code, done: code === 0, reasons, open, downgraded, labels });
   let treatment = null, downgraded = [];
   try { ({ treatment } = loadTreatment(out)); } catch (error) { reasons.push(error.message); return result("NOT DONE", 1); }
+  if (treatment.preview === true) return previewDone(out, { reasons, labels, result });
   downgraded = downgrades(readJson(path.join(out, ".run", "treatment-first.json")), treatment);
   const manifestFile = path.join(out, "manifest.json");
   const manifest = readJson(manifestFile);

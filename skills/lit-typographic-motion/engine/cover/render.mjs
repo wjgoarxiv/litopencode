@@ -114,14 +114,27 @@ function prepare(out) {
   if (state.blocked) throw stop(state.blocked.exit, state.blocked.name, `${state.blocked.detail}; fix: ${state.fix}`);
   const chrome = findChrome();
   if (!chrome.path) throw stop(EXIT.BLOCKED_NO_CHROME, "BLOCKED_NO_CHROME", `${chrome.missing}; fix: install Chrome or set CHROME_PATH`);
-  return { cover, coverDir, assets, state, chromePath: chrome.path, fonts: coverFonts(skillRoot, state, pins) };
+  return { cover, coverDir, assets, state, chromePath: chrome.path, fonts: coverFonts(skillRoot, state, pins), rung: cover.recipe === "hero-3d" ? "gpu" : "swiftshader", notices: [] };
 }
 
-// One browser for one pass; the profile lives under .run/cover/ and goes with the pass.
+// One browser for one pass; the profile lives under .run/cover/ and goes with the pass. The 3D hero asks
+// for the GPU rung. When a browser cannot start or draw there, every pass of the round takes the
+// software rung (the passes must share one) and the report says so; a page that breaks the
+// determinism or network rules is not retried, it would break the same way.
 async function withBrowser(chromium, context, profile, body) {
-  rmSync(profile, { recursive: true, force: true });
-  mkdirSync(profile, { recursive: true });
-  const browser = await openCover(chromium, { chromePath: context.chromePath, profile, coverDir: context.coverDir, page: context.cover.page, scale: COVER.captureScale, fonts: context.fonts });
+  const open = async () => {
+    rmSync(profile, { recursive: true, force: true });
+    mkdirSync(profile, { recursive: true });
+    return openCover(chromium, { chromePath: context.chromePath, profile, coverDir: context.coverDir, page: context.cover.page, scale: COVER.captureScale, fonts: context.fonts, rung: context.rung });
+  };
+  let browser;
+  try { browser = await open(); }
+  catch (error) {
+    if (context.rung !== "gpu" || [EXIT.STAGE_NETWORK_REQUEST, EXIT.STAGE_NONDETERMINISTIC].includes(error.exitCode)) throw error;
+    context.notices.push(`the 3D hero asked for the GPU rung and it failed there (${String(error.message).slice(0, 120)}); rendered on the software rung (SwiftShader), slower, same frames`);
+    context.rung = "swiftshader";
+    browser = await open();
+  }
   try { return await body(browser); } finally { await browser.close(); rmSync(profile, { recursive: true, force: true }); }
 }
 
@@ -255,11 +268,11 @@ export async function renderCover(out, { round = 1, log = () => {} } = {}) {
   renameSync(encoded.file, delivered);
   const stills = writeCoverStills(out, { round, gate, cover });
   writeFileSync(path.join(out, "poster.png"), readFileSync(path.join(out, "stills", "poster.png")));
-  const report = formatCoverReport(gate, { strict: true });
+  const report = `${formatCoverReport(gate, { strict: true })}${context.notices.map((note) => `warning: ${note}\n`).join("")}`;
   writeFileSync(path.join(out, "gate-report.txt"), report);
   const manifest = {
     schemaVersion: 1, mode: "cover", path: "cover", craftRound: round, recipe: cover.recipe,
-    page: cover.page, size, scale: COVER.captureScale, fps: cover.fps, frames: times.length, frameMs: ms, seed: cover.seed,
+    page: cover.page, size, scale: COVER.captureScale, rung: context.rung, warnings: context.notices, fps: cover.fps, frames: times.length, frameMs: ms, seed: cover.seed,
     encoder: encoded.encoder, encode: cover.encode, file: path.basename(delivered), bytes: statSync(delivered).size, captureSec: Number(captureSec.toFixed(1)),
     treatmentSha256: sha256(readFileSync(path.join(out, "treatment.json"))), coverSha256: stageSha(context.coverDir), stillsSha256: stills.sha256,
     gate: { pass: gate.pass, target: gate.target, medianD: gate.medianD, movingFrac: gate.movingFrac, longestStillSec: gate.longestStillSec, spike: gate.spike, seamLocal: gate.seamLocal, gates: gate.gates },

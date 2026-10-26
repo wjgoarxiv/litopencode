@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { concreteObservation, doneState, needsAnotherRound, recordLook } from "../skills/lit-typographic-motion/engine/look.mjs";
+import { LOOK_QUESTIONS, STAGE_LOOK_QUESTIONS, concreteObservation, doneState, needsAnotherRound, recordLook } from "../skills/lit-typographic-motion/engine/look.mjs";
 import { encodePng } from "../skills/lit-typographic-motion/engine/png.mjs";
 import { createToolExecuteAfterHook } from "../src/hooks.ts";
 import { recordMotionImageRead } from "../src/motion-image-reads.ts";
@@ -39,8 +39,8 @@ function renderRound(out, round, { film = false, exit = 0, withheld = false } = 
 }
 
 function answersFor(frames, { verdicts = {}, observed } = {}) {
-  const good = { 1: "yes", 2: "yes", 3: "yes", 4: "no", 5: "yes", 6: "yes", 7: "no", 8: "no", 9: "no" };
-  return Array.from({ length: 9 }, (_, i) => ({ q: i + 1, verdict: verdicts[i + 1] ?? good[i + 1], frame: i === 5 ? "sound-cues.json" : frames[i % frames.length], observed: observed ?? "The drawn basin fills with teal water under the low copy line.", ...(i === 0 ? { by: "blind" } : {}) }));
+  const good = { 1: "yes", 2: "yes", 3: "yes", 4: "no", 5: "yes", 6: "yes", 7: "no", 8: "no", 9: "no", 10: "yes", 11: "yes" };
+  return Array.from({ length: 11 }, (_, i) => ({ q: i + 1, verdict: verdicts[i + 1] ?? good[i + 1], frame: i === 5 ? "sound-cues.json" : frames[i % frames.length], observed: observed ?? "The drawn basin fills with teal water under the low copy line.", ...(i === 0 ? { by: "blind" } : {}) }));
 }
 
 function writeAnswers(dir, body) {
@@ -193,5 +193,60 @@ test("the viewed count in a gate report comes from the look round and survives g
     const round = JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"), "utf8")).craftRound;
     fs.writeFileSync(path.join(dir, "look.json"), JSON.stringify({ schemaVersion: 1, rounds: [{ round, kind: "film", frames: Object.fromEntries(allFrames.map((file) => [file, "0".repeat(64)])) }] }));
     for (const options of [{}, {}, { viewed: 0 }]) assert.match(runGate(dir, options).report, /frames actually viewed this run: 6 \(confirmed looked/u);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("a stage film is also asked whether it is rich enough for its register and whether its turn lands; a no on either asks for another round", () => {
+  assert.equal(LOOK_QUESTIONS.length, 9);
+  assert.equal(STAGE_LOOK_QUESTIONS.length, 11);
+  assert.match(STAGE_LOOK_QUESTIONS[9], /rich enough for its register/u);
+  assert.match(STAGE_LOOK_QUESTIONS[10], /turn land/u);
+  assert.deepEqual(needsAnotherRound(answersFor(allFrames, { verdicts: { 10: "no", 11: "no" } })), [10, 11]);
+  assert.deepEqual(needsAnotherRound(answersFor(allFrames)), []);
+});
+
+test("look on a stage film refuses a round that skips the register and turn questions", () => {
+  const dir = tmp("ltm-look-stage-q-");
+  const out = path.join(dir, "out");
+  try {
+    writeTreatment(out, fixtureStageTreatment());
+    renderRound(out, 1);
+    const body = { viewed: allFrames, weakestBeat: "beat 2 is flat", change: "add a splash ring", answers: answersFor(allFrames).slice(0, 9) };
+    const result = spawnSync(process.execPath, [render, "look", "--out", out, "--round", "1", "--answers", writeAnswers(dir, body)], { encoding: "utf8" });
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /answer every question; missing 10, 11/u);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("gate --done finds the run: a bare --out ., the folder it is run from, a subfolder of it, an empty variable and a plain path all give one verdict", () => {
+  const run = doneRun();
+  try {
+    const at = (cwd, args) => spawnSync(process.execPath, [gate, "--done", ...args], { encoding: "utf8", cwd });
+    const plain = at(run.dir, [run.out]);
+    assert.equal(plain.status, 0, plain.stdout);
+    assert.equal(plain.stdout.trim(), "DONE");
+    for (const [cwd, args] of [[run.out, ["--out", "."]], [run.out, ["."]], [run.out, []], [run.out, [""]], [path.join(run.out, "stills"), ["."]], [path.join(run.out, "stills"), ["--out", "."]], [run.dir, [`--out=${run.out}`]], [run.dir, ["--out", "out"]]]) {
+      const result = at(cwd, args);
+      assert.equal(result.status, 0, `${cwd} ${args.join(" ")}: ${result.stdout}${result.stderr}`);
+      assert.equal(result.stdout, plain.stdout, `${args.join(" ")}`);
+    }
+    const lost = at(run.dir, ["--out", "elsewhere"]);
+    assert.equal(lost.status, 1);
+    assert.match(lost.stdout, /^NOT DONE: .*treatment\.json/u);
+  } finally { fs.rmSync(run.dir, { recursive: true, force: true }); }
+});
+
+test("the read hook records the storyboard from stills/board.png, with a relative path from the film folder", () => {
+  const dir = tmp("ltm-hook-board-");
+  const out = path.join(dir, "out");
+  try {
+    writeTreatment(out, fixtureStageTreatment());
+    renderRound(out, 1);
+    fs.writeFileSync(path.join(out, "stills", "board.png"), png(77));
+    recordMotionImageRead({ tool: "read", args: { filePath: "stills/board.png" } }, out);
+    const reads = fs.readFileSync(path.join(out, ".run", "image-reads.jsonl"), "utf8").trim().split("\n").map((line) => JSON.parse(line));
+    assert.equal(reads.length, 1);
+    assert.equal(reads[0].file, "stills/board.png");
+    assert.equal(reads[0].sha256, sha(path.join(out, "stills", "board.png")));
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });

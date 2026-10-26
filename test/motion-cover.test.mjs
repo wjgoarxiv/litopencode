@@ -124,6 +124,7 @@ test("the cover init script makes every clock and entropy source throw and recor
   sandbox.requestAnimationFrame = () => 1;
   sandbox.setInterval = () => 1;
   vm.runInNewContext(fs.readFileSync(path.join(skillRoot, "engine", "stage", "cover-init.js"), "utf8"), sandbox);
+  sandbox.ready = true;
   for (const call of ["Math.random()", "Date.now()", "new Date()", "performance.now()", "requestAnimationFrame(() => {})", "setInterval(() => {}, 5)", "crypto.getRandomValues(new Uint8Array(2))"]) {
     assert.throws(() => vm.runInNewContext(call, sandbox), /is not available in a cover page/u, call);
   }
@@ -363,7 +364,7 @@ test("C009: a finished cover with generated art tells the reply to label it", ()
 });
 
 // ---- cover look rounds and defects (C001) ----
-test("a cover round takes the eight cover questions, needs no stills-only round 1, and records defects", () => {
+test("a cover round takes the nine cover questions, needs no stills-only round 1, and records defects", () => {
   const out = fakeCoverRun(path.join(tmp("ltm-cover-look-"), "out"));
   try {
     const defect = { t: 1.2, region: [340, 10, 330, 50], frame: "stills/sheet.png", observed: "The glint turns the last letter of the painted title into a solid red block.", cause: "colour-dodge blend saturates coloured letters", fix: "run the glint in overlay blend" };
@@ -371,7 +372,8 @@ test("a cover round takes the eight cover questions, needs no stills-only round 
     assert.equal(entry.kind, "cover");
     assert.deepEqual(entry.defects, [defect]);
     assert.deepEqual(entry.needsAnotherRound, []);
-    assert.equal(COVER_LOOK_QUESTIONS.length, 8);
+    assert.equal(COVER_LOOK_QUESTIONS.length, 9);
+    assert.match(COVER_LOOK_QUESTIONS[8], /hero act its beat once per loop/u);
   } finally {
     done(out);
   }
@@ -454,10 +456,10 @@ test("cover mode is enrolled in the skill body, the references, the route contex
   assert.ok(cover.split(/\s+/u).length >= 3500, `cover.md holds ${cover.split(/\s+/u).length} words`);
   const prompt = promptForChatActivationMode("lit-task", "make a short launch video for our new library lit");
   assert.match(prompt, /A README cover or banner loop takes cover mode \(references\/cover\.md\)/u);
-  assert.match(prompt, /\(film, stills, stage, cover, sound, look, gate\)/u);
+  assert.match(prompt, /\(film, stills, stage, scaffold, styles, assets, blender, cover, sound, look, gate\)/u);
   const pinned = new Set(managedSkillDefinition("lit-typographic-motion").canonicalFiles.map((asset) => asset.path));
   for (const rel of ["references/cover.md", "engine/cover/render.mjs", "engine/cover/gate.mjs", "engine/cover/decode.mjs", "engine/stage/loop-kit.js", "engine/stage/cover-init.js", "fonts/JetBrainsMono-wght-latin.woff2", "recipes/painted-light/index.html", "recipes/painted-light/expected.json", "recipes/negatives/reset-sweep/expected.json"]) assert.ok(pinned.has(rel), rel);
-  const line = formatProbe({ chrome: { ok: false, detail: "x" }, ffmpeg: { ok: false, detail: "y", previewEncoder: "none" }, webgl2: { ok: false, detail: "z" }, softwareWarning: "w", coverEncoder: coverEncoder({ PATH: "" }), prewarm: { ready: false, deps: [], missingFonts: [], mismatchedFonts: [], fix: "f", audio: { reason: "a" }, wordTiming: { reason: "b" } } });
+  const line = formatProbe({ chrome: { ok: false, detail: "x" }, ffmpeg: { ok: false, detail: "y", previewEncoder: "none" }, webgl2: { ok: false, detail: "z" }, softwareWarning: "w", blender: { ok: false, detail: "b" }, coverEncoder: coverEncoder({ PATH: "" }), prewarm: { ready: false, deps: [], missingFonts: [], mismatchedFonts: [], fix: "f", audio: { reason: "a" }, wordTiming: { reason: "b" } } });
   assert.match(line, /^motion cover encoder: none; cover renders stop with exit 21; fix: install libwebp/mu);
   const pack = spawnSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   assert.equal(pack.status, 0, pack.stderr);
@@ -467,7 +469,7 @@ test("cover mode is enrolled in the skill body, the references, the route contex
 });
 
 test("C014: every recipe ships an expected row inside TARGET and at most 2 MiB, and the recipe QA is wired", () => {
-  for (const name of ["painted-light", "weight-tide", "orbit-loop"]) {
+  for (const name of ["hero-3d", "painted-light", "weight-tide", "orbit-loop"]) {
     const expected = JSON.parse(fs.readFileSync(path.join(skillRoot, "recipes", name, "expected.json"), "utf8"));
     const { row } = expected;
     assert.ok(row.medianD >= COVER.target.medianD && row.movingFrac >= COVER.target.movingFrac, name);

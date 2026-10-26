@@ -49,8 +49,8 @@ class OfficeCraftTests(unittest.TestCase):
         return path
 
     def test_accent_family(self):
-        for index, rgb in enumerate([(220, 30, 30), (30, 170, 50), (40, 70, 220)]):
-            shape = self.slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(1 + index * 2), Inches(2), Inches(1), Inches(1))
+        for index, rgb in enumerate([(220, 30, 30), (30, 170, 50), (40, 70, 220), (230, 190, 20), (150, 40, 190)]):
+            shape = self.slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(.5 + index * 1.6), Inches(2), Inches(1), Inches(1))
             shape.fill.solid()
             shape.fill.fore_color.rgb = RGBColor(*rgb)
         self.assertTrue(self.check('OF-101'))
@@ -129,8 +129,8 @@ class OfficeCraftTests(unittest.TestCase):
         self.assertTrue(self.check('OF-109'))
 
     def test_sample_notice_tag_is_not_an_accent(self):
-        for index, rgb in enumerate([(31, 59, 51), (203, 211, 218)]):
-            shape = self.slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(1 + index * 3), Inches(2), Inches(2), Inches(1))
+        for index, rgb in enumerate([(31, 59, 51), (203, 211, 218), (180, 50, 50), (50, 90, 200), (220, 180, 30)]):
+            shape = self.slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(.5 + index * 1.6), Inches(2), Inches(1), Inches(1))
             shape.fill.solid()
             shape.fill.fore_color.rgb = RGBColor(*rgb)
         tag = self.slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(.3), Inches(6.9), Inches(2.6), Inches(.25))

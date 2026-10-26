@@ -1,7 +1,7 @@
 # Atlas
 
 Atlas is a picture book with captions. Photographs bleed to the edge, titles sit on dark panels
-over pictures or under large images, text stays short and calm, and the photographs bring the
+over full-bleed pictures or in the slide grid's title zone above a large image, text stays short and calm, and the photographs bring the
 colour; the pack's own accent is a quiet navy. Pack file: `templates/tonalities/atlas/pack.yaml`.
 
 ## Use it for
@@ -34,7 +34,7 @@ colour; the pack's own accent is a quiet navy. Pack file: `templates/tonalities/
 ## Type
 
 Pretendard throughout. Compact ramp at density 10. Titles at normal tracking, display slightly
-tight.
+tight. Cover and statement titles take the hero step (60 pt) when their words fit; `hero: false` in the front matter turns it off. A figure is never larger than a title.
 
 ## Dials
 
@@ -53,7 +53,7 @@ Density 10, variance 7: up to five treatments, which is all of Atlas's five.
 | reference | side-rail |
 | definition | side-rail |
 
-Treatments: overlay, bottom-anchor, side-rail, top-plain-large, statement. Overlay applies only to
+Treatments: overlay, bottom-anchor (the title closed by a heavy rule over a visual that takes the body's full height), side-rail, top-plain-large, statement. Overlay applies only to
 `image-full`. The cover is drawn on a `plate`, the dark field under the text, that hugs the title
 and its lines and bleeds off the page foot. A statement or quote stands on the whole-page field
 (`drench`): a plate under the lower half would leave the page above it open.

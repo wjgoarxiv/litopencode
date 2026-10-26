@@ -5,7 +5,7 @@ export const frontendUiUxFeature = {
   id: "frontend-ui-ux",
   title: "Frontend UI/UX",
   summary:
-    "Builds and inspects authorized interfaces using an evolving beta2 contract and offline design intelligence.",
+    "Builds and inspects authorized interfaces using an evolving beta2 contract, offline design intelligence and a locked house style with a rich default.",
   bindings: [
     {
       kind: "config",
@@ -22,6 +22,13 @@ export const frontendUiUxFeature = {
         "Ships focused contract references plus an exact verified 167-file canonical design library. The canonical route is inert and separate from the normalized retrieval dataset."
     },
     {
+      kind: "config",
+      id: "skills/frontend-ui-ux/kit",
+      surface: "OpenCode native skill frontend-ui-ux",
+      description:
+        "Ships five house styles, the token-only component sheet and three layout starters; scripts/design-lock.mjs writes the design lock, tokens and fonts into a new project, and the probe checks the rendered page against it (DS-001 to DS-008)."
+    },
+    {
       kind: "cli",
       id: "litopencode install",
       surface: "LitOpenCode native skill installer",
@@ -35,6 +42,7 @@ export const frontendUiUxFeature = {
     }
   ],
   verification: [
+    "node --test test/frontend-design-lock.test.mjs",
     "node --test --test-name-pattern='uiux\\.' test/runtime-skills.test.mjs test/packed-artifact.test.mjs",
     "node --test --test-name-pattern='integration\\.installed-nested-assets' test/cli-install-surface.test.mjs",
     "npm run check:managed-skill-manifest",

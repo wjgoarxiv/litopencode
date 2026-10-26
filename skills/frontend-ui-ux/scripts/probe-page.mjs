@@ -19,7 +19,9 @@ export function inspectPage(viewport, t, state = {}) {
   const color = (value) => {
     const hex = value?.match(/^#([\da-f]{3}|[\da-f]{6})$/iu);
     if (hex) { const raw = hex[1].length === 3 ? [...hex[1]].map((digit) => digit + digit).join('') : hex[1]; return { c: [0, 2, 4].map((index) => Number.parseInt(raw.slice(index, index + 2), 16)), a: 1 }; }
-    const n = value?.match(/[\d.]+/gu)?.map(Number); return n?.length >= 3 ? { c: n.slice(0, 3), a: n[3] ?? 1 } : null;
+    // color-mix() and relative colours compute to color(srgb r g b / a) with 0 to 1 channels; other spaces are not sampled.
+    if (/^(?:color\((?!srgb[ )])|lab\(|lch\(|oklab\(|oklch\()/iu.test(value ?? '')) return null;
+    const n = value?.match(/[\d.]+/gu)?.map(Number), unit = /^color\(srgb /iu.test(value ?? '') ? 255 : 1; return n?.length >= 3 ? { c: n.slice(0, 3).map((v) => v * unit), a: n[3] ?? 1 } : null;
   };
   const luminance = (channels) => { const c = channels.map((n) => { const v = n / 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
   const contrast = (a, b) => (Math.max(luminance(a), luminance(b)) + .05) / (Math.min(luminance(a), luminance(b)) + .05);
@@ -38,7 +40,7 @@ export function inspectPage(viewport, t, state = {}) {
   const gradientStops = (el) => {
     for (let node = el; node; node = node.parentElement) {
       const css = getComputedStyle(node), paint = color(css.backgroundColor);
-      if (/gradient\(/iu.test(css.backgroundImage)) return [...css.backgroundImage.matchAll(/rgba?\([^)]*\)|#[\da-f]{3,6}\b/giu)].map((match) => color(match[0])).filter(Boolean);
+      if (/gradient\(/iu.test(css.backgroundImage)) return [...css.backgroundImage.matchAll(/rgba?\([^)]*\)|#[\da-f]{3,6}\b/giu)].map((match) => color(match[0])).filter((stop) => stop && stop.a >= .5);
       if (css.backgroundImage !== 'none' || paint && paint.a * Number(css.opacity) >= .99) break;
     }
     return [];
@@ -63,7 +65,7 @@ export function inspectPage(viewport, t, state = {}) {
     if (state.zoomEmulation) add('RS-004', 'HIGH', 'derived', null, overflow, t.pageOverflowTolerancePx);
   }
   const elements = [...document.querySelectorAll('body *')].slice(0, 3000).filter(visible);
-  const textElements = [], hues = [], accentSamples = [], targets = [], spacing = [], fontFamilies = new Set(), roles = new Set(), eyebrows = [], glows = [], stripes = [], tileGrids = [];
+  const textElements = [], gradientText = [], hues = [], accentSamples = [], targets = [], spacing = [], fontFamilies = new Set(), roles = new Set(), eyebrows = [], glows = [], stripes = [], tileGrids = [];
   const destructive = /\b(?:delete|remove|destroy|erase|discard|삭제|제거|폐기)\b/iu;
   const isTarget = (el) => el.matches('button,a[href],input,select,textarea,[role="button"]');
   const firstFilled = elements.find((el) => isTarget(el) && el.getBoundingClientRect().top < innerHeight && el.matches('button,a,[role="button"]') && color(getComputedStyle(el).backgroundColor)?.a > .5);
@@ -85,8 +87,10 @@ export function inspectPage(viewport, t, state = {}) {
         if (!/mono/u.test(family) && !/tabular-nums/u.test(css.fontVariantNumeric) && !/["'](?:tnum|lnum)["']\s*1/u.test(css.fontFeatureSettings)) add('CF-106', 'LOW', 'measured', el, css.fontVariantNumeric, 'tabular numerals');
       }
       const rects = textRects(el);
+      // A strip that scrolls sideways inside its own box (a tab or nav row) keeps its overflow reachable.
+      const inScroller = (() => { for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) if (/(auto|scroll)/u.test(getComputedStyle(p).overflowX) && p.scrollWidth > p.clientWidth) return true; return false; })();
       const clipped = rects.some((r) => {
-        if (r.left < -t.clippedTextTolerancePx || r.right > innerWidth + t.clippedTextTolerancePx) return true;
+        if (!inScroller && (r.left < -t.clippedTextTolerancePx || r.right > innerWidth + t.clippedTextTolerancePx)) return true;
         for (let parent = el; parent; parent = parent.parentElement) {
           const pc = getComputedStyle(parent);
           if (!/(hidden|clip)/u.test(`${pc.overflowX} ${pc.overflowY}`) || pc.textOverflow === 'ellipsis' || Number.parseInt(pc.webkitLineClamp, 10) > 0 || Number.parseInt(pc.lineClamp, 10) > 0) continue;
@@ -107,7 +111,8 @@ export function inspectPage(viewport, t, state = {}) {
         const size = Number.parseFloat(css.fontSize), large = size >= t.largeTextPx || (size >= t.boldLargeTextPx && Number.parseFloat(css.fontWeight) >= 700);
         const floor = large ? t.largeTextContrast : t.smallTextContrast;
         if (value < floor) add('CF-201', large ? 'MEDIUM' : 'HIGH', 'derived', el, Number(value.toFixed(2)), floor);
-      } else if (!el.closest(':disabled,[aria-disabled="true"]')) {
+      } else if (!el.closest(':disabled,[aria-disabled="true"]') && !((css.backgroundClip === 'text' || css.webkitBackgroundClip === 'text') && /gradient\(/iu.test(css.backgroundImage))) {
+        // Gradient text paints its own gradient; SLOP-009 checks the stops against the surface.
         const stops = !obscured && fg ? gradientStops(el) : [];
         if (stops.length) {
           const size = Number.parseFloat(css.fontSize), large = size >= t.largeTextPx || size >= t.boldLargeTextPx && Number.parseFloat(css.fontWeight) >= 700;
@@ -134,7 +139,7 @@ export function inspectPage(viewport, t, state = {}) {
       if (flourishDashes) add('SLOP-040', 'MEDIUM', 'measured', el, flourishDashes.length, 0);
       if (/\b(?:unleash|revolutionize|transformative platform|seamless experience|next.gen)\b/iu.test(text)) add('SLOP-036', 'MEDIUM', 'measured', el, text.slice(0, 120), 'specific claim');
       if (/\b(?:lorem ipsum|\[placeholder\]|\[todo\]|todo:)\b/iu.test(text)) add('SLOP-060', 'LOW', 'measured', el, text.slice(0, 120), 'finished copy');
-      if (el.matches('button,a,label,[role="button"],nav *') && /^\p{Lu}[\p{L}]+(?:\s+\p{Lu}[\p{L}]+)+$/u.test(text) && !/\bExample\b/u.test(text)) add('CF-107', 'LOW', 'derived', el, text, 'sentence case');
+      if (el.matches('button,a,label,[role="button"],nav *') && !el.matches('[class*="brand"],[class*="logo"]') && /^\p{Lu}[\p{L}]+(?:\s+\p{Lu}\p{Ll}[\p{L}]*)+$/u.test(text) && !/\bExample\b/u.test(text)) add('CF-107', 'LOW', 'derived', el, text, 'sentence case');
       if (el.nextElementSibling?.matches('h1,h2,h3') && css.textTransform === 'uppercase' && Number.parseFloat(css.letterSpacing) > 0 && Number.parseFloat(css.fontSize) < Number.parseFloat(getComputedStyle(el.nextElementSibling).fontSize) * .65) eyebrows.push(el);
       if (el.matches('button,a,[role="button"]') && /^[\p{Extended_Pictographic}\uFE0F\s]+$/u.test(text) && box.width <= 32) add('SLOP-053', 'LOW', 'derived', el, text, 'named icon set');
     }
@@ -145,7 +150,9 @@ export function inspectPage(viewport, t, state = {}) {
       const fg = color(getComputedStyle(el, '::placeholder').color), bg = background(el);
       if (fg && bg) { const value = contrast(fg.c, bg); if (value < t.smallTextContrast) add('CF-807', 'MEDIUM', 'derived', el, Number(value.toFixed(2)), t.smallTextContrast); }
     }
-    if (el.matches('a[href]') && /^(#|javascript:)/iu.test(el.getAttribute('href')?.trim() ?? '')) add('SLOP-058', el.closest('nav') || el.classList.contains('primary') ? 'HIGH' : 'MEDIUM', 'derived', el, el.getAttribute('href'), 'real destination');
+    // A bare "#" or a javascript: URL goes nowhere; an in-page "#section" is real when the target exists.
+    const href = el.matches('a[href]') ? el.getAttribute('href').trim() : '', fragment = href.length > 1 && href.startsWith('#') ? href.slice(1) : null;
+    if (el.matches('a[href]') && (/^(#|javascript:)/iu.test(href) && fragment === null || fragment !== null && !document.getElementById(fragment) && !document.getElementsByName(fragment).length)) add('SLOP-058', el.closest('nav') || el.classList.contains('primary') ? 'HIGH' : 'MEDIUM', 'derived', el, el.getAttribute('href'), 'real destination');
     if (el.matches('button:not([type])') && el.form && [...el.form.querySelectorAll('button,input[type="submit"],input[type="image"]'), ...document.querySelectorAll(`button[form="${CSS.escape(el.form.id)}"]`)].filter((button) => button.form === el.form && (button.matches('button:not([type]),button[type="submit"],input[type="submit"],input[type="image"]'))).length >= 2) add('SLOP-059', 'HIGH', 'derived', el, 'implicit submit among submit-capable controls', 'explicit button or submit');
     if (el.matches('img')) {
       const source = el.getAttribute('src') || el.getAttribute('srcset');
@@ -168,7 +175,7 @@ export function inspectPage(viewport, t, state = {}) {
       const accessibleName = el.getAttribute('aria-label')?.trim() || labelledBy || el.getAttribute('title')?.trim() || el.innerText?.trim() || el.querySelector('img[alt]')?.getAttribute('alt')?.trim() || el.labels?.[0]?.textContent?.trim() || el.getAttribute('value')?.trim();
       if (!accessibleName && !el.matches('input[type="hidden"]')) add('CF-603', 'HIGH', 'derived', el, 'no accessible name', 'accessible name');
     }
-    if ((css.backgroundClip === 'text' || css.webkitBackgroundClip === 'text') && /gradient\(/iu.test(css.backgroundImage)) add('SLOP-009', 'MEDIUM', 'measured', el, css.backgroundImage.slice(0, 100), 'solid text');
+    if ((css.backgroundClip === 'text' || css.webkitBackgroundClip === 'text') && /gradient\(/iu.test(css.backgroundImage)) gradientText.push({ el, css });
     if (/repeating-(?:linear|radial)-gradient/iu.test(css.backgroundImage) && !el.closest('figure,[role="img"]') && !el.querySelector('canvas,svg,table')) {
       const section = el.closest('section') ?? el;
       if (section.querySelector('[class*="blob"],[class*="halo"]') || /(?:rgb|hsl)a?\([^)]*(?:22\d|2[3-7]\d)/iu.test(css.backgroundImage)) add('SLOP-012', 'MEDIUM', 'derived', el, css.backgroundImage.slice(0, 100), 'data-linked grid');
@@ -208,8 +215,17 @@ export function inspectPage(viewport, t, state = {}) {
   }
   if (fontFamilies.size > t.fontFamilyMax) add('SLOP-019', 'MEDIUM', 'derived', null, [...fontFamilies], t.fontFamilyMax);
   if (viewport === '390' && roles.size > t.typeRoleMax) add('CF-108', 'MEDIUM', 'derived', null, [...roles], t.typeRoleMax);
-  if (glows.length >= t.glowRepeatMin) add('SLOP-010', 'MEDIUM', 'derived', glows[0], glows.length, 1);
-  if (stripes.some((row) => row.inset) || stripes.length >= t.stripeRepeatMin) add('SLOP-015', 'MEDIUM', 'derived', stripes[0].el, stripes.length, 'no decorative stripe');
+  if (glows.length >= t.glowRepeatMin) add('SLOP-010', 'MEDIUM', 'derived', glows[0], glows.length, `fewer than ${t.glowRepeatMin} repeated halos`);
+  if (stripes.filter((row) => row.inset).length >= t.stripeInsetRepeatMin || stripes.length >= t.stripeRepeatMin) add('SLOP-015', 'MEDIUM', 'derived', stripes[0].el, stripes.length, `fewer than ${t.stripeRepeatMin} accent stripes (inset form: ${t.stripeInsetRepeatMin})`);
+  // One gradient headline in the palette's own hues is craft. The reflex is a violet stop, the effect repeated across the page, or a stop the text cannot be read on.
+  for (const { el, css } of gradientText) {
+    const surface = background(el.parentElement ?? el), stops = [...css.backgroundImage.matchAll(/rgba?\([^)]*\)|#[\da-f]{3,6}\b/giu)].map((match) => color(match[0])).filter((stop) => stop && stop.a >= .1);
+    const floor = Number.parseFloat(css.fontSize) >= t.largeTextPx ? t.gradientTextLargeStopContrast : t.gradientTextStopContrast;
+    const weakest = surface && stops.length ? Math.min(...stops.map((stop) => contrast(stop.c.map((value, index) => stop.a * value + (1 - stop.a) * surface[index]), surface))) : null;
+    const violet = stops.some((stop) => Math.max(...stop.c) - Math.min(...stop.c) >= t.bannedAccentSpreadMin && hsl(stop.c).h >= t.bannedAccentHueMin && hsl(stop.c).h <= t.bannedAccentHueMax);
+    const reason = violet ? 'a violet stop' : gradientText.length > t.gradientTextMaxElements ? `${gradientText.length} gradient-filled text elements` : weakest !== null && weakest < floor ? `a stop at ${weakest.toFixed(2)}:1` : null;
+    if (reason) add('SLOP-009', 'MEDIUM', 'measured', el, `${css.backgroundImage.slice(0, 80)} (${reason})`, `at most ${t.gradientTextMaxElements} gradient headline, palette hues, every stop at least ${floor}:1`);
+  }
   const sections = elements.filter((el) => el.tagName === 'SECTION');
   for (const heading of elements.filter((el) => /^H[1-6]$/u.test(el.tagName))) {
     let anchor = heading, previous = null;
@@ -262,7 +278,11 @@ export function inspectPage(viewport, t, state = {}) {
       const ca = getComputedStyle(a), cb = getComputedStyle(b);
       const painted = [ca, cb].some((css) => css.backgroundColor !== 'rgba(0, 0, 0, 0)' || Number.parseFloat(css.borderTopWidth) > 0);
       const floor = painted ? t.borderedBlockGapPx : t.borderlessBlockGapPx;
-      if (gap < floor && !a.contains(b) && !b.contains(a)) add('CF-303', 'MEDIUM', 'measured', b, Number(gap.toFixed(1)), floor);
+      // Full-bleed section bands carry their own padding, so a flush stack of them is the page rhythm, not a cramped pair.
+      const bleed = Math.min(ra.width, rb.width) >= innerWidth * .95 && /^(SECTION|HEADER|FOOTER)$/u.test(a.tagName) && /^(SECTION|HEADER|FOOTER)$/u.test(b.tagName);
+      // A heading and what it introduces, or the rows of a table, belong together; the spacing rule is for separate blocks.
+      const related = /^H[1-6]$/u.test(a.tagName) || /table/u.test(getComputedStyle(parent).display) || /^T(HEAD|BODY|FOOT)$/u.test(b.tagName);
+      if (gap < floor && !bleed && !related && !a.contains(b) && !b.contains(a)) add('CF-303', 'MEDIUM', 'measured', b, Number(gap.toFixed(1)), floor);
     }
     if (gaps.length >= 3) {
       const sorted = [...gaps].sort((a, b) => a - b), middle = sorted[Math.floor(sorted.length / 2)];
@@ -285,7 +305,9 @@ export function inspectPage(viewport, t, state = {}) {
   }
   const clusters = [];
   for (const hue of hues) if (!clusters.some((v) => Math.min(Math.abs(hue - v), 360 - Math.abs(hue - v)) <= t.accentHueToleranceDegrees)) clusters.push(hue);
-  if (clusters.length > 1) add('CF-205', 'MEDIUM', 'derived', null, clusters.length, 1, 'review separate status colours');
+  // Rich is the default register; a lock recorded as calm keeps the single-accent limit.
+  const clusterLimit = state.density === 'calm' ? t.accentClusterCalmMax : t.accentClusterMax;
+  if (clusters.length > clusterLimit) add('CF-205', 'MEDIUM', 'derived', null, clusters.length, clusterLimit, 'review separate status colours');
   const banned = accentSamples.filter((sample) => sample.hue >= t.bannedAccentHueMin && sample.hue <= t.bannedAccentHueMax);
   if (banned.length && new Set(banned.map((sample) => sample.el.closest('section') ?? sample.el.closest('main') ?? sample.el)).size < 2) add('SLOP-008', 'MEDIUM', 'derived', banned[0].el, Number(banned[0].hue.toFixed(1)), 'brand-consistent hue or alternate accent');
   for (let i = 0; i < Math.min(textElements.length, 150); i++) for (let j = i + 1; j < Math.min(textElements.length, 150); j++) {

@@ -5,7 +5,10 @@
 // the band always move together.
 import { ease, mixHex, motionTiming, seg, type MotionFrame } from "./mission-motion.ts";
 import { contextWarnPercent, currentStepIndex, missionStatus, stepName, type MissionView } from "./mission-model.ts";
+import { laneColor, reviewLanes, reviewMark, turnColor, turnMark, type LaneReports } from "./mission-looks.ts";
+import { isRainbowSkill, rainbowColor, rainbowPill, rainbowText, rewindMark, type Rainbow } from "./mission-rainbow.ts";
 import type { ChipShimmer, SkillChip } from "./mission-skills.ts";
+import { threadLines, type ThreadRow } from "./mission-threads.ts";
 import {
   cellWidth,
   chipSparkCells,
@@ -59,6 +62,7 @@ export function readNotifyOptions(options: unknown): NotifyOptions {
 }
 
 const minimumText = 12;
+const idleHint = "lit adhd to pick up where you left off";
 
 function elapsedText(minutes: number | undefined): string {
   const total = Math.max(0, minutes ?? 0);
@@ -151,10 +155,10 @@ function phaseLabel(view: MissionView, frame: MotionFrame, palette: MissionPalet
   return { text: `● ${stepName(view.phase, view).toUpperCase()}`, fg: palette.info, bold: true };
 }
 
-function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string, rest: boolean): Line {
+function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string, rest: boolean, mark?: Line): Line {
   const brand: Segment[] = [{ text: "🔥 ", fg: palette.text }, { text: "LIT", fg: shine(palette.secondary, palette, 0.5, shimmerAt(frame), 0.6), bold: true }];
   const name = view.active ? view.discipline : "ready";
-  const right = [phaseLabel(view, frame, palette, rest)];
+  const right: Line = mark ?? [phaseLabel(view, frame, palette, rest)];
   const withName = (room: number): Segment[] => [...brand, { text: " · ", fg: palette.muted }, { text: truncateCells(name, room), fg: view.active ? palette.text : palette.muted }];
   const nameRoom = width - cellWidth("╭─") - lineWidth(withName(0)) - 2 - (lineWidth(right) + 2) - cellWidth("─╮") - 1;
   const attempts: [Line, Line][] = [];
@@ -209,11 +213,16 @@ function trackPills(view: MissionView, frame: MotionFrame, palette: MissionPalet
 }
 
 /** The text after the track in an idle session: the project's last goal, or how to start. */
-function idleText(last: LastMission | undefined, palette: MissionPalette, room: number): Segment[] {
-  if (last === undefined || last.title === "") return [{ text: "  ", fg: palette.muted }, { text: truncateCells("add lit to a prompt to start", room - 2), fg: palette.muted }];
+function idleText(last: LastMission | undefined, palette: MissionPalette, room: number, earlier: boolean): Segment[] {
+  if (last === undefined || last.title === "") {
+    return [{ text: "  ", fg: palette.muted }, { text: truncateCells(earlier ? idleHint : "add lit to a prompt to start", room - 2), fg: earlier ? palette.accent : palette.muted }];
+  }
   const mark: Segment = last.complete ? { text: ` ✓ ${last.passed}/${last.total}`, fg: palette.success } : { text: ` ● ${last.passed}/${last.total}`, fg: palette.info };
   const head: Segment = { text: "  last: ", fg: palette.muted };
-  return [head, { text: truncateCells(last.title, room - cellWidth(head.text) - cellWidth(mark.text)), fg: palette.text }, mark];
+  const hint: Segment[] = earlier ? [{ text: `  ${idleHint}`, fg: palette.accent }] : [];
+  const fixed = cellWidth(head.text) + cellWidth(mark.text);
+  const withHint = hint.length > 0 && room - fixed - lineWidth(hint) >= 12 ? hint : [];
+  return [head, { text: truncateCells(last.title, room - fixed - lineWidth(withHint)), fg: palette.text }, mark, ...withHint];
 }
 
 type TrackPlan = { readonly tight: boolean; readonly bar: number; readonly criteria: boolean; readonly text: boolean };
@@ -229,7 +238,7 @@ const trackPlans: readonly TrackPlan[] = [
   { tight: true, bar: 0, criteria: false, text: false }
 ];
 
-function trackRow(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, last: LastMission | undefined): Line {
+function trackRow(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, last: LastMission | undefined, earlier: boolean): Line {
   const sweep = shimmerAt(frame);
   const gap: Segment = { text: "  ", fg: palette.muted };
   for (const plan of trackPlans) {
@@ -241,7 +250,7 @@ function trackRow(view: MissionView, frame: MotionFrame, palette: MissionPalette
     const fixed = lineWidth(pills) + lineWidth(bar) + lineWidth(criteria);
     if (fixed > width) continue;
     const room = width - fixed;
-    const after = plan.text ? (view.active ? trailing(view, frame, palette, room) : idleText(last, palette, room)) : [];
+    const after = plan.text ? (view.active ? trailing(view, frame, palette, room) : idleText(last, palette, room, earlier)) : [];
     const keepText = plan.text && after.length > 0 && (view.complete ? lineWidth(after) <= room : room >= minimumText);
     if (plan.text && after.length > 0 && !keepText) continue;
     const body: Segment[] = [...pills, ...bar, ...criteria, ...(keepText ? after : [])];
@@ -252,8 +261,9 @@ function trackRow(view: MissionView, frame: MotionFrame, palette: MissionPalette
   return fitLine(trackPills(view, frame, palette, true), width, palette);
 }
 
-function chipSegments(chip: SkillChip, shimmer: ChipShimmer | undefined, palette: MissionPalette): Segment[] {
+function chipSegments(chip: SkillChip, shimmer: ChipShimmer | undefined, palette: MissionPalette, rainbow?: Rainbow): Segment[] {
   const text = ` ${chip.name} `;
+  if (rainbow !== undefined && chip.current && isRainbowSkill(chip.name)) return rainbowPill(text, rainbow, 180);
   if (!chip.current) return [{ text, fg: palette.muted, ...(palette.element === undefined ? {} : { bg: palette.element }) }];
   const sweep = shimmer?.names.includes(chip.name) === true ? shimmer.sweep : -1;
   if (sweep < 0) return [{ text, fg: palette.onFill, bg: palette.fill, bold: true }];
@@ -265,10 +275,10 @@ function chipSegments(chip: SkillChip, shimmer: ChipShimmer | undefined, palette
  * The skill chips row, exactly `width` cells: bright LIT accent pills for the current request first, then
  * dim recent names, and `+N` for the ones that do not fit. The label goes before any chip does.
  */
-export function skillRow(chips: readonly SkillChip[], shimmer: ChipShimmer | undefined, palette: MissionPalette, width: number): Line {
+export function skillRow(chips: readonly SkillChip[], shimmer: ChipShimmer | undefined, palette: MissionPalette, width: number, rainbow?: Rainbow): Line {
   const label: Segment = { text: "skills ", fg: palette.muted };
   if (chips.length === 0) return fitLine([label, { text: " none yet", fg: palette.muted }], width, palette);
-  const pills = chips.map((chip) => chipSegments(chip, shimmer, palette));
+  const pills = chips.map((chip) => chipSegments(chip, shimmer, palette, rainbow));
   const space: Segment = { text: " ", fg: palette.muted };
   for (const lead of [[label], []] as const) {
     const all = lineWidth(lead) + pills.reduce((total, pill, index) => total + lineWidth(pill) + (index === 0 ? 0 : 1), 0);
@@ -304,7 +314,38 @@ export type CardInputs = {
   readonly figures: CardFigures;
   /** The project's last goal, shown on the track while the session has no lit mission. */
   readonly last?: LastMission;
+  /** Other lanes of work beside the session's own; two or more draw the thread rows. */
+  readonly threads?: readonly ThreadRow[];
+  /** Rows to keep under the skill row while lanes are live, so the card never shrinks between repaints. */
+  readonly reserve?: number;
+  /** False under reduced motion: pulses hold one steady frame. */
+  readonly motion?: boolean;
+  /** Present while lit-adhd or lit-rewind runs: the colour cycle for the border, the LIT word and the gauges. */
+  readonly rainbow?: Rainbow;
+  /** Earlier work exists in this workspace, so an idle card names the way back in. */
+  readonly earlier?: boolean;
+  /** Present while the session waits on the user: the amber look, `glow` easing it 0 to 1 (0 at rest). */
+  readonly turn?: { readonly glow: number };
+  /** Present while review-work runs: the lanes reported so far, each a stretch of the top border. */
+  readonly lanes?: LaneReports;
 };
+
+/** The longest run of rule in the top border, split into the five review lanes, each in its lane's colour. */
+function laneRule(top: Line, reports: LaneReports, palette: MissionPalette): Line {
+  let at = -1;
+  top.forEach((segment, index) => {
+    if (/^─+$/u.test(segment.text) && (at < 0 || segment.text.length > (top[at]?.text.length ?? 0))) at = index;
+  });
+  const rule = top[at];
+  if (rule === undefined || rule.text.length < reviewLanes.length) return top;
+  const size = rule.text.length;
+  const parts: Segment[] = reviewLanes.map((lane, index) => {
+    const from = Math.floor((index * size) / reviewLanes.length);
+    const to = Math.floor(((index + 1) * size) / reviewLanes.length);
+    return { text: "─".repeat(to - from), fg: laneColor(lane, reports, palette), ...(reports[lane] === undefined ? {} : { bold: true }) };
+  });
+  return [...top.slice(0, at), ...parts, ...top.slice(at + 1)];
+}
 
 /**
  * The status card: four rows of exactly `width` cells whether the session is idle or working, so
@@ -315,14 +356,40 @@ export function statusCard(input: CardInputs, palette: MissionPalette, width: nu
   const rest = resting(input.view, input.busy);
   // At rest the track keeps what is done and unlights the step that was running.
   const view: MissionView = rest ? { ...input.view, steps: input.view.steps.map((step) => (step.state === "now" ? { ...step, state: "todo" } : step)) } : input.view;
-  const border = borderColor(view, frame, palette, rest);
+  // One look at a time: waiting on the user first, then the rewind look, then the review lanes.
+  const turn = input.turn;
+  const rainbow = turn === undefined ? input.rainbow : undefined;
+  const lanes = turn === undefined && rainbow === undefined ? input.lanes : undefined;
+  const border = turn !== undefined ? turnColor(palette, turn.glow) : rainbow === undefined ? borderColor(view, frame, palette, rest) : rainbowColor(rainbow.hue);
+  const trackPalette: MissionPalette = rainbow === undefined ? palette : { ...palette, primary: rainbowColor(rainbow.hue + 40), accent: rainbowColor(rainbow.hue + 160) };
   const inner = width - 4;
   const row = (content: Line): Line => (inner < 0 ? fitLine([], width, palette) : [{ text: "│ ", fg: border }, ...fitLine(content, inner, palette), { text: " │", fg: border }]);
+  const mark = turn !== undefined ? turnMark(palette, turn.glow) : rainbow !== undefined ? rewindMark(rainbow) : lanes !== undefined ? reviewMark(lanes, palette) : undefined;
+  const ruledTop = topLine(view, frame, palette, width, border, rest, mark);
+  const top = lanes === undefined ? ruledTop : laneRule(ruledTop, lanes, palette);
+  const threadRows = input.threads === undefined ? [] : threadLines(input.threads, palette, Math.max(0, inner), {
+    now: frame.now ?? 0,
+    motion: input.motion ?? true,
+    ...(rainbow === undefined ? {} : { gaugeColor: (index: number) => rainbowColor(rainbow.hue + 60 + index * 50) })
+  });
+  while (threadRows.length < (input.reserve ?? 0)) threadRows.push([]);
+  const track = trackRow(view, frame, trackPalette, Math.max(0, inner), input.last, input.earlier === true);
+  const bottom = bottomLine(view, input.figures, palette, width, border);
+  if (rainbow === undefined) return [top, row(track), row(skillRow(input.chips, input.shimmer, palette, Math.max(0, inner))), ...threadRows.map(row), bottom];
+  // The rewind look reaches every pill cell by cell: LIT, the running phase, the lit-adhd chip; the phase
+  // labels and the context figure turn on the card's own ground.
+  const names = view.steps.map((step) => stepName(step.id, view).toLowerCase());
+  const label = (text: string): number => names.findIndex((name) => text.trim().toLowerCase().startsWith(name));
   return [
-    topLine(view, frame, palette, width, border, rest),
-    row(trackRow(view, frame, palette, Math.max(0, inner), input.last)),
-    row(skillRow(input.chips, input.shimmer, palette, Math.max(0, inner))),
-    bottomLine(view, input.figures, palette, width, border)
+    top.flatMap((segment) => (segment.text === "LIT" ? rainbowPill("LIT", rainbow, 90) : [segment])),
+    row(track.flatMap((segment) => {
+      if (segment.bg !== undefined && segment.bold === true && /\S/u.test(segment.text)) return rainbowPill(segment.text, rainbow, 160);
+      const at = segment.bg === undefined ? label(segment.text) : -1;
+      return at >= 0 ? [{ ...segment, fg: rainbowColor(rainbow.hue + 200 + at * 50), bold: true }] : [segment];
+    })),
+    row(skillRow(input.chips, input.shimmer, palette, Math.max(0, inner), rainbow)),
+    ...threadRows.map(row),
+    bottom.flatMap((segment) => (segment.text.startsWith("ctx ") ? rainbowText(segment.text, rainbow, 120) : [segment]))
   ];
 }
 

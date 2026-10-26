@@ -73,7 +73,7 @@ test("the A/B pictures are gone from the tree", async () => {
 
 test("Skills at a glance lists every snapshot once, in the same order in both languages", async () => {
   const snapshots = (await fs.readdir("docs/assets/skills")).sort();
-  assert.equal(snapshots.length, 38, "one snapshot per user-facing skill row");
+  assert.equal(snapshots.length, 39, "one snapshot per user-facing skill row");
   for (const id of [...newSkills, "frontend-ui-ux"]) assert.ok(snapshots.includes(`${id}.webp`), `${id} snapshot`);
   for (const name of snapshots) {
     const bytes = await fs.readFile(`docs/assets/skills/${name}`);

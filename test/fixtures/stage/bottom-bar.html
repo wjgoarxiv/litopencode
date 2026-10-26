@@ -1,13 +1,18 @@
 <!doctype html>
 <meta charset="utf-8">
+<link rel="stylesheet" href="/lit/fonts.css">
+<link rel="stylesheet" href="/lit/style.css">
+<script src="/lit/style.js"></script>
 <script src="/lit/stage-kit.js"></script>
 <style>
   html, body { margin: 0; background: #202020; overflow: hidden; }
   #bar { position: fixed; left: 0; right: 0; bottom: 0; height: 40px; background: rgb(0, 200, 0); }
 </style>
 <div id="bar"></div>
+<div class="lit-headline lit-ink" id="copy">지붕의 비가 사흘을 버틴다</div>
 <script>
+  LitStage.text(document.getElementById("copy"));
   // A bar pinned to the viewport's bottom edge: it stays on the frame's last rows only while the page
   // keeps the format's full height after every capture.
-  LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4.2, render() {} });
+  LitStage.define({ width: 1920, height: 1080, fps: 30, duration: 4.2, render(t) { LitStage.place(document.getElementById("copy"), LitStage.shot(t).layout, "type"); } });
 </script>

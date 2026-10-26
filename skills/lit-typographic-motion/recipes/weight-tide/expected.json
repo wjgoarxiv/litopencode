@@ -29,6 +29,8 @@
     "idea": "A tide of weight rolls through drifting rows of the name while the bold name in the middle never thins.",
     "recipe": "weight-tide",
     "recipeReason": "The name is the only material, and a variable weight axis can move it without moving it.",
+    "hero": "The brand word, set as rows of type.",
+    "beat": "A swell of weight crosses the rows once per loop.",
     "brandWord": "LITOPENCODE",
     "aspect": "2:1",
     "loopSec": 8,

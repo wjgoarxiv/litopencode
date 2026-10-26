@@ -398,6 +398,8 @@ notice ship together — removing one without the other is a licence violation.
 
 When research leads to implementation, produce a handoff rather than blending modes. The handoff should include the decision, supporting evidence, uncertainty, recommended slice, files to inspect, tests to run, and risks. If evidence is insufficient, do not ask the implementation agent to guess. If the user asked only for research, do not edit files. If the user asks to proceed after research, route through the normal approval and `/start-work` path.
 
+When the research exists to port someone else's technique into a skill or system, hand the sources to `lit-hijack`: it captures them with provenance, gates the licence, writes a source-free spec and proves the port on the real surface. litresearch finds and verifies the sources, and the port is `lit-hijack`'s job.
+
 ## Evidence Graph Example
 
 For a question such as “Does the static skill corpus ship in the package?” the graph might include: claim “skills are packed,” source `tools/check-pack-payload.mjs`, confidence medium until executed, uncertainty whether current manifest changed, evidence command `npm run check:pack-payload`, and follow-up `npm pack --dry-run --json` if package contents changed. For a question such as “Does `/start-work` route correctly?” the graph might include command registration source, hook activation test, prompt text source, and a note that a tool call alone cannot switch agents.

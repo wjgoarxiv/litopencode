@@ -33,17 +33,13 @@ layout: method
 r = k · p_CO2^a · p_H2^b / (1 + K_H2O · p_H2O)
 
 - **r** CO2 consumption rate
-  (1) mol per gram of surface Ni per second
-  (2) measured below 10% conversion so the bed stays differential
+  (1) mol per gram of surface Ni per second, below 10% conversion
 - **k** rate constant
   (1) Arrhenius form, k = A · exp(−Ea / RT)
-  (2) apparent Ea compared across the five catalysts
 - **a, b** reaction orders in CO2 and H2
   (1) a between 0.21 and 0.34, b between 0.48 and 0.62
-  (2) fitted at fixed temperature, varying one partial pressure at a time
 - **K_H2O** water adsorption term
   (1) accounts for product inhibition above 220 °C
-  (2) held at one value per catalyst across temperatures
 - **Fit** least squares over 42 runs at 180-260 °C
   (1) R² = 0.97, residuals without trend in temperature
 - Note: rates are normalised by surface Ni from H2 chemisorption

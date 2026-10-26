@@ -158,3 +158,14 @@ test("a chat start-work resume puts the lifecycle receipt in the user message an
     return { "session-hook": { id: "session-hook", agent: "lit-implement" } };
   });
 });
+
+test("the prompt hook stays fail-open when typed start, re-entry or a typed word cannot read its state", async () => {
+  await withSession(async (dir, fake) => {
+    // A regular file where the runtime directory belongs makes every state read and write fail.
+    await fs.rm(path.join(dir, ".litopencode"), { recursive: true, force: true });
+    await fs.writeFile(path.join(dir, ".litopencode"), "not a directory", "utf8");
+    for (const text of ["lit approve", "lit deny", "go", "start-work plans/demo.md", "lit continue", "lit fix the failing test"]) {
+      await assert.doesNotReject(fake.run("session", "prompt", prompt(text)), text);
+    }
+  });
+});

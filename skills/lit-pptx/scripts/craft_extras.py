@@ -1,4 +1,13 @@
-"""Measured OOXML craft checks for the LitOpenCode slide QA gate."""
+"""Measured OOXML craft checks for the LitOpenCode slide QA gate.
+
+  OF-101  at most four accent hue families per slide (among solid shape fills); five fail
+  OF-120  a hard offset shadow (no blur) only in a pack that allows one, and there every shadow is hard
+
+A tonality pack may widen two limits through its own `qa:` block: `accent-families` and
+`display-accent-families` (how many accent hue families a content or display slide may carry before
+OF-101 fails; five or six, the default is four) and `offset-shadow` (OF-120). The gate finds the pack
+through the deck's tonality stamp; a deck without a stamp keeps the defaults.
+"""
 
 from __future__ import annotations
 
@@ -18,6 +27,8 @@ EMU = 914400
 NUMERIC = re.compile(r"^[\d\s,.%+\-±()$€£¥₩▲▼]+$")
 HANGUL = re.compile(r"[가-힣]")
 EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2600-\u27BF]")
+STAMP = re.compile(r"\blit-pptx tonality=(\S+) density=(\d+) grid=(\w+) variance=(\d+)")
+QA_KEY = re.compile(r"^  ([a-z-]+):\s*(\S+)\s*$")
 # Families the tonality compiler draws as display pages; every other `family@` name is a content slide.
 DISPLAY_FAMILY = re.compile(r"(?:cover|section)(?:-|$)|(?:statement|quote|closing-statement|image-full)$")
 
@@ -102,8 +113,42 @@ def _vertical_gaps(top, bottom, boxes):
     return gaps
 
 
+def pack_allowances(deck):
+    """The stamped tonality pack's `qa:` block as {key: int or bool}; empty without a stamp or a block."""
+    stamp = STAMP.search(deck.core_properties.subject or "")
+    if not stamp or not re.fullmatch(r"[a-z][a-z0-9-]*", stamp.group(1)):
+        return {}
+    pack = Path(__file__).resolve().parent.parent / "templates" / "tonalities" / stamp.group(1) / "pack.yaml"
+    if not pack.is_file():
+        return {}
+    allowed, inside = {}, False
+    for line in pack.read_text(encoding="utf-8").splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if not line.startswith(" "):
+            inside = line.rstrip() == "qa:"
+            continue
+        match = QA_KEY.match(line) if inside else None
+        if match:
+            value = match.group(2)
+            allowed[match.group(1)] = value == "true" if value in ("true", "false") else int(value) if value.isdigit() else value
+    return allowed
+
+
+def _accent_limits(display, allowed):
+    """The hue-family count that is advisory and the count that fails. A pack's own limit only widens the
+    default: N families pass, N + 1 fail, with no advisory step between."""
+    medium = T["displayAccentMedium"] if display else T["contentAccentMedium"]
+    high = T["displayAccentHigh"] if display else T["contentAccentHigh"]
+    allowance = allowed.get("display-accent-families" if display else "accent-families")
+    if isinstance(allowance, int) and not isinstance(allowance, bool):
+        medium = high = max(high, allowance + 1)
+    return medium, high
+
+
 def analyse(path):
     deck = Presentation(str(path))
+    allowed = pack_allowances(deck)
     canvas = deck.slide_width * deck.slide_height
     findings = check_output(deck) + check_labels(deck) + check_figures(deck) + check_run_ins(deck)
 
@@ -170,10 +215,18 @@ def analyse(path):
                                 add("OF-103", "HIGH", slide_no, {"row": row, "col": col + 1, "alignment": str(paragraph.alignment)}, "right", shape=index)
 
         count = _family_count(hues)
-        medium = T["displayAccentMedium"] if display else T["contentAccentMedium"]
-        high = T["displayAccentHigh"] if display else T["contentAccentHigh"]
+        medium, high = _accent_limits(display, allowed)
         if count >= medium:
             add("OF-101", "HIGH" if count >= high else "MEDIUM", slide_no, count, {"medium": medium, "high": high})
+
+        # OF-120: a hard offset shadow (blur 0) is a pack's look or nothing; a pack that has it keeps every shadow hard.
+        for index, shape in enumerate(slide.shapes, 1):
+            for shadow in shape._element.xpath('.//a:outerShdw'):
+                hard = int(shadow.get("blurRad") or 0) == 0
+                if hard and not allowed.get("offset-shadow"):
+                    add("OF-120", "HIGH", slide_no, "hard offset shadow in a pack that does not draw one", "no shadow", shape=index)
+                elif not hard and allowed.get("offset-shadow"):
+                    add("OF-120", "HIGH", slide_no, "soft shadow beside the pack's hard offset shadows", "blur 0", shape=index)
 
         rounds = [(index, shape, _box(shape), _radius(shape)) for index, shape in enumerate(shapes, 1) if shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE and "ROUNDED_RECTANGLE" in str(shape.auto_shape_type)]
         for inner_index, inner, ibox, iradius in rounds:

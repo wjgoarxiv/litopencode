@@ -6,6 +6,7 @@ import { actionFromArgs, deniedToolResultFromArgs, projectRootFromContext, summa
 import type { ToolDefinition, ToolResult } from "@opencode-ai/plugin";
 import { LifecycleConflictError, createBoundedAuthorityLifecycle } from "./bounded-authority.ts";
 import { createRuntimePaths } from "./state.ts";
+import { isLaneResult, isReviewLane, laneResults, reviewLanes } from "./tui/mission-looks.ts";
 import { loadConfig } from "./config.ts";
 import {
   captureKnowledgeEvent,
@@ -18,7 +19,7 @@ import {
 const litActions = ["activate", "status"] as const;
 const litworkActions = ["start", "status"] as const;
 const startWorkActions = ["start", "status"] as const;
-const reviewWorkActions = ["review", "status"] as const;
+const reviewWorkActions = ["review", "status", "lane"] as const;
 const wikifyActions = ["capture", "save", "review", "query", "status"] as const;
 
 function formatLenientDiagnostic(result: LenientLedgerReadResult): string {
@@ -225,7 +226,9 @@ export const startWorkTool = tool({
 export const reviewWorkTool = tool({
   description: "Start read-only review-work only when the user explicitly requests an independent plan or work review; run relevant checks directly for bounded tasks.",
   args: {
-    action: actionSchema("LitOpenCode review-work action. Supported values: review, status.")
+    action: actionSchema("LitOpenCode review-work action. Supported values: review, status, lane (report one finished lane of a work review)."),
+    lane: tool.schema.string().describe(`With action lane: the lane that finished, one of ${reviewLanes.join(", ")}.`).optional(),
+    result: tool.schema.string().describe(`With action lane: its verdict, one of ${laneResults.join(", ")}.`).optional()
   },
   async execute(args, context): Promise<ToolResult> {
     const denied = deniedToolResultFromArgs(args, "review-work", reviewWorkActions);
@@ -251,6 +254,23 @@ review-work is active. For a draft plan, audit objective achievability and retur
             command: "review-work",
             action
           }
+        };
+      }
+      case "lane": {
+        // The status card colours this lane's stretch of its border from the call itself; the ledger keeps the record.
+        if (!isReviewLane(args.lane) || !isLaneResult(args.result)) {
+          return {
+            title: "LitOpenCode review-work blocked",
+            output: `BLOCKED: action lane needs lane (${reviewLanes.join(", ")}) and result (${laneResults.join(", ")}).`,
+            metadata: { command: "review-work", action: "deny", blocked: true }
+          };
+        }
+        await operations.init();
+        await operations.append({ type: "tool.review-work.lane", sessionID: context.sessionID, lane: args.lane, result: args.result });
+        return {
+          title: `LitOpenCode review-work lane ${args.lane}: ${args.result}`,
+          output: `Recorded lane ${args.lane} as ${args.result}.`,
+          metadata: { command: "review-work", action, lane: args.lane, result: args.result }
         };
       }
       case "status": {

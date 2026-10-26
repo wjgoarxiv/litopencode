@@ -37,7 +37,7 @@ Because the accent is red, a loss is never red here; write the sign (`▼ 4%`, `
 ## Type
 
 Pretendard throughout; A2Z only on request. Compact ramp at density 10 (body 13, title 26,
-display 36). Display text tracks tighter (−2) than titles (−1).
+display 36). Display text tracks tighter (−2) than titles (−1). Cover and statement titles take the hero step (60 pt) when their words fit; `hero: false` in the front matter turns it off. A figure is never larger than a title.
 
 ## Dials
 
@@ -96,7 +96,7 @@ a list.
   three evidence lines; a KPI row carries five figures with their comparisons.
 - A mid-deck statement slide needs its one support line, or the composition check reports the
   page as nearly empty.
-- Keep bullet lists to four items; Signal's own avoid list says so.
+- Let each bullet carry a number or a name; split a long list into labelled groups.
 - Two lines of display text at most per title.
 
 ## Avoid
@@ -104,7 +104,7 @@ a list.
 - Red for losses (losses carry `▼` in ink).
 - More than two lines of display text.
 - Cards.
-- Bullet lists longer than four items.
+- A long bullet list with no groups.
 
 ## A sample fragment
 

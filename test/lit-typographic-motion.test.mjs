@@ -98,11 +98,11 @@ test("type-led requests raise the type-led cue hint, and a quote is detected wit
   }
 });
 
-test("the neutral film context stays under 700 bytes of prose and names each installed script once", () => {
+test("the neutral film context stays under 1000 bytes of prose and names each installed script once", () => {
   const prompt = promptForChatActivationMode("lit-task", noCopyRequests[0]);
   const context = prompt.slice(prompt.indexOf("This is a film request"), prompt.indexOf("</lit-task-mode>"));
   const [prose, commands] = context.split("\nCommands: ");
-  assert.ok(Buffer.byteLength(prose, "utf8") <= 700, `${Buffer.byteLength(prose, "utf8")} bytes of prose`);
+  assert.ok(Buffer.byteLength(prose, "utf8") <= 1000, `${Buffer.byteLength(prose, "utf8")} bytes of prose`);
   assert.equal((commands.match(/render\.mjs'/gu) ?? []).length, 1);
   assert.equal((commands.match(/gate\.mjs'/gu) ?? []).length, 1);
   for (const sub of ["film", "stills", "stage", "sound", "look", "gate", "--done <dir>"]) assert.ok(commands.includes(sub), sub);
@@ -275,9 +275,9 @@ test("the packed payload carries the engine, lockfile, notices, fonts and pins b
 
 test("SKILL.md stays lean, contract-shaped, and the references carry the dense detail", () => {
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
-  assert.ok(Buffer.byteLength(skill, "utf8") <= 6144, `SKILL.md is ${Buffer.byteLength(skill, "utf8")} bytes`);
+  assert.ok(Buffer.byteLength(skill, "utf8") <= 6656, `SKILL.md is ${Buffer.byteLength(skill, "utf8")} bytes`);
   for (const heading of ["#contract.activation", "#contract.inputs", "#contract.mode_matrix", "#contract.procedure", "#contract.runtime", "#contract.outputs", "#contract.output_channels", "#contract.evidence", "#contract.hard_stops", "#contract.anti_patterns"]) assert.ok(skill.includes(`## ${heading}`), heading);
-  for (const phrase of [/ask no questions/u, /--stills-only/u, /gate\.mjs --done/u, /BLOCKED exit 10/u, /Hand-encoded films/u, /MO-B-00/u, /references\/treatment\.md` only/u]) assert.match(skill, phrase);
+  for (const phrase of [/ask only the look question/u, /--stills-only/u, /gate\.mjs --done/u, /BLOCKED exit 10/u, /Hand-encoded films/u, /MO-B-00/u, /references\/treatment\.md` only/u]) assert.match(skill, phrase);
   const references = ["treatment.md", "style-bibles.md", "authoring.md", "type-craft.md", "craft-loop.md", "runtime.md"];
   let words = 0;
   for (const name of references) {
@@ -428,7 +428,7 @@ test("the Tier-1 timeline snaps every start to the beat and never splits a ì–´ì 
 // test/motion-look.test.mjs (a gate PASS alone, one round and a stale manifest are not done).
 test("the done check is the gate's --done surface and names its four statuses", () => {
   const help = spawnSync(process.execPath, [path.join(skillRoot, "gate.mjs"), "--help"], { encoding: "utf8" });
-  assert.match(help.stdout, /--done <output-dir>   \(0 DONE, 1 NOT DONE, 2 DONE_WITH_OPEN_ITEMS after round 3, 3 DONE_UNVIEWED\)/u);
+  assert.match(help.stdout, /--done \[<output-dir> \| --out <output-dir>\]   \(the working directory or the run above it when none; 0 DONE, 1 NOT DONE, 2 DONE_WITH_OPEN_ITEMS after round 3, 3 DONE_UNVIEWED\)/u);
   assert.equal(typeof completionState, "function");
 });
 

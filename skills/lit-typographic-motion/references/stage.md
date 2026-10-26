@@ -17,6 +17,10 @@ loop time the renderer seeks in any order, with the loop kit instead of this one
 - Rasters are textures and stills, never a frame sequence: at most 24 raster files and 8 MB in total.
   Ten or more rasters of one size (a flipbook), or any animated GIF, APNG or WebP, stops the render
   with exit 17.
+- `<out>/stage/assets/`: the real logo, screenshots and README images of a named product, written by
+  `render.mjs assets` (`treatment.md`, Named products). Show them; never redraw them.
+- A film about a thing with a back and an inside takes the 3D route: the renderer serves a pinned
+  three.js under `/lit/three/` and the scaffold sets the world up (`depth.md`). Load nothing else.
 
 ## The page contract
 
@@ -24,6 +28,8 @@ loop time the renderer seeks in any order, with the loop kit instead of this one
 <!doctype html>
 <meta charset="utf-8">
 <link rel="stylesheet" href="/lit/fonts.css">
+<link rel="stylesheet" href="/lit/style.css">
+<script src="/lit/style.js"></script>
 <script src="/lit/stage-kit.js"></script>
 <body>…your SVG, DOM and canvases…</body>
 <script>
@@ -48,6 +54,24 @@ loop time the renderer seeks in any order, with the loop kit instead of this one
   `Silkscreen` (400, 700), `MesloLGS NF` and `Galmuri9`. Use only these; the QA checks the platform
   font behind every copy line.
 
+## The house style on the page
+
+`render.mjs scaffold --out <d>` writes this page from the treatment: one `<section>` per shot, its type
+in the shot's type zone, an empty subject group in its subject zone, entrances and hand-offs on the
+style's tokens and one DRAW function per shot. It never replaces a page that exists. Start from it
+unless the film needs another structure.
+
+- `/lit/style.css` is the style as CSS: custom properties for every palette colour (`--lit-ground`,
+  `--lit-ink`, `--lit-signal`, ...), the four type roles as classes (`.lit-display`, `.lit-headline`,
+  `.lit-body`, `.lit-label`, at the style's size for this format) and the colour classes.
+- `/lit/style.js` defines `LitStyle` (palette, faces, scale, motion tokens, zones in pixels) and
+  `LitTimeline` (the treatment's shots). The kit reads both:
+  `LitStage.shot(t)` gives `{ index, beat, layout, local, length, p, enter(delay, dur), exit(dur) }`;
+  `LitStage.zone(layout, "type" | "subject")` a `{ x, y, w, h }` in pixels; `LitStage.place(el, layout, part)`
+  positions an element in it; `LitStage.plate({ parent, fps, count })` shows a Blender plate frame behind the type (`depth.md`); `LitStage.tokens()` the style's eases, durations, staggers and springs.
+- Text outside the type scale, the style's colours or faces, or outside its shot's type zone fails the
+  board; decor text inside a drawn subject only warns.
+
 ## Forbidden (the render stops)
 
 | Stops with | What |
@@ -56,7 +80,7 @@ loop time the renderer seeks in any order, with the loop kit instead of this one
 | 18 `STAGE_NONDETERMINISTIC` | a frame that differs between two fresh replays: wall-clock reads such as `performance.timeOrigin`, `crypto.getRandomValues`, or state that depends on how fast frames arrive |
 | 19 `STAGE_NETWORK_REQUEST` | any request outside the stage origin; an absolute `http(s)://` or `//host` URL in a stage file (W3C namespace URIs such as `http://www.w3.org/2000/svg` are fine); `preconnect`, `dns-prefetch`, `prefetch` or `prerender` links; `WebSocket`, `WebTransport`, `RTCPeerConnection` |
 
-A page that asks for a WebGL context and gets none stops with exit 11.
+A page that asks for a WebGL context and gets none stops with exit 11 (a `depth: 3d` film tries the GPU rung first and falls back to the software rung with a notice; `depth.md`).
 
 ## Kit reference (`/lit/stage-kit.js`, global `LitStage`)
 
@@ -135,6 +159,19 @@ LitStage.text({ content: "…", x, y, w, h });              // canvas or WebGL t
 - A run equal to or containing the request, the idea, a file name or a word such as path, preset,
   gate, beat or treatment is a WARN the look must answer.
 - Canvas text drawn without registration is not measured (a WARN the look must answer).
+- House-style rows, measured on settled copy: `TEXT-OVERLAP` (two visible runs overlapping past 8 %
+  of the smaller box, also sampled every 1/15 s within 0.4 s of each cut), `TEXT-ON-STYLE` (colour,
+  face and size on the style's scale) and `TEXT-ZONE` (inside the shot's type zone, within 1.2 % of
+  the frame). Two more rows read the rendered frames: `FLAT-FRAME` (a frame of one flat colour may
+  hold for 1 s, 2 s at the open or the close) and `DEAD-AIR` (a frame where under 2.5 % of its
+  cells carry anything may hold for 0.5 s, with 0.4 s more to build at the open and 0.6 s more to fade
+  at the close). A film that draws nothing for a second is not paced, it is empty.
+- `ASSET-USED` (a film with `product.assets`): at least one listed asset must be loaded by the page's
+  own files; a page that draws the product's logo or screen from scratch fails it.
+- `RICH-FILL` (a rich film): at each shot midpoint the frame is cut into 4 by 3 regions and a region
+  with under 15 % of it carrying anything is empty; more than 2 empty regions in more than one shot
+  fails. A minimal film, and a run whose frames were not measured, skip it. Fill the frame with
+  panels, labelled parts and layers around the hero (`studio.md`), not by crowding the type zone.
 - The subject must be drawn: when every word is hidden, at least half of the beat midpoints still
   carry visible structure outside the text boxes.
 
@@ -143,25 +180,31 @@ LitStage.text({ content: "…", x, y, w, h });              // canvas or WebGL t
 - The renderer replays the clock from 0 in a fresh browser and compares 8-16 sample frames by the
   SHA-256 of their pixels. A mismatch stops with exit 18, naming the frame and the first region.
 - Filters (`blur()`, `backdrop-filter`, `mix-blend-mode`, `box-shadow`, SVG `feGaussianBlur`, Canvas2D
-  `shadowBlur`) and WebGL shaders are deterministic on the software renderer the stage uses.
+  `shadowBlur`) and WebGL shaders are deterministic on the software renderer the stage uses; a 3D film
+  on the GPU rung is held to the same replay (`depth.md`).
 - Seed every random choice from `LitStage.rand()` or `Math.random()` (both seeded); never read
   `crypto.getRandomValues` or `performance.timeOrigin`.
 
 ## Rendering
 
-- Stills round: `node render.mjs stage --out <d> --stills-only --round 1` (about 20 s): the beat
-  midpoints, a strip around every cut and a 12-frame contact sheet, no encode.
+- Stills round (the board round): `node render.mjs stage --out <d> --stills-only --round 1` (about
+  20 s): the beat midpoints, a strip around every cut, a 12-frame contact sheet and
+  `stills/board.png`, a storyboard with every shot's number, time, layout, hand-off and hero move, the
+  type zone outlined and the layout check in its footer. The text rules above run on the page here, before
+  any film is encoded; a failing rule is exit 13 (`BOARD_CHECK_FAIL`) with the board still drawn,
+  and `stills/check.json` holds the rows. A request for a preview stops here.
 - Film: `node render.mjs stage --out <d> --round N`. Give the command a timeout of at least 600 s; a
   15 s 1080x1920 film with its checks takes a few minutes. Never shorten the film to save render time.
   Progress is written to `<d>/.run/progress.json`. When the host's command timeout is shorter, add
   `--detach`: the render continues in the background, and `<d>/.run/render-exit.json` holds its exit
   code when it ends (the log is `<d>/.run/render.log`).
 - Outputs: `film.mp4` (H.264, BT.709, sound muxed), `preview.webp` or `.gif`, `poster.png`,
-  `reduced-motion.png` (the final beat's midpoint), `manifest.json`, `gate-report.txt`, `stills/`,
-  `sheet/` and `sound-cues.json`.
+  `reduced-motion.png` (the final beat's midpoint), `manifest.json`, `gate-report.txt`, `stills/`
+  (with `board.png`), `sheet/` and `sound-cues.json`.
 
 ## Sound on the stage
 
-The default is the generated bed (`sound.mode: generated`). To score the film yourself, write a WAV
+A rich film's sound is the per-film score (`sound.mode: score`, `sound.md`); a minimal film takes the
+style's generated bed. To score the film yourself, write a WAV
 into `stage/` and set `sound: { mode: "authored", file: "stage/<name>.wav", plan }`. The page itself
 never plays audio: audio elements and audio contexts are forbidden, and the renderer muxes the track.

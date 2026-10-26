@@ -7,12 +7,12 @@ exits non-zero if ANY real defect is found:
   1. Layout issues  — inventory.py --issues-only (overflow / overlap / off-slide)
   2. Anti-slop      — validate_pptx.py (forbidden/placeholder terms, default fonts)
   3. WCAG contrast  — text colour vs its fill (body < 4.5:1, large < 3:1)
-  4. Craft floor    — craft_extras.py (OF-101..OF-109 per slide) and deck_output.py
-                      (OF-110..OF-117 over the deck: title-treatment count, composition
-                      variety, empty body band, one frame per treatment, label titles,
-                      no empty region, no light figure card on a dark ground; with
-                      --sibling, OF-116: another tonality of the same source must draw
-                      a different skeleton)
+  4. Craft floor    — craft_extras.py (OF-101..OF-109 per slide, OF-120 hard shadows) and
+                      deck_output.py (OF-110..OF-119 over the deck: title-treatment count,
+                      composition variety, empty body band, one shared title frame, label
+                      titles, no empty region, no light figure card on a dark ground; with
+                      --sibling, OF-116: another tonality of the same source sets titles and
+                      body in the same places)
 
 No LibreOffice / rendering engine required: everything is read from the OOXML
 via python-pptx. (A renderer is only ever needed for *visual* preview, which is
@@ -35,7 +35,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 from pptx.opc.constants import RELATIONSHIP_TYPE as RT
 from craft_extras import analyse as analyse_craft
-from deck_output import compare_skeletons
+from deck_output import compare_placement
 
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATE = ROOT / "scripts" / "validate_pptx.py"
@@ -617,9 +617,8 @@ def check_composition(path: Path) -> dict[str, Any]:
     for slide_no, slide in enumerate(prs.slides, 1):
         content = []
         table_count = chart_count = 0
-        # The content area runs under a top title; a bottom title closes it from below, so it starts at the top margin.
-        title = next((shape for shape in slide.shapes if shape.name == "title@bottom-anchor" and shape.top is not None), None)
-        top, floor = (0.45, title.top / 914400) if title is not None else (1.7, 6.7)
+        # Every treatment styles the one title zone, so the content area is the shared body zone under it.
+        top, floor = 120 / 72 - 0.03, 6.7
         held = [box for shape in slide.shapes if (box := _bbox_in(shape)) is not None and (
             getattr(shape, "has_table", False) or getattr(shape, "has_chart", False)
             or shape.shape_type == MSO_SHAPE_TYPE.PICTURE or _shape_text(shape))]
@@ -733,7 +732,7 @@ def qa(pptx: Path, sibling: Path | None = None) -> dict[str, Any]:
     composition = check_composition(pptx)
     craft = analyse_craft(pptx)
     if sibling is not None:
-        craft["findings"] += compare_skeletons(pptx, sibling)
+        craft["findings"] += compare_placement(pptx, sibling)
         craft["pass"] = not any(item["severity"] == "HIGH" for item in craft["findings"])
 
     reasons: list[str] = []

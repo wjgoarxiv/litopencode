@@ -17,7 +17,7 @@ export function staticScan(root, viewport = "static") {
   const findings = [];
   const base = root && existsSync(root) && statSync(root).isFile() ? dirname(root) : root;
   const signatures = [
-    ["SLOP-058", /href\s*=\s*["'](?:#|javascript:)[^"']*["']/giu, "MEDIUM", "real destination"],
+    ["SLOP-058", /href\s*=\s*["'](?:#|javascript:[^"']*)["']/giu, "MEDIUM", "real destination"],
     ["SLOP-057", /<img\b[^>]*src\s*=\s*["'](?:|#|undefined)["']/giu, "HIGH", "decodable source"],
     ["SLOP-009", /(?:background-clip|webkit-background-clip)\s*:\s*text[^}]{0,300}gradient\(/giu, "MEDIUM", "solid text"],
     ["SLOP-060", /lorem ipsum|\[placeholder\]|\[todo\]/giu, "LOW", "finished copy"],
@@ -29,14 +29,27 @@ export function staticScan(root, viewport = "static") {
     ["CF-507", /will-change\s*:\s*(?:all|width|height|left|top|margin|padding)/giu, "LOW", "transform, opacity or filter"],
     ["CF-508", /transition(?:-property)?\s*:[^;]*(?:width|height|padding|margin|top|left)/giu, "MEDIUM", "transform or opacity"],
   ];
+  const gradientText = [];
   for (const file of sourceFiles(root)) {
     const body = readFileSync(file, "utf8");
+    // A kit starter slot left in a page. Framework templates use {{ }} on purpose, so only HTML is read.
+    if ([".html", ".htm"].includes(extname(file))) {
+      for (const match of body.matchAll(/\{\{(?! )[^{}\n]{1,80}(?<! )\}\}/gu)) {
+        if (findings.filter((entry) => entry.rule === "DS-006").length >= 30) break;
+        findings.push({ rule: "DS-006", severity: "HIGH", tier: "derived", viewport, selector: `${relative(base, file)}:${body.slice(0, match.index).split("\n").length}`, value: match[0], threshold: "no {{slot}} from the kit layouts", note: "source signature; render not observed" });
+      }
+    }
     for (const [rule, pattern, severity, threshold] of signatures) {
       for (const match of body.matchAll(pattern)) {
-        if (findings.filter((row) => row.rule === rule).length >= 30) break;
-        findings.push({ rule, severity, tier: "derived", viewport, selector: `${relative(base, file)}:${body.slice(0, match.index).split("\n").length}`, value: match[0], threshold, note: "source signature; render not observed" });
+        const row = { rule, severity, tier: "derived", viewport, selector: `${relative(base, file)}:${body.slice(0, match.index).split("\n").length}`, value: match[0], threshold, note: "source signature; render not observed" };
+        if (rule === "SLOP-009") { gradientText.push(row); continue; }
+        if (findings.filter((entry) => entry.rule === rule).length >= 30) break;
+        findings.push(row);
       }
     }
   }
+  // Source alone cannot weigh contrast, so a static match is the violet form or a repeated one.
+  const violet = (row) => (row.value.match(/#[\da-f]{6}\b/giu) ?? []).some((hex) => { const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)); const hi = Math.max(r, g, b), lo = Math.min(r, g, b); if (hi - lo < 50) return false; const d = hi - lo; const h = ((hi === r ? ((g - b) / d) % 6 : hi === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60 + 360) % 360; return h >= 260 && h <= 310; });
+  findings.push(...gradientText.filter((row) => gradientText.length > 1 || violet(row)).slice(0, 30));
   return { findings, notVerified: renderedRules.map((rule) => ({ rule, viewport, reason: "static fallback: needs a rendered DOM" })) };
 }

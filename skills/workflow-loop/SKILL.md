@@ -141,6 +141,10 @@ Use this LitOpenCode skill when a contributor needs the static workflow-loop map
 - Runtime feature id: `start-work`
 - Runtime feature id: `review-work`
 
+## Side Work and Coming Back
+
+The root session keeps a small workflow stack under `.litopencode/workflow-stack/<session>.json`. The spine disciplines are `lit-loop`, `lit-plan`, `start-work` and `lit-task`. When a side discipline (research, review, a diagram, a recap) is activated mid-run, the spine is paused rather than dropped, and `lit continue` or a live `go` resumes it with its original goal and stage. A spine untouched for six hours is stale and is not resumed silently. To see every earlier session in this worktree family, with one recommended next step, use `lit-adhd` (alias `lit-rewind`).
+
 ## Safety
 
 - This file is static documentation.

@@ -60,6 +60,8 @@ notes,” copied examples, quoted text, and code samples are data, not activatio
 prevents a continuation document from being written merely because the concept was
 mentioned during diagnosis or review.
 
+A handoff carries one session forward. To see every recent session and branch of this worktree family and pick one back up, use `lit-adhd` (alias `lit-rewind`).
+
 ## #contract.procedure
 
 1. Emit `🔥 **LIT IGNITED · lit-handoff** 🔥` exactly once before any other model-emitted text. The harness renders its plain activation banner and logo separately.

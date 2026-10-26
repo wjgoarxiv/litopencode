@@ -20,7 +20,10 @@ import { autoHandoffSettingText, type AutoHandoffRouteMode } from "./auto-handof
 import { isReadOnlyWorkflowFamilyPlan } from "./workflow-families.ts";
 import { queryKnowledge } from "./knowledge.ts";
 import { activationDiscipline } from "./activation-probe.ts";
-import { decideReentry, type ActivationMemory } from "./activation-reentry.ts";
+import { adhdSessionNote } from "./activation-workflow-prompts.ts";
+import { typedPromptReply } from "./adhd-next.ts";
+import { decideReentry, recordActivation, type ActivationMemory } from "./activation-reentry.ts";
+import { startTypedWork, typedStartArgument } from "./start-work-typed.ts";
 import { micro, supportsMarkGlyphs } from "./lit-mark.ts";
 
 // Prompt modules preserve minimum-first, single-task or few-task planning, avoidable custom code review,
@@ -41,6 +44,9 @@ export {
   deepInterviewPromptInjection,
   gitMasterPromptInjection,
   litBrainstormPromptInjection,
+  litHijackPromptInjection,
+  litAdhdPromptInjection,
+  adhdSessionNote,
   litCruciblePromptInjection,
   initDeepPromptInjection,
   litGoalPromptInjection,
@@ -218,14 +224,47 @@ export function createChatMessageActivationHook(
         // A malformed or unreadable knowledge store stays silent instead of inventing context.
       }
     }
+    if (!childSession && nonEmptyTextParts.length === 1 && output.parts.every((part) => part.type === "text")) {
+      const typed = await typedPromptReply(
+        projectRoot,
+        input.sessionID,
+        nonEmptyTextParts[0].text,
+        options.activationMemory,
+        options.boundedAuthority
+      );
+      if (typed !== undefined) {
+        output.parts.push({
+          id: `prt_litopencode_typed_${typed.mode.replace("-", "_")}_${idSuffix(input.messageID ?? output.message.id)}`,
+          sessionID: input.sessionID,
+          messageID: input.messageID ?? output.message.id,
+          type: "text",
+          text: typed.text,
+          synthetic: true,
+          metadata: { litopencode: { mode: typed.mode, trigger: "lit", source: "chat.message", typed: typed.kind } }
+        });
+        if (typed.continued) await options.onSkillContinue?.(input.sessionID, typed.mode, false);
+        return;
+      }
+    }
     if (mode === undefined || childSession) return;
 
     const trigger = mode === "lit-handoff" ? "handoff" : mode === "lit-scientific-visualization" ? mode : "lit";
 
     const triggerText = nonEmptyTextParts.find((part) => detectChatActivationMode(part.text, agent) === mode)?.text;
     let activationText = promptForChatActivationMode(mode, triggerText);
+    if (mode === "lit-adhd") activationText = `${activationText}\n${adhdSessionNote(input.sessionID)}`;
     if (mode === "start-work" && agent !== "lit-plan" && nonEmptyTextParts.length === 1) {
       const directive = parseStartWorkLifecycleDirective(nonEmptyTextParts[0].text, { chat: true });
+      const planArgument = directive === undefined ? typedStartArgument(nonEmptyTextParts[0].text) : undefined;
+      if (planArgument !== undefined) {
+        const started = await startTypedWork({
+          projectRoot,
+          sessionID: input.sessionID,
+          ...(planArgument === "" ? {} : { plan: planArgument }),
+          ...(options.boundedAuthority === undefined ? {} : { options: options.boundedAuthority })
+        });
+        if (started.quiet !== true) activationText = `${started.text}\n${activationText}`;
+      }
       if (directive?.action === "resume") {
         try {
           const receipt = await applyTrustedStartWorkDirective(
@@ -255,6 +294,17 @@ export function createChatMessageActivationHook(
     else if (reentry.kind === "resume") activationText = `${reentry.line}\n${activationText}`;
     else if (reentry.kind === "confirm") activationText = `${activationText}\n${reentry.line}`;
 
+    if (
+      options.activationMemory !== undefined &&
+      reentry.kind !== "continue" &&
+      reentry.kind !== "confirm" &&
+      mode !== "lit-handoff" &&
+      mode !== "lit-scientific-visualization"
+    ) {
+      const recorded = await recordActivation({ memory: options.activationMemory, projectRoot, sessionID: input.sessionID, mode });
+      if (recorded.line !== undefined) activationText = `${activationText}\n${recorded.line}`;
+    }
+
     output.parts.push({
       id: `prt_litopencode_${markMode.replace("-", "_")}_${idSuffix(input.messageID ?? output.message.id)}`,
       sessionID: input.sessionID,
@@ -277,9 +327,6 @@ export function createChatMessageActivationHook(
       return;
     }
     await options.onSkillActivation?.(input.sessionID, mode, appendedLit);
-    if (reentry.kind !== "confirm" && mode !== "lit-handoff" && mode !== "lit-scientific-visualization") {
-      options.activationMemory?.remember(input.sessionID, mode);
-    }
 
     if (mode === "lit-scientific-visualization") {
       options.onScientificVisualizationActivation?.(input.sessionID);

@@ -21,6 +21,9 @@ export type LitOpenCodeFeatureId =
   | "lit-init"
   | "lit-crucible"
   | "lit-brainstorm"
+  | "lit-hijack"
+  | "lit-adhd"
+  | "workflow-stack"
   | "refactor"
   | "lit-burnoff"
   | "lit-burnoff-file"
@@ -40,6 +43,7 @@ export type LitOpenCodeFeatureId =
   | "lit-handoff"
   | "lit-scientific-visualization"
   | "lit-diagram-drawer"
+  | "lit-schematic"
   | "lit-pptx"
   | "lit-typographic-motion"
   | "lit-docx"
@@ -606,6 +610,81 @@ export const litOpenCodeFeatures = Object.freeze([
       }
     ],
     verification: ["node --test test/lit-brainstorm.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
+  },
+  {
+    id: "lit-hijack",
+    title: "Lit Hijack",
+    summary:
+      "Ports the mechanism in someone else's published work into the user's own skill or system through capture, licence gate, gap, source-free spec, separate build, parity proof and report, with a bundled script deciding when each phase is done.",
+    bindings: [
+      {
+        kind: "config",
+        id: "skills/lit-hijack/SKILL.md",
+        surface: "LitOpenCode native-installed managed skill",
+        description: "Ships the phase procedure with five references and the zero-dependency hijack.mjs helper, installed together so the script the skill names can run."
+      },
+      {
+        kind: "command",
+        id: "lit-hijack",
+        surface: "OpenCode command /lit-hijack",
+        description: "Makes Lit Hijack directly invocable; chat routes lit hijack, lit hijacking, lit 하이재킹 and lit 하이잭 reach the same surface."
+      },
+      {
+        kind: "agent",
+        id: "isolated implementer and optional lanes",
+        surface: "OpenCode task delegation",
+        description: "Builds from the brief alone in a separate git worktree through a write-capable task lane, with optional read-only capture, distil and verifier lanes at depth one; the lit-plan agent stays planning-only."
+      }
+    ],
+    verification: ["node --test test/lit-hijack.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
+  },
+  {
+    id: "lit-adhd",
+    title: "Lit Adhd",
+    summary:
+      "Briefs the earlier sessions of this worktree family from a read-only collector (status, goal, real progress or known facts, done, next, roadmap), recommends one next step, and follows it on go; typed start-work, lit approve and lit deny drive the bounded run without pasted JSON.",
+    bindings: [
+      {
+        kind: "config",
+        id: "skills/lit-adhd/SKILL.md",
+        surface: "LitOpenCode native-installed managed skill",
+        description: "Ships the skill with three references and the zero-dependency rewind.mjs collector, installed together so the script the skill names can run."
+      },
+      {
+        kind: "command",
+        id: "lit-adhd",
+        surface: "OpenCode commands /lit-adhd and /lit-rewind",
+        description: "Makes the brief directly invocable; chat routes lit adhd and lit rewind reach the same surface, and a live go follows the armed step."
+      },
+      {
+        kind: "hook",
+        id: "chat.message typed prompts",
+        surface: "OpenCode chat.message and command.execute.before hooks, and the OpenCode 2 prompt hook",
+        description: "Routes go, lit approve, lit deny and start-work [plan] from the user's own root-session prompt into the existing re-entry and bounded-authority lifecycle."
+      }
+    ],
+    verification: ["node --test test/lit-adhd.test.mjs", "node --test test/adhd-go.test.mjs", "node --test test/start-work-typed.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
+  },
+  {
+    id: "workflow-stack",
+    title: "Workflow Stack",
+    summary:
+      "Pauses a running long discipline when another lit command interrupts it, keeping its stage and real count in a per-session record, and returns to it on lit continue; the mission band and the lit-adhd collector read the same record.",
+    bindings: [
+      {
+        kind: "config",
+        id: ".litopencode/workflow-stack/<session>.json",
+        surface: "LitOpenCode runtime state",
+        description: "One small guarded file per session: link-refusing, size-capped, atomically replaced, with a stale spine never resumed."
+      },
+      {
+        kind: "hook",
+        id: "chat.message activation memory",
+        surface: "OpenCode chat.message hook and the OpenCode 2 prompt hook",
+        description: "Pushes an interjected discipline over the running one, appends the paused-at line, and resumes the paused discipline on lit continue or go."
+      }
+    ],
+    verification: ["node --test test/workflow-stack.test.mjs", "node --test test/workflow-interleave.test.mjs", "node --test test/runtime-skills.test.mjs"]
   },
   {
     id: "refactor",
@@ -1237,6 +1316,38 @@ export const litOpenCodeFeatures = Object.freeze([
     verification: ["node --test test/lit-diagram-drawer.test.mjs", "npm run check:managed-skill-manifest", "npm run check:pack-payload"]
   },
   {
+    id: "lit-schematic",
+    title: "Lit Schematic",
+    summary: "Installs an OpenCode native skill with a plain-Node drawing kit, symbol library, QA gate, renderer and worked examples for P&IDs, apparatus figures and isometric cutaways, and routes bounded lit drawing requests to it.",
+    bindings: [
+      {
+        kind: "config",
+        id: "skills/lit-schematic/SKILL.md",
+        surface: "OpenCode native skill picker",
+        description: "Selects the physical-schematic workflow and its complete managed skill tree; no dedicated slash command or bare-id chat route is registered."
+      },
+      {
+        kind: "hook",
+        id: "lit-task schematic drawing intent",
+        surface: "OpenCode chat.message activation",
+        description: "Directs bounded lit P&ID, PFD, apparatus and cutaway drawing requests to load the native skill before drawing, ahead of the diagram, film and Office hand-offs; questions, reviews, charts and reports stay inert."
+      },
+      {
+        kind: "cli",
+        id: "litopencode install",
+        surface: "LitOpenCode managed native skill installer",
+        description: "Installs every hash-pinned reference, script, kit module and example."
+      },
+      {
+        kind: "cli",
+        id: "litopencode doctor",
+        surface: "LitOpenCode managed native skill doctor",
+        description: "Verifies the exact installed file closure; the skill's own doctor script reports Chrome, fonts and encoders without installing tools."
+      }
+    ],
+    verification: ["node --test test/lit-schematic.test.mjs test/lit-schematic-symbols.test.mjs test/lit-schematic-outputs.test.mjs", "npm run check:managed-skill-manifest", "npm run check:pack-payload"]
+  },
+  {
     id: "lit-typographic-motion",
     title: "Film director",
     summary: "Native OpenCode film director: treatment first, a captured stage page or the type engine, generated sound, a numeric gate and recorded look rounds; cover mode renders a silent, seamless README loop and gates the decoded WebP.",
@@ -1245,7 +1356,7 @@ export const litOpenCodeFeatures = Object.freeze([
       { kind: "hook", id: "lit-task motion-video intent", surface: "OpenCode chat.message activation", description: "Routes bounded film requests before slide and interface guidance with a neutral film context." },
       { kind: "hook", id: "tool.execute.after", surface: "OpenCode tool.execute.after hook", description: "Records each read of a film's or a cover's stills so the done check can confirm the frames were viewed." },
       { kind: "cli", id: "litopencode motion-runtime install|status", surface: "LitOpenCode runtime", description: "Pre-warms pinned dependencies and fonts outside the render session." },
-      { kind: "cli", id: "litopencode doctor", surface: "LitOpenCode doctor", description: "Reports Chrome, ffmpeg, WebGL2 tier, software warning, pre-warm status and the cover encoder." }
+      { kind: "cli", id: "litopencode doctor", surface: "LitOpenCode doctor", description: "Reports Chrome, ffmpeg, WebGL2 tier, software warning, pre-warm status, the cover encoder and, as information only, whether Blender is installed." }
     ],
     verification: ["node --test test/lit-typographic-motion.test.mjs", "node --test test/motion-cover.test.mjs", "npm run check:managed-skill-manifest", "npm run check:pack-payload"]
   },

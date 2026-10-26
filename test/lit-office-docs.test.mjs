@@ -32,9 +32,9 @@ test("bare lit routes report, slide, and joint Office requests through native sk
   const slides = route("Create a product presentation for our team lit");
   assert.match(slides, /load lit-pptx before drafting/u);
   assert.match(slides, /complete a realistic example without asking or leaving placeholders/u);
-  // The direction is chosen by the skill and named in the reply, never asked about.
+  // The skill ranks the direction, then asks the user to pick it unless the prompt already named one.
   for (const prompt of [document, slides]) {
-    assert.match(prompt, /choose its design direction \(tonality\) yourself and name it with two alternatives/u);
+    assert.match(prompt, /rank its design direction \(tonality\) with two alternatives\. Before building, unless the prompt names the theme, style or preset or says "you choose", ask the user to pick it with OpenCode's question tool/u);
     assert.doesNotMatch(prompt, /use the skill defaults/u);
   }
   const both = route("sources 폴더 자료로 보고서랑 발표자료 만들어줘 lit");
@@ -63,6 +63,23 @@ test("lit routes the 'turn X into a deck or report' shape to the Office skills, 
   // "turn" without "into <office noun>" is not an authoring request, even beside an office word.
   for (const prompt of ["lit turn on dark mode", "lit turn on dark mode in the settings page", "lit turn the deck lights on, then report back", "lit turn the report filter into a dropdown"]) {
     assert.doesNotMatch(promptForChatActivationMode("lit-task", prompt), /native skill tool to load lit-(?:docx|pptx)/u, prompt);
+  }
+});
+
+test("a deck asked for by its slide count and a named style, with no making verb, routes to lit-pptx", () => {
+  const routed = (prompt) => {
+    const mode = detectChatActivationMode(prompt);
+    assert.equal(mode, "lit-task", prompt);
+    return promptForChatActivationMode(mode, prompt);
+  };
+  for (const prompt of ["lit 신규 서비스 투자 피칭 덱 10장, 네오 브루탈리즘 스타일로", "lit a 10-slide deck in bauhaus style", "lit 10-slide launch deck, neo-brutalism", "lit 슬라이드 12장 라이엇 스타일로"]) {
+    const prompted = routed(prompt);
+    assert.match(prompted, /load lit-pptx before drafting/u, prompt);
+    assert.doesNotMatch(prompted, /load lit-docx/u, prompt);
+  }
+  // A count beside something that is not a deck asks for no deck: photos, pages, code lines.
+  for (const prompt of ["lit 사진 10장 보정 스타일로", "lit retouch 10 photos in a film style", "lit 발표 사진 10장 골라줘", "lit 10 pages of the report need fixing, in a calmer tone"]) {
+    assert.doesNotMatch(routed(prompt), /native skill tool to load lit-pptx/u, prompt);
   }
 });
 
@@ -128,7 +145,7 @@ test("package contains none of the excluded source hashes", () => {
   assert.equal(files.some((file) => /TEMPLATE-EXAMPLE-1/u.test(file)), false);
 });
 
-const deckTonalities = ["atlas", "chalk", "gazette", "ledger", "night", "paper", "signal", "studio"];
+const deckTonalities = ["atlas", "bauhaus", "chalk", "computational-brutalism", "gazette", "ledger", "neo-brutalism", "newsroom", "night", "paper", "riso", "signal", "studio"];
 const docTonalities = ["brief", "journal", "manual", "memo", "proposal", "report"];
 const treatments = ["top-rule", "top-plain-large", "side-rail", "band", "statement", "overlay", "kicker-numeral", "bottom-anchor"];
 
@@ -160,7 +177,7 @@ test("both Office skills choose and name a direction before building, and their 
   for (const id of require("../skills/lit-pptx/scripts/lib/grid-resolver.js").familyIds()) assert.ok(familySheet.includes(id), id);
   const components = readFileSync("skills/lit-docx/references/components.md", "utf8");
   for (const kind of ["cover", "callout", "sidebar", "pullquote", "keyfigures", "columns"]) assert.ok(components.includes(`::: ${kind}`), kind);
-  assert.ok(readdirSync("skills/lit-pptx/references/examples").filter((f) => f.endsWith(".md")).length >= 12);
+  assert.ok(readdirSync("skills/lit-pptx/references/examples").filter((f) => f.endsWith(".md")).length >= 17);
   assert.ok(readdirSync("skills/lit-docx/references/examples").filter((f) => f.endsWith(".md")).length >= 9);
 });
 

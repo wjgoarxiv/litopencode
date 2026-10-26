@@ -170,7 +170,7 @@ export async function nativeSkillContent(metadata: PackageMetadata, skill: Runti
     ...description.split("\n").map((line) => "  " + line),
     "metadata:",
     `  ${litOpenCodeGeneratedFrontmatterMarker.replace(": true", ': "true"')}`,
-    ...(skill.id === "lit-diagram-drawer" ? ["  reader_projection: shared_rule"] : []),
+    ...(skill.id === "lit-diagram-drawer" || skill.id === "lit-schematic" ? ["  reader_projection: shared_rule"] : []),
     "---",
     "",
     body.trimEnd(),

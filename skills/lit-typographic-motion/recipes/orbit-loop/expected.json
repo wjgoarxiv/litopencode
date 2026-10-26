@@ -29,6 +29,8 @@
     "idea": "Three orbits cross one gate and every crossing lights a cell of the ledger under the name.",
     "recipe": "orbit-loop",
     "recipeReason": "A system with whole-number laps closes by itself and gives the beat events a cause.",
+    "hero": "The dots lapping three rings.",
+    "beat": "Each crossing at the gate lights the next ledger cell.",
     "brandWord": "LITOPENCODE",
     "aspect": "2:1",
     "loopSec": 8,

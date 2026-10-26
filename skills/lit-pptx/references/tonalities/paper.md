@@ -31,7 +31,7 @@ method". Pack file: `templates/tonalities/paper/pack.yaml`.
 
 ## Type
 
-Pretendard throughout. Compact ramp at density 10; titles at normal tracking.
+Pretendard throughout. Compact ramp at density 10; titles at normal tracking. Cover and statement titles take the hero step (60 pt) when their words fit; `hero: false` in the front matter turns it off. A figure is never larger than a title.
 
 ## Dials
 
@@ -50,7 +50,7 @@ Density 10, variance 5: up to four of its four treatments.
 | reference | top-rule |
 | definition | side-rail |
 
-Treatments: top-rule, bottom-anchor, side-rail, statement. There is no accent bar: a top-rule title
+Treatments: top-rule, bottom-anchor (the title closed by a heavy rule over a picture that takes the body's full height), side-rail, statement. There is no accent bar: a top-rule title
 always sits on a full-width hairline. A comparison is drawn as a ruled table under a `top-rule` title
 (`structure: comparison: top-rule`), kept even when the deck already leans on that title. Statements, covers and closings are drawn with `rules`:
 hairlines above and below, like a journal title page.

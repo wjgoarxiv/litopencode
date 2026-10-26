@@ -110,6 +110,31 @@ test("scientific visualization keeps generic and near-miss chat text inert", () 
   }
 });
 
+test("scientific visualization adapter makes the rich layer a standing request and keeps minimal for an explicit ask", async () => {
+  const adapter = await fs.readFile(path.resolve("skills", skillId, "SKILL.md"), "utf8");
+  assert.match(adapter, /rich, context-dense figure by default/u);
+  assert.match(adapter, /standing request/u);
+  assert.match(adapter, /direct annotation/iu);
+  assert.match(adapter, /inset/iu);
+  assert.match(adapter, /multi-panel/iu);
+  assert.match(adapter, /minimal figure[^.]*only when the user asks/iu);
+  assert.doesNotMatch(adapter, /smallest correct figure/iu);
+});
+
+test("/lit-scientific-visualization delivers the adapter body, so the rich layer reaches the model", async () => {
+  await withTempDir(async (dir) => {
+    const hook = createCommandActivationHook(dir);
+    const output = { parts: [] };
+
+    await hook({ command: `/${skillId}`, sessionID: "session-sciviz-body", arguments: "plot the isotherms" }, output);
+
+    const text = output.parts[0].text;
+    assert.match(text, /rich, context-dense figure by default/u, "adapter body is inlined, not only referenced");
+    assert.match(text, /standing request/u);
+    assert.doesNotMatch(text, /(?:^|\n)\s*(?:Please |First, )?(?:load|invoke|use) the [`"]?lit-scientific-visualization[`"]? skill\.?\s*(?:\n|$)/iu, "no bare load-the-skill instruction that names its own id");
+  });
+});
+
 test("/lit-scientific-visualization injects the exact first banner", async () => {
   await withTempDir(async (dir) => {
     const hook = createCommandActivationHook(dir);

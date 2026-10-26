@@ -12,6 +12,8 @@ export type StaticSkillPromptId =
   | "lit-init"
   | "lit-crucible"
   | "lit-brainstorm"
+  | "lit-hijack"
+  | "lit-adhd"
   | "lit-burnoff-file"
   | "lit-fetch"
   | "refactor"

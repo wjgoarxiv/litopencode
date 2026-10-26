@@ -17,6 +17,7 @@ import { pinnedSampleTimes } from "./engine/timing.mjs";
 import { checkStageRun, formatStageReport } from "./engine/stage/gate.mjs";
 import { soundChecks } from "./engine/sound.mjs";
 import { doneState, formatDone } from "./engine/look.mjs";
+import { recordHouse } from "./engine/house.mjs";
 import { coverGate, formatCoverReport } from "./engine/cover/gate.mjs";
 
 export const exportNames = ["film.mp4", "preview.webp", "preview.gif", "poster.png", "reduced-motion.png"];
@@ -538,6 +539,16 @@ function viewedCount(root, round, viewed) {
   return viewed;
 }
 
+// A film that passes its gate leaves its style in `motion-house.json` beside the output folder, so
+// the next film starts from it (engine/house.mjs). A withheld film is not a deliverable and records nothing.
+function keepHouse(root, exitCode, exportState) {
+  if (exitCode !== EXIT.OK || exportState === "withheld") return;
+  const file = path.join(root, "treatment.json");
+  if (!existsSync(file)) return;
+  const t = JSON.parse(readFileSync(file, "utf8"));
+  if (typeof t.style === "string") recordHouse(root, { style: t.style, path: t.path, format: t.format, durationSec: t.durationSec });
+}
+
 export function runGate(dir, { viewed, requirePreview = true } = {}) {
   const root = path.resolve(dir);
   const manifestPath = JSON.parse(readFileSync(path.join(root, "manifest.json"), "utf8")).path;
@@ -550,6 +561,7 @@ export function runGate(dir, { viewed, requirePreview = true } = {}) {
   const presetReason = result.run.brief?.explicitPreset ? (result.run.brief.presetSource === "user" ? "user-specified" : "agent default") : selectPreset(result.run.brief?.sourceText ?? "", undefined).reason;
   const report = formatReport(result, { exportDir: flashPass ? root : path.join(root, "withheld"), viewed, exitCode, exportState: exportState === "withheld" ? "withheld (MO-C-03 FAIL: diagnostics only, never deliverables)" : exportState, presetReason, briefPath: result.run.brief?.path });
   writeFileSync(path.join(root, "gate-report.txt"), report);
+  keepHouse(root, exitCode, exportState);
   return { ...result, exitCode, report, exportState };
 }
 
@@ -561,6 +573,7 @@ function runStageGate(root, { viewed }) {
   const exitCode = result.passed ? EXIT.OK : EXIT.GATE_FAIL_QA;
   const report = formatStageReport(result, { exportDir: flashPass ? root : path.join(root, "withheld"), viewed, exitCode, exportState: exportState === "withheld" ? "withheld (MO-C-03 FAIL: diagnostics only, never deliverables)" : exportState });
   writeFileSync(path.join(root, "gate-report.txt"), report);
+  keepHouse(root, exitCode, exportState);
   return { ...result, exitCode, report, exportState };
 }
 
@@ -592,11 +605,14 @@ function coverDirGate(root) {
 
 function main(argv) {
   if (!argv.length || argv.includes("--help")) {
-    console.log("lit-typographic-motion gate\nUsage: node gate.mjs <output-dir> [--viewed N]\n       node gate.mjs --done <output-dir>   (0 DONE, 1 NOT DONE, 2 DONE_WITH_OPEN_ITEMS after round 3, 3 DONE_UNVIEWED)\n       node gate.mjs --cover <cover.webp|cover.gif|frames-dir> [--frames d --replay d --masks d --title x,y,w,h --display-width N] [--strict] [--json]");
+    console.log("lit-typographic-motion gate\nUsage: node gate.mjs <output-dir> [--viewed N]\n       node gate.mjs --done [<output-dir> | --out <output-dir>]   (the working directory or the run above it when none; 0 DONE, 1 NOT DONE, 2 DONE_WITH_OPEN_ITEMS after round 3, 3 DONE_UNVIEWED)\n       node gate.mjs --cover <cover.webp|cover.gif|frames-dir> [--frames d --replay d --masks d --title x,y,w,h --display-width N] [--strict] [--json]");
     return 0;
   }
   if (argv[0] === "--done") {
-    const state = completionState(argv[1]);
+    const rest = argv.slice(1);
+    const named = rest.findIndex((arg) => arg === "--out" || arg.startsWith("--out="));
+    const given = named < 0 ? rest.find((arg) => !arg.startsWith("--")) : rest[named] === "--out" ? rest[named + 1] : rest[named].slice("--out=".length);
+    const state = completionState(given);
     console.log(formatDone(state));
     return state.code;
   }

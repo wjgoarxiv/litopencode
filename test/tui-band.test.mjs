@@ -50,3 +50,17 @@ test("the band's LIT word is LIT pink, deepened on light themes", () => {
   assert.equal(word(palette).bold, true);
   assert.equal(word(paletteFromTheme(undefined, "light")).fg, "#d81b78");
 });
+
+test("text from records cannot carry terminal control sequences onto the card", async () => {
+  const { truncateCells } = await import("../src/tui/mission-text.ts");
+  const hostile = "fix \u001b]0;pwned\u0007 the \u001b[2Jbug\u009b31m now\u0000\u007f";
+  const cut = truncateCells(hostile, 60);
+  assert.doesNotMatch(cut, /[\u0000-\u001f\u007f-\u009f]/u);
+  assert.match(cut, /fix .*the .*bug/u);
+  const now = Date.parse("2026-10-13T08:05:00.000Z");
+  const criterion = (id, scenario, status) => ({ id, scenario, qaChannel: "", testRef: "", status, evidence: [] });
+  const ledger = { version: 1, activeGoalId: "G1", goals: [{ id: "G1", sessionId: "ses_demo", objective: `objective ${hostile}`, title: `title ${hostile}`, status: "active", createdAt: "2026-10-13T08:04:30.000Z", updatedAt: "2026-10-13T08:04:40.000Z", criteria: [criterion("C1", "one", "pass"), criterion("C2", `next ${hostile}`, "pending")], checkpoints: [], steering: [], reviewBlockers: [] }] };
+  const view = buildMissionView({ marks: [{ at: now - 20_000, mode: "lit-loop" }], todos: [{ content: `todo ${hostile}`, status: "in_progress" }], ledger, sessionStatus: "idle", now, agent: "lit-loop" });
+  const rows = statusCard({ view, frame: restingFrameFor(view, now), chips: [{ name: "lit-loop", current: false }], busy: false, figures: { contextPercent: 4, branch: `main${hostile}`, inLane: false } }, paletteFromTheme(undefined), 98);
+  for (const row of rows) for (const segment of row) assert.doesNotMatch(segment.text, /[\u0000-\u001f\u007f-\u009f]/u, JSON.stringify(segment.text));
+});

@@ -168,6 +168,8 @@ for an approved plan; `/review-work` checks the `DoneClaim` through a five-lane 
 | `/review-work` | Plan review after `lit-plan` or work review after `lit-loop` or `/start-work`, picked from what exists; `/review-work plan` or `/review-work work` forces one. |
 | `/litgoal` | Set and keep the finish line: one goal with checkable criteria on durable state. `lit-loop` and `/start-work` run toward it. |
 | `/lit-brainstorm` | Open a question into options, narrow them to a short list, and hand the pick to `deep-interview` or `lit-plan`. Chat: `lit brainstorm`, `lit brainstorming`, `lit ideation`, `lit ideate`, `lit idea`, `lit ideas`. It never builds. |
+| `/lit-hijack` | Port the mechanism in someone else's published work into your own skill or system: capture with provenance, licence gate, gap, source-free spec, separate build, parity proof and report. A bundled `hijack.mjs` decides when each phase is done. Chat: `lit hijack`, `lit hijacking`, `lit 하이재킹`, `lit 하이잭`. |
+| `/lit-adhd`, `/lit-rewind` | Pick up where you left off: a read-only brief of earlier sessions with status, real progress or known facts, a roadmap and one recommended step. A bundled `rewind.mjs` collects it. Chat: `lit adhd`, `lit rewind`; then `go` follows the armed step for 30 minutes. `lit approve` and `lit deny` answer a pending boundary; `lit deny` ends the run. |
 | `/litresearch` or `/lit-research` | Run evidence-backed research with a sequential fallback. |
 | `/lit-handoff` | Create a resumable handoff; exact bare `handoff` also routes here. |
 | `/lit-recap` | Read a concise recap from local ledger and session context. |
@@ -263,6 +265,8 @@ flowchart LR
 - <code>lit-commit</code>
 - <code>lit-crucible</code>
 - <code>lit-brainstorm</code>
+- <code>lit-hijack</code>
+- <code>lit-adhd</code>
 - <code>lit-init</code>
 - <code>lit-comprehend</code>
 - <code>lit-handoff</code>
@@ -270,6 +274,7 @@ flowchart LR
 - <code>lit-recap</code>
 - <code>lit-scientific-visualization</code>
 - <code>lit-diagram-drawer</code>
+- <code>lit-schematic</code>
 - <code>lit-pptx</code>
 - <code>lit-docx</code>
 - <code>lit-typographic-motion</code>
@@ -522,7 +527,32 @@ What it draws:
     gets a short light sweep as it arrives; when the turn ends they dim and stay as the recent list,
     newest first, and firing one again brightens it. Chips that do not fit collapse into `+N`;
   - the bottom border holds the context use (amber from 75%), the time since the first lit turn
-    (`⟳ 7m`) and the git branch.
+    (`⟳ 7m`) and the git branch;
+  - lanes of parallel work add rows under the skill row while two or more exist: `┬ 3 lanes in
+    parallel`, then one `├─`/`└─` row per lane (this session's workflow-stack frames, running `task`
+    calls and other sessions in the workspace whose stack moved in the last 15 minutes), four at
+    most and `+N more` for the rest. Each row has the lane name, a status word (`working`,
+    `paused`, `done`, `failed`, `idle`) and a gauge only when the lane has a real total
+    (`[▉▉░░░░░░] 3/10`); otherwise it says what is known (the stage, how long it has run) and a
+    working lane shows a small pulse, never a question mark. The card keeps its tallest height while
+    lanes are live and drops back to four rows once everything has settled;
+  - while `lit-adhd` (alias `lit-rewind`) runs, the border, the LIT word and the gauges cycle through
+    the colour wheel at one fixed lightness, four small colour steps a second with no flashing. It
+    is off under `motion: false` and `NO_COLOR`. An idle session in a workspace with earlier work
+    says `lit adhd to pick up where you left off`, and the first fresh session there raises one
+    toast with the same words (v1 TUI only; the v2 TUI has no band and no toast).
+  - one look at a time, picked from a small registry in `src/tui/mission-looks.ts`. Every route that runs
+    lit-adhd wears the rewind look: `lit adhd`/`lit rewind` in chat, `/lit-adhd`/`/lit-rewind` (also from an
+    installed v2 alias file) and a native `skill` load. While the session waits on you (a permission or a
+    question, or an idle turn that ended on a goal decision, a reply opening with `BLOCKED:`, or a typed
+    start-work run paused on a boundary) the border turns amber and the corner says `◆ YOUR TURN`; the
+    amber eases over a 3 s breath with no flashing, holds still under `motion: false` and `NO_COLOR`, and
+    stops once you type. While `review-work` runs, the top border splits into its five lanes (scope, tests,
+    package, security, surface) and the corner counts them, `◇ REVIEW 2/5`. A lane lights only after the
+    agent reports it with the `review-work` tool (`action: "lane"`, a lane and `pass`, `fail` or
+    `blocked`); a failed lane turns the error colour and an unreported one stays dim. When a goal reaches
+    done the completion sparks play once and the card settles; a routine turn never replays them. A
+    published release has no signal on the card, so it raises no burst;
 
   A subagent session shows its parent's card with `· in lane`; the home screen has no band. When the
   card is narrow each row drops its own low-priority parts: the track drops the live step and
@@ -771,6 +801,8 @@ unmanaged copy, or accept that OpenCode may prefer it over the LitOpenCode-manag
 
 ## Design production and README Studio
 
-The native `frontend-ui-ux` skill takes an adequate authorized build request through working implementation and rendered inspection. It asks only material design choices and retains answers; review and plan requests remain read-only.
+The native `frontend-ui-ux` skill takes an adequate authorized build request through working implementation and rendered inspection. It asks only material design choices and retains answers; review and plan requests remain read-only. A new page or screen locks its look first with `scripts/design-lock.mjs` (house style, layout family, signature moment, rich or calm density); the generated `design.lock.json`, `ui/tokens.css`, `ui/components.css` and fonts live in the project, fonts are copied from the `lit-diagram-drawer` and `lit-typographic-motion` skills after a sha256 check, and `scripts/probe.mjs` adds DS-001 to DS-008 and the LOOK-1 to LOOK-6 questions when the lock sits beside the page. `--viewports` runs a subset of the matrix and never approves.
 
 Select `readme-studio` through OpenCode's native skill tool for factual README writing and local cover composition. The installed resources include outlined typography helpers and pinned Remotion/HyperFrames recipes. Without a native image generator it reports `IMAGE_GENERATION_UNAVAILABLE` and can continue from a supplied background. Public GitHub/npm rendering is a separate gate. No dedicated slash command is claimed.
+
+The native `lit-typographic-motion` skill gives a stage film a story (`story`: what the viewer expects, the turn, the shot where it lands, the payoff) and a protagonist that acts across at least half of the film. A link in the request makes the product required: `render.mjs assets --out <dir> --url <https link> [--cover]` reads the page and its README as untrusted data and keeps only sniffed, size-capped images (SVG cleaned, badges skipped) under `stage/assets/` or `cover/assets/`, and the `ASSET-USED` gate row fails a film that never shows them; an unreachable product exits 22 and asks the user instead of drawing an invented screen. `depth: "3d"` draws with the pinned three.js r170 (served under `/lit/three/`, hashes in `THIRD_PARTY_NOTICES`) on the GPU rung, and a failed GPU start falls back, labelled, to SwiftShader. A README cover without user art takes the `hero-3d` recipe; `painted-light` needs user art. Films are rich by default (`register: rich`): a stage film must fill its frame (`RICH-FILL` fails when more than two of twelve regions stay empty in more than one shot), carry dense real labels and a moving camera, and takes a per-film layered score (`sound.mode: score`; kick, clap, hats, perc, bass, chords, lead, fx and accents stems, sidechained, -16 LUFS, the drop on the story beat, stems kept under `sound/stems/`); only a request for a calm or minimal film makes it `minimal`. `render3d: "blender"` adds an optional Cycles plate rung (`render.mjs blender --out <dir> [--final] [--detach]`; `scaffold` prints a `BLENDER:` line, and an absent Blender falls back to three.js with a labelled note). The look round asks 11 questions on the stage path (9 on the type path and for covers), including whether the film is rich enough for its register and whether the turn lands, and `gate.mjs --done` finds the run up the tree, so it works with `--out .` from inside the film folder. Before the treatment the skill makes one `question` call for path, style, format and register, with the rules' pick first.

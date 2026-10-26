@@ -183,6 +183,10 @@ Paused work cannot complete. It must receive a matching trusted resume or explic
 Cancelled and completed items are terminal and permit a new init at the next monotonic revision;
 active or paused work cannot be overwritten by a new init.
 
+## Typed Start, Approve and Deny
+
+A user can also type `start-work`, `start-work plans/<name>.md` or `/start-work [plan]` without a pasted directive. The plugin then resolves the named plan, else the latest durable plan, else the only plan with an open row, and calls lifecycle init on the user's behalf with read, write and execute grants under the workspace root. Nothing wider is ever granted this way, and an unresolved plan only adds one sentence to the ordinary activation. When the run pauses at a boundary, the user's whole-prompt `lit approve` resumes with exactly that boundary and `lit deny` cancels the run, because the lifecycle has no refused-but-paused state; the reply says the run ended and how to start it again. Only the user's own prompt in a root session can answer a boundary. After a `lit-adhd` brief that recommends this run or an open plan, a bare `go` continues it. A side discipline such as `lit-plan` or `litresearch` pauses this one on the workflow stack; `lit continue` or `go` returns here.
+
 ## Safety
 
 - Preserve unrelated workspace changes.
@@ -210,6 +214,10 @@ Turn the plan into slices that can be verified independently. A slice should be 
 Maximum safe subagent delegation means using independent lanes when they reduce risk. A documentation expansion can split by skill families. A package change can split into implementation, tests, payload review, and security review. A public-source change can split into fetch runtime, SSRF guard review, and CLI probe. Delegation is not mandatory for a tiny one-file fix, and it is not a way to bypass accountability. The parent agent owns the final diff, resolves conflicts, and verifies that every subagent claim matches local files.
 
 A good delegation packet includes scope, allowed files, mutation permission, test command, expected return format, stop rules, and an explicit `return_mode: reader|technical|audit`. Detailed worker evidence remains available to the parent and reviewer even when the assigned conversational return is `reader`. Do not let subagents commit, tag, push, publish, bump versions, alter host config, or clean unrelated state unless the user explicitly approved those actions and the parent delegated them in writing.
+
+### Plans that come from a lit-hijack spec
+
+When the plan was written from a `lit-hijack` spec, give implementer lanes the packet from `hijack.mjs brief <run>` (the spec and the target, with the captured sources left out). The `task` tool has no host worktree isolation, so create a separate `git worktree` for each implementer lane and give the lane that absolute directory as its only place to edit. Run `hijack.mjs check <run> --phase build` before ticking the last implementation row. A build-gate failure means source wording reached the target; rewrite that part from the spec instead of editing words around it.
 
 ## Implementation Discipline
 

@@ -18,7 +18,7 @@ export function stillsPlan({ beats, cuts, frameCount, fps }) {
   return { beatFrames, strips, sheet, all };
 }
 
-function tile(images, cols, tileW, tileH, gap) {
+export function tile(images, cols, tileW, tileH, gap) {
   const rows = Math.ceil(images.length / cols);
   const width = cols * tileW + (cols + 1) * gap, height = rows * tileH + (rows + 1) * gap;
   const out = Buffer.alloc(width * height * 4);

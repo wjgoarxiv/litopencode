@@ -22,10 +22,13 @@ def _face(bold):
     return ImageFont.truetype(str(FACES / f"Pretendard-{'Bold' if bold else 'Regular'}.otf"), 100)
 
 
-def _measured_lines(line, size, bold, usable_points):
-    """Lines a run of the bundled face takes at this width, wrapped between words like the renderer."""
+def _measured_lines(line, size, bold, usable_points, tracking=0.0):
+    """Lines a run of the bundled face takes at this width, wrapped between words like the renderer.
+
+    `tracking` is the character spacing the runs set, in points per character (display type is set tight).
+    """
     face = _face(bold)
-    width = lambda text: face.getlength(text) * size / 100
+    width = lambda text: face.getlength(text) * size / 100 + len(text) * tracking
     lines, current = 1, ""
     for word in line.split(" "):
         candidate = f"{current} {word}" if current else word
@@ -76,11 +79,15 @@ def inspect(path):
                     if runs and all("Pretendard" in (run.font.name or "") for run in runs):
                         # The bundled face is measured, not estimated; its bold is wider than its regular.
                         bold = sum(len(run.text) for run in runs if run.font.bold) * 2 > sum(len(run.text) for run in runs)
-                        line_count = max(1, sum(_measured_lines(line, size, bold, usable_width / 12700) for line in paragraph.text.splitlines() if line.strip()))
+                        tracking = int(runs[0]._r.get_or_add_rPr().get("spc", "0")) / 100
+                        line_count = max(1, sum(_measured_lines(line, size, bold, usable_width / 12700, tracking) for line in paragraph.text.splitlines() if line.strip()))
                     else:
                         approximate_chars = max(1, usable_width / Inches(size / 72 * 0.52))
                         line_count = max(1, sum(max(1, -(-len(line) // approximate_chars)) for line in paragraph.text.splitlines()))
-                    estimated += line_count * Inches(size / 72 * 1.15)
+                    # The engine tightens a title's spacing to keep it in its frame; measure with the leading the paragraph sets.
+                    leading = paragraph.line_spacing
+                    line_height = int(leading) if leading is not None and not isinstance(leading, float) else Inches(size / 72 * (leading or 1.15))
+                    estimated += line_count * line_height
                 if estimated > usable_height + Inches(0.08):
                     overflow["frame"] = "estimated text height exceeds frame"
             if overflow or off_slide:

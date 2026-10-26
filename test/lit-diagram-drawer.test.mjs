@@ -81,6 +81,29 @@ test("diagram workflow is enrolled only through the OpenCode native skill picker
   assert.match(help.stdout, /lit-diagram-drawer creates conceptual, editorial, and technical diagrams/u);
 });
 
+test("diagram defaults are maximal: dense layered output, three to five accent families, minimal only on request", async () => {
+  const read = (...parts) => fsSync.readFileSync(path.join(skillRoot, ...parts), "utf8");
+  const style = read("references", "style-guide.md");
+  assert.match(style, /density around 8 on a 10-point scale/u);
+  assert.match(style, /about 14–24 nodes/u);
+  assert.match(style, /Minimal is opt-in/u);
+  for (const family of ["accent-2", "accent-3", "accent-4", "accent-5"]) {
+    assert.match(style, new RegExp(`\\| ${family} \\|`, "u"), `${family} token row`);
+    assert.match(style, new RegExp(`\\| ${family}-wash \\|`, "u"), `${family}-wash token row`);
+  }
+  const skill = read("SKILL.md");
+  assert.match(skill, /density near 8\/10/u);
+  assert.match(skill, /3–5 accent families/u);
+  assert.match(skill, /only when the user asks for minimal/u);
+  assert.match(read("references", "verifier-guide.md"), /six or more saturated hue families/u);
+  for (const guide of ["type-architecture", "type-dependency", "type-tree", "type-wardley"]) {
+    assert.doesNotMatch(read("references", `${guide}.md`), /\b(?:nine|9) nodes\b/u, `${guide} keeps no nine-node cap`);
+  }
+  const thresholds = JSON.parse(read("scripts", "craft-thresholds.json"));
+  assert.equal(thresholds.accentHigh, 6, "OF-202 fails at six families");
+  assert.equal("accentMedium" in thresholds, false, "no advisory band below the failing count");
+});
+
 test("managed skill closure pins every guide, example, template, tool, font, and license", async () => {
   const definition = managedSkillDefinition(skillId);
   assert.ok(definition);

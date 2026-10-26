@@ -6,14 +6,16 @@
 // than from LitOpenCode's own instructions (local knowledge, a start-work receipt, an auto-handoff setting
 // reply) rides the latest user message instead, the channel it had on OpenCode 1.
 import { fileURLToPath } from "node:url";
-import { createActivationMemory, decideReentry } from "../activation-reentry.ts";
+import { typedPromptReply } from "../adhd-next.ts";
+import { createActivationMemory, decideReentry, recordActivation } from "../activation-reentry.ts";
 import { detectChatActivationMode, promptForChatActivationMode, type ChatActivationMode } from "../activation-routing.ts";
-import { startWorkPromptInjection } from "../activation-workflow-prompts.ts";
+import { adhdSessionNote, litAdhdPromptInjection, startWorkPromptInjection } from "../activation-workflow-prompts.ts";
 import { autoHandoffSettingText, type AutoHandoffRouteMode } from "../auto-handoff.ts";
 import { applyTrustedStartWorkDirective, parseStartWorkLifecycleDirective } from "../bounded-authority-hooks.ts";
 import type { BoundedAuthorityOptions } from "../bounded-authority.ts";
 import type { LitOpenCodeConfig } from "../config.ts";
 import { queryKnowledge } from "../knowledge.ts";
+import { startTypedWork, typedStartArgument } from "../start-work-typed.ts";
 import { createLitGoalOperations } from "../ledger.ts";
 import { applyCompactionRuleReset, applyStaticRuleInjection } from "../rules/hooks.ts";
 import { isReadOnlyWorkflowFamilyPlan } from "../workflow-families.ts";
@@ -175,12 +177,46 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
       // A malformed or unreadable knowledge store stays silent instead of inventing context.
     }
 
+    const typed = await typedPromptReply(
+      options.projectRoot,
+      event.sessionID,
+      input,
+      activationMemory,
+      options.config.boundedAuthority as BoundedAuthorityOptions
+    );
+    if (typed !== undefined) {
+      state.turn.push(typed.text);
+      event.metadata = { ...(event.metadata ?? {}), litopencode: { mode: typed.mode, trigger: "lit", source: "prompt", typed: typed.kind } };
+      if (typed.continued) options.onActivation?.(event.sessionID, typed.mode);
+      return;
+    }
+
+    // An installed alias file makes the host expand /lit-adhd (or /lit-rewind) itself, so the prompt
+    // arrives as the command body with no plugin mark; it still runs the brief and takes its look.
+    if (input.trimStart().startsWith(litAdhdPromptInjection.trim())) {
+      state.turn.push(adhdSessionNote(event.sessionID));
+      event.metadata = { ...(event.metadata ?? {}), litopencode: { mode: "lit-adhd", trigger: "lit", source: "alias" } };
+      options.onActivation?.(event.sessionID, "lit-adhd");
+      return;
+    }
+
     const mode = detectChatActivationMode(input, session.agent);
     if (mode === undefined) return;
     const trigger = mode === "lit-handoff" ? "handoff" : mode === "lit-scientific-visualization" ? mode : "lit";
     let activation = promptForChatActivationMode(mode, input);
+    if (mode === "lit-adhd") activation = `${activation}\n${adhdSessionNote(event.sessionID)}`;
     if (mode === "start-work" && session.agent !== "lit-plan") {
       const directive = parseStartWorkLifecycleDirective(input, { chat: true });
+      const planArgument = directive === undefined ? typedStartArgument(input) : undefined;
+      if (planArgument !== undefined) {
+        const started = await startTypedWork({
+          projectRoot: options.projectRoot,
+          sessionID: event.sessionID,
+          ...(planArgument === "" ? {} : { plan: planArgument }),
+          options: options.config.boundedAuthority as BoundedAuthorityOptions
+        });
+        if (started.quiet !== true) state.user.push(started.text);
+      }
       if (directive?.action === "resume") {
         try {
           const receipt = await applyTrustedStartWorkDirective(options.projectRoot, event.sessionID, directive, options.config.boundedAuthority as BoundedAuthorityOptions);
@@ -206,15 +242,16 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     }
     if (reentry.kind === "resume") activation = `${reentry.line}\n${activation}`;
     else if (reentry.kind === "confirm") activation = `${activation}\n${reentry.line}`;
+    if (reentry.kind !== "confirm" && mode !== "lit-handoff" && mode !== "lit-scientific-visualization") {
+      const recorded = await recordActivation({ memory: activationMemory, projectRoot: options.projectRoot, sessionID: event.sessionID, mode });
+      if (recorded.line !== undefined) activation = `${activation}\n${recorded.line}`;
+    }
     state.activation = activation;
     event.metadata = {
       ...(event.metadata ?? {}),
       litopencode: { mode, trigger, source: "prompt", ...(reentry.kind === "full" ? {} : { reentry: reentry.kind }) }
     };
     options.onActivation?.(event.sessionID, mode);
-    if (reentry.kind !== "confirm" && mode !== "lit-handoff" && mode !== "lit-scientific-visualization") {
-      activationMemory.remember(event.sessionID, mode);
-    }
 
     if (mode === "lit-task" || mode === "lit-recap" || mode === "lit-brainstorm" || isReadOnlyWorkflowFamilyPlan(mode)) return;
     try {

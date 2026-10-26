@@ -33,18 +33,21 @@ warning, and the pre-warm state naming what is missing and the command that fixe
 | --- | --- | --- | --- |
 | 0 | OK | the requested mode finished; for `film`, the gate passed | none |
 | 10 | BLOCKED_NO_CHROME | Chrome is missing or failed to start headless; the message carries its first error line | install Chrome or set `CHROME_PATH` |
-| 11 | BLOCKED_NO_WEBGL2 | Chrome ran but no rung produced a WebGL2 context | check GPU drivers; the SwiftShader rung is already tried |
+| 11 | BLOCKED_NO_WEBGL2 | Chrome ran but no rung produced a WebGL2 context (a 3D film tries the GPU rung first, then SwiftShader) | check GPU drivers; the SwiftShader rung is already tried |
 | 12 | BLOCKED_NO_FFMPEG_FOR_VIDEO | a film was requested without ffmpeg | install ffmpeg; `--stills-only`, `stills` and `sheet` still work |
-| 13 | GATE_FAIL_QA | pre-flight or the full gate failed; the report names the rules | fix and rerun the next round |
+| 13 | GATE_FAIL_QA | pre-flight or the full gate failed, or the board round's layout check failed (`BOARD_CHECK_FAIL`, board still drawn); the report names the rules | fix and rerun the next round |
 | 14 | BLOCKED_DEPS_NOT_PREWARMED | the pinned packages are absent (or Tier-3 models are requested) | `litopencode motion-runtime install` outside the session |
 | 15 | BLOCKED_FONT_FETCH | a required font is missing or its bytes do not match the pin | `litopencode motion-runtime install`; a mismatch is never accepted |
 | 16 | BLOCKED_TREATMENT_INVALID | `treatment.json` is missing or a field breaks its rule; the message names the field | fix that field (`treatment.md`) |
 | 17 | STAGE_CONTRACT_ERROR | the stage page broke its contract: no `LitStage.define`, a wrong size, a forbidden element or API, a flipbook or animated raster, a path outside `stage/`, or a copy line never found on screen | fix the page (`stage.md`) |
 | 18 | STAGE_NONDETERMINISTIC | a sample frame differs between the master and a fresh replay from 0; the message names the frame and the first region | remove the clock or random source the renderer does not drive |
 | 19 | STAGE_NETWORK_REQUEST | the page requested something outside the stage origin, or a stage file names an external URL | make the asset local |
-| 20 | SOUND_INVALID | the planned track is missing from the film, too long or short, too loud, or a generated bed starts silent | fix the track or its plan |
+| 20 | SOUND_INVALID | the planned track is missing from the film, too long or short, too loud, or a generated bed starts silent; a score that cannot be built | fix the track or its plan |
 | 21 | BLOCKED_NO_COVER_ENCODER | cover mode found neither img2webp with dwebp nor gifski with ffmpeg; checked before any capture | install libwebp (or gifski); a cover is never an MP4 (`cover.md`) |
-| 22 | BLOCKED_ASSET_MISSING | cover mode: `assets.json` lists a file that is not there, or the painted recipe lists no base art | supply or generate the art and list it; never draw a stand-in |
+| 22 | BLOCKED_ASSET_MISSING | `render.mjs assets` reached no image of a named product (or `product.unreachable` is set); cover mode: `assets.json` lists a file that is not there, or the painted recipe lists no user-supplied base art | ask the user for the logo, a screenshot or the README images and list them; never draw a stand-in |
+
+`render.mjs assets` exits 0 with the files written, 2 for a link that is not `https` or a missing `--url`, and 22
+when nothing could be fetched. It needs the network and nothing else from the runtime.
 
 Cover mode uses 13 and 16–19 too, with its own meanings for 17 and 18 (an unlisted raster; a frame
 that differs when sought out of order); `cover.md` has its table.
@@ -52,7 +55,7 @@ that differs when sought out of order); `cover.md` has its table.
 ## Chrome, egress and the sandbox
 
 - Launch ladder (MO-A-51), first rung that yields a real `getContext('webgl2')` in the page wins and
-  is recorded as `chromeFlags`: the platform GPU rung (macOS `--use-angle=metal`, Linux
+  is recorded as `chromeFlags` (a `depth: 3d` film or `hero-3d` cover starts on the GPU rung and falls back to SwiftShader with a notice in the report and the manifest's `warnings`, `rung` and `renderer`; `depth.md`): the platform GPU rung (macOS `--use-angle=metal`, Linux
   `--use-angle=gl`, Windows `--use-angle=d3d11`), then `--use-angle=swiftshader
   --enable-unsafe-swiftshader`. The anti-throttling flags are always appended. The Chrome profile
   lives in `<out>/.run/` and is removed on exit; Chrome is driven over a pipe, so no control port.
@@ -82,7 +85,9 @@ that differs when sought out of order); `cover.md` has its table.
 
 ## Sound
 
-- Generated (the default under bare `lit`, on both paths): a deterministic bed from the treatment,
+- Score (the default for a rich stage film): a per-film layered track with its stems kept as files,
+  built in code and measured to -16 LUFS with the peak held under -2 dBFS (`sound.md`).
+- Generated (a minimal stage film, and the type path, under bare `lit`): a deterministic bed from the treatment,
   built in code with no network or model weights: tempo, pulse and a chord pad, plus the accents the
   beats ask for. 48 kHz 16-bit stereo, exactly the film's length, peaks at most -2 dBFS, integrated
   loudness about -16 LUFS (ITU-R BS.1770-4, measured in this code). `sound-cues.json` lists every cue
@@ -101,3 +106,13 @@ that differs when sought out of order); `cover.md` has its table.
   revision and a verified licence that allows commercial use. This build pins no licence-verified
   Korean alignment model, so the install fails closed and a render with `--word-timing` exits 14.
   MMS_FA and madmom weights, aubio and essentia are never used at any tier.
+
+## Blender (optional)
+
+Blender is not part of the pre-warm and nothing needs it. `motion-runtime status` and `doctor` report
+whether it is installed (`motion blender:` line, information only, never a failure). It is found, in
+this order, at `LITOPENCODE_BLENDER` (used only if that path exists; a missing path is a miss, not a
+reason to look elsewhere), at `/Applications/Blender.app/Contents/MacOS/Blender`, then as `blender` on
+`PATH`. Without it `render.mjs blender` renders nothing, prints a `FALLBACK:` text naming the three.js
+GPU rung and exits 0. A Blender film whose plate is missing or short stops the stage with exit 17
+(`depth.md`, "The Blender rung"). Never install Blender inside the session.

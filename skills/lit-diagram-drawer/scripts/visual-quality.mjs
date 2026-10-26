@@ -93,8 +93,7 @@ function officeCraft(texts,nodes,outlines,view){
     if(view&&node.w*node.h>=craft.fullBleedFraction*view.w*view.h)continue;
     const hue=accentHue(node.fill);if(hue!==null&&!hues.some((other)=>Math.min(Math.abs(hue-other),360-Math.abs(hue-other))<=craft.accentHueBucketDegrees))hues.push(hue);
   }
-  if(hues.length>=craft.accentHigh)issues.push('ACCENT_COUNT OF-202 '+hues.length+' maximum='+(craft.accentHigh-1));
-  else if(hues.length>=craft.accentMedium)advisories.push('ACCENT_COUNT OF-202 '+hues.length+' preferred<'+craft.accentMedium);
+  if(hues.length>=craft.accentHigh)issues.push('ACCENT_COUNT OF-202 '+hues.length+' maximum='+(craft.accentHigh-1)+'; keep three to five, each tied to a role');
   for(const text of texts){
     const label=text.label,latin=[...label].filter((char)=>/[A-Za-z0-9]/.test(char)).length/Math.max(1,[...label].filter((char)=>!(/\s/.test(char))).length);
     if(latin>=craft.latinFractionMin&&label!==label.toUpperCase()){
