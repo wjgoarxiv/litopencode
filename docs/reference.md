@@ -169,7 +169,7 @@ for an approved plan; `/review-work` checks the `DoneClaim` through a five-lane 
 | `/litgoal` | Set and keep the finish line: one goal with checkable criteria on durable state. `lit-loop` and `/start-work` run toward it. |
 | `/lit-brainstorm` | Open a question into options, narrow them to a short list, and hand the pick to `deep-interview` or `lit-plan`. Chat: `lit brainstorm`, `lit brainstorming`, `lit ideation`, `lit ideate`, `lit idea`, `lit ideas`. It never builds. |
 | `/lit-hijack` | Port the mechanism in someone else's published work into your own skill or system: capture with provenance, licence gate, gap, source-free spec, separate build, parity proof and report. A bundled `hijack.mjs` decides when each phase is done. Chat: `lit hijack`, `lit hijacking`, `lit 하이재킹`, `lit 하이잭`. |
-| `/lit-adhd`, `/lit-rewind` | Pick up where you left off: a read-only brief of earlier sessions with status, real progress or known facts, a roadmap and one recommended step. A bundled `rewind.mjs` collects it. Chat: `lit adhd`, `lit rewind`; then `go` follows the armed step for 30 minutes. `lit approve` and `lit deny` answer a pending boundary; `lit deny` ends the run. |
+| `/lit-adhd`, `/lit-rewind` | Pick up where you left off: a read-only brief that opens with three lines (done so far, doing now, next), then earlier sessions with status, real progress or known facts, a roadmap and one recommended step. Finished plans and completed start-work runs count as done, a liveness record marks idle sessions, plans older than seven days stay out, and this worktree's `HANDOFF.md` `Next` item is the fallback step. A bundled `rewind.mjs` collects it. Chat: `lit adhd`, `lit rewind`; then `go` follows the armed step for 30 minutes. `lit approve` and `lit deny` answer a pending boundary; `lit deny` ends the run. |
 | `/litresearch` or `/lit-research` | Run evidence-backed research with a sequential fallback. |
 | `/lit-handoff` | Create a resumable handoff; exact bare `handoff` also routes here. |
 | `/lit-recap` | Read a concise recap from local ledger and session context. |
@@ -218,6 +218,16 @@ litopencode complete-goals
 `/start-work init|resume|cancel|complete|status <schema-3 JSON>` is the bounded-authority
 surface for approved execution. Resume requires the trusted user route and matching work,
 session, revision, and grant; copied or quoted text is inert.
+
+When `/start-work save-plan <JSON>` saves an approved plan, the saved-plan notice arms a one-word start:
+typing `go` in that same session within 30 minutes starts the typed start-work run on that plan. A `go`
+from another session, or later, is an ordinary word. A plan whose checklist names an absolute path
+outside the project must carry a `Scope roots: <folder> (<actions>)` line (actions from `read`, `write`,
+`execute`); save-plan refuses an uncovered outside folder and replies with the exact line to add, or
+asks for a narrower existing folder when only the filesystem root, a top-level folder or the home
+folder would cover it. Paths in code fences and commands quoted in an inline code span do not count.
+When typed start-work begins, each valid `Scope roots:` line becomes a grant of the run, so it does
+not pause for a folder the approved plan named; the folder must exist then.
 
 Native goal verdict: the OpenCode host surface does not currently expose a native goal primitive;
 LitOpenCode uses `.litopencode/litgoal` instead. Static skills are installed under
@@ -535,7 +545,13 @@ What it draws:
     `paused`, `done`, `failed`, `idle`) and a gauge only when the lane has a real total
     (`[▉▉░░░░░░] 3/10`); otherwise it says what is known (the stage, how long it has run) and a
     working lane shows a small pulse, never a question mark. The card keeps its tallest height while
-    lanes are live and drops back to four rows once everything has settled;
+    lanes are live and drops back to four rows once everything has settled. Other sessions follow
+    this session's own lanes, working first, then paused, done and idle, and one other session is
+    already a row. Each session's hooks keep a small record in `.litopencode/liveness/<session>.json`
+    (`alive` after a tool, `idle` on `session.idle`, `ended` when the session is deleted); when a
+    record exists it decides idle and ended instead of the five-minute guess, a session running in
+    a herdr pane is named `<skill> · <pane>`, and an ended session or another session's completed
+    start-work run shows `done` for one minute and then leaves;
   - while `lit-adhd` (alias `lit-rewind`) runs, the border, the LIT word and the gauges cycle through
     the colour wheel at one fixed lightness, four small colour steps a second with no flashing. It
     is off under `motion: false` and `NO_COLOR`. An idle session in a workspace with earlier work
@@ -557,7 +573,10 @@ What it draws:
   A subagent session shows its parent's card with `· in lane`; the home screen has no band. When the
   card is narrow each row drops its own low-priority parts: the track drops the live step and
   next-task text, bar width, the bar, the criteria count and then every stage but the running one; the bottom border drops the branch,
-  then the time, then the context use. It never wraps. The completion moment plays here too.
+  then the time, then the context use. It never wraps. When an installed LitOpenCode is newer than the
+  code this OpenCode start loaded (the automatic update's receipt or the package on disk says so), the
+  bottom border starts with `restart to <version>` in the warning colour, the last figure to go, and one
+  toast says the same; nothing restarts on its own. The completion moment plays here too.
 - A line under the home prompt, after OpenCode's tips: `🔥 lit ready · last: <goal> ✓ n/m`. It
   appears only when the project ledger holds a goal.
 - Warnings always carry `⚑` and words, not colour alone, so they read the same without colour.

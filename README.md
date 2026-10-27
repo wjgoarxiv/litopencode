@@ -237,6 +237,8 @@ Bug reports and pull requests are welcome. Start with [Contributing](./CONTRIBUT
 
 MIT. See [LICENSE](./LICENSE). Reference material bundled for `lit-handoff` and `lit-scientific-visualization` keeps its own license and provenance files under `vendor/`.
 
+The LitOpenCode name, logos and mascot art follow the [trademark policy](./TRADEMARK.md).
+
 <details>
 <summary>Copy ASCII logo</summary>
 

@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { adhdNextTtlMs, routeGo } from "../src/adhd-next.ts";
 import { persistApprovedPlan, resolveLatestDurablePlan } from "../src/durable-plan.ts";
 import { pluginModule } from "../src/index.ts";
 
@@ -272,6 +273,66 @@ test("/start-work save-plan persists an explicitly approved chat plan without gr
     assert.match(output.parts[0].text, /does not grant start-work authority/i);
     assert.equal(await (await resolveLatestDurablePlan(dir))?.text, `${request.markdown}\n`);
     assert.equal(await exists(path.join(dir, ".litopencode", "litgoal")), false);
+  });
+});
+
+test("a saved plan arms go for the saving session only, for 30 minutes", async () => {
+  await withTempDir(async (dir) => {
+    const hooks = await commandHooks(dir);
+    const send = async (text, sessionID) => {
+      const output = { message: { id: "msg_go", sessionID, role: "user" }, parts: [{ id: "prt_go", sessionID, messageID: "msg_go", type: "text", text }] };
+      await hooks["chat.message"]({ sessionID, messageID: "msg_go", agent: "build" }, output);
+      return output.parts.slice(1).map((part) => part.text).join("\n");
+    };
+    const save = async (sessionID, requestId) => {
+      const output = { parts: [] };
+      await hooks["command.execute.before"]({
+        command: "/start-work",
+        sessionID,
+        arguments: savePlanArgument(approvedPlan({ slug: "go-plan", requestId, revision: Number(requestId.slice(-1)) }))
+      }, output);
+      return output.parts[0].text;
+    };
+
+    assert.match(await save("writer", "go-plan-1"), /type `go` within 30 minutes/u);
+    assert.doesNotMatch(await send("go", "bystander"), /start-work began/u, "another session's go does nothing");
+    assert.equal(await routeGo({ projectRoot: dir, sessionID: "writer", text: "go", now: Date.now() + adhdNextTtlMs + 60_000 }), undefined, "31 minutes is expired");
+    assert.doesNotMatch(await send("go", "writer"), /start-work began/u, "the expired record was consumed");
+
+    await save("writer", "go-plan-2");
+    assert.match(await send("go", "writer"), /start-work began from \.litopencode\/plans\/go-plan\.md/u);
+    await hooks.dispose();
+  });
+});
+
+test("save-plan blocks an outside todo path until a Scope roots line covers it; a fenced path never blocks", async () => {
+  await withTempDir(async (dir) => {
+    const outside = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-scope-outside-")));
+    try {
+      const hooks = await commandHooks(dir);
+      const todo = `## TODOs\n\n- [ ] 1. Read — Action: read ${outside}/table.csv; Output: x; Verification: y`;
+      const save = async (markdown, requestId, revision) => {
+        const output = { parts: [] };
+        await hooks["command.execute.before"]({
+          command: "/start-work",
+          sessionID: "scope-writer",
+          arguments: savePlanArgument(approvedPlan({ slug: "scoped", markdown, requestId, revision }))
+        }, output);
+        return output.parts[0].text;
+      };
+
+      const blocked = await save(`# Scoped\n\n${todo}`, "scoped-1", 1);
+      assert.match(blocked, /^BLOCKED:/u);
+      assert.ok(blocked.includes(`Scope roots: ${outside} (read)`), blocked);
+      assert.equal(await resolveLatestDurablePlan(dir), undefined);
+      await assert.rejects(persistApprovedPlan(dir, approvedPlan({ markdown: `# Scoped\n\n${todo}` })), /Scope roots/u);
+
+      assert.match(await save(`# Fenced\n\n## TODOs\n\n- [ ] 1. Run\n\n\`\`\`sh\ncat ${outside}/table.csv\n\`\`\``, "scoped-2", 2), /Saved durable plan/u);
+      assert.match(await save(`# Scoped\n\nScope roots: ${outside} (read)\n\n${todo}`, "scoped-3", 3), /Saved durable plan/u);
+      await hooks.dispose();
+    } finally {
+      await fs.rm(outside, { recursive: true, force: true });
+    }
   });
 });
 

@@ -159,7 +159,8 @@ export function guardSql(sql) {
   return sql;
 }
 
-const budget = { left: TOTAL_BYTE_BUDGET };
+// `skipped` counts regular files left unread because the budget ran out, so the brief can say so.
+const budget = { left: TOTAL_BYTE_BUDGET, skipped: 0 };
 
 function readSmall(file, max = FILE_CAP) {
   let stat;
@@ -168,7 +169,11 @@ function readSmall(file, max = FILE_CAP) {
   } catch {
     return undefined;
   }
-  if (!stat.isFile() || stat.size > max || stat.size > budget.left) return undefined;
+  if (!stat.isFile() || stat.size > max) return undefined;
+  if (stat.size > budget.left) {
+    budget.skipped += 1;
+    return undefined;
+  }
   let fd;
   try {
     fd = openSync(file, constants.O_RDONLY | constants.O_NOFOLLOW);
@@ -260,9 +265,23 @@ function goalOf(raw) {
   };
 }
 
+// The first list item or line of text under a `Next` or `Next Steps` heading, without its marker.
+function handoffNextOf(text) {
+  const lines = text.split(/\r?\n/u);
+  const start = lines.findIndex((line) => /^#{1,6}\s+Next(?:\s+Steps)?\s*$/iu.test(line.trim()));
+  if (start < 0) return undefined;
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,6}\s/u.test(line.trim())) return undefined;
+    const item = line.trim().replace(/^(?:[-*+]|\d+[.)])\s+/u, "");
+    if (item !== "") return item;
+  }
+  return undefined;
+}
+
 export function readLocalState(dir) {
-  const state = { plans: [], goal: undefined, work: undefined, stacks: new Map(), handoff: [], commits: [] };
+  const state = { plans: [], plansSkipped: 0, goal: undefined, work: undefined, stacks: new Map(), liveness: new Map(), handoff: [], handoffNext: undefined, commits: [] };
   const litLoop = join(dir, ".litopencode", "litgoal", "lit-loop");
+  const skippedBefore = budget.skipped;
   for (const planDir of [join(dir, "plans"), join(dir, ".litopencode", "plans")]) {
     let names = [];
     try {
@@ -281,18 +300,35 @@ export function readLocalState(dir) {
       } catch {
         // gone since the listing
       }
-      state.plans.push({ path: relative(dir, join(planDir, name)), title: heading ? heading[1].replace(/\s*—\s*Work Plan$/u, "").trim() : name, changedMs, ...checklist });
+      state.plans.push({ path: relative(dir, join(planDir, name)), title: heading ? heading[1].replace(/\s*—\s*Work Plan$/u, "").trim() : name, changedMs, complete: checklist.done === checklist.total, ...checklist });
     }
   }
+  state.plansSkipped = budget.skipped - skippedBefore;
   state.goal = goalOf(readJson(join(litLoop, "goals.json")));
   const work = readJson(join(litLoop, "work-schema-3.json"));
   if (isRecord(work) && work.schemaVersion === 3) {
+    const planPath = isRecord(work.plan) ? str(work.plan.path) : "";
     state.work = {
       sessionID: str(work.sessionID),
       status: str(work.status),
-      planPath: isRecord(work.plan) ? str(work.plan.path) : "",
+      planPath,
+      plan: planPath === "" ? "" : !isAbsolute(planPath) ? planPath : relative(dir, planPath).startsWith("..") ? basename(planPath) : relative(dir, planPath),
+      updatedMs: Date.parse(str(work.updatedAt)),
       boundary: isRecord(work.pendingBoundary) ? `${str(work.pendingBoundary.action)} on ${basename(str(work.pendingBoundary.root))}` : undefined,
     };
+  }
+  // Each session's last lifecycle signal (alive, idle, ended), written by the plugin's hooks.
+  const livenessDir = join(dir, ".litopencode", "liveness");
+  try {
+    for (const name of readdirSync(livenessDir).filter((entry) => entry.endsWith(".json")).slice(0, 40)) {
+      const record = readJson(join(livenessDir, name), 1024);
+      const atMs = isRecord(record) ? Date.parse(str(record.at)) : Number.NaN;
+      if (isRecord(record) && SAFE_SESSION.test(str(record.sessionId)) && ["alive", "idle", "ended"].includes(record.state) && Number.isFinite(atMs)) {
+        state.liveness.set(record.sessionId, { state: record.state, atMs });
+      }
+    }
+  } catch {
+    // no liveness records for this worktree
   }
   const stackDir = join(dir, ".litopencode", "workflow-stack");
   try {
@@ -306,7 +342,10 @@ export function readLocalState(dir) {
   try {
     for (const name of readdirSync(dir).filter((entry) => /^HANDOFF.*\.md$/u.test(entry)).slice(0, 3)) {
       const text = readSmall(join(dir, name), FILE_CAP);
-      if (text !== undefined) state.handoff.push(...[...text.matchAll(/^#{1,3}\s+(.+)$/gmu)].slice(0, 4).map((match) => clean(match[1], 80)));
+      if (text === undefined) continue;
+      state.handoff.push(...[...text.matchAll(/^#{1,3}\s+(.+)$/gmu)].slice(0, 4).map((match) => clean(match[1], 80)));
+      const next = handoffNextOf(text);
+      if (state.handoffNext === undefined && next !== undefined) state.handoffNext = clean(next, 120);
     }
   } catch {
     // no handoff file
@@ -480,20 +519,36 @@ export function countChain({ sessionID, directory, local, detail }) {
   return undefined;
 }
 
-export function statusOf({ detail, local, sessionID, now }) {
+// A liveness record written this long before the session's last stored move still describes that move.
+const LIVENESS_SLACK_MS = 5000;
+
+/**
+ * The session's status from its records. A start-work run it completed (and did not move past) makes it
+ * done; an idle or ended liveness record at least as new as its last move makes it idle, before the
+ * two-minute guess. The session asking for the brief (`self`) is working whatever it last wrote.
+ */
+export function statusOf({ detail, local, sessionID, now, self = false }) {
   const pending = detail.tools.find((entry) => entry.tool === "question" && (entry.status === "running" || entry.status === "pending"));
   if (pending || (local.work?.sessionID === sessionID && local.work.status === "paused" && local.work.boundary)) return "waits-on-you";
   const latest = detail.tools[0];
   if (latest && latest.status === "error" && now - detail.updated > ACTIVE_WINDOW_MS) return "blocked";
   const stack = local.stacks.get(sessionID);
   if (stack?.frames?.some((entry) => isRecord(entry) && entry.status === "paused")) return "paused";
+  if (self) return "working";
+  const run = local.work?.sessionID === sessionID && local.work.status === "completed" ? local.work : undefined;
+  if (run && Number.isFinite(run.updatedMs) && detail.updated <= run.updatedMs + LIVENESS_SLACK_MS) return "done";
+  // An ended session (deleted in OpenCode) reads idle: nothing proves its work finished, only that it stopped.
+  const live = local.liveness?.get(sessionID);
+  if (live && live.state !== "alive" && live.atMs >= detail.updated - LIVENESS_SLACK_MS) return "idle";
   if (now - detail.updated <= ACTIVE_WINDOW_MS) return "working";
   const count = countChain({ sessionID, directory: detail.directory, local, detail });
   if (count && count.done === count.total) return "done";
   return "idle";
 }
 
-function nextOf(detail, local, sessionID) {
+function nextOf(detail, local, status) {
+  // A finished session's leftovers are history, never its next step.
+  if (status === "done") return undefined;
   const todo = detail.todos.find((entry) => entry.status !== "completed" && entry.status !== "cancelled");
   if (todo) return clean(todo.content, 100);
   const open = local.plans.filter((entry) => entry.done < entry.total);
@@ -529,9 +584,9 @@ function touchedOf(detail) {
   return { edited: edited.slice(0, 20).map((name) => clean(name, 60)), tools };
 }
 
-export function buildCard({ row, detail, local, lanes, now }) {
+export function buildCard({ row, detail, local, lanes, now, self = false }) {
   const count = countChain({ sessionID: row.id, directory: row.directory, local, detail });
-  const status = statusOf({ detail: { ...detail, updated: row.updated, directory: row.directory }, local, sessionID: row.id, now });
+  const status = statusOf({ detail: { ...detail, updated: row.updated, directory: row.directory }, local, sessionID: row.id, now, self });
   const latest = detail.tools[0];
   const defaultTitle = /^(?:new session|child session|untitled)/iu.test(row.title) || row.title === "";
   const touched = touchedOf(detail);
@@ -540,7 +595,7 @@ export function buildCard({ row, detail, local, lanes, now }) {
     status,
     goal: clean(defaultTitle ? detail.firstPrompt || "(no title)" : row.title, 160),
     done: doneOf(detail, local),
-    next: nextOf(detail, local, row.id) ?? null,
+    next: nextOf(detail, local, status) ?? null,
     edited: touched.edited,
     tools: touched.tools,
     ...(count ? { counts: count } : {}),
@@ -592,6 +647,8 @@ export function recommend({ groups, sessionID }) {
   const here = groups.find((group) => group.current);
   const open = here?.plans.filter((plan) => plan.done < plan.total) ?? [];
   if (open.length === 1) return { kind: "plan", sessionID, target: open[0].path, text: `Start work on ${open[0].path}: ${open[0].total - open[0].done} step${open[0].total - open[0].done === 1 ? "" : "s"} left.` };
+  // With nothing for go to run here, this worktree's own HANDOFF.md Next item comes before older sessions.
+  if (here?.handoffNext) return { kind: "handoff", sessionID, text: `From HANDOFF.md: ${clip(here.handoffNext, 100)}`, short: clip(here.handoffNext, 60) };
   const unfinished = cards.find(({ card }) => card.status === "idle" && card.next);
   if (unfinished) return { kind: "session", sessionID: unfinished.card.id, text: `Pick up "${clip(unfinished.card.goal, 50)}": next is ${clip(unfinished.card.next, 60)}.` };
   // Nothing can run on go, so the box still names a real step from the records: an open plan in another
@@ -624,10 +681,19 @@ export function writeNext(root, record) {
 export async function collect(options = {}) {
   const root = resolve(options.root ?? process.cwd());
   const now = options.now ?? Date.now();
-  budget.left = TOTAL_BYTE_BUDGET;
+  budget.left = Math.min(TOTAL_BYTE_BUDGET, Math.max(1, Number.isInteger(options.budgetBytes) ? options.budgetBytes : TOTAL_BYTE_BUDGET));
+  budget.skipped = 0;
   const family = options.allDirs ? [] : worktreeFamily(root);
   const dirs = family.map((entry) => resolve(entry.dir));
   const limit = Math.min(Math.max(options.maxSessions ?? 10, 1), 30);
+  // The small local records first (plans, goal, run, stacks, liveness, handoff): the session store read
+  // after them may use up the read budget. A plan outside the window is left out, here or elsewhere.
+  const locals = family.map((entry) => {
+    const dir = resolve(entry.dir);
+    const local = readLocalState(dir);
+    local.plans = local.plans.filter((plan) => now - plan.changedMs <= PLAN_WINDOW_MS);
+    return { entry, dir, local };
+  });
   const dataHome = process.env.XDG_DATA_HOME && isAbsolute(process.env.XDG_DATA_HOME) ? process.env.XDG_DATA_HOME : join(homedir(), ".local", "share");
   const dbFile = options.db ?? join(dataHome, "opencode", "opencode.db");
   let store = lstatOk(dbFile) ? await openSqlite(dbFile) : { error: "no session database was found" };
@@ -638,23 +704,30 @@ export async function collect(options = {}) {
   const report = { schema: REWIND_SCHEMA, generatedAt: new Date(now).toISOString(), root: clean(root, 200), source: { store: store.kind ?? "none", ...(store.error ? { note: store.error } : {}) }, groups: [] };
   const rows = store.kind ? store.sessions(dirs, limit) : [];
   const lanes = store.kind ? store.lanes(rows.map((row) => row.id)) : new Map();
-  for (const entry of family) {
-    const dir = resolve(entry.dir);
-    const local = readLocalState(dir);
-    if (dir !== root) local.plans = local.plans.filter((plan) => now - plan.changedMs <= PLAN_WINDOW_MS);
-    const sessions = rows.filter((row) => resolve(row.directory) === dir).map((row) => buildCard({ row, detail: store.detail(row), local, lanes: lanes.get(row.id) ?? 0, now }));
-    if (sessions.length === 0 && local.plans.length === 0 && local.work === undefined) continue;
+  for (const { entry, dir, local } of locals) {
+    const sessions = rows.filter((row) => resolve(row.directory) === dir).map((row) => buildCard({ row, detail: store.detail(row), local, lanes: lanes.get(row.id) ?? 0, now, self: row.id === options.session }));
+    if (sessions.length === 0 && local.plans.length === 0 && local.work === undefined && local.handoffNext === undefined) continue;
+    const run = local.work?.status === "completed" && local.work.plan !== "" && now - local.work.updatedMs <= PLAN_WINDOW_MS ? local.work.plan : undefined;
     report.groups.push({
       worktree: clean(basename(dir), 60),
       branch: clean(entry.branch, 60),
       current: dir === root,
       sessions,
-      plans: local.plans.map(({ path, title, done, total, rows }) => ({ path, title: clean(title, 80), done, total, next: clean(rows.find((entry) => !entry.done)?.title ?? "", 90) })),
-      work: local.work ? { sessionID: local.work.sessionID, status: local.work.status } : undefined,
+      plans: local.plans.map(({ path, title, done, total, rows, complete }) => ({ path, title: clean(title, 80), done, total, complete, next: clean(rows.find((entry) => !entry.done)?.title ?? "", 90) })),
+      work: local.work ? { sessionID: local.work.sessionID, status: local.work.status, plan: clean(local.work.plan, 90) } : undefined,
       handoff: local.handoff,
+      ...(local.handoffNext === undefined ? {} : { handoffNext: local.handoffNext }),
       roadmap: roadmapOf(local),
+      // Finished inside the window, for the brief's opener: commits, a completed start-work run, ticked plans and a met goal.
+      finished: {
+        commits: local.commits.filter((commit) => now - Date.parse(commit.at) <= PLAN_WINDOW_MS).slice(0, 2).map((commit) => commit.subject),
+        runs: run === undefined ? [] : [clean(run, 90)],
+        plans: local.plans.filter((plan) => plan.complete).map(({ path, done, total }) => ({ path, done, total })),
+        ...(local.goal && local.goal.total > 0 && local.goal.done === local.goal.total && local.goal.title ? { goal: clean(local.goal.title, 100) } : {}),
+      },
     });
   }
+  report.plansSkipped = locals.reduce((total, { local }) => total + local.plansSkipped, 0);
   report.recommended = recommend({ groups: report.groups, sessionID: options.session });
   const all = report.groups.flatMap((group) => group.sessions);
   const waits = all.filter((card) => card.status === "waits-on-you").length;
@@ -667,7 +740,7 @@ export async function collect(options = {}) {
   if (options.writeNext && forThisSession && (kind === "continue" || kind === "work" || kind === "plan")) {
     const record = { kind, target: report.recommended.target ?? kind, at: now, sessionID: options.session };
     if (writeNext(root, record)) report.nextRecord = { kind, target: record.target };
-  } else if (options.writeNext && options.session !== undefined && kind !== "none") {
+  } else if (options.writeNext && options.session !== undefined && kind !== "none" && kind !== "handoff") {
     // The step belongs to another session or worktree: go here cannot run it, so it answers with where to go.
     const record = { kind: "elsewhere", target: clip(report.recommended.text, 300), at: now, sessionID: options.session };
     if (writeNext(root, record)) report.nextRecord = { kind: "elsewhere", target: record.target };
@@ -755,10 +828,34 @@ function endedTable(rows, now) {
   return ["| id | where | goal | ago | done |", "|---|---|---|---|---|", ...body, ...more];
 }
 
+// The three lines that open the brief, from records only. Done: this worktree's newest commits in the
+// window (two at most), its completed start-work run and its fully ticked plans (three items in all),
+// else its met goal. Doing: this session's own frame or goal while it works, else the running start-work
+// run, else the newest working session. Next: the recommended step, with the word to type when go runs it.
+function openerLines(report, sessionID, runsHere) {
+  const here = report.groups.find((group) => group.current);
+  const finished = here?.finished;
+  const runs = new Set(finished?.runs ?? []);
+  const items = [
+    ...(finished?.commits ?? []).map(md),
+    ...[...runs].map((plan) => `${code(plan)} (start-work complete)`),
+    ...(finished?.plans ?? []).filter((plan) => !runs.has(plan.path)).map((plan) => `${code(plan.path)} ${code(gauge(plan.done, plan.total) ?? `${plan.done}/${plan.total}`)}`),
+  ].slice(0, 3);
+  const done = items.length > 0 ? items.join("; ") : finished?.goal ? md(finished.goal) : "nothing finished in this window";
+  const cards = report.groups.flatMap((group) => group.sessions);
+  const self = cards.find((card) => card.id === sessionID && card.status === "working");
+  const running = here?.work?.status === "active" ? here.work.plan : undefined;
+  const newest = cards.filter((card) => card.status === "working").sort((a, b) => Date.parse(b.updated) - Date.parse(a.updated))[0];
+  const doing = self ? md(cutCells(self.goal, 80)) : running !== undefined ? ["start-work", running].filter(Boolean).map(md).join(" · ") : newest ? md(cutCells(newest.goal, 80)) : "nothing running";
+  const step = md(cutCells(report.recommended.short ?? report.recommended.text, 90));
+  return [`**Done so far:** ${cutCells(done, 100)}  `, `**Doing now:** ${doing}  `, `**Next:** ${step}${runsHere ? " (type `go`)" : ""}`];
+}
+
 export function renderBrief(report, { ascii = false, width = 72, sessionID } = {}) {
   const glyph = (fancy, plain) => (ascii ? plain : fancy);
   const now = Date.parse(report.generatedAt) || Date.now();
-  const lines = [`## ${glyph("🧭 ", "")}${md(cutCells(report.headline, 110))}`];
+  const runsHere = Boolean(report.nextRecord && report.nextRecord.kind !== "elsewhere");
+  const lines = [...openerLines(report, sessionID, runsHere), "", `## ${glyph("🧭 ", "")}${md(cutCells(report.headline, 110))}`];
   const worktrees = report.groups.length;
   lines.push(`*this worktree family · ${worktrees} worktree${worktrees === 1 ? "" : "s"} with records${report.source.note ? ` · ${md(report.source.note)}` : ""}*`);
   const ended = [];
@@ -786,13 +883,14 @@ export function renderBrief(report, { ascii = false, width = 72, sessionID } = {
   }
   const inner = width - 4;
   const title = " Recommended next step ";
-  lines.push("", "```text");
+  // An untagged fence: a language tag would make the chat colour the box as code.
+  lines.push("", "```");
   lines.push(`${glyph("╭─", "+-")}${title}${glyph("─", "-").repeat(Math.max(1, inner + 1 - cellWidth(title)))}${glyph("╮", "+")}`);
   for (const text of wrapCells(report.recommended.text, inner)) lines.push(`${glyph("│", "|")} ${padCells(text, inner)} ${glyph("│", "|")}`);
-  const runsHere = report.nextRecord && report.nextRecord.kind !== "elsewhere";
   if (runsHere) lines.push(`${glyph("│", "|")} ${padCells("type: go", inner)} ${glyph("│", "|")}`);
   lines.push(`${glyph("╰", "+")}${glyph("─", "-").repeat(inner + 2)}${glyph("╯", "+")}`, "```", "");
   lines.push(runsHere ? "Type **`go`** to do it." : report.nextRecord ? "Nothing runs on its own here: open that session, or say what to do (`go` says where)." : "Nothing runs on its own here: open that session, or say what to do.");
+  if (report.plansSkipped > 0) lines.push("", `*${report.plansSkipped} ${report.plansSkipped === 1 ? "plan was" : "plans were"} not read (read budget used up).*`);
   return lines.join("\n");
 }
 

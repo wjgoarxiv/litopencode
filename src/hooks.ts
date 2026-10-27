@@ -12,6 +12,7 @@ import {
 } from "./tool-guards.ts";
 import { captureKnowledgeEvent } from "./knowledge.ts";
 import { recordMotionImageRead } from "./motion-image-reads.ts";
+import { markLiveness } from "./session-liveness.ts";
 
 type ToolExecuteBeforeHook = NonNullable<Hooks["tool.execute.before"]>;
 type ToolExecuteAfterHook = NonNullable<Hooks["tool.execute.after"]>;
@@ -39,6 +40,7 @@ export type ToolExecuteAfterHookOptions = {
 
 export function createToolExecuteAfterHook(options: ToolExecuteAfterHookOptions = {}): ToolExecuteAfterHook {
   return async (input, output) => {
+    if (options.projectRoot !== undefined) await markLiveness(options.projectRoot, input.sessionID, "alive");
     applyLitOpenCodeToolAfterHook(input, output);
     applyLitOpenCodePostEditHook(input, output);
     recordMotionImageRead(input, options.projectRoot);

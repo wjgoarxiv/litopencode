@@ -174,6 +174,7 @@ function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette,
 /** The figures in the bottom border, most important first; the last ones go first when room runs out. */
 function figureParts(view: MissionView, figures: CardFigures, palette: MissionPalette): Segment[] {
   const parts: Segment[] = [];
+  if (figures.restartTo !== undefined) parts.push({ text: `restart to ${truncateCells(figures.restartTo, 16)}`, fg: palette.warning });
   if (figures.contextPercent !== null) {
     const percent = Math.round(figures.contextPercent);
     parts.push({ text: `ctx ${percent}%`, fg: percent >= contextWarnPercent ? palette.warning : palette.muted });
@@ -302,7 +303,8 @@ export function skillRow(chips: readonly SkillChip[], shimmer: ChipShimmer | und
   return fitLine([{ text: `+${pills.length}`, fg: palette.muted }], width, palette);
 }
 
-export type CardFigures = { readonly contextPercent: number | null; readonly branch?: string; readonly inLane: boolean };
+/** `restartTo`: an installed LitOpenCode version newer than the code this OpenCode start loaded. */
+export type CardFigures = { readonly contextPercent: number | null; readonly branch?: string; readonly inLane: boolean; readonly restartTo?: string };
 
 export type CardInputs = {
   readonly view: MissionView;

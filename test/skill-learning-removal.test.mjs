@@ -49,5 +49,7 @@ test("the actual tool-after hook creates no skill-learning state and leaves stal
   for (const [name, expected] of before) {
     assert.equal(digest(await readFile(path.join(runtime, name))), expected, `${name} changed`);
   }
-  assert.deepEqual((await readdir(runtime)).sort(), [...stale.keys()].sort());
+  // The only new entry is the session liveness record the hook keeps; no skill-learning state appears.
+  assert.deepEqual((await readdir(runtime)).sort(), [...stale.keys(), "liveness"].sort());
+  assert.deepEqual(await readdir(path.join(runtime, "liveness")), ["removal-proof.json"]);
 });

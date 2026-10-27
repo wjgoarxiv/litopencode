@@ -63,6 +63,7 @@ const requiredReadmePaths = [
   "CONTRIBUTING.md",
   "SECURITY.md",
   "SUPPORT.md",
+  "TRADEMARK.md",
   "docs/lit-mark.md",
   "docs/migration.md",
   "docs/privacy.md",

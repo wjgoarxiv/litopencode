@@ -22,6 +22,10 @@ export type ThreadSource = {
   readonly startedAt?: number;
   /** When the lane last moved; an old one reads as idle. */
   readonly touchedAt?: number;
+  /** When a done lane finished; it leaves the card a minute later. */
+  readonly doneAt?: number;
+  /** The status came from the session's liveness record, so the five-minute idle guess does not apply. */
+  readonly settled?: boolean;
 };
 
 export type ThreadRow = {
@@ -36,6 +40,9 @@ export type ThreadRow = {
 export const threadRowCap = 4;
 /** A lane untouched for this long is shown as idle rather than working. */
 export const idleAfterMs = 5 * 60_000;
+/** A finished lane stays this long, so a glance still catches it, then leaves. */
+export const doneLingerMs = 60_000;
+const sessionRank: Readonly<Record<ThreadStatus, number>> = { working: 0, paused: 1, done: 2, failed: 2, idle: 3 };
 const pulseFrames = ["▓▒░░░", "░▓▒░░", "░░▓▒░", "░░░▓▒", "░░▒▓░", "░▒▓░░"] as const;
 const steadyPulse = "░▒▓▒░";
 const pulseMs = 250;
@@ -61,13 +68,20 @@ function factsFor(source: ThreadSource, status: ThreadStatus, now: number): stri
 }
 
 /**
- * The rows for the sources, or undefined when fewer than two lanes exist: one lane is the session's own
- * work, which the four-row card already shows. A source untouched for five minutes reads as idle.
+ * The rows for the sources, or undefined when only one lane of the session's own work exists, which the
+ * four-row card already shows; one other session is still a row. A source untouched for five minutes reads
+ * as idle unless a liveness record settled it, a done lane leaves a minute after it finished, and other
+ * sessions follow the session's own lanes, working first, then paused, finished and idle.
  */
 export function threadsOf(sources: readonly ThreadSource[], now: number): ThreadRow[] | undefined {
-  if (sources.length < 2) return undefined;
-  return sources.map((source, index) => {
-    const status: ThreadStatus = source.status === "working" && source.touchedAt !== undefined && now - source.touchedAt > idleAfterMs ? "idle" : source.status;
+  const live = sources.filter((source) => !(source.status === "done" && source.doneAt !== undefined && now - source.doneAt > doneLingerMs));
+  const statusOf = (source: ThreadSource): ThreadStatus =>
+    source.status === "working" && source.settled !== true && source.touchedAt !== undefined && now - source.touchedAt > idleAfterMs ? "idle" : source.status;
+  const own = live.filter((source) => source.kind !== "session");
+  const others = live.filter((source) => source.kind === "session").sort((left, right) => sessionRank[statusOf(left)] - sessionRank[statusOf(right)]);
+  if (others.length === 0 && own.length < 2) return undefined;
+  return [...own, ...others].map((source, index) => {
+    const status = statusOf(source);
     return {
       key: `${source.kind}:${index}:${source.name}`,
       name: source.name,
@@ -142,7 +156,7 @@ export function threadLines(rows: readonly ThreadRow[], palette: MissionPalette,
   if (rows.length === 0) return [];
   const shown = rows.slice(0, threadRowCap);
   const more = rows.length - shown.length;
-  const fork: Line = [{ text: "┬ ", fg: palette.borderSubtle }, { text: `${rows.length} lanes in parallel`, fg: palette.muted }];
+  const fork: Line = [{ text: "┬ ", fg: palette.borderSubtle }, { text: `${rows.length} ${rows.length === 1 ? "lane" : "lanes"} in parallel`, fg: palette.muted }];
   const lines: Line[] = [fork];
   shown.forEach((row, index) => lines.push(rowLine(row, index, index === shown.length - 1 && more === 0, palette, width, options)));
   if (more > 0) lines.push([{ text: "└─ ", fg: palette.borderSubtle }, { text: `+${more} more`, fg: palette.muted }]);

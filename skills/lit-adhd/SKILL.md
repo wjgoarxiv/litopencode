@@ -57,7 +57,7 @@ Use the OpenCode vocabulary for this contract: `chat.message`, `command.execute.
 | `session_id` | The id of the session that typed the request. The route prompt states it; pass it as `--session`. Without it the brief still prints but no `go` step is armed. |
 | `scope` | This worktree and the other worktrees of the same git repository. `--root <dir>` points elsewhere; `--all-dirs` is not used unless the user asks. |
 | `store` | The OpenCode session database (`opencode.db`), opened read-only, else the older JSON session store, else nothing. A missing store is said in words. |
-| `local_state` | `plans/*.md` and `.litopencode/plans/*.md` checklists, the active goal, the bounded start-work run, `.litopencode/workflow-stack/<session>.json`, `HANDOFF*.md` headings and `git log`. |
+| `local_state` | `plans/*.md` and `.litopencode/plans/*.md` checklists, the active goal, the bounded start-work run, `.litopencode/workflow-stack/<session>.json`, `.litopencode/liveness/<session>.json`, `HANDOFF*.md` headings and the first item under their `Next` heading, and `git log`. These small records are read before the session store, so a large store cannot use up the read budget first. |
 
 ## #contract.mode_matrix
 
@@ -77,7 +77,7 @@ Use the OpenCode vocabulary for this contract: `chat.message`, `command.execute.
 
 ## #contract.outputs
 
-- The brief, in Markdown: a headline, a card per live session grouped by worktree and branch, ended sessions as one table, the roadmap, one boxed recommended step, and `go`.
+- The brief, in Markdown: a three-line opener (done so far, doing now, next), a headline, a card per live session grouped by worktree and branch, ended sessions as one table, the roadmap, one boxed recommended step, and `go`.
 - At most one file written: `.litopencode/adhd/next-<session>.json`, only with `--write-next`, only for the asking session.
 - `PASS` when the brief printed, `BLOCKED:` with the missing capability otherwise.
 
@@ -151,12 +151,13 @@ The installed copy of the script sits next to this file; use its path from the s
 
 Shape (see `references/brief-format.md` for every rule and `references/card-examples.md` for worked cards):
 
+- Three opening lines from records only. `Done so far`: this worktree's newest commits in the seven-day window (two at most), its completed start-work run and its plans with every row ticked (three items in all), else its met goal. `Doing now`: this session while it works, else the running start-work run and its plan, else the newest working session. `Next`: the recommended step, with `(type go)` when `go` runs it here.
 - A headline: how many sessions, how many wait on the user, how many are active, and the one next step.
 - Live sessions (working, waiting, blocked, paused) as full cards under a heading per worktree and branch: a coloured badge, the goal in bold, a real gauge or the known facts in words, what is done (or, before any edit, the tools it used most), what is next (or what it is doing now).
 - Ended sessions folded into one table, one row each, at most eight: id, where, goal, how long ago, done.
-- The roadmap: recent commits with their dates (`✓`), the step in hand (`▶`), the steps after it (`○`). Unfilled plan scaffolds and another worktree's plans untouched for seven days are left out.
-- One boxed recommended step.
-- The closing line: `Type go to do it.` when a step is armed here, otherwise where to act.
+- The roadmap: recent commits with their dates (`✓`), the step in hand (`▶`), the steps after it (`○`). Unfilled plan scaffolds and any plan untouched for seven days, in this worktree or another, are left out. A plan with every row ticked is finished work: it counts in the opener, never in the roadmap.
+- One boxed recommended step, in an untagged fence so the chat draws the box as plain text.
+- The closing line: `Type go to do it.` when a step is armed here, otherwise where to act. When the read budget ran out before every plan was read, one more line says how many plans were not read.
 
 ### Progress is a bar or words, never filler
 
@@ -164,11 +165,11 @@ The collector draws `[▉▉▉░░░░░░░] 3/10` only when both numbe
 
 ### Status words
 
-`working`, `waits-on-you`, `blocked`, `paused`, `done`, `idle`. `references/status-taxonomy.md` lists the record behind each and the precedence when two apply.
+`working`, `waits-on-you`, `blocked`, `paused`, `done`, `idle`. A session that completed the start-work run, and has not moved since, reads `done`, and a done card names no next step. A session whose liveness record says idle or ended, at least as new as its last stored move, reads `idle` even inside the two-minute working window. The session asking for the brief is working. `references/status-taxonomy.md` lists the record behind each and the precedence when two apply.
 
 ### The recommended step
 
-One step, chosen in this order: something waiting on the user, a blocked session, a paused discipline, another running session (with what it is doing now), the running start-work run, the single open plan, the newest unfinished session, an open plan in another worktree, the most recent session that stopped. The box always names a real step from the records; only an empty window asks what to start. If the step belongs to this session and is one of continue, keep working, or start the plan, the collector writes the next-step record and `go` follows it. If it belongs to another session or worktree, the box says where to act and `go` here only repeats that pointer; it never starts the step.
+One step, chosen in this order: something waiting on the user, a blocked session, a paused discipline, another running session (with what it is doing now), the running start-work run, the single open plan, the first item under this worktree's `HANDOFF.md` `Next` heading (it never runs on `go`), the newest unfinished session, an open plan in another worktree, the most recent session that stopped. The box always names a real step from the records; only an empty window asks what to start. If the step belongs to this session and is one of continue, keep working, or start the plan, the collector writes the next-step record and `go` follows it. If it belongs to another session or worktree, the box says where to act and `go` here only repeats that pointer; it never starts the step.
 
 ## Following `go`
 

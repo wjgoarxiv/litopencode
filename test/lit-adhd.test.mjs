@@ -189,7 +189,8 @@ test("the brief keeps every line within 120 cells with Hangul goals, boxes one r
       const brief = renderBrief(await collect({ root: dir, db: file, now: NOW, session: "ses_ko" }));
       for (const line of brief.split("\n")) assert.ok(cellWidth(line) <= 120, `${cellWidth(line)} cells: ${line}`);
       assert.equal(brief.match(/Recommended next step/gu)?.length, 1);
-      assert.match(brief, /```text\n╭─ Recommended next step ─+╮\n/u);
+      assert.match(brief, /```\n╭─ Recommended next step ─+╮\n/u);
+      assert.doesNotMatch(brief, /```text/u, "the box fence carries no language tag");
       const box = brief.split("\n").filter((line) => /^[╭│╰]/u.test(line));
       assert.equal(new Set(box.map(cellWidth)).size, 1, "every box line closes at the same column");
       assert.match(brief, /\n.*(go|say what to do).*$/u);
@@ -395,6 +396,138 @@ test("when the next step belongs to another session, go still answers and points
       assert.equal(reply?.kind, "elsewhere");
       assert.ok(reply.text.includes(report.recommended.text), reply?.text);
       assert.match(reply.text, /do not start/u);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+});
+
+// A worktree shaped like a finished port round: one plan fully ticked by a completed start-work run, one
+// stale open plan from last month, a session that finished that run, one that went idle a moment ago and
+// one whose session ended.
+async function roundThree(dir) {
+  const min = 60_000;
+  await fs.mkdir(path.join(dir, "plans"));
+  await fs.writeFile(path.join(dir, "plans", "port.md"), "# Port — Work Plan\n\n- [x] 1. pin the base\n- [x] 2. port the feature\n- [x] 3. docs and gates\n");
+  await fs.writeFile(path.join(dir, "plans", "stale.md"), "# Stale\n\n- [ ] 1. an old idea\n- [ ] 2. never started\n");
+  const old = new Date(NOW - 30 * 24 * 60 * min);
+  await fs.utimes(path.join(dir, "plans", "stale.md"), old, old);
+  const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop");
+  await fs.mkdir(loop, { recursive: true });
+  await fs.writeFile(path.join(loop, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID: "ses_run", status: "completed", plan: { path: path.join(dir, "plans", "port.md") }, updatedAt: new Date(NOW - 10 * min).toISOString() }));
+  const live = path.join(dir, ".litopencode", "liveness");
+  await fs.mkdir(live);
+  const mark = (id, state, at) => fs.writeFile(path.join(live, `${id}.json`), JSON.stringify({ version: 1, sessionId: id, state, at: new Date(at).toISOString(), herdrPane: null }));
+  await mark("ses_quiet", "idle", NOW - 30_000);
+  await mark("ses_gone", "ended", NOW - 4 * min);
+  await mark("ses_me", "idle", NOW - 10_000);
+  return [
+    { id: "ses_run", directory: dir, title: "Run the port plan", created: NOW - 90 * min, updated: NOW - 10 * min - 2000,
+      messages: [{ role: "user", parts: [text("start-work", "user")] }, { role: "assistant", parts: [tool("edit", "completed", { filePath: "/x/src/port.ts" })] }],
+      todos: [{ content: "port the feature", status: "completed" }, { content: "docs and gates", status: "pending" }] },
+    { id: "ses_quiet", directory: dir, title: "Answer a question about the card", created: NOW - 20 * min, updated: NOW - 60_000,
+      messages: [{ role: "user", parts: [text("why", "user")] }, { role: "assistant", parts: [tool("read", "completed", { filePath: "/x/src/card.ts" })] }] },
+    { id: "ses_gone", directory: dir, title: "Closed exploration", created: NOW - 40 * min, updated: NOW - 5 * min,
+      messages: [{ role: "user", parts: [text("look", "user")] }, { role: "assistant", parts: [tool("grep", "completed", { pattern: "x" })] }] },
+    { id: "ses_me", directory: dir, title: "Ask for the brief", created: NOW - 2 * min, updated: NOW - 20_000,
+      messages: [{ role: "user", parts: [text("lit adhd", "user")] }, { role: "assistant", parts: [tool("bash", "running", { description: "Collect the brief" })] }] }
+  ];
+}
+
+test("round three: a completed run and a fully ticked plan read done, liveness settles idle, and nothing repeats a done step", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: await roundThree(dir) });
+      const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me" });
+      const group = report.groups[0];
+      const byId = Object.fromEntries(group.sessions.map((card) => [card.id, card]));
+      assert.equal(byId.ses_run.status, "done", "the session that completed the run");
+      assert.equal(byId.ses_run.next, null, "a done session repeats no step");
+      assert.equal(byId.ses_quiet.status, "idle", "an idle record newer than its last move beats the two-minute guess");
+      assert.equal(byId.ses_gone.status, "idle", "an ended session is not running");
+      assert.equal(byId.ses_me.status, "working", "the session running the brief is working whatever it last wrote");
+      assert.deepEqual(group.plans.map((plan) => [plan.path, plan.complete]), [["plans/port.md", true]], "the finished plan is kept; the stale one is held to the window");
+      assert.equal(report.recommended.kind === "plan", false, "a stale open plan is never recommended");
+      assert.doesNotMatch(renderBrief(report, { sessionID: "ses_me" }), /an old idea/u);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+});
+
+test("round three: the brief opens with done so far, doing now and next", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: await roundThree(dir) });
+      const brief = renderBrief(await collect({ root: dir, db: file, now: NOW, session: "ses_me" }), { sessionID: "ses_me" });
+      const [done, doing, next, blank] = brief.split("\n");
+      assert.match(done, /^\*\*Done so far:\*\* feat: first milestone; `plans\/port\.md` \(start-work complete\) {2}$/u);
+      assert.match(doing, /^\*\*Doing now:\*\* Ask for the brief {2}$/u);
+      assert.match(next, /^\*\*Next:\*\* \S/u);
+      assert.equal(blank, "");
+      for (const line of [done, doing, next]) assert.ok(cellWidth(line) <= 120, line);
+      const ascii = renderBrief(await collect({ root: dir, db: file, now: NOW }), { ascii: true });
+      assert.match(ascii.split("\n")[1], /^\*\*Doing now:\*\* nothing running {2}$/u);
+      const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop", "work-schema-3.json");
+      await fs.writeFile(loop, JSON.stringify({ schemaVersion: 3, sessionID: "ses_run", status: "active", plan: { path: path.join(dir, "plans", "port.md") }, updatedAt: new Date(NOW).toISOString() }));
+      assert.match(renderBrief(await collect({ root: dir, db: file, now: NOW })).split("\n")[1], /^\*\*Doing now:\*\* start-work · plans\/port\.md {2}$/u);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+});
+
+test("the opener names an open plan's step with go, and a finished plan with no run counts by its gauge", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.mkdir(path.join(dir, "plans"));
+      await fs.writeFile(path.join(dir, "plans", "a-done.md"), "# A\n\n- [x] 1. one\n- [x] 2. two\n");
+      await fs.writeFile(path.join(dir, "plans", "b-open.md"), "# B\n\n- [x] 1. one\n- [ ] 2. two\n");
+      const brief = renderBrief(await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true }), { sessionID: "ses_me" });
+      assert.match(brief.split("\n")[0], /`plans\/a-done\.md` `\[▉▉▉▉▉▉▉▉▉▉\] 2\/2`/u);
+      assert.match(brief.split("\n")[2], /^\*\*Next:\*\* Start work on plans\/b-open\.md: 1 step left\. \(type `go`\)$/u);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+});
+
+test("with no step for go, this worktree's HANDOFF.md Next item is the recommendation", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.writeFile(path.join(dir, "HANDOFF.md"), "# Handoff\n\n## Done\n\n- the parser\n\n## Next Steps\n\n1. Wire the exporter to the CLI\n2. Later work\n");
+      const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
+      assert.equal(report.recommended.kind, "handoff");
+      assert.match(report.recommended.text, /Wire the exporter to the CLI/u);
+      assert.equal(report.nextRecord, null, "a handoff item does not run on go");
+      assert.match(renderBrief(report), /Nothing runs on its own here/u);
+      await fs.writeFile(path.join(dir, "HANDOFF.md"), "# Handoff\n\n## Next\n\n## Notes\n\n- not a step\n");
+      assert.match((await collect({ root: dir, db: file, now: NOW })).recommended.text, /say what to start/u, "an empty Next section gives no step");
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+});
+
+test("plans are read before sessions, and plans the read budget skipped are counted and reported", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.mkdir(path.join(dir, "plans"));
+      const body = (name) => `# ${name}\n\n- [ ] 1. ${name} step ${"x".repeat(400)}\n`;
+      for (const name of ["a", "b", "c"]) await fs.writeFile(path.join(dir, "plans", `${name}.md`), body(name));
+      const report = await collect({ root: dir, db: file, now: NOW, budgetBytes: 1000 });
+      assert.equal(report.plansSkipped, 1);
+      assert.match(renderBrief(report), /1 plan was not read \(read budget used up\)/u);
+      assert.equal((await collect({ root: dir, db: file, now: NOW })).plansSkipped, 0);
+      assert.doesNotMatch(renderBrief(await collect({ root: dir, db: file, now: NOW })), /not read \(read budget/u);
     } finally {
       await fs.rm(file, { force: true });
     }

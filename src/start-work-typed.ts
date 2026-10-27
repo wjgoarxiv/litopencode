@@ -9,6 +9,7 @@ import {
   type BoundedAuthorityState
 } from "./bounded-authority.ts";
 import { resolveLatestDurablePlan } from "./durable-plan.ts";
+import { parseScopeRoots } from "./plan-scope-roots.ts";
 
 // Typed start-work: the user's own typed `start-work [plan]`, `/start-work [plan]`, `lit approve` and
 // `lit deny` drive the schema-3 bounded-authority lifecycle without a pasted JSON directive. The grants
@@ -60,6 +61,15 @@ async function resolvePlan(projectRoot: string, explicit: string | undefined): P
   const durable = await resolveLatestDurablePlan(projectRoot).catch(() => undefined);
   if (durable !== undefined) return durable.relativePath;
   return singleOpenPlan(projectRoot);
+}
+
+/** The plan's own `Scope roots:` lines, granted at start so the run never pauses for a folder the plan named. */
+async function planScopeGrants(projectRoot: string, plan: string): Promise<Array<{ action: string; root: string }>> {
+  const file = path.resolve(projectRoot, plan);
+  const stat = await fs.lstat(file).catch(() => undefined);
+  if (stat === undefined || !stat.isFile() || stat.size > 256 * 1024) return [];
+  const text = await fs.readFile(file, "utf8");
+  return parseScopeRoots(text, projectRoot).flatMap((scope) => scope.actions.map((action) => ({ action, root: scope.root })));
 }
 
 async function currentState(lifecycle: ReturnType<typeof createBoundedAuthorityLifecycle>): Promise<BoundedAuthorityState | undefined> {
@@ -118,7 +128,8 @@ export async function startTypedWork(input: {
       authority: [
         { action: "read", root: "." },
         { action: "write", root: "." },
-        { action: "execute", root: "." }
+        { action: "execute", root: "." },
+        ...(await planScopeGrants(input.projectRoot, plan))
       ]
     });
     return {

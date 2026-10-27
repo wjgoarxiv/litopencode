@@ -1,6 +1,15 @@
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { describeUncoveredScopePaths, uncoveredScopePaths } from "./plan-scope-roots.ts";
+
+/** The plan reaches a folder outside the project that no `Scope roots:` line names; the message says what to add. */
+export class PlanScopeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PlanScopeError";
+  }
+}
 
 const PLAN_DIRECTORY = path.join(".litopencode", "plans");
 const MAX_PLAN_BYTES = 256 * 1024;
@@ -290,6 +299,8 @@ export async function persistApprovedPlan(
 ): Promise<DurablePlan> {
   const validationError = validateRequest(request);
   if (validationError !== "") throw new Error(validationError);
+  const uncovered = uncoveredScopePaths(request.markdown, projectRoot);
+  if (uncovered.length > 0) throw new PlanScopeError(describeUncoveredScopePaths(uncovered));
 
   const body = normalizeMarkdown(request.markdown);
   const directory = path.join(projectRoot, PLAN_DIRECTORY);
@@ -368,7 +379,8 @@ export function formatResolvedPlanNotice(plan: DurablePlan): string {
   return `Durable plan: ${plan.relativePath}. Discovery only. This does not grant start-work authority.\n\n<durable-plan>\n${plan.text}</durable-plan>`;
 }
 
-export function formatSavedPlanNotice(plan: DurablePlan, replayed: boolean): string {
+export function formatSavedPlanNotice(plan: DurablePlan, replayed: boolean, goArmed = false): string {
   const verb = replayed ? "Durable plan already persisted" : "Saved durable plan";
-  return `${verb}: ${plan.relativePath}. Discovery only. This does not grant start-work authority.`;
+  const go = goArmed ? " To start it, type `go` within 30 minutes in this session." : "";
+  return `${verb}: ${plan.relativePath}. Discovery only. This does not grant start-work authority.${go}`;
 }

@@ -59,7 +59,7 @@ npm uninstall -g @litfamily/litopencode
 - [Guide on GitHub](https://github.com/wjgoarxiv/litopencode/blob/main/docs/guide.md): install options, automatic handoff, troubleshooting and removal.
 - [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/reference.md)
 - [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/CHANGELOG.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/privacy.md)
-- [LitFamily hub](https://github.com/wjgoarxiv/litfamily) · [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/LICENSE) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/assets/readme/JetBrainsMono-OFL.txt)
+- [LitFamily hub](https://github.com/wjgoarxiv/litfamily) · [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/LICENSE) · [Trademark policy](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/TRADEMARK.md) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/assets/readme/JetBrainsMono-OFL.txt)
 
 <details>
 <summary>Copy ASCII logo</summary>

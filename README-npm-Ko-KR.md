@@ -59,7 +59,7 @@ npm uninstall -g @litfamily/litopencode
 - [GitHub의 사용 안내](https://github.com/wjgoarxiv/litopencode/blob/main/docs/guide-Ko-KR.md): 설치 옵션, 자동 인수인계, 문제 해결, 제거
 - [워크플로 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/reference-Ko-KR.md) · [English reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/reference.md)
 - [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/CHANGELOG.md) · [개인정보와 네트워크 동작](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/privacy.md)
-- [LitFamily 허브](https://github.com/wjgoarxiv/litfamily) · [MIT 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/LICENSE) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/assets/readme/JetBrainsMono-OFL.txt)
+- [LitFamily 허브](https://github.com/wjgoarxiv/litfamily) · [MIT 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/LICENSE) · [상표 정책](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/TRADEMARK.md) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.32/docs/assets/readme/JetBrainsMono-OFL.txt)
 
 <details>
 <summary>ASCII 로고 복사</summary>

@@ -130,6 +130,30 @@ test("go on a single open plan starts it through the typed path; an expired reco
   });
 });
 
+test("go on a plan with Scope roots lines starts with those grants, so the run does not pause for them", async () => {
+  await workspace(async (dir) => {
+    const outside = path.join(dir, "outside-data");
+    await fs.mkdir(outside);
+    await fs.mkdir(path.join(dir, "project", "plans"), { recursive: true });
+    const project = path.join(dir, "project");
+    await fs.writeFile(
+      path.join(project, "plans", "one.md"),
+      `# plan\n\nScope roots: ${outside} (read, write)\n\n## Todos\n\n- [ ] 1. read ${outside}/a.csv\n`
+    );
+    await withPlugin(project, async (send) => {
+      await writeNext(project, { kind: "plan", target: "plans/one.md", at: Date.now(), sessionID: "ses_a" });
+      assert.match(await send("go"), /start-work began from plans\/one\.md/u);
+      const state = await createBoundedAuthorityLifecycle(project).read();
+      assert.equal(state.status, "active");
+      assert.equal(state.pendingBoundary, null);
+      for (const action of ["read", "write"]) {
+        assert.ok(state.authority.grants.some((grant) => grant.action === action && grant.root === outside), action);
+      }
+      assert.equal(state.authority.grants.some((grant) => grant.root === outside && grant.action === "execute"), false);
+    });
+  });
+});
+
 test("go never answers a pending boundary: lit approve does", async () => {
   await workspace(async (dir) => {
     await fs.mkdir(path.join(dir, "plans"), { recursive: true });

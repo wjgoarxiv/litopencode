@@ -14,6 +14,7 @@ import {
 } from "../bounded-authority.ts";
 import type { AutoHandoffConfig } from "../config.ts";
 import type { SessionLookup } from "../session-lineage.ts";
+import { markLiveness } from "../session-liveness.ts";
 import type { RuntimePaths } from "../state.ts";
 
 export type StreamEvent = { readonly type: string; readonly data?: unknown };
@@ -143,6 +144,7 @@ export function createV2Events(options: V2EventOptions) {
         // A step cut short (abort, crash) never ends; its entry goes with its session.
         for (const [messageID, step] of steps) if (step.sessionID === sessionID) steps.delete(messageID);
         options.onSessionDeleted(sessionID);
+        await markLiveness(options.projectRoot, sessionID, "ended");
         await toHandoff("session.deleted", { info: { id: sessionID } });
         return;
       case "session.step.started": {
@@ -179,6 +181,7 @@ export function createV2Events(options: V2EventOptions) {
         await toHandoff("session.status", { sessionID, status: data.status });
         return;
       case "session.idle":
+        await markLiveness(options.projectRoot, sessionID, "idle");
         await toHandoff("session.idle", { sessionID });
         return;
       case "session.compaction.ended":

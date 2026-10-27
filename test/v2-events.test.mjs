@@ -5,6 +5,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { promptForChatActivationMode } from "../src/activation-routing.ts";
 import { createBoundedAuthorityLifecycle } from "../src/bounded-authority.ts";
+import { readLivenessSync } from "../src/session-liveness.ts";
 import { createV2Events } from "../src/v2/events.ts";
 import { setupLitOpenCodeServer } from "../src/v2/server.ts";
 import { createFakeV2Context, settle } from "../test-support/opencode-v2-fake.mjs";
@@ -111,7 +112,7 @@ async function withLifecycle(fn) {
       model: { list: async () => [] },
       onSessionDeleted: () => undefined
     });
-    await fn(events, initialized.state, prompts);
+    await fn(events, initialized.state, prompts, dir);
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
@@ -124,6 +125,15 @@ test("review M3: a bounded-authority continuation carries its message id, so a r
     await events.handle(event("session.text.ended", { sessionID: "ses_root", assistantMessageID: "msg_a1", ordinal: 0, text: progressFence(state, "progress-1") }));
     assert.equal(prompts.length, 1);
     assert.match(prompts[0].id ?? "", /^msg_litopencode_continue_[0-9a-f]{32}$/u);
+  });
+});
+
+test("the v2 stream records idle and ended liveness for the session", async () => {
+  await withLifecycle(async (events, _state, _prompts, dir) => {
+    await events.handle(event("session.idle", { sessionID: "ses_root" }));
+    assert.equal(readLivenessSync(dir, "ses_root")?.state, "idle");
+    await events.handle(event("session.deleted", { sessionID: "ses_root" }));
+    assert.equal(readLivenessSync(dir, "ses_root")?.state, "ended");
   });
 });
 

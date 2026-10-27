@@ -16,6 +16,8 @@ import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "./tui/
 import { activeSkillLook, turnGlow, waitingOnYou } from "./tui/mission-looks.ts";
 import { rainbowActive, rainbowAllowed, rainbowAt, rainbowShows, rainbowTickMs } from "./tui/mission-rainbow.ts";
 import { threadLineCount, threadsOf } from "./tui/mission-threads.ts";
+import { readPackageMetadata } from "./cli/json.ts";
+import { readInstalledVersions, restartVersion } from "./restart-notice.ts";
 
 export const litOpenCodeTuiPluginId = "litopencode";
 
@@ -24,6 +26,7 @@ const refreshDelayMs = 80;
 const ledgerPollMs = 2000;
 const toastMs = 4000;
 const liveTickMs = 1000;
+const restartCheckMs = 10 * 60_000;
 const trackedSessionLimit = 4;
 const refreshEvents = [
   "message.updated",
@@ -70,6 +73,20 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   const suggested = new Set<string>();
   const suggestedDays = new Map<string, string>();
   const colorAllowed = rainbowAllowed(motionEnabled, process.env.NO_COLOR);
+  // The version this start loaded; an install newer than it shows `restart to <v>` and one toast.
+  const loaded = await readPackageMetadata().catch(() => undefined);
+  const [restartTo, setRestartTo] = createSignal<string | undefined>(undefined);
+  let restartTimer: ReturnType<typeof setInterval> | undefined;
+
+  async function checkRestart(): Promise<void> {
+    if (loaded === undefined) return;
+    const target = restartVersion(loaded.version, await readInstalledVersions(loaded.packageRoot).catch(() => []));
+    if (target === undefined || target === restartTo()) return;
+    if (restartTo() === undefined) {
+      api.ui.toast({ variant: "info", title: "🔥 LIT", message: `LitOpenCode ${target} is installed. Restart OpenCode to load it.`, duration: toastMs });
+    }
+    setRestartTo(target);
+  }
 
   const state = (): MissionStateSource => api.state as unknown as MissionStateSource;
   const palette = (): MissionPalette => paletteFromTheme(api.theme.current as unknown as Record<string, unknown>, api.theme.mode());
@@ -281,7 +298,11 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     api.event.on(type as Parameters<TuiPluginApi["event"]["on"]>[0], scheduleRefresh);
   }
 
+  void checkRestart();
+  restartTimer = setInterval(() => void checkRestart(), restartCheckMs);
+
   api.lifecycle.onDispose(() => {
+    if (restartTimer !== undefined) clearInterval(restartTimer);
     if (frameTimer !== undefined) clearInterval(frameTimer);
     if (refreshTimer !== undefined) clearTimeout(refreshTimer);
     if (pollTimer !== undefined) clearInterval(pollTimer);
@@ -403,7 +424,12 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
                   ...(rainbowOn(snapshot, snapshot.now) ? { rainbow: rainbowAt(snapshot.now) } : {}),
                   ...(snapshot.card.lanes !== undefined && activeSkillLook(snapshot.view, snapshot.card.chips, snapshot.card.busy) === "review" ? { lanes: snapshot.card.lanes } : {}),
                   ...(shimmer === undefined ? {} : { shimmer }),
-                  figures: { contextPercent: snapshot.card.contextPercent, ...(snapshot.card.branch === undefined ? {} : { branch: snapshot.card.branch }), inLane: snapshot.inLane },
+                  figures: {
+                    contextPercent: snapshot.card.contextPercent,
+                    ...(snapshot.card.branch === undefined ? {} : { branch: snapshot.card.branch }),
+                    inLane: snapshot.inLane,
+                    ...(restartTo() === undefined ? {} : { restartTo: restartTo() })
+                  },
                   ...(last === undefined ? {} : { last })
                 }, colors, width);
                 const rows: unknown[] = lines.map(lineElement);

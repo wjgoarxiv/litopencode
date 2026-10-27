@@ -19,6 +19,7 @@ import { isLaneResult, isReviewLane, type LaneReports, type ReviewLane, type Lan
 import { readSkillUse, skillChips, type SkillChip, type SkillUse } from "./mission-skills.ts";
 import { isRealCount, type ThreadRow, type ThreadSource } from "./mission-threads.ts";
 import { readSiblingStacksSync, readStackSync, type WorkflowStack } from "../workflow-stack.ts";
+import { readLivenessSync, type LivenessRecord } from "../session-liveness.ts";
 
 const ledgerByteLimit = 1024 * 1024;
 
@@ -431,28 +432,59 @@ function stackSources(stack: WorkflowStack | undefined): ThreadSource[] {
   }));
 }
 
-function siblingSource(stack: WorkflowStack): ThreadSource {
+/** `<skill> · <herdr pane>` when the session runs in a herdr pane, else the last four characters of its id. */
+function siblingName(skill: string, sessionID: string, liveness: LivenessRecord | undefined): string {
+  return `${skill} · ${liveness?.herdrPane ?? sessionID.slice(-4)}`;
+}
+
+/** A sibling's own liveness record settles its status: ended reads done, idle reads idle (a held frame stays paused). */
+function siblingSource(stack: WorkflowStack, liveness: LivenessRecord | undefined, finishedAt: number | undefined): ThreadSource {
   const top = stack.frames.find((frame) => frame.status === "active") ?? stack.frames[stack.frames.length - 1];
+  const endedAt = liveness?.state === "ended" ? Date.parse(liveness.at) : finishedAt;
+  const status = endedAt !== undefined ? "done" : top.status !== "active" ? "paused" : liveness?.state === "idle" ? "idle" : "working";
   return {
     kind: "session",
-    name: `${top.skill} · ${stack.sessionID.slice(-4)}`,
-    status: top.status === "active" ? "working" : "paused",
+    name: siblingName(top.skill, stack.sessionID, liveness),
+    status,
     ...countsOf(top.done, top.total),
     ...(top.phase === undefined ? {} : { phase: top.phase }),
-    touchedAt: stack.updatedAt
+    touchedAt: Math.max(stack.updatedAt, liveness === undefined ? 0 : Date.parse(liveness.at)),
+    ...(endedAt === undefined ? {} : { doneAt: endedAt }),
+    ...(liveness === undefined && finishedAt === undefined ? {} : { settled: true })
   };
+}
+
+/** Another session's start-work run that completed, with when, read from the bounded work record. */
+function finishedWork(root: string, sessionID: string, now: number): { readonly sessionID: string; readonly at: number } | undefined {
+  const file = path.join(litLoopDir(root), "work-schema-3.json");
+  const stat = lstatOrUndefined(file);
+  if (stat === undefined || !stat.isFile() || stat.size > ledgerByteLimit) return undefined;
+  try {
+    const raw: unknown = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (!isRecord(raw) || raw.schemaVersion !== 3 || raw.status !== "completed" || typeof raw.sessionID !== "string" || raw.sessionID === sessionID) return undefined;
+    const at = typeof raw.updatedAt === "string" ? Date.parse(raw.updatedAt) : Number.NaN;
+    return Number.isFinite(at) && at <= now && now - at <= siblingFreshMs ? { sessionID: raw.sessionID, at } : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
  * The lanes beside this session's own mission: its workflow stack frames, its running `task` calls and
- * the stacks of other sessions in the workspace that moved in the last fifteen minutes. Only counts
- * that are real totals are carried; the input of a tool call is read for its description alone.
+ * the stacks of other sessions in the workspace that moved in the last fifteen minutes, read with their
+ * liveness records. Another session's completed start-work run shows as done. Only counts that are real
+ * totals are carried; the input of a tool call is read for its description alone.
  */
 export function readThreadSources(state: MissionStateSource, sessionID: string, root: string | undefined, now: number): ThreadSource[] {
   const tasks = taskSources(state, sessionID, now);
   if (root === undefined) return tasks.sources;
   const siblings = readSiblingStacksSync(root, sessionID, { now, freshMs: siblingFreshMs, max: siblingMax }).filter((stack) => !tasks.children.has(stack.sessionID));
-  return [...stackSources(readStackSync(root, sessionID)), ...tasks.sources, ...siblings.map(siblingSource)];
+  const finished = finishedWork(root, sessionID, now);
+  const others = siblings.map((stack) => siblingSource(stack, readLivenessSync(root, stack.sessionID), stack.sessionID === finished?.sessionID ? finished.at : undefined));
+  if (finished !== undefined && !siblings.some((stack) => stack.sessionID === finished.sessionID) && !tasks.children.has(finished.sessionID)) {
+    others.push({ kind: "session", name: siblingName("start-work", finished.sessionID, readLivenessSync(root, finished.sessionID)), status: "done", touchedAt: finished.at, doneAt: finished.at, settled: true });
+  }
+  return [...stackSources(readStackSync(root, sessionID)), ...tasks.sources, ...others];
 }
 
 /**

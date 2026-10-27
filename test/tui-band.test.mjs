@@ -51,6 +51,17 @@ test("the band's LIT word is LIT pink, deepened on light themes", () => {
   assert.equal(word(paletteFromTheme(undefined, "light")).fg, "#d81b78");
 });
 
+test("a newer installed version puts `restart to <v>` first in the bottom border; none otherwise", () => {
+  const idle = buildMissionView({ marks: [], todos: [], now });
+  const bottom = (figures, width = 98) => text(statusCard({ view: idle, frame: restingFrameFor(idle), chips: [], figures: { contextPercent: 4, inLane: false, ...figures } }, palette, width).at(-1));
+  assert.match(bottom({ restartTo: "9.9.9", branch: "main" }), /restart to 9\.9\.9 · ctx 4% · ⎇ main/u);
+  assert.match(bottom({ restartTo: "9.9.9", branch: "a-very-long-branch-name" }, 30), /restart to 9\.9\.9/u, "the chip is the last figure to go");
+  assert.doesNotMatch(bottom({ branch: "main" }), /restart/u);
+  const chip = statusCard({ view: idle, frame: restingFrameFor(idle), chips: [], figures: { contextPercent: 4, inLane: false, restartTo: "9.9.9" } }, palette, 98).at(-1).find((segment) => segment.text.startsWith("restart"));
+  assert.equal(chip.fg, palette.warning);
+  for (const width of [20, 40, 98]) assert.equal(lineWidth(statusCard({ view: idle, frame: restingFrameFor(idle), chips: [], figures: { contextPercent: 4, inLane: false, restartTo: "9.9.9" } }, palette, width).at(-1)), width);
+});
+
 test("text from records cannot carry terminal control sequences onto the card", async () => {
   const { truncateCells } = await import("../src/tui/mission-text.ts");
   const hostile = "fix \u001b]0;pwned\u0007 the \u001b[2Jbug\u009b31m now\u0000\u007f";

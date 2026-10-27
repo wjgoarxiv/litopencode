@@ -4,6 +4,10 @@ A complete brief as the collector prints it, from a fixture store with invented 
 Markdown: the headings, bold status words, emoji badges, inline code and the table come out in the theme's colours.
 
 ````markdown
+**Done so far:** feat(billing): add the ledger tables; `plans/ledger.md` (start-work complete)  
+**Doing now:** Port the exporter  
+**Next:** In "Migrate the billing tables", answer the open question.
+
 ## 🧭 4 sessions · 1 waiting on you · 1 active · next: In "Migrate the billing tables", answer the open question.
 *this worktree family · 1 worktree with records*
 
@@ -35,7 +39,7 @@ Markdown: the headings, bold status words, emoji badges, inline code and the tab
 - ○ **later** · 4. totals check
 - ○ **later** · 5. cut-over
 
-```text
+```
 ╭─ Recommended next step ──────────────────────────────────────────────╮
 │ In "Migrate the billing tables", answer the open question.           │
 ╰──────────────────────────────────────────────────────────────────────╯
@@ -46,6 +50,8 @@ Nothing runs on its own here: open that session, or say what to do.
 
 What each part shows:
 
+- The opener reads only records: the newest commit, the start-work run that completed its plan, this session's
+  goal while it works, and the same step the box recommends.
 - The active card has a real total (the single open plan), so it has a bar. It has no edit yet, so `Done` names
   the tools it used most, never a count of calls.
 - The waiting card comes from a `question` tool call still open, and the box recommends answering it.
@@ -74,7 +80,22 @@ and says what it is doing now.
 Nothing runs on its own here: open that session, or say what to do.
 ```
 
-The box still names a real step from the records. Only an empty window says "say what to start".
+The box still names a real step from the records. When this worktree's `HANDOFF.md` has a `Next` heading, its
+first item comes first (`From HANDOFF.md: Wire the exporter to the CLI`). Only an empty window says "say what to
+start".
+
+## A finished run and an idle session
+
+```markdown
+| id | where | goal | ago | done |
+|---|---|---|---|---|
+| `run0a1b2` | billing-api | Run the ledger plan | 10m | finished |
+| `quiet9c8` | billing-api | Answer a question about the card | 1m | · |
+```
+
+The session that completed the start-work run reads done and names no next step, even though its to-do list
+still held an item. The second one moved a minute ago, but its liveness record says idle, so it is listed as
+ended rather than drawn as an active card.
 
 ## `--ascii`
 

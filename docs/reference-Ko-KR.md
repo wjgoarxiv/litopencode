@@ -141,7 +141,7 @@ litopencode install
 | `/litgoal` | 끝나는 지점을 정하고 지킴: 확인 가능한 기준이 붙은 목표 하나를 디스크에 남김. `lit-loop`와 `/start-work`가 그 목표를 향해 일함 |
 | `/lit-brainstorm` | 열린 질문을 여러 선택지로 펼친 뒤 짧은 목록으로 좁히고, 고른 것을 `deep-interview`나 `lit-plan`에 넘김. 채팅에서는 `lit brainstorm`, `lit brainstorming`, `lit ideation`, `lit ideate`, `lit idea`, `lit ideas`. 직접 만들지는 않음 |
 | `/lit-hijack` | 다른 사람이 공개한 작업의 기법 원리를 내 스킬이나 시스템에 옮김: 출처 기록, 라이선스 확인, 격차 분석, 원문 없는 명세, 분리된 구현, 동작 비교, 보고서. 각 단계의 완료는 동봉된 `hijack.mjs`가 판정함. 채팅에서는 `lit hijack`, `lit hijacking`, `lit 하이재킹`, `lit 하이잭` |
-| `/lit-adhd`, `/lit-rewind` | 하던 일을 이어서 시작: 이전 세션의 상태, 실제 진행 또는 아는 사실, 로드맵, 추천 한 단계를 읽기 전용으로 보여 줌. 동봉된 `rewind.mjs`가 수집함. 채팅에서는 `lit adhd`, `lit rewind`, 이어서 `go`가 30분간 준비된 단계를 따라감. `lit approve`와 `lit deny`는 대기 중인 경계에 답하고, `lit deny`는 실행을 끝냄. |
+| `/lit-adhd`, `/lit-rewind` | 하던 일을 이어서 시작: 세 줄(지금까지, 지금, 다음)로 시작해 이전 세션의 상태, 실제 진행 또는 아는 사실, 로드맵, 추천 한 단계를 읽기 전용으로 보여 줌. 끝난 계획과 완료된 start-work 실행은 끝난 일로 세고, liveness 기록으로 쉬는 세션을 가리며, 7일 넘은 계획은 빼고, 이 워크트리 `HANDOFF.md`의 `Next` 항목을 마지막 대안으로 씀. 동봉된 `rewind.mjs`가 수집함. 채팅에서는 `lit adhd`, `lit rewind`, 이어서 `go`가 30분간 준비된 단계를 따라감. `lit approve`와 `lit deny`는 대기 중인 경계에 답하고, `lit deny`는 실행을 끝냄. |
 | `/litresearch` 또는 `/lit-research` | 순차 대체 경로를 포함한 근거 기반 연구 |
 | `/lit-handoff` | 이어서 작업할 수 있는 핸드오프 작성 |
 | `/lit-recap` | 로컬 ledger와 세션 맥락으로 짧은 리캡 작성 |
@@ -181,6 +181,15 @@ litopencode complete-goals
 `/start-work init|resume|cancel|complete|status <schema-3 JSON>`은 승인된 실행을 위한
 bounded-authority 경로입니다. `resume`은 신뢰된 사용자 경로와 work, session, revision,
 grant가 모두 맞을 때만 허용됩니다. 복사하거나 인용한 텍스트는 명령으로 처리하지 않습니다.
+
+`/start-work save-plan <JSON>`으로 승인된 계획을 저장하면, 저장 안내와 함께 한 단어 시작이 준비됩니다.
+같은 세션에서 30분 안에 `go`를 입력하면 그 계획으로 타이핑 start-work 실행이 시작됩니다. 다른 세션의
+`go`나 30분이 지난 `go`는 평범한 단어입니다. 체크리스트가 프로젝트 밖의 절대 경로를 가리키는 계획에는
+`Scope roots: <폴더> (<동작>)` 줄이 있어야 합니다(동작은 `read`, `write`, `execute` 중에서). 이 줄로 덮이지
+않은 바깥 폴더가 있으면 save-plan은 저장하지 않고 넣을 줄을 그대로 알려 줍니다. 파일 시스템 루트, 최상위
+폴더, 홈 폴더 자체로만 덮을 수 있을 때는 더 좁은 기존 폴더를 적어 달라고 합니다. 코드 펜스 안의 경로와
+인라인 코드로 인용한 명령은 세지 않습니다. 타이핑 start-work가 시작되면 올바른 `Scope roots:` 줄 하나하나가
+실행의 권한이 되므로, 승인된 계획이 이미 적은 폴더 때문에 멈추지 않습니다. 이때 그 폴더는 있어야 합니다.
 
 ### UI 및 Visual QA 관리 헬퍼
 
@@ -413,7 +422,12 @@ OpenCode 1.18은 `tui.json`이나 `tui.jsonc`의 `plugin` 배열에 적힌 TUI �
     상태 단어(`working`, `paused`, `done`, `failed`, `idle`), 그리고 실제 총량이 있을 때만 게이지
     (`[▉▉░░░░░░] 3/10`)가 붙습니다. 총량을 모르면 아는 것(단계, 걸린 시간)을 글로 쓰고 일하는 중이면 작은
     펄스를 보여 줄 뿐 물음표는 쓰지 않습니다. 작업이 살아 있는 동안 카드는 가장 높았던 높이를 유지하고,
-    모두 가라앉으면 네 줄로 돌아옵니다.
+    모두 가라앉으면 네 줄로 돌아옵니다. 다른 세션 줄은 이 세션의 작업 줄 뒤에 일하는 중, 멈춤, 끝남,
+    쉬는 중 순서로 놓이고, 다른 세션이 하나뿐이어도 줄이 생깁니다. 세션마다 훅이
+    `.litopencode/liveness/<session>.json`에 작은 기록을 남깁니다(도구 실행 뒤 `alive`, `session.idle`에서
+    `idle`, 세션 삭제 시 `ended`). 기록이 있으면 5분 추정 대신 그 기록으로 쉬는 중과 끝남을 정하고, herdr
+    pane에서 도는 세션은 `<skill> · <pane>`으로 부르며, 끝난 세션이나 다른 세션이 완료한 start-work 실행은
+    1분 동안 `done`으로 보였다가 사라집니다.
   - `lit-adhd`(별칭 `lit-rewind`)가 도는 동안 테두리, LIT 글자, 게이지가 같은 밝기의 색상환을 따라 돕니다.
     1초에 네 번 색이 조금씩 바뀌고 깜박이지 않습니다. `motion: false`와 `NO_COLOR`에서는 꺼집니다. 이전
     작업이 있는 작업 공간의 쉬는 세션은 `lit adhd to pick up where you left off`를 보여 주고, 그곳에서 처음 연
@@ -433,7 +447,10 @@ OpenCode 1.18은 `tui.json`이나 `tui.jsonc`의 `plugin` 배열에 적힌 TUI �
   하위(subagent) 세션에서는 부모 세션의 카드를 `· in lane`과 함께 보여 주고, 홈 화면에는 띠가
   없습니다. 폭이 좁으면 줄마다 덜 중요한 것부터 덜어 냅니다. 단계 줄은 지금 하는 일과 다음 할 일
   글자, 막대 길이, 막대, 기준 개수를 차례로 빼고, 마지막에는 지금 단계만 남깁니다. 아래 테두리는 브랜치, 시간, context 사용량 순서로 뺍니다. 줄을
-  넘기지는 않습니다. 완료 순간도 여기서 함께 보입니다.
+  넘기지는 않습니다. 완료 순간도 여기서 함께 보입니다. 이번 OpenCode 시작 때 읽어 들인 코드보다 새
+  LitOpenCode가 설치되어 있으면(자동 업데이트 영수증이나 디스크의 패키지로 확인) 아래 테두리 맨 앞에
+  경고 색으로 `restart to <버전>`이 붙고, 폭이 좁아져도 가장 늦게 빠집니다. 같은 내용의 토스트도 한 번
+  뜹니다. 스스로 다시 시작하지는 않습니다.
 - 홈 화면 입력창 아래, OpenCode 팁 다음 줄: `🔥 lit ready · last: <목표> ✓ n/m`. 프로젝트 ledger에
   목표가 있을 때만 보입니다.
 - 경고는 색만 바꾸지 않고 늘 `⚑`와 글자를 함께 붙입니다. 색이 없어도 똑같이 읽히게 하려는

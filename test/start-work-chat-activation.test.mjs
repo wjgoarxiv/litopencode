@@ -158,6 +158,41 @@ test("the native /start-work route remains assigned to lit-implement", async () 
   });
 });
 
+test("a linked worktree nested inside another checkout keeps its state in the worktree", async () => {
+  await withTempDir(async (dir) => {
+    const outer = path.join(dir, "main-checkout");
+    const linked = path.join(outer, ".worktrees", "feature");
+    const launch = path.join(linked, "packages", "app");
+    await fs.mkdir(path.join(outer, ".git", "worktrees", "feature"), { recursive: true });
+    await fs.mkdir(launch, { recursive: true });
+    await fs.writeFile(path.join(linked, ".git"), `gitdir: ${path.join(outer, ".git", "worktrees", "feature")}\n`);
+
+    const hooks = await pluginModule.server({
+      directory: launch,
+      worktree: linked,
+      project: {},
+      client: rootSessionClient(),
+      experimental_workspace: { register() {} },
+      serverUrl: new URL("http://localhost:4096"),
+      $: {}
+    });
+    const output = chatOutput("start-work on the approved plan", "linked_worktree");
+    await hooks["chat.message"](
+      { sessionID: output.message.sessionID, messageID: output.message.id, agent: "lit-loop" },
+      output
+    );
+
+    assert.equal(output.parts[1].metadata.litopencode.mode, "start-work");
+    assert.deepEqual(
+      (await readLedgerEvents(linked)).map((event) => [event.type, event.mode]),
+      [["prompt.activated", "start-work"]]
+    );
+    for (const elsewhere of [outer, launch]) {
+      await assert.rejects(fs.stat(path.join(elsewhere, ".litopencode")), { code: "ENOENT" });
+    }
+  });
+});
+
 test("a final standalone lit stays a bounded task activation despite a diagnostic start-work mention", async () => {
   await withTempDir(async (dir) => {
     const hooks = await pluginModule.server({

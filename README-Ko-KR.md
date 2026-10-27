@@ -237,6 +237,8 @@ npm uninstall -g @litfamily/litopencode
 
 MIT입니다. [LICENSE](./LICENSE)를 보세요. `lit-handoff`와 `lit-scientific-visualization`에 함께 들어 있는 참조 원본은 `vendor/` 아래에 자체 라이선스·출처 파일과 함께 있습니다.
 
+LitOpenCode 이름, 로고, 마스코트 그림은 [상표 정책](./TRADEMARK.md)을 따릅니다.
+
 <details>
 <summary>ASCII 로고 복사</summary>
 

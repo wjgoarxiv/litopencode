@@ -201,3 +201,70 @@ test("a subagent still writing after five minutes stays working; one whose sessi
     for (const row of rows) assert.ok(["working", "paused", "done", "failed", "idle"].includes(row.status), "no blocked or stalled status exists");
   });
 });
+
+const sibling = (name, status, extra = {}) => ({ kind: "session", name, status, touchedAt: now - 30_000, ...extra });
+
+test("a lone other-session row still shows; a lone own lane does not", () => {
+  assert.deepEqual(threadsOf([sibling("lit-plan · w2B:3", "working")], now).map((row) => row.name), ["lit-plan · w2B:3"]);
+  assert.equal(threadsOf([lane("only")], now), undefined);
+  assert.equal(threadLineCount(threadsOf([sibling("x", "idle")], now)), 2);
+  const lone = card(working, { threads: threadsOf([sibling("lit-plan · w9:2", "working")], now) }).map(text);
+  assert.match(lone[3], /┬ 1 lane in parallel/u, "one row is one lane, not `1 lanes`");
+});
+
+test("other sessions sort working, paused, done, then idle; own lanes keep their order above them", () => {
+  const rows = threadsOf([
+    { kind: "stack", name: "start-work", status: "paused", touchedAt: now - 1000 },
+    { kind: "stack", name: "lit-research", status: "working", touchedAt: now - 1000 },
+    sibling("quiet", "idle"),
+    sibling("finished", "done", { doneAt: now - 5000 }),
+    sibling("held", "paused"),
+    sibling("busy", "working")
+  ], now);
+  assert.deepEqual(rows.map((row) => row.name), ["start-work", "lit-research", "busy", "held", "finished", "quiet"]);
+});
+
+test("a finished row lingers for 60 seconds, then leaves", () => {
+  const at = (age) => threadsOf([sibling("a", "working"), sibling("done one", "done", { doneAt: now - age })], now).map((row) => row.name);
+  assert.deepEqual(at(59_000), ["a", "done one"]);
+  assert.deepEqual(at(61_000), ["a"]);
+});
+
+test("a status settled by a liveness record skips the five-minute idle guess", () => {
+  const rows = threadsOf([sibling("long turn", "working", { touchedAt: now - 9 * 60_000, settled: true }), sibling("guessed", "working", { touchedAt: now - 9 * 60_000 })], now);
+  assert.deepEqual(rows.map((row) => row.status), ["working", "idle"]);
+});
+
+test("liveness names a sibling by its herdr pane, settles idle and ended, and a finished start-work shows done for a minute", async () => {
+  await withStacks(async (root, _dir, write) => {
+    const live = path.join(root, ".litopencode", "liveness");
+    await fs.mkdir(live);
+    const mark = (id, state, at, herdrPane = null) => fs.writeFile(path.join(live, `${id}.json`), JSON.stringify({ version: 1, sessionId: id, state, at: new Date(at).toISOString(), herdrPane }));
+    await write("ses_pane", [frame("lit-plan", "active", now - 9 * 60_000)], now - 9 * 60_000);
+    await mark("ses_pane", "alive", now - 9 * 60_000, "w2B:3");
+    await write("ses_idle", [frame("lit-loop", "active", now - 20_000)], now - 20_000);
+    await mark("ses_idle", "idle", now - 10_000);
+    await write("ses_gone", [frame("lit-task", "active", now - 40_000)], now - 40_000);
+    await mark("ses_gone", "ended", now - 30_000);
+    await write("ses_plain", [frame("lit-adhd", "active", now - 20_000)], now - 20_000);
+    const workDir = path.join(root, ".litopencode", "litgoal", "lit-loop");
+    await fs.mkdir(workDir, { recursive: true });
+    const finished = (age) => fs.writeFile(path.join(workDir, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID: "ses_work", status: "completed", updatedAt: new Date(now - age).toISOString() }));
+    await finished(20_000);
+    await mark("ses_work", "idle", now - 20_000, "w2B:7");
+
+    const rows = threadsOf(readThreadSources(emptyState(), "ses_self", root, now), now);
+    assert.deepEqual(rows.map((row) => `${row.name}:${row.status}`), [
+      "lit-plan · w2B:3:working",
+      "lit-adhd · lain:working",
+      "lit-task · gone:done",
+      "start-work · w2B:7:done",
+      "lit-loop · idle:idle"
+    ]);
+    for (const width of [40, 60, 80]) for (const line of card(working, { threads: rows }, width)) assert.equal(lineWidth(line), width, text(line));
+
+    await finished(61_000);
+    const later = threadsOf(readThreadSources(emptyState(), "ses_self", root, now), now).map((row) => row.name);
+    assert.equal(later.some((name) => name.startsWith("start-work")), false);
+  });
+});

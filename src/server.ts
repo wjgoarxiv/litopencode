@@ -12,6 +12,7 @@ import { createToolExecuteAfterHook, createToolExecuteBeforeHook } from "./hooks
 import { createLogger } from "./logger.ts";
 import { createIgnitionState } from "./ignition.ts";
 import { createSessionLookup } from "./session-lineage.ts";
+import { markLiveness } from "./session-liveness.ts";
 import { applyCompactionRuleReset, applyStaticRuleInjection } from "./rules/hooks.ts";
 import { defaultOpenCodeConfigRoot } from "./state.ts";
 import { litOpenCodeTools } from "./tools.ts";
@@ -79,7 +80,9 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         registerLitOpenCodeAgents(config, loaded.config);
       },
       event: async (eventInput) => {
+        if (eventInput.event.type === "session.idle") await markLiveness(root, eventInput.event.properties.sessionID, "idle");
         if (eventInput.event.type === "session.deleted") {
+          await markLiveness(root, eventInput.event.properties.info.id, "ended");
           ignitionState.clear(eventInput.event.properties.info.id);
           activationMemory.forget(eventInput.event.properties.info.id);
           trustedCommandActivations.delete(eventInput.event.properties.info.id);

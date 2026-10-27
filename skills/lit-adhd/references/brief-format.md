@@ -6,6 +6,7 @@ The collector's `--brief` output is the only format; paste it as printed. This f
 
 The brief is Markdown, so OpenCode's chat draws it with the theme's colours.
 
+0. The opener, three lines kept apart by a hard break and followed by a blank line: `**Done so far:**` this worktree's newest commits in the seven-day window (two at most), then `` `plans/<name>.md` (start-work complete) `` for a completed run and `` `plans/<name>.md` `<gauge>` `` for a plan with every row ticked, three items in all, else its met goal, else `nothing finished in this window`; `**Doing now:**` the asking session's goal while it works, else `start-work · <plan>` for a running run, else the newest working session's goal, else `nothing running`; `**Next:**` the recommended step, ending in ``(type `go`)`` when a step is armed here.
 1. Headline: `## 🧭 <n> sessions · <k> waiting on you · <a> active · next: <short step>`, then one italic line naming the worktree family and how many worktrees had records (and a note when the store could not be read: missing database, old Node). Zero sessions print `No earlier sessions found here.` under the headings.
 2. Live sessions (working, waits-on-you, blocked, paused) as full cards, grouped under one `### 🌿 \`branch\` · worktree` heading per worktree, `(this one)` on the worktree the command ran in. Each card is one quote, its lines kept apart by a hard break:
    - a badge (🟢 ACTIVE, 🟠 WAITS ON YOU, 🔴 BLOCKED, ⏸️ PAUSED), the short id, how long ago it last moved, `this session` for the asking one, and the start-work boundary it waits on;
@@ -15,13 +16,15 @@ The brief is Markdown, so OpenCode's chat draws it with the theme's colours.
    - `▶ Next:` the first open todo, else the open plan step, else the open goal criterion, else what a running session is doing now (`now: Run the gates`), else `nothing pending on record`.
 3. Ended sessions (done, idle) under `### ⚪ Ended · <n>` as one table, newest first, at most eight rows and an italic count of the rest. Columns: id, where (cut to 20 cells), goal (cut to 44 cells), ago (the largest unit only: `5d`, `14h`, `20m`), done (`finished`, a file count, or `·`).
 4. `### 🗺️ Roadmap`: per worktree with something to show, up to three recent commits with their month-day (`✓`), the plan step in hand (`▶ **now**`), up to two steps after it (`○ **later**`); another worktree's lines carry its name in inline code.
-5. The box, `Recommended next step`, in a `text` code block so its frame keeps its columns: the step wrapped at word breaks to at most three lines, then `type: go` when a step is armed.
+5. The box, `Recommended next step`, in a code block with no language tag, so its frame keeps its columns and the chat draws it as plain text: the step wrapped at word breaks to at most three lines, then `type: go` when a step is armed.
 6. The closing line: ``Type **`go`** to do it.`` when a step is armed; otherwise `Nothing runs on its own here: open that session, or say what to do.`
+7. When the read budget ran out before every plan was read, an italic line: `<n> plans were not read (read budget used up).` Plans and the other small records are read before the session store, so this happens only with very large plan folders.
 
 ## Plans the roadmap leaves out
 
 - An unfilled scaffold: a row still holding a `<placeholder>`, or every row the same.
-- Another worktree's plan that has not changed in seven days. This worktree's plans always show.
+- Any plan that has not changed in seven days, in this worktree or another.
+- A plan with every row ticked: it is finished work and appears in the opener instead.
 
 ## Width and glyphs
 

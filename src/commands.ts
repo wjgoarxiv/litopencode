@@ -42,12 +42,14 @@ import {
 } from "./bounded-authority-hooks.ts";
 import type { BoundedAuthorityOptions } from "./bounded-authority.ts";
 import { startTypedWork, typedStartArgument } from "./start-work-typed.ts";
+import { writeNext } from "./adhd-next.ts";
 import { autoHandoffSettingText, type AutoHandoffRouteMode } from "./auto-handoff.ts";
 import {
   formatResolvedPlanNotice,
   formatSavedPlanNotice,
   parsePlanSaveArgument,
   persistApprovedPlan,
+  PlanScopeError,
   resolveLatestDurablePlan
 } from "./durable-plan.ts";
 import { isWorkflowFamilyMode, workflowFamilyCommandDefinitions } from "./workflow-families.ts";
@@ -642,12 +644,15 @@ export function createCommandActivationHook(
         try {
           const saved = await persistApprovedPlan(projectRoot, request);
           const replayed = saved.replayed === true;
+          // The saved plan becomes this session's next step, so a bare `go` starts it through the typed path.
+          const goArmed = await writeNext(projectRoot, { kind: "plan", target: saved.relativePath, at: Date.now(), sessionID: input.sessionID })
+            .then(() => true, () => false);
           output.parts.push({
             id: "prt_litopencode_start_work_plan_saved",
             sessionID: input.sessionID,
             messageID: "msg_litopencode_start_work_plan_saved",
             type: "text",
-            text: formatSavedPlanNotice(saved, replayed),
+            text: formatSavedPlanNotice(saved, replayed, goArmed),
             synthetic: true,
             metadata: {
               litopencode: {
@@ -658,13 +663,15 @@ export function createCommandActivationHook(
               }
             }
           });
-        } catch {
+        } catch (error) {
           output.parts.push({
             id: "prt_litopencode_start_work_plan_save_blocked",
             sessionID: input.sessionID,
             messageID: "msg_litopencode_start_work_plan_save_blocked",
             type: "text",
-            text: "BLOCKED: the approved plan was not saved because the request is stale, repeated with different content, or conflicts with existing state.",
+            text: error instanceof PlanScopeError
+              ? `BLOCKED: the approved plan was not saved. ${error.message}`
+              : "BLOCKED: the approved plan was not saved because the request is stale, repeated with different content, or conflicts with existing state.",
             synthetic: true,
             metadata: {
               litopencode: {

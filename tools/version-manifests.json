@@ -17,13 +17,13 @@
     {
       "path": "README-npm-Ko-KR.md",
       "kind": "pinned",
-      "occurrences": 13,
+      "occurrences": 14,
       "why": "The npm package pages pin artwork and package links to the current package version; tools/readme-for-npm.mjs copies them over README.md and README-Ko-KR.md at pack time."
     },
     {
       "path": "README-npm.md",
       "kind": "pinned",
-      "occurrences": 12,
+      "occurrences": 13,
       "why": "The npm package pages pin artwork and package links to the current package version; tools/readme-for-npm.mjs copies them over README.md and README-Ko-KR.md at pack time."
     },
     {

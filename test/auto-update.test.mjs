@@ -694,3 +694,32 @@ test("a rollback whose restored bytes differ from the backup is not reported as 
     assert.equal(receipt.backupRetained, true);
   });
 });
+
+test("restart chip: only an installed version newer than the loaded one asks for a restart", async () => {
+  const { restartVersion } = await import("../src/restart-notice.ts");
+  assert.equal(restartVersion("3.4.5", ["3.4.6"]), "3.4.6");
+  assert.equal(restartVersion("3.4.5", ["3.4.6", "3.4.7", "3.4.4"]), "3.4.7");
+  for (const installed of [[], ["3.4.5"], ["3.4.4"], [undefined], ["3.4.x"], [""], [null], ["4.0.0-beta.1"]]) {
+    assert.equal(restartVersion("3.4.5", installed), undefined, JSON.stringify(installed));
+  }
+  assert.equal(restartVersion("garbage", ["3.4.6"]), undefined, "an unknown loaded version never claims a restart");
+});
+
+test("restart chip: the installed version comes from the package on disk and an updated receipt", async () => {
+  const { readInstalledVersions, restartVersion } = await import("../src/restart-notice.ts");
+  await withFixture(async ({ home }) => {
+    const packageRoot = path.join(home, "pkg");
+    await fs.mkdir(packageRoot);
+    assert.deepEqual(await readInstalledVersions(packageRoot, home), [], "missing package and receipt");
+    await fs.writeFile(path.join(packageRoot, "package.json"), "{not json");
+    assert.deepEqual(await readInstalledVersions(packageRoot, home), [], "malformed package.json");
+    await fs.writeFile(path.join(packageRoot, "package.json"), JSON.stringify({ name: "@litfamily/litopencode", version: "3.4.6" }));
+    await writePrivateReceipt(home, { status: "rolled-back", currentVersion: "3.4.5", targetVersion: "3.4.8" });
+    assert.deepEqual(await readInstalledVersions(packageRoot, home), ["3.4.6"], "a rolled-back target was never installed");
+    await writePrivateReceipt(home, { status: "updated", currentVersion: "3.4.5", targetVersion: "3.4.7" });
+    const installed = await readInstalledVersions(packageRoot, home);
+    assert.deepEqual(installed, ["3.4.6", "3.4.7"]);
+    assert.equal(restartVersion("3.4.5", installed), "3.4.7");
+    assert.equal(restartVersion("3.4.7", installed), undefined);
+  });
+});

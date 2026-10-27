@@ -84,19 +84,19 @@
       "canonicalFiles": [
         {
           "path": "references/brief-format.md",
-          "sha256": "0106bcd7d209a3c2a36791665744ba145b94f7f99c64c5a04e22ab78ed47c8c9"
+          "sha256": "01e84c87740a7069daabb331b915c3dc9888f2c4052efc0c870d2450740e353d"
         },
         {
           "path": "references/card-examples.md",
-          "sha256": "4a31b6bacb675e243eefb0c60736fa7b753c86054dc9ee5776d39c5f79c6e667"
+          "sha256": "3946212954ee5f3c26e98032ad5199f4d20826dc112e15b66da67d98c489f698"
         },
         {
           "path": "references/status-taxonomy.md",
-          "sha256": "8de250f50c84e4a2a8ac39ddb46e8fc90098d92406eae0f029389cb23f6b9df2"
+          "sha256": "b4c16cbbefdf72b8e04b7aa67dcd45f7232dfc30b6f926cae3ce0f22724f2463"
         },
         {
           "path": "scripts/rewind.mjs",
-          "sha256": "649eee3424f78879591b2ba178a6fda860c7cb67f87c8daa1f618b899346b443"
+          "sha256": "a00d565d382c60bb179db25b7cae4ce8d8221c9dcc360f913ce0b0bb366f734a"
         }
       ]
     },
