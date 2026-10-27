@@ -5,6 +5,20 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.33 - 2026-10-28
+
+- After `/start-work save-plan` saves an approved plan, typing `go` in the same session within 30 minutes starts the work. A `go` from another session, or later, is an ordinary word.
+
+- A plan that names a folder outside the project needs a `Scope roots: <folder> (<actions>)` line. Saving the plan without one is refused with the exact line to add. When the work starts, each line becomes a permission for that run, so it no longer stops to ask about folders the plan already named.
+
+- The status card shows other sessions more honestly. One other session is already enough for a row, working sessions come first, and a finished session shows `done` for one minute before it leaves. Each session keeps a small record in `.litopencode/liveness/`, so idle and ended come from the session itself instead of a five-minute guess. A session in a herdr pane is named after that pane.
+
+- When a newer LitOpenCode is installed than the one this OpenCode start loaded, the card shows `restart to <version>` and one toast says the same. Nothing restarts on its own.
+
+- The `lit-adhd` brief opens with three lines: done so far, doing now, next. Finished plans and completed runs count as done, plans older than seven days stay out, the next step never repeats a finished one, and the worktree's `HANDOFF.md` next item is used when nothing else is armed.
+
+- The repository has a `TRADEMARK.md`: the code stays MIT, and the LitOpenCode and LitFamily names and artwork are kept for the official project.
+
 ## 1.0.32 - 2026-10-27
 
 - `lit-hijack` takes the technique from someone else's published work (posts, articles, repos, PDFs, transcripts) and ports it into your own skill. It records each source's author, date and licence, keeps none of the wording, writes a spec, has a separate subagent build from that spec in its own git worktree, and checks that the new skill behaves differently before reporting what was taken. Use `lit hijack <url> into skills/<name>` or `/lit-hijack`.

@@ -6,6 +6,12 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.33 Release Scope
+
+- A saved plan arms `go` for 30 minutes in the same session, and `Scope roots:` lines are required for outside folders and become run grants.
+- Liveness records under `.litopencode/liveness/` drive the mission card's other-session rows (one-session rows, working first, one-minute `done` linger, herdr pane names), and the band shows a restart chip and one toast when a newer install is on disk.
+- The lit-adhd brief opens with three lines, counts finished plans and runs as done, keeps plans to the window and falls back to the `HANDOFF.md` next item; add `TRADEMARK.md` to the package and README pages.
+
 ## 1.0.32 Release Scope
 
 - Add lit-hijack, lit-schematic and lit-adhd/lit-rewind, with workflow pause and resume, typed start-work and the parallel-lane, YOUR TURN and review-work looks on the status card.
