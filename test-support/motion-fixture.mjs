@@ -58,7 +58,7 @@ export function baseManifest() {
     schemaVersion: 1, engineCredit: "mexicat/pdoom-video ca251e3dddda422b364385eb484b5a3593a0990d (MIT)", presetId: "swiss-signal", seed: SEED,
     fps: FPS, resolution: [1920, 1080], scale: 1, samples: 4, shutter: 0.5,
     renderer: "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)", softwareRenderer: false,
-    chromeFlags: chromeFlagRungs("darwin")[0].flags, previewEncoder: "img2webp", audioTier: "text-reading-time", bpm: 100,
+    chromeFlags: chromeFlagRungs()[0].flags, previewEncoder: "img2webp", audioTier: "text-reading-time", bpm: 100,
     durationSec: DURATION, generatedAt: "2026-09-27T00:00:00.000Z", passRanges, timeline, warnings: [], craftRound: 1,
     preview: { width: 960, fps: 30, bytes: 1024 }
   };
