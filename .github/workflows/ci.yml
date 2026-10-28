@@ -20,6 +20,11 @@ jobs:
         with:
           node-version: 22
 
+      # The motion score test encodes AAC through ffmpeg, which the Ubuntu runner image does not ship.
+      # Installing it also runs the ffmpeg-gated motion tests that publish.yml runs before a release.
+      - name: ffmpeg for the motion and audio tests
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+
       - name: Install dependencies
         run: npm ci
 
