@@ -34,6 +34,7 @@ test("no-network security and connection-failure tests still run when loopback l
     process.execPath,
     [
       "--test",
+      "--test-reporter=tap",
       "--test-name-pattern",
       [
         "blocks private, malformed, and unsupported targets without opening a listener",
