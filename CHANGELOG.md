@@ -5,6 +5,12 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.34 - 2026-10-29
+
+- Releases are now built and published from GitHub Actions with npm provenance. The npm page shows a green check that links each version to this repository and the commit it was built from.
+
+- The motion gate test builds its fixture on the Chrome rung the host actually has, and the scoping test asks its child run for TAP output, so both pass on Linux and Node 24.
+
 ## 1.0.33 - 2026-10-28
 
 - After `/start-work save-plan` saves an approved plan, typing `go` in the same session within 30 minutes starts the work. A `go` from another session, or later, is an ordinary word.

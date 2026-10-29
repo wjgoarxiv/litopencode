@@ -6,6 +6,11 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.34 Release Scope
+
+- Publish from GitHub Actions (`publish.yml`, stage only) with npm provenance; the maintainer approves the staged version on npmjs.com.
+- Linux and Node 24 test fixes for the motion gate fixture and the scoping child run.
+
 ## 1.0.33 Release Scope
 
 - A saved plan arms `go` for 30 minutes in the same session, and `Scope roots:` lines are required for outside folders and become run grants.
