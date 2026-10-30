@@ -1,7 +1,9 @@
 # Publishes @litfamily/litopencode from GitHub through npm trusted publishing, so each version carries a
 # provenance statement tying the tarball to this repository and the commit it was built from. Start it by
-# hand on main. Left at the default it is a dry run: the same gates as CI plus a pack check. With stage on,
+# hand on main. Left at the default it is a dry run: the fast gates plus a pack check. With stage on,
 # npm receives a staged version that stays private until the maintainer approves it on npmjs.com with 2FA.
+# The suite and the QA probes do not run again here: ci.yml already ran them on the pushed commit, and the
+# publish gate refuses unless that ci.yml run passed on this exact commit.
 name: Publish
 
 on:
@@ -19,10 +21,14 @@ jobs:
   publish:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     permissions:
       contents: read
+      actions: read
       id-token: write
+    env:
+      LITOPENCODE_PUBLISH_FROM_CI: "1"
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -36,39 +42,14 @@ jobs:
       - name: npm with staged publishing
         run: npm install -g npm@11.21.1
 
-      # The motion score test encodes AAC through ffmpeg, which the Ubuntu runner image does not ship.
-      - name: ffmpeg for the motion and audio tests
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Build runtime for QA
+      - name: Build runtime
         run: npm run build
-
-      # prepublishOnly (tools/prepublish-test-gate.mjs) runs npm test inside npm stage publish,
-      # so the suite runs here only on a dry run.
-      - name: Run tests
-        if: ${{ !inputs.stage }}
-        run: npm test
 
       - name: Run typecheck
         run: npm run typecheck
-
-      - name: Run behavior replacement probes
-        run: npm run qa:behavior-replacement
-
-      - name: Run installed resource tamper probe
-        run: npm run qa:installed-resource-tamper
-
-      - name: Run negative gate matrix
-        run: npm run qa:negative-gate-matrix
-
-      - name: Run rules glob differential
-        run: npm run qa:rules-glob-differential
-
-      - name: Run Wikify surface probe
-        run: node tools/run-wikify-surface-probe.mjs
 
       - name: Run legacy-token scanner
         run: npm run scan:legacy-tokens
@@ -87,6 +68,12 @@ jobs:
       - name: Run pack payload guard
         run: node tools/check-pack-payload.mjs --file "$RUNNER_TEMP/pack-report.json"
 
-      - name: Stage on npm (runs the suite through prepublishOnly first)
+      # prepublishOnly (tools/prepublish-test-gate.mjs) asks the GitHub API for a green ci.yml push run on
+      # this commit inside npm stage publish; a dry run makes the same check as its own step.
+      - name: ci.yml passed on this commit
+        if: ${{ !inputs.stage }}
+        run: node tools/prepublish-test-gate.mjs
+
+      - name: Stage on npm (the gate checks ci.yml first)
         if: inputs.stage
         run: npm stage publish

@@ -6,6 +6,7 @@ are tracked separately from this product history.
 ## Unreleased
 
 - Dependency alerts cleared: zod 4.6.6 (the runtime dependency and the Remotion cover template), the audio runtime's msgpack 1.2.3, @hono/node-server 2.1.5 in the HyperFrames cover template, and toml 5.0.1 in the development tree.
+- Releases are faster: the publish workflow no longer repeats the test suite and the QA probes. It checks with GitHub that CI already passed on the exact commit being released and stops if it did not. A publish from your own machine still runs the full suite first.
 
 ## 1.0.37 - 2026-11-01
 
