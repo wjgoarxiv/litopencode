@@ -57,7 +57,7 @@ Use the OpenCode vocabulary for this contract: `chat.message`, `command.execute.
 | `session_id` | The id of the session that typed the request. The route prompt states it; pass it as `--session`. Without it the brief still prints but no `go` step is armed. |
 | `scope` | This worktree and the other worktrees of the same git repository. `--root <dir>` points elsewhere; `--all-dirs` is not used unless the user asks. |
 | `store` | The OpenCode session database (`opencode.db`), opened read-only, else the older JSON session store, else nothing. A missing store is said in words. |
-| `local_state` | `plans/*.md` and `.litopencode/plans/*.md` checklists, the active goal, the bounded start-work run, `.litopencode/workflow-stack/<session>.json`, `.litopencode/liveness/<session>.json`, `HANDOFF*.md` headings and the first item under their `Next` heading, and `git log`. These small records are read before the session store, so a large store cannot use up the read budget first. |
+| `local_state` | `plans/*.md` and `.litopencode/plans/*.md` checklists, the active goal, the bounded start-work run, `.litopencode/workflow-stack/<session>.json`, `.litopencode/liveness/<session>.json`, `HANDOFF*.md` headings and the first open item under their `Next` heading (newest file first; an item marked ✅, ✓, `[x]`, `~~struck~~`, `DONE` or `SHIPPED` is skipped), and `git log`. Under `HERDR_ENV=1` it also runs `herdr agent list` once (3 s timeout; a failure reads `unknown` and counts nothing). These small records are read before the session store, so a large store cannot use up the read budget first. |
 
 ## #contract.mode_matrix
 
@@ -169,14 +169,14 @@ The collector draws `[▉▉▉░░░░░░░] 3/10` only when both numbe
 
 ### The recommended step
 
-One step, chosen in this order: something waiting on the user, a blocked session, a paused discipline, another running session (with what it is doing now), the running start-work run, the single open plan, the first item under this worktree's `HANDOFF.md` `Next` heading (it never runs on `go`), the newest unfinished session, an open plan in another worktree, the most recent session that stopped. The box always names a real step from the records; only an empty window asks what to start. If the step belongs to this session and is one of continue, keep working, or start the plan, the collector writes the next-step record and `go` follows it. If it belongs to another session or worktree, the box says where to act and `go` here only repeats that pointer; it never starts the step.
+One step, chosen in this order: something waiting on the user, a blocked session, a paused discipline, lanes at work (other running sessions of this worktree family, and under `HERDR_ENV=1` herdr agents working or blocked in this herdr workspace or inside the repo, never this pane; a lane seen both ways counts once), this session's running start-work run, another session's running start-work run (followed from that session), the single open plan, the first item under this worktree's `HANDOFF.md` `Next` heading (it never runs on `go`), the newest unfinished session, an open plan in another worktree, the most recent session that stopped. The box always names a real step from the records; only an empty window asks what to start. If the step belongs to this session and is one of continue, keep working, or start the plan, the collector writes the next-step record and `go` follows it. If it belongs to another session or worktree, the box says where to act and `go` here only repeats that pointer; it never starts the step. While lanes work, the box says to wait for them (or to answer the one waiting on the user), nothing is armed, and the closing line is ``Do not type `go` until they finish.``
 
 ## Following `go`
 
 `go` is live only while the next-step record for this session is younger than 30 minutes. It is read once and removed.
 
 - A paused discipline: the same return as `lit continue`, at the same stage and count.
-- The running start-work run: a note to keep going from the checked plan; nothing restarts.
+- The running start-work run: a note to keep going from the checked plan; nothing restarts. `go` first re-checks that the run is still active and still this session's; if not, the reply says the step no longer holds and starts nothing.
 - A single open plan: the typed start-work path, which opens a bounded run with read, write and execute under this workspace and nothing more.
 
 A pending boundary is never answered by `go`. The user types `lit approve` to grant exactly that boundary, or `lit deny`. In LitOpenCode `lit deny` ends the run, because the run lifecycle has no refused-and-still-paused state; the reply says so and says how to start it again (`start-work`, then answer the boundary differently). Forbidden actions (commit, push, publish, release, version-bump, host-config, destructive) can never become a pending boundary, so `lit approve` cannot grant them.

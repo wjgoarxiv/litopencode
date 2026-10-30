@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- `lit adhd` no longer offers `go` while other lanes work: other running sessions and, under `HERDR_ENV=1`, herdr agents in this workspace or repo make the box say to wait for them. Its HANDOFF step skips items already marked done and reads the newest handoff file first, another session's running start-work is never a `go` step here, and `go` re-checks that the recorded run is still this session's before it says keep working.
+
 ## 1.0.34 - 2026-10-29
 
 - Releases are now built and published from GitHub Actions with npm provenance. The npm page shows a green check that links each version to this repository and the commit it was built from.

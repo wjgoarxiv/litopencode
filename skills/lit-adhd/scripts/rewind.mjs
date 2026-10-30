@@ -265,7 +265,10 @@ function goalOf(raw) {
   };
 }
 
-// The first list item or line of text under a `Next` or `Next Steps` heading, without its marker.
+// An item someone already marked finished; the words are matched case-sensitively, so "done" in prose stays open.
+const HANDOFF_DONE = /✅|✓|^\[[xX]\]|~~.+~~|\b(?:DONE|SHIPPED)\b/u;
+
+// The first open list item or line of text under a `Next` or `Next Steps` heading, without its marker.
 function handoffNextOf(text) {
   const lines = text.split(/\r?\n/u);
   const start = lines.findIndex((line) => /^#{1,6}\s+Next(?:\s+Steps)?\s*$/iu.test(line.trim()));
@@ -273,7 +276,7 @@ function handoffNextOf(text) {
   for (const line of lines.slice(start + 1)) {
     if (/^#{1,6}\s/u.test(line.trim())) return undefined;
     const item = line.trim().replace(/^(?:[-*+]|\d+[.)])\s+/u, "");
-    if (item !== "") return item;
+    if (item !== "" && !HANDOFF_DONE.test(item)) return item;
   }
   return undefined;
 }
@@ -324,7 +327,7 @@ export function readLocalState(dir) {
       const record = readJson(join(livenessDir, name), 1024);
       const atMs = isRecord(record) ? Date.parse(str(record.at)) : Number.NaN;
       if (isRecord(record) && SAFE_SESSION.test(str(record.sessionId)) && ["alive", "idle", "ended"].includes(record.state) && Number.isFinite(atMs)) {
-        state.liveness.set(record.sessionId, { state: record.state, atMs });
+        state.liveness.set(record.sessionId, { state: record.state, atMs, pane: typeof record.herdrPane === "string" ? clean(record.herdrPane, 32) : undefined });
       }
     }
   } catch {
@@ -339,8 +342,17 @@ export function readLocalState(dir) {
   } catch {
     // no stacks recorded for this worktree
   }
+  // The newest handoff file first: a lane's fresh HANDOFF beats an old root one.
   try {
-    for (const name of readdirSync(dir).filter((entry) => /^HANDOFF.*\.md$/u.test(entry)).slice(0, 3)) {
+    const changed = (name) => {
+      try {
+        return lstatSync(join(dir, name)).mtimeMs;
+      } catch {
+        return 0;
+      }
+    };
+    const names = readdirSync(dir).filter((entry) => /^HANDOFF.*\.md$/u.test(entry)).slice(0, 40);
+    for (const name of names.map((entry) => [entry, changed(entry)]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([entry]) => entry)) {
       const text = readSmall(join(dir, name), FILE_CAP);
       if (text === undefined) continue;
       state.handoff.push(...[...text.matchAll(/^#{1,3}\s+(.+)$/gmu)].slice(0, 4).map((match) => clean(match[1], 80)));
@@ -607,6 +619,7 @@ export function buildCard({ row, detail, local, lanes, now, self = false }) {
     },
     updated: new Date(row.updated).toISOString(),
     boundary: local.work?.sessionID === row.id && local.work.boundary ? clean(local.work.boundary, 80) : undefined,
+    ...(local.liveness?.get(row.id)?.pane ? { pane: local.liveness.get(row.id).pane } : {}),
   };
 }
 
@@ -622,7 +635,37 @@ function roadmapOf(local) {
   return out;
 }
 
-export function recommend({ groups, sessionID }) {
+/**
+ * Herdr agents at work beside this session, read only under HERDR_ENV=1: working or blocked, in this
+ * herdr workspace or with a cwd inside one of `dirs`, never the asking pane. A failed, slow or malformed
+ * `herdr agent list` reads "unknown" and counts no lane.
+ */
+export function readHerdrLanes(dirs, env = process.env) {
+  if (env.HERDR_ENV !== "1") return { state: "off", agents: [] };
+  let doc;
+  try {
+    doc = JSON.parse(execFileSync("herdr", ["agent", "list"], { encoding: "utf8", timeout: 3000, env, stdio: ["ignore", "pipe", "ignore"], maxBuffer: 1024 * 1024 }));
+  } catch {
+    return { state: "unknown", agents: [] };
+  }
+  const list = isRecord(doc) && isRecord(doc.result) && Array.isArray(doc.result.agents) ? doc.result.agents : undefined;
+  if (list === undefined) return { state: "unknown", agents: [] };
+  const inside = (cwd) => isAbsolute(str(cwd)) && dirs.some((dir) => {
+    const rel = relative(dir, resolve(str(cwd)));
+    return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+  });
+  const ownPane = str(env.HERDR_PANE_ID);
+  const workspace = str(env.HERDR_WORKSPACE_ID);
+  const agents = list
+    .filter((entry) => isRecord(entry) && (entry.agent_status === "working" || entry.agent_status === "blocked"))
+    .filter((entry) => ownPane === "" || str(entry.pane_id) !== ownPane)
+    .filter((entry) => (workspace !== "" && str(entry.workspace_id) === workspace) || inside(entry.cwd) || inside(entry.foreground_cwd))
+    .slice(0, 40)
+    .map((entry) => ({ pane: clean(str(entry.pane_id), 32), status: entry.agent_status, session: isRecord(entry.agent_session) ? str(entry.agent_session.value) : "", title: clean(str(entry.terminal_title_stripped), 60) }));
+  return { state: "read", agents };
+}
+
+export function recommend({ groups, sessionID, herdr = [] }) {
   const cards = groups.flatMap((group) => group.sessions.map((card) => ({ card, group })));
   const waiting = cards.find(({ card }) => card.status === "waits-on-you");
   if (waiting) {
@@ -637,13 +680,26 @@ export function recommend({ groups, sessionID }) {
       ? { kind: "continue", sessionID, text: `Return to the paused discipline in "${clip(paused.card.goal, 50)}" where it stopped.` }
       : { kind: "session", sessionID: paused.card.id, text: `Open "${clip(paused.card.goal, 50)}" and say lit continue.` };
   }
-  const working = cards.find(({ card }) => card.status === "working" && card.id !== sessionID);
-  if (working) {
-    const doing = working.card.facts.lastAction ? ` (now: ${working.card.facts.lastAction})` : "";
-    return { kind: "session", sessionID: working.card.id, text: `"${clip(working.card.goal, 50)}" in ${working.group.worktree} is still running${doing}; check on it before starting more.` };
+  // Lanes: other sessions at work here, and herdr agents beside this one; one seen both ways counts once.
+  const working = cards.filter(({ card }) => card.status === "working" && card.id !== sessionID);
+  const seen = new Set(working.flatMap(({ card }) => [card.id, card.pane].filter(Boolean)));
+  const agents = herdr.filter((agent) => agent.session === "" || (agent.session !== sessionID && !seen.has(agent.session))).filter((agent) => !seen.has(agent.pane));
+  const lanes = working.length + agents.length;
+  if (lanes > 0) {
+    const plural = `${lanes} lane${lanes === 1 ? "" : "s"}`;
+    const waiting = agents.find((agent) => agent.status === "blocked");
+    const first = working[0];
+    const doing = first?.card.facts.lastAction ? ` (now: ${first.card.facts.lastAction})` : "";
+    const what = first ? `"${clip(first.card.goal, 50)}" in ${first.group.worktree} is still running${doing}` : `${agents[0].title || "an agent"} in pane ${agents[0].pane}`;
+    const text = waiting
+      ? `A lane waits on you: answer the one waiting on you in pane ${waiting.pane}, then wait for ${plural} to finish before starting more.`
+      : `Wait for ${plural} to finish before starting more: ${what}.`;
+    return { kind: "lanes", sessionID: first?.card.id ?? sessionID, lanes, text, short: waiting ? `answer pane ${waiting.pane}, then wait for ${plural}` : `wait for ${plural} to finish` };
   }
   const run = groups.find((group) => group.work?.status === "active");
   if (sessionID !== undefined && run?.work.sessionID === sessionID) return { kind: "work", sessionID, text: "Keep the running start-work run going from its checked plan." };
+  // Another session's active run is followed from that session, never started again here.
+  if (run) return { kind: "session", sessionID: run.work.sessionID || undefined, text: `start-work on ${run.work.plan || "its plan"} is running in another session; open that session to follow it.` };
   const here = groups.find((group) => group.current);
   const open = here?.plans.filter((plan) => plan.done < plan.total) ?? [];
   if (open.length === 1) return { kind: "plan", sessionID, target: open[0].path, text: `Start work on ${open[0].path}: ${open[0].total - open[0].done} step${open[0].total - open[0].done === 1 ? "" : "s"} left.` };
@@ -701,7 +757,8 @@ export async function collect(options = {}) {
     const legacy = openLegacy(options.storage ?? join(dataHome, "opencode", "storage"));
     store = legacy.error ? { ...store, error: `${store.error}; ${legacy.error}` } : legacy;
   }
-  const report = { schema: REWIND_SCHEMA, generatedAt: new Date(now).toISOString(), root: clean(root, 200), source: { store: store.kind ?? "none", ...(store.error ? { note: store.error } : {}) }, groups: [] };
+  const herdr = readHerdrLanes(dirs.length > 0 ? dirs : [root], options.env ?? process.env);
+  const report = { schema: REWIND_SCHEMA, generatedAt: new Date(now).toISOString(), root: clean(root, 200), source: { store: store.kind ?? "none", ...(store.error ? { note: store.error } : {}), ...(herdr.state === "off" ? {} : { herdr: herdr.state }) }, groups: [] };
   const rows = store.kind ? store.sessions(dirs, limit) : [];
   const lanes = store.kind ? store.lanes(rows.map((row) => row.id)) : new Map();
   for (const { entry, dir, local } of locals) {
@@ -728,7 +785,7 @@ export async function collect(options = {}) {
     });
   }
   report.plansSkipped = locals.reduce((total, { local }) => total + local.plansSkipped, 0);
-  report.recommended = recommend({ groups: report.groups, sessionID: options.session });
+  report.recommended = recommend({ groups: report.groups, sessionID: options.session, herdr: herdr.agents });
   const all = report.groups.flatMap((group) => group.sessions);
   const waits = all.filter((card) => card.status === "waits-on-you").length;
   report.headline = all.length === 0
@@ -740,7 +797,7 @@ export async function collect(options = {}) {
   if (options.writeNext && forThisSession && (kind === "continue" || kind === "work" || kind === "plan")) {
     const record = { kind, target: report.recommended.target ?? kind, at: now, sessionID: options.session };
     if (writeNext(root, record)) report.nextRecord = { kind, target: record.target };
-  } else if (options.writeNext && options.session !== undefined && kind !== "none" && kind !== "handoff") {
+  } else if (options.writeNext && options.session !== undefined && kind !== "none" && kind !== "handoff" && kind !== "lanes") {
     // The step belongs to another session or worktree: go here cannot run it, so it answers with where to go.
     const record = { kind: "elsewhere", target: clip(report.recommended.text, 300), at: now, sessionID: options.session };
     if (writeNext(root, record)) report.nextRecord = { kind: "elsewhere", target: record.target };
@@ -889,7 +946,7 @@ export function renderBrief(report, { ascii = false, width = 72, sessionID } = {
   for (const text of wrapCells(report.recommended.text, inner)) lines.push(`${glyph("│", "|")} ${padCells(text, inner)} ${glyph("│", "|")}`);
   if (runsHere) lines.push(`${glyph("│", "|")} ${padCells("type: go", inner)} ${glyph("│", "|")}`);
   lines.push(`${glyph("╰", "+")}${glyph("─", "-").repeat(inner + 2)}${glyph("╯", "+")}`, "```", "");
-  lines.push(runsHere ? "Type **`go`** to do it." : report.nextRecord ? "Nothing runs on its own here: open that session, or say what to do (`go` says where)." : "Nothing runs on its own here: open that session, or say what to do.");
+  lines.push(runsHere ? "Type **`go`** to do it." : report.recommended.kind === "lanes" ? "Do not type `go` until they finish." : report.nextRecord ? "Nothing runs on its own here: open that session, or say what to do (`go` says where)." : "Nothing runs on its own here: open that session, or say what to do.");
   if (report.plansSkipped > 0) lines.push("", `*${report.plansSkipped} ${report.plansSkipped === 1 ? "plan was" : "plans were"} not read (read budget used up).*`);
   return lines.join("\n");
 }

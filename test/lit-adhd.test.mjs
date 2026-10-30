@@ -14,6 +14,9 @@ import { cellWidth as tuiCellWidth } from "../src/tui/mission-text.ts";
 import { buildStore } from "../test-support/rewind-store.mjs";
 import { collect, cellWidth, factsLine, gauge, guardSql, isRealCount, pulse, redact, renderBrief, SECRET_SHAPE_SOURCE } from "../skills/lit-adhd/scripts/rewind.mjs";
 
+// A suite run inside a herdr pane must not count the real panes as lanes; the lane tests pass their own env.
+delete process.env.HERDR_ENV;
+
 const engine = fileURLToPath(new URL("../skills/lit-adhd/scripts/rewind.mjs", import.meta.url));
 const placeholder = /\?\/\?|\[\?\?\?\]|\d+\/\?|\?{2,}/u;
 const NOW = Date.parse("2026-10-26T12:00:00Z");
@@ -530,6 +533,183 @@ test("plans are read before sessions, and plans the read budget skipped are coun
       assert.doesNotMatch(renderBrief(await collect({ root: dir, db: file, now: NOW })), /not read \(read budget/u);
     } finally {
       await fs.rm(file, { force: true });
+    }
+  });
+});
+
+// A herdr stand-in on PATH that prints one `herdr agent list` document, or fails.
+async function fakeHerdr(dir, agents) {
+  const bin = path.join(dir, "..", `herdr-bin-${path.basename(dir)}`);
+  await fs.mkdir(bin, { recursive: true });
+  const doc = path.join(bin, "agents.json");
+  await fs.writeFile(doc, agents === undefined ? "not json" : JSON.stringify({ result: { agents } }));
+  await fs.writeFile(path.join(bin, "herdr"), `#!/bin/sh\n[ "$1 $2" = "agent list" ] || exit 9\ncat '${doc}'\n`, { mode: 0o755 });
+  return { bin, env: { PATH: `${bin}${path.delimiter}${process.env.PATH}`, HERDR_ENV: "1", HERDR_PANE_ID: "w1:p1", HERDR_WORKSPACE_ID: "w1" } };
+}
+
+const agent = (pane, status, extra = {}) => ({ agent: "opencode", agent_status: status, pane_id: pane, workspace_id: pane.split(":")[0], cwd: "/elsewhere", foreground_cwd: "/elsewhere", agent_session: { value: `ses_${pane.replace(":", "")}` }, terminal_title_stripped: `lane ${pane}`, ...extra });
+
+test("lanes: herdr agents at work in this workspace or repo hold back go on an open plan", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    const herdr = await fakeHerdr(dir, [
+      agent("w1:p1", "working"),
+      agent("w1:p2", "working"),
+      agent("w2:p1", "working", { cwd: path.join(dir, "src") }),
+      agent("w3:p1", "working"),
+      agent("w1:p3", "idle"),
+      agent("w1:p4", "done"),
+    ]);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.mkdir(path.join(dir, "plans"));
+      await fs.writeFile(path.join(dir, "plans", "p.md"), "# Demo\n\n- [ ] 1. one\n");
+      const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
+      assert.equal(report.recommended.kind, "lanes");
+      assert.equal(report.recommended.lanes, 2, "own pane, other workspace, idle and done agents are not lanes");
+      assert.equal(report.nextRecord, null, "nothing is armed for go");
+      assert.equal(await consumeNext(dir, "ses_me", NOW), undefined);
+      const brief = renderBrief(report, { sessionID: "ses_me" });
+      assert.match(brief, /Wait for 2 lanes/u);
+      assert.doesNotMatch(brief, /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
+      assert.equal(brief.split("\n").at(-1), "Do not type `go` until they finish.");
+      const quiet = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: { ...herdr.env, HERDR_ENV: "" } });
+      assert.equal(quiet.recommended.kind, "plan", "herdr is read only under HERDR_ENV=1");
+    } finally {
+      await fs.rm(file, { force: true });
+      await fs.rm(herdr.bin, { recursive: true, force: true });
+    }
+  });
+});
+
+test("lanes: a blocked herdr agent is named to answer, and a broken herdr reads unknown", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    let herdr = await fakeHerdr(dir, [agent("w1:p2", "blocked", { terminal_title_stripped: "lane waiting" }), agent("w1:p5", "working")]);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.mkdir(path.join(dir, "plans"));
+      await fs.writeFile(path.join(dir, "plans", "p.md"), "# Demo\n\n- [ ] 1. one\n");
+      const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
+      assert.equal(report.recommended.kind, "lanes");
+      assert.match(report.recommended.text, /answer the one waiting on you in pane w1:p2/u);
+      assert.equal(report.source.herdr, "read");
+      herdr = await fakeHerdr(dir, undefined);
+      const broken = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
+      assert.equal(broken.source.herdr, "unknown");
+      assert.equal(broken.recommended.kind, "plan");
+    } finally {
+      await fs.rm(file, { force: true });
+      await fs.rm(herdr.bin, { recursive: true, force: true });
+    }
+  });
+});
+
+test("lanes: a session seen also as a herdr agent counts once, and a working session alone offers no go", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working", { agent_session: { value: "ses_work" } }), agent("w1:p7", "working")]);
+    try {
+      buildStore(file, { sessions: [{ id: "ses_work", directory: dir, title: "Port the exporter", created: NOW - 30 * 60_000, updated: NOW - 30_000,
+        messages: [{ role: "user", parts: [text("port", "user")] }, { role: "assistant", parts: [tool("bash", "completed", { description: "Run the gates" })] }] }] });
+      const live = path.join(dir, ".litopencode", "liveness");
+      await fs.mkdir(live, { recursive: true });
+      await fs.writeFile(path.join(live, "ses_work.json"), JSON.stringify({ version: 1, sessionId: "ses_work", state: "alive", at: new Date(NOW - 30_000).toISOString(), herdrPane: "w1:p7" }));
+      await fs.mkdir(path.join(dir, "plans"));
+      await fs.writeFile(path.join(dir, "plans", "p.md"), "# Demo\n\n- [ ] 1. one\n");
+      const alone = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
+      assert.equal(alone.recommended.kind, "lanes");
+      assert.equal(alone.recommended.lanes, 1);
+      assert.match(alone.recommended.text, /Port the exporter/u);
+      assert.doesNotMatch(renderBrief(alone, { sessionID: "ses_me" }), /type: go/u);
+      const both = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
+      assert.equal(both.recommended.lanes, 1, "matched by agent session and by liveness pane");
+    } finally {
+      await fs.rm(file, { force: true });
+      await fs.rm(herdr.bin, { recursive: true, force: true });
+    }
+  });
+});
+
+test("another session's active start-work run is never a go step here", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.mkdir(path.join(dir, "plans"));
+      await fs.writeFile(path.join(dir, "plans", "p.md"), "# Demo\n\n- [x] 1. one\n- [ ] 2. two\n");
+      const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop");
+      await fs.mkdir(loop, { recursive: true });
+      const runOf = (sessionID, status) => fs.writeFile(path.join(loop, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID, status, plan: { path: path.join(dir, "plans", "p.md") }, updatedAt: new Date(NOW).toISOString() }));
+      await runOf("ses_other", "active");
+      const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
+      assert.notEqual(report.nextRecord?.kind, "plan");
+      assert.notEqual(report.nextRecord?.kind, "work");
+      assert.doesNotMatch(renderBrief(report, { sessionID: "ses_me" }), /type: go/u);
+      await runOf("ses_me", "active");
+      const own = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
+      assert.equal(own.nextRecord?.kind, "work");
+      assert.match(renderBrief(own, { sessionID: "ses_me" }), /type: go/u);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+});
+
+test("an approval step never says type go, even in this session", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: [{ id: "ses_me", directory: dir, title: "Run the plan", created: NOW - 30 * 60_000, updated: NOW - 10 * 60_000, messages: [{ role: "user", parts: [text("start-work", "user")] }] }] });
+      const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop");
+      await fs.mkdir(loop, { recursive: true });
+      await fs.writeFile(path.join(loop, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID: "ses_me", status: "paused", pendingBoundary: { action: "write", root: "/x/nested" }, plan: { path: "plans/p.md" }, updatedAt: new Date(NOW).toISOString() }));
+      const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
+      assert.equal(report.recommended.kind, "answer");
+      const brief = renderBrief(report, { sessionID: "ses_me" });
+      assert.doesNotMatch(brief, /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+});
+
+test("HANDOFF Next skips items marked done and reads the newest handoff file first", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.writeFile(path.join(dir, "HANDOFF.md"), "# Old\n\n## Next\n\n1. The old root step\n");
+      const old = new Date(NOW - 3 * 24 * 60 * 60_000);
+      await fs.utimes(path.join(dir, "HANDOFF.md"), old, old);
+      await fs.writeFile(path.join(dir, "HANDOFF_lane.md"), [
+        "# Lane", "", "## Next Steps", "",
+        "1. ✅ wired the parser", "2. ✓ tests", "- [x] ticked", "3. ~~struck idea~~", "4. DONE: the exporter", "5. SHIPPED 1.0.3", "6. Polish the done-ness view", "7. later", ""
+      ].join("\n"));
+      const report = await collect({ root: dir, db: file, now: NOW });
+      assert.equal(report.recommended.kind, "handoff");
+      assert.match(report.recommended.text, /Polish the done-ness view/u, report.recommended.text);
+      await fs.writeFile(path.join(dir, "HANDOFF_lane.md"), "# Lane\n\n## Next\n\n- ✅ all done\n");
+      assert.match((await collect({ root: dir, db: file, now: NOW })).recommended.text, /The old root step/u, "a fully done Next falls to the next file");
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+});
+
+test("a live lane outranks the HANDOFF Next item", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working")]);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.writeFile(path.join(dir, "HANDOFF.md"), "# H\n\n## Next\n\n1. Wire the exporter\n");
+      const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
+      assert.equal(report.recommended.kind, "lanes");
+      assert.equal(renderBrief(report).split("\n").at(-1), "Do not type `go` until they finish.");
+    } finally {
+      await fs.rm(file, { force: true });
+      await fs.rm(herdr.bin, { recursive: true, force: true });
     }
   });
 });

@@ -4,7 +4,7 @@ import path from "node:path";
 import { createActivationMemory, decideReentry, type ActivationMemory } from "./activation-reentry.ts";
 import type { ChatActivationMode } from "./activation-routing.ts";
 import { startWorkPromptInjection } from "./activation-workflow-prompts.ts";
-import type { BoundedAuthorityOptions } from "./bounded-authority.ts";
+import { createBoundedAuthorityLifecycle, type BoundedAuthorityOptions } from "./bounded-authority.ts";
 import { answerBoundary, boundaryVerdict, startTypedWork } from "./start-work-typed.ts";
 import { createRuntimePaths } from "./state.ts";
 
@@ -140,6 +140,16 @@ export async function routeGo(input: {
     };
   }
   if (record.kind === "work") {
+    // The brief saw this session's run active; go re-checks that before it says keep working.
+    const state = await createBoundedAuthorityLifecycle(input.projectRoot, input.boundedAuthority).read().catch(() => undefined);
+    if (state?.status !== "active" || state.sessionID !== input.sessionID) {
+      const why = state === undefined ? "there is no start-work run any more" : state.sessionID !== input.sessionID ? "the start-work run now belongs to another session" : `the start-work run is ${state.status}`;
+      return {
+        text: `LitOpenCode: the user answered go to the lit-adhd brief, but its step no longer holds: ${why}. Say so in one line and start nothing; \`lit adhd\` gives a fresh step.`,
+        mode: "lit-adhd",
+        kind: "elsewhere"
+      };
+    }
     return {
       text: "LitOpenCode: the user answered go to the brief's next step, which is the running start-work run. Keep working from the checked plan; do not restart it, replan or widen what it may touch. A pending boundary still needs `lit approve` from the user.",
       mode: "start-work",

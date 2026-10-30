@@ -216,3 +216,27 @@ test("the v2 prompt hook follows go the same way", async () => {
     }
   });
 });
+
+test("go on a recorded run re-checks it: another session's or a finished run starts nothing", async () => {
+  await workspace(async (dir) => {
+    await fs.mkdir(path.join(dir, "plans"), { recursive: true });
+    await fs.writeFile(path.join(dir, "plans", "one.md"), "# plan\n\n- [ ] 1. first\n");
+    await withPlugin(dir, async (send) => {
+      await writeNext(dir, { kind: "work", target: "start-work", at: Date.now(), sessionID: "ses_a" });
+      const none = await routeGo({ projectRoot: dir, sessionID: "ses_a", text: "go" });
+      assert.match(none?.text ?? "", /no longer holds/u, "no run at all");
+      assert.notEqual(none?.mode, "start-work");
+      await send("start-work", "ses_b");
+      const before = await createBoundedAuthorityLifecycle(dir).read();
+      await writeNext(dir, { kind: "work", target: "start-work", at: Date.now(), sessionID: "ses_a" });
+      const other = await routeGo({ projectRoot: dir, sessionID: "ses_a", text: "go" });
+      assert.match(other?.text ?? "", /no longer holds/u);
+      assert.match(other?.text ?? "", /another session/u);
+      assert.match(other?.text ?? "", /start nothing/u);
+      const after = await createBoundedAuthorityLifecycle(dir).read();
+      assert.deepEqual([after.status, after.sessionID, after.revision], [before.status, before.sessionID, before.revision], "the run is untouched");
+      await writeNext(dir, { kind: "work", target: "start-work", at: Date.now(), sessionID: "ses_b" });
+      assert.match((await routeGo({ projectRoot: dir, sessionID: "ses_b", text: "go" }))?.text ?? "", /Keep working from the checked plan/u, "the owner still keeps working");
+    });
+  });
+});

@@ -17,7 +17,7 @@ The brief is Markdown, so OpenCode's chat draws it with the theme's colours.
 3. Ended sessions (done, idle) under `### ⚪ Ended · <n>` as one table, newest first, at most eight rows and an italic count of the rest. Columns: id, where (cut to 20 cells), goal (cut to 44 cells), ago (the largest unit only: `5d`, `14h`, `20m`), done (`finished`, a file count, or `·`).
 4. `### 🗺️ Roadmap`: per worktree with something to show, up to three recent commits with their month-day (`✓`), the plan step in hand (`▶ **now**`), up to two steps after it (`○ **later**`); another worktree's lines carry its name in inline code.
 5. The box, `Recommended next step`, in a code block with no language tag, so its frame keeps its columns and the chat draws it as plain text: the step wrapped at word breaks to at most three lines, then `type: go` when a step is armed.
-6. The closing line: ``Type **`go`** to do it.`` when a step is armed; otherwise `Nothing runs on its own here: open that session, or say what to do.`
+6. The closing line: ``Type **`go`** to do it.`` when a step is armed; ``Do not type `go` until they finish.`` while lanes work; otherwise `Nothing runs on its own here: open that session, or say what to do.`
 7. When the read budget ran out before every plan was read, an italic line: `<n> plans were not read (read budget used up).` Plans and the other small records are read before the session store, so this happens only with very large plan folders.
 
 ## Plans the roadmap leaves out

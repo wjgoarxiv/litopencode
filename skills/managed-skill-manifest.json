@@ -84,7 +84,7 @@
       "canonicalFiles": [
         {
           "path": "references/brief-format.md",
-          "sha256": "01e84c87740a7069daabb331b915c3dc9888f2c4052efc0c870d2450740e353d"
+          "sha256": "4989b4a2d141342fc729922f385c435a4a601c2103dc6c3bf5eac0fccadd72e6"
         },
         {
           "path": "references/card-examples.md",
@@ -92,11 +92,11 @@
         },
         {
           "path": "references/status-taxonomy.md",
-          "sha256": "b4c16cbbefdf72b8e04b7aa67dcd45f7232dfc30b6f926cae3ce0f22724f2463"
+          "sha256": "9a03b1910165d039e5fb69e39eb7b6e800cbc44be824d0a8581525891ba60ab7"
         },
         {
           "path": "scripts/rewind.mjs",
-          "sha256": "a00d565d382c60bb179db25b7cae4ce8d8221c9dcc360f913ce0b0bb366f734a"
+          "sha256": "2f350ecadc99d4d991b041fa35632d735d2166da6a25aee0af2fea605da74d0d"
         }
       ]
     },
