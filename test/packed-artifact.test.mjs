@@ -501,7 +501,7 @@ test("uiux.package-assets", async () => {
     assert.match(notice, /PROVENANCE\.json/);
 
     const packageJson = JSON.parse(await fs.readFile(path.join(packageDir, "package.json"), "utf8"));
-    assert.equal(packageJson.dependencies?.zod, "4.1.8");
+    assert.equal(packageJson.dependencies?.zod, "4.6.6");
     assert.equal(packageJson.dependencies?.["@opencode-ai/plugin"], undefined);
     assert.equal(packageJson.devDependencies?.["@opencode-ai/plugin"], "^1.17.6");
     assert.doesNotMatch(JSON.stringify(packageJson.dependencies ?? {}), /playwright|puppeteer|browser/i);

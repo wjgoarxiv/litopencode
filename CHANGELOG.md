@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- Dependency alerts cleared: zod 4.6.6 (the runtime dependency and the Remotion cover template), the audio runtime's msgpack 1.2.3, @hono/node-server 2.1.5 in the HyperFrames cover template, and toml 5.0.1 in the development tree.
+
 ## 1.0.37 - 2026-11-01
 
 - `lit-typographic-motion` films can now carry real keyed footage, such as a reaction clip or a spinning-cat loop shot on a green screen. Key it outside the renderer into 8-bit RGBA PNG frames, put them in `stage/clips/<folder>/` and list them in `stage/clips/clips.json` (`id`, `dir`, `count`, `fps`). The page loads `/lit/clips.js`, registers a clip once with `LitStage.clip({ parent, id, box })` and shows it from `render(t)`; the frame is picked from film time, so a cue is plain arithmetic and the determinism replay holds. A declared clip is checked against its bytes (12 clips, 360 frames each and 1500 in all, 40 MB each and 128 MB in all, 720 px on the long side, up to 30 fps, real transparency) and is exempt from the flipbook rule; any frame sequence you did not declare is still refused with exit 17. A cover takes no clips. The flash audit and the text checks run on the final pixels, and the report lists each clip. `LitStage.clip.circle`, `wipe` and `iris` keep working.

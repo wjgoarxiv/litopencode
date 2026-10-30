@@ -70,7 +70,7 @@
   },
   "dependencies": {
     "yaml": "^2.9.0",
-    "zod": "4.1.8"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@opencode-ai/plugin": "^1.17.6",
@@ -78,6 +78,10 @@
     "@types/node": "^24.12.2",
     "picomatch": "^4.0.5",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "zod": "$zod",
+    "toml": "5.0.1"
   },
   "publishConfig": {
     "access": "public"

@@ -86,7 +86,7 @@ test("packed consumer installs do not resolve effect/ini and stay engine-clean",
 
 test("runtime tool factory owns the zod schema and keeps the host package type-only", async () => {
   const packageJson = JSON.parse(await fs.readFile(path.join(repositoryRoot, "package.json"), "utf8"));
-  assert.equal(packageJson.dependencies?.zod, "4.1.8");
+  assert.equal(packageJson.dependencies?.zod, "4.6.6");
   assert.equal(packageJson.dependencies?.["@opencode-ai/plugin"], undefined);
   assert.equal(packageJson.devDependencies?.["@opencode-ai/plugin"], "^1.17.6");
 
