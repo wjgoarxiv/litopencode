@@ -42,6 +42,8 @@ npm exec --package @litfamily/litopencode@latest -- litopencode install
 
 설치 도중 어떤 모델을 쓸지, 에이전트에게 권한을 얼마나 줄지 묻습니다. 무엇이 바뀔지 먼저 보고 싶다면 `--dry-run`을 붙이세요. 파일은 건드리지 않고 보여 주기만 합니다. 기본값으로 충분하다면 `--yes`를 붙여 질문을 건너뛸 수 있습니다. 권한은 `safe`에서 시작하는데, 무언가 하기 전에 OpenCode가 먼저 물어보는 설정입니다.
 
+OpenCode는 세션을 시작할 때마다 전역 `AGENTS.md` 하나를 읽습니다. 설치 도구는 거기에 짧은 표시 블록을 넣어, 매 세션이 `lit`이 무슨 뜻인지, 그리고 당신의 허락 없이는 push나 배포를 하지 않는다는 것을 알게 할 수 있습니다. 한 번만 물어보고, `--yes`는 예로 답하며, `--no-agent-file`은 이번 실행에서만 건너뜁니다. `litopencode agent-file remove`는 블록을 빼고 당신이 쓴 글은 그대로 둡니다.
+
 ### 코딩 에이전트에게 설치 맡기기
 
 이미 쓰는 에이전트에 아래 내용을 붙여 넣으세요. 에이전트는 먼저 확인하고, 할 일을 보여 준 뒤, 허락을 받고 나서야 무언가를 바꿉니다.
@@ -210,7 +212,7 @@ LitOpenCode는 대화형으로 시작할 때와 install이나 doctor가 성공�
 
 ### 제거
 
-OpenCode의 `opencode.jsonc`에서 `plugin` 배열의 `@litfamily/litopencode` 항목을 지우고 OpenCode를 다시 시작하세요. 전역으로 설치했다면 다음 명령도 실행합니다.
+전역 `AGENTS.md`에 블록을 넣었다면 먼저 `litopencode agent-file remove`를 실행하세요. 그런 다음 OpenCode의 `opencode.jsonc`에서 `plugin` 배열의 `@litfamily/litopencode` 항목을 지우고 OpenCode를 다시 시작하세요. 전역으로 설치했다면 다음 명령도 실행합니다.
 
 ```sh
 npm uninstall -g @litfamily/litopencode

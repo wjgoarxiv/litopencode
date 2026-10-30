@@ -32,6 +32,11 @@ export type ParsedArgs = {
   readonly outputStylePrompt: PermissionPromptMode;
   readonly loop: LoopArgs;
   readonly tuiAction?: string;
+  readonly agentFileAction?: string;
+  readonly agentFileDir?: string;
+  // "skip" is the per-run --no-agent-file; the stored setting lives in litopencode.json.
+  readonly agentFile: "auto" | "skip";
+  readonly assumeYes: boolean;
   readonly host: HostChoice;
 };
 
@@ -192,6 +197,12 @@ export type InstallReport = {
       readonly style: string;
       readonly changed: boolean;
     };
+  };
+  readonly agentFile?: {
+    readonly path: string;
+    readonly state: string;
+    readonly mode: string;
+    readonly action: string;
   };
   readonly plugin: PluginMutation["plugin"];
   readonly commandAliases: {

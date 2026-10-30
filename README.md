@@ -42,6 +42,8 @@ npm exec --package @litfamily/litopencode@latest -- litopencode install
 
 The installer asks which models to use and how much freedom the agents get. Add `--dry-run` when you want to see what would change before anything is written, or `--yes` when the defaults are fine and you'd rather skip the questions. Permissions start at `safe`, where OpenCode asks you before acting.
 
+OpenCode reads one global `AGENTS.md` at the start of every session. The installer can put a short marked block there, so each session knows what `lit` means and that nothing is pushed or published without your yes. It asks once, `--yes` says yes, `--no-agent-file` skips it for a run, and `litopencode agent-file remove` takes it back out with your own text untouched.
+
 ### Or let a coding agent install it
 
 Paste this into the agent you already use. It checks first, shows you the plan and waits for your yes before anything changes.
@@ -210,7 +212,7 @@ LitOpenCode checks for a new release when it starts interactively and after an i
 
 ### Uninstall
 
-Remove the `@litfamily/litopencode` entry from the `plugin` array in OpenCode's `opencode.jsonc`, then restart OpenCode. If you installed it globally, also run:
+If you added the block to OpenCode's global `AGENTS.md`, run `litopencode agent-file remove` first. Then remove the `@litfamily/litopencode` entry from the `plugin` array in OpenCode's `opencode.jsonc`, then restart OpenCode. If you installed it globally, also run:
 
 ```sh
 npm uninstall -g @litfamily/litopencode

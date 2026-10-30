@@ -7,6 +7,8 @@ import { test } from "node:test";
 const repo = path.resolve(import.meta.dirname, "..");
 const python = spawnSync("python3", ["-c", "import pty, termios"], { encoding: "utf8" });
 const blockGlyphs = /[█▓▀▄▌▐▖▗▘▝▙▛▜▟▚▞]/u;
+// The two interactive cases opt out of the LitFamily block question (--no-agent-file): this harness answers
+// only the numbered "Select" prompts, and the block question has its own tests in agent-file.test.mjs.
 const cases = [
   { name: "fresh --yes with empty CI", env: { CI: "" }, args: ["--yes"], ansi: false, fresh: true, style: "off" },
   { name: "--yes with empty CI", env: { CI: "" }, args: ["--yes"], ansi: false },
@@ -16,8 +18,8 @@ const cases = [
   { name: "--yes with dumb terminal", env: { TERM: "dumb" }, args: ["--yes"], ansi: false, plain: true },
   { name: "--yes with non-UTF-8 locale", env: { LC_ALL: "C" }, args: ["--yes"], ansi: false, plain: true },
   { name: "--yes retains truecolor", env: {}, args: ["--yes"], ansi: true, color: /\u001b\[38;2;255;99;55m/u },
-  { name: "interactive 256-color explicit style", env: { COLORTERM: "" }, args: ["--no-model-prompt", "--no-permission-prompt"], answers: ["3"], style: "eli5", ansi: true, color: /\u001b\[38;5;203m/u },
-  { name: "interactive NO_COLOR explicit style", env: { NO_COLOR: "" }, args: ["--no-model-prompt", "--no-permission-prompt"], answers: ["4"], style: "eli5-ko", ansi: false },
+  { name: "interactive 256-color explicit style", env: { COLORTERM: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["3"], style: "eli5", ansi: true, color: /\u001b\[38;5;203m/u },
+  { name: "interactive NO_COLOR explicit style", env: { NO_COLOR: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["4"], style: "eli5-ko", ansi: false },
   { name: "explicit CI permission prompt remains plain", env: { CI: "" }, args: ["--permission-prompt"], answers: ["0"], ansi: false }
 ];
 

@@ -28,6 +28,10 @@ npm exec --package @litfamily/litopencode@latest -- litopencode install --yes   
 
 `--dry-run` prints what it would change and writes nothing. `--yes` skips the questions, takes the defaults, and keeps any choices you saved on an earlier install.
 
+One more thing install offers is a short block in OpenCode's global instruction file, `AGENTS.md` in the config folder (`~/.config/opencode/AGENTS.md`, or `$XDG_CONFIG_HOME/opencode/AGENTS.md`). OpenCode reads that file at the start of every session, so the block is where a fresh session learns that `lit` is an activation word, where plans, the handoff and run state live, and that nothing is pushed, published, tagged or version-bumped without your explicit yes. It stays under 1,200 bytes and only ever occupies the lines between its own `litfamily:litopencode` markers. Your own text is not touched, the first change keeps one backup copy beside the file, a repeat install changes nothing, and a newer release refreshes the block in place.
+
+An interactive install asks once. `--yes` adds the block, `--no-agent-file` leaves the file alone for one run, and an install with no terminal and no `--yes` never writes it. `litopencode agent-file off` removes the block and remembers the choice in `litopencode.json`, `litopencode agent-file on` brings it back, `litopencode agent-file remove` removes it without changing that choice, and `doctor` prints `agentFile.state` as `present`, `stale`, `absent`, `off` or `malformed`. A symlinked, non-UTF-8 or malformed file is reported and left as it was. OpenCode reads `~/.claude/CLAUDE.md` only while its own `AGENTS.md` is missing, so install will not create that file over an existing `CLAUDE.md`; it prints `skipped-claude-fallback` and leaves both alone.
+
 What install actually does is small. It adds the plugin to OpenCode's config and copies LitOpenCode's commands and skills into your OpenCode config folder. Your routes, which say which model handles each kind of work, are kept in `~/.config/opencode/litopencode.json`. If you set `XDG_CONFIG_HOME`, that whole config folder moves with it. Routes you've already customized are left as they are. The [installation and model reference](./reference.md#install) covers custom roots, provider choices, terminal behavior, and unattended setup.
 
 This checkout is `@litfamily/litopencode@1.0.34`. The registry's `@latest` can be different, so run `npm view @litfamily/litopencode version` when the exact version matters.
@@ -100,15 +104,16 @@ Two skills-folder setups can surprise you, and install and `doctor` point out bo
 
 There's no `litopencode uninstall` command. Removing it by hand takes a few steps:
 
-1. Delete the `@litfamily/litopencode` or `@litfamily/litopencode@<version>` entry from the `plugin` array in OpenCode's `opencode.jsonc` (or a custom root's `opencode.json`). Remove any legacy `litopencode` package entries too.
-2. If you installed it globally, remove the npm binary:
+1. If install added the LitFamily block to OpenCode's global `AGENTS.md`, run `litopencode agent-file remove` first. It returns the file to your own text, and deletes it if install created it.
+2. Delete the `@litfamily/litopencode` or `@litfamily/litopencode@<version>` entry from the `plugin` array in OpenCode's `opencode.jsonc` (or a custom root's `opencode.json`). Remove any legacy `litopencode` package entries too.
+3. If you installed it globally, remove the npm binary:
 
    ```sh
    npm uninstall -g @litfamily/litopencode
    ```
 
-3. Look over the installed command and skill files before you remove the installer's copies, and keep anything you created or edited.
-4. Restart OpenCode.
+4. Look over the installed command and skill files before you remove the installer's copies, and keep anything you created or edited.
+5. Restart OpenCode.
 
 Keep `litopencode.json` if you still want its routes, and keep a project's `.litopencode/` records if you plan to resume. The [removal reference](./reference.md#remove) has the details.
 

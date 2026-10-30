@@ -14,6 +14,8 @@ export const loopCommands = [
   "record-review-blockers"
 ] as const;
 
+export const agentFileActions = ["on", "off", "remove", "project"] as const;
+
 export type LoopCommand = (typeof loopCommands)[number];
 
 export function isLoopCommand(command: string | undefined): command is LoopCommand {
@@ -62,6 +64,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   let directive: string | undefined;
   let resolve: string | undefined;
   let host: HostChoice = "auto";
+  let agentFile: ParsedArgs["agentFile"] = "auto";
+  let agentFileDir: string | undefined;
 
   if (command === "--help" || command === "-h") {
     command = "help";
@@ -77,7 +81,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
   const tuiAction = command === "tui" ? argv[1] : undefined;
   if (command === "tui" && tuiAction !== "remove") throw new Error("tui requires an action: remove");
-  const firstOptionIndex = command === "fetch-public" || command === "tui" ? 2 : 1;
+  const agentFileAction = command === "agent-file" ? argv[1] : undefined;
+  if (command === "agent-file" && !agentFileActions.some((action) => action === agentFileAction)) {
+    throw new Error(`agent-file requires an action: ${agentFileActions.join(", ")}`);
+  }
+  const firstOptionIndex = command === "fetch-public" || command === "tui" || command === "agent-file" ? 2 : 1;
   if (command === "fetch-public") {
     fetchPublicUrl = cleanOption(argv[1], "fetch-public URL");
     if (!fetchPublicUrl) throw new Error("fetch-public requires a URL");
@@ -94,6 +102,17 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     }
     if (arg === "--dry-run") {
       dryRun = true;
+      continue;
+    }
+    if (arg === "--no-agent-file") {
+      if (command !== "install") throw new Error(`Unknown argument: ${arg}`);
+      agentFile = "skip";
+      continue;
+    }
+    if (arg === "--dir") {
+      if (agentFileAction !== "project") throw new Error(`Unknown argument: ${arg}`);
+      agentFileDir = cleanOption(argv[index + 1], arg);
+      index += 1;
       continue;
     }
     if (arg === "--no-auto-update") {
@@ -303,6 +322,10 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     modelPrompt: yes ? "never" : modelPrompt,
     outputStylePrompt: yes ? "never" : "auto",
     ...(tuiAction === undefined ? {} : { tuiAction }),
+    ...(agentFileAction === undefined ? {} : { agentFileAction }),
+    ...(agentFileDir === undefined ? {} : { agentFileDir }),
+    agentFile,
+    assumeYes: yes,
     host,
     loop: {
       projectRoot,

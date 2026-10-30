@@ -52,7 +52,7 @@ export async function promptOutputStyle(existing: string, promptMode: Permission
   }
 }
 
-type PromptReader = {
+export type PromptReader = {
   question(prompt: string): Promise<string>;
   close(): void;
 };
@@ -83,7 +83,7 @@ async function askLine(reader: PromptReader, prompt: string): Promise<string> {
   return (await reader.question(prompt)).trim();
 }
 
-function createPromptReader(): PromptReader {
+export function createPromptReader(): PromptReader {
   if (process.stdin.isTTY === true) {
     return readline.createInterface({ input: process.stdin, output: process.stdout, terminal: markColorMode() !== "none" });
   }

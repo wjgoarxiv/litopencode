@@ -28,6 +28,10 @@ npm exec --package @litfamily/litopencode@latest -- litopencode install --yes   
 
 `--dry-run`은 무엇이 바뀔지만 보여 주고 아무것도 쓰지 않습니다. `--yes`는 질문을 건너뛰고 기본값으로 설치하되, 예전에 저장해 둔 선택은 그대로 둡니다.
 
+설치는 한 가지를 더 제안합니다. OpenCode의 전역 지침 파일, 즉 설정 폴더의 `AGENTS.md`(`~/.config/opencode/AGENTS.md`, 또는 `$XDG_CONFIG_HOME/opencode/AGENTS.md`)에 짧은 블록을 넣는 것입니다. OpenCode는 세션을 시작할 때마다 이 파일을 읽으므로, 새 세션은 여기서 `lit`이 활성화 단어라는 것, 계획·인수인계·실행 상태가 어디에 있는지, 그리고 당신의 명시적인 허락 없이는 push, 배포, 태그, 버전 올리기를 하지 않는다는 것을 알게 됩니다. 블록은 1,200바이트 안쪽이고 자기 `litfamily:litopencode` 표시 사이의 줄만 차지합니다. 당신이 쓴 글은 건드리지 않고, 처음 바꿀 때 파일 옆에 백업을 한 번 남기며, 다시 설치해도 바뀌는 것이 없고, 새 릴리스는 블록을 제자리에서 갱신합니다.
+
+대화형 설치는 한 번 묻습니다. `--yes`는 블록을 넣고, `--no-agent-file`은 이번 실행에서만 파일을 그대로 두며, 터미널도 `--yes`도 없는 설치는 절대 쓰지 않습니다. `litopencode agent-file off`는 블록을 빼고 그 선택을 `litopencode.json`에 기억하며, `litopencode agent-file on`은 다시 넣고, `litopencode agent-file remove`는 그 선택을 바꾸지 않고 블록만 뺍니다. `doctor`는 `agentFile.state`를 `present`, `stale`, `absent`, `off`, `malformed` 중 하나로 보여 줍니다. 심볼릭 링크이거나 UTF-8이 아니거나 표시가 깨진 파일은 알려 주고 그대로 둡니다. OpenCode는 자기 `AGENTS.md`가 없을 때만 `~/.claude/CLAUDE.md`를 읽으므로, 이미 `CLAUDE.md`가 있으면 설치는 그 위에 `AGENTS.md`를 새로 만들지 않고 `skipped-claude-fallback`을 출력한 채 둘 다 그대로 둡니다.
+
 설치가 하는 일은 많지 않습니다. OpenCode 설정에 플러그인을 등록하고, LitOpenCode의 명령과 스킬 파일을 OpenCode 설정 폴더에 복사합니다. 어떤 일에 어떤 모델을 쓸지 정한 route는 `~/.config/opencode/litopencode.json`에 저장됩니다. `XDG_CONFIG_HOME`을 지정하면 설정 폴더가 통째로 그쪽으로 옮겨 갑니다. 이미 손봐 둔 route는 건드리지 않습니다. 설정 폴더를 직접 정하는 방법, 모델 선택, 터미널 정책, 무인 설치는 [상세 안내](./reference-Ko-KR.md#설치)에 있습니다.
 
 이 체크아웃의 패키지 버전은 `@litfamily/litopencode@1.0.34`입니다. registry의 `@latest`와 다를 수 있으니, 정확한 버전이 중요하면 `npm view @litfamily/litopencode version`으로 확인하세요.
@@ -100,15 +104,16 @@ npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 
 `litopencode uninstall` 명령은 없습니다. 직접 지우려면 다음 순서로 하세요.
 
-1. OpenCode의 `opencode.jsonc`(custom root라면 `opencode.json`)에서 `plugin` 배열의 `@litfamily/litopencode` 또는 `@litfamily/litopencode@<version>` 항목을 지웁니다. 예전 `litopencode` 패키지 항목이 있으면 그것도 지웁니다.
-2. 전역으로 설치했다면 npm 실행 파일도 제거합니다.
+1. 설치가 OpenCode 전역 `AGENTS.md`에 LitFamily 블록을 넣었다면 먼저 `litopencode agent-file remove`를 실행합니다. 파일은 당신이 쓴 글만 남은 상태로 돌아가고, 설치가 만든 파일이었다면 지워집니다.
+2. OpenCode의 `opencode.jsonc`(custom root라면 `opencode.json`)에서 `plugin` 배열의 `@litfamily/litopencode` 또는 `@litfamily/litopencode@<version>` 항목을 지웁니다. 예전 `litopencode` 패키지 항목이 있으면 그것도 지웁니다.
+3. 전역으로 설치했다면 npm 실행 파일도 제거합니다.
 
    ```sh
    npm uninstall -g @litfamily/litopencode
    ```
 
-3. 설치된 명령·스킬 파일은 먼저 살펴본 뒤 설치 도구가 만든 복사본만 지우고, 직접 만들거나 고친 파일은 남깁니다.
-4. OpenCode를 다시 시작합니다.
+4. 설치된 명령·스킬 파일은 먼저 살펴본 뒤 설치 도구가 만든 복사본만 지우고, 직접 만들거나 고친 파일은 남깁니다.
+5. OpenCode를 다시 시작합니다.
 
 route가 계속 필요하면 `litopencode.json`을, 나중에 작업을 이어 갈 생각이라면 프로젝트의 `.litopencode/` 기록을 남겨 두세요. 자세한 내용은 [제거 상세 안내](./reference-Ko-KR.md#제거)에 있습니다.
 

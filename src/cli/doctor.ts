@@ -26,6 +26,7 @@ import {
 } from "../auto-handoff.ts";
 import { inspectLspCapability } from "./lsp-capability.ts";
 import { probeMotionRuntime } from "./motion-runtime.ts";
+import { agentFileState, globalAgentFilePath, readAgentFileMode } from "./agent-file.ts";
 import { isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { inspectTuiPlugin, planCliJsonCleanup } from "./tui-config.ts";
 import { detectOpenCodeHosts, targetsV1, targetsV2, type HostChoice } from "./host-detect.ts";
@@ -304,11 +305,21 @@ export async function doctor(root: string, hostChoice: HostChoice = "auto"): Pro
     );
   }
 
+  const agentFilePath = globalAgentFilePath(root);
+  const agentFileMode = await readAgentFileMode(root);
+  const agentFileBlock = agentFileMode === "off" ? "off" : agentFileState({ path: agentFilePath, version: metadata.version });
+
   return {
     exitCode: 0,
     stdout: JSON.stringify(
       {
         package: metadata,
+        agentFile: {
+          path: agentFilePath,
+          state: agentFileBlock,
+          mode: agentFileMode,
+          line: `AGENT_FILE: ${agentFileBlock} (${agentFilePath}; change: litopencode agent-file on|off)`
+        },
         capabilities: openCodeHostCapabilities(),
         hostLimits: { path: hostConfig.path, ...inspectHostLimits(hostConfig.config) },
         host: {

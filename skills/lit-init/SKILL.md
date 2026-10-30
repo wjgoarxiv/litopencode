@@ -197,6 +197,10 @@ Every lit-init run should try to prove itself wrong before completion. Pick at l
 
 If a claim cannot be verified quickly, mark it as uncertain or omit it. Future agents are better served by a small verified map than a large speculative one.
 
+## LitFamily Project Block
+
+When the user has approved writing the root `AGENTS.md`, the short LitFamily block can go in with `litopencode agent-file project --dir <repo root>`. It writes only the lines between its own `litfamily:litopencode` markers at the end of the file, keeps every byte of the hand-written text, makes no backup copy next to tracked files, and reports `unchanged` on a repeat. A malformed marker pair or a symlinked `AGENTS.md` is refused and reported, never rewritten. Run `litopencode agent-file project --dir <repo root> --dry-run` first when the file already exists, and treat the block as one more thing the receipt lists.
+
 ## Completion Receipt
 
 The final receipt should list files created, files updated, directories intentionally skipped, key evidence sources, tests or checks run, and cleanup. If no files were written because the run was discovery-only, say so. If local handoff or ledger state influenced the map, state that it was cross-checked. If any temp files or exploration artifacts were created, remove them or identify them as ignored evidence. Do not commit the guidance unless the user explicitly asks for a commit.

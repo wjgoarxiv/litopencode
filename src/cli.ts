@@ -1,6 +1,7 @@
 import { isLoopCommand, parseArgs } from "./cli/args.ts";
 import { runLoopCommand } from "./cli/loop.ts";
 import { doctor } from "./cli/doctor.ts";
+import { runAgentFileCommand } from "./cli/agent-file-command.ts";
 import { install } from "./cli/install.ts";
 import { createInstallTui, renderLitOpenCodeWordmark, shouldRenderInstallTui } from "./cli/install-tui.ts";
 import type { CliResult, InstallProgress, ParsedArgs } from "./cli/types.ts";
@@ -39,7 +40,10 @@ function helpText(): string {
     "  litopencode install [--dry-run] [--root <dir>] --provider <openai|xai> --model <id> [--effort <e>] [--subagent-model <provider/id>] [--subagent-effort <e>] [--yolo]",
     "  litopencode install [--model-prompt | --no-model-prompt | --yes]",
     "  litopencode install [--permission-prompt | --no-permission-prompt] [--permission-mode <safe|balanced|yolo>]",
+    "  litopencode install [--no-agent-file]",
     "  litopencode install|doctor [--no-auto-update]",
+    "  litopencode agent-file on|off|remove [--dry-run] [--root <dir>]",
+    "  litopencode agent-file project [--dir <path>] [--dry-run]",
     "  litopencode doctor [--json] [--root <dir>]",
     "  litopencode tui remove [--dry-run] [--root <dir>]",
     "  litopencode motion-runtime install|status [--audio] [--word-timing] [--dry-run] (install) [--json] (status)",
@@ -60,6 +64,7 @@ function helpText(): string {
     "Commands:",
     "  install       Register litopencode with OpenCode using a branded installer UI.",
     "  doctor        Report package, config, and runtime path status without writing files.",
+    "  agent-file    Add, remove or switch off the short LitFamily block in OpenCode's global AGENTS.md; project writes it into a repo's AGENTS.md.",
     "  tui remove    Remove only LitOpenCode's TUI panel entry from tui.json/tui.jsonc (backed up first).",
     "  fetch-public  Fetch a public URL with SSRF guards, verdicts, and trace output.",
     "                --allow-private-network is opt-in for reviewed local fixtures or trusted internal tests.",
@@ -127,6 +132,12 @@ function helpText(): string {
     "  --no-auto-update or LITOPENCODE_NO_AUTO_UPDATE=1 disables the barrier; NO_UPDATE_NOTIFIER and LITOPENCODE_NO_UPDATE_CHECK also disable it.",
     "  The detached update notice remains cache-refresh-only and never installs.",
     "",
+    "LitFamily block:",
+    "  An interactive install asks once whether to add a short, marker-delimited block to <root>/AGENTS.md, the global file OpenCode reads every session.",
+    "  --yes adds it; --no-agent-file skips it for one run; a non-interactive install without --yes never writes it. Your own text stays byte for byte.",
+    "  OpenCode reads ~/.claude/CLAUDE.md only while <root>/AGENTS.md is missing, so the installer never creates AGENTS.md over an existing CLAUDE.md.",
+    "  agent-file off removes the block and stores the choice in litopencode.json; agent-file remove only removes it. doctor prints the block state.",
+    "",
     "Default root:",
     "  ~/.config/opencode, or $XDG_CONFIG_HOME/opencode when XDG_CONFIG_HOME is set."
   ].join("\n");
@@ -151,6 +162,7 @@ export async function runCli(argv: readonly string[] = process.argv.slice(2), op
     }
     if (isLoopCommand(parsed.command)) return await runLoopCommand(parsed.command, parsed.loop, parsed.dryRun);
     if (parsed.command === "doctor") return await doctor(parsed.root, parsed.host);
+    if (parsed.command === "agent-file") return await runAgentFileCommand(parsed, (await readPackageMetadata()).version);
     if (parsed.command === "tui") {
       const removed = await removeTuiEntries(parsed.root, parsed.dryRun, { cliJson: parsed.host !== "v1" });
       return { exitCode: 0, stdout: JSON.stringify(removed, null, 2) };
@@ -176,7 +188,8 @@ export async function runCli(argv: readonly string[] = process.argv.slice(2), op
         parsed.permissionPrompt,
         options.installProgress,
         parsed.outputStylePrompt,
-        parsed.host
+        parsed.host,
+        { assumeYes: parsed.assumeYes, skip: parsed.agentFile === "skip" }
       );
     }
     return { exitCode: 2, stderr: `Unknown command: ${parsed.command}` };

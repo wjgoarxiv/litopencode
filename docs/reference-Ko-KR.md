@@ -53,6 +53,32 @@ npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 그대로 둡니다. 기본 OpenCode 설정 파일은 `~/.config/opencode/opencode.jsonc`입니다.
 `XDG_CONFIG_HOME`이 설정되어 있으면 `$XDG_CONFIG_HOME/opencode/opencode.jsonc`를 사용합니다.
 
+### 전역 AGENTS.md 블록
+
+OpenCode의 Rules 문서는 `~/.config/opencode/AGENTS.md`를 전역 규칙 파일로 적고, OpenCode는 그 폴더를
+`$XDG_CONFIG_HOME`에서 만듭니다(`OPENCODE_CONFIG_DIR`은 위치를 바꾸지 않으며, `opencode debug paths`로 확인할 수
+있습니다). 설치 도구는 다른 모든 곳에서 쓰는 것과 같은 root의 `<root>/AGENTS.md`에 쓰므로 `--root`와
+`XDG_CONFIG_HOME`이 그대로 따라갑니다. `<!-- litfamily:litopencode:start v=<version> -->`와
+`<!-- litfamily:litopencode:end -->` 사이의 줄만 씁니다. 시작 표시에는 블록 앞에 덧붙인 내용도 기록해 두므로,
+블록을 빼면 LF든 CRLF든 원래 바이트로 돌아갑니다. 쓰기는 임시 파일과 rename으로 하고, 두 번째 설치는 아무것도
+바꾸지 않으며 새 백업도 만들지 않습니다.
+
+| 명령 | 효과 |
+| --- | --- |
+| `install` (대화형) | 한 번 묻고 기본값은 예입니다. 아니오를 고르면 `litopencode.json`에 `"agentFile": "off"`를 저장합니다. |
+| `install --yes` | `agentFile`이 `off`가 아니면 블록을 넣거나 갱신합니다. |
+| `install --no-agent-file` | 이번 실행에서만 파일을 그대로 두고 아무것도 저장하지 않습니다. |
+| `install` (터미널 없음, `--yes` 없음) | 블록을 새로 넣지 않습니다. 이미 있는 이전 블록은 제자리에서 갱신합니다. |
+| `agent-file on` / `off` | 설정을 저장하고 블록을 바로 넣거나 뺍니다. |
+| `agent-file remove` | 블록을 빼고, 설치가 만든 파일이면 파일도 지웁니다. 저장된 설정은 그대로입니다. |
+| `agent-file project [--dir <path>]` | 해당 폴더의 `AGENTS.md`에 프로젝트 블록을 쓰며 백업 복사본은 만들지 않습니다. |
+| `doctor` | `agentFile.state`는 `present v=<x>`, `stale v=<x>`, `absent`, `off`, `malformed`, `symlink`, `not-file`, `not-utf8` 중 하나입니다. |
+
+`LITOPENCODE_AGENT_FILE=on|off`는 저장된 설정보다 우선합니다. 표시 쌍이 깨졌거나, 심볼릭 링크이거나, 폴더이거나,
+UTF-8이 아닌 파일은 `refused-*`로 알리고 그대로 둡니다. `<root>/AGENTS.md`가 없고 `~/.claude/CLAUDE.md`가 있으면
+OpenCode는 자기 전역 파일이 없을 때만 그 Claude 파일을 읽으므로 아무것도 만들지 않습니다
+(`skipped-claude-fallback`). `OPENCODE_DISABLE_CLAUDE_CODE_PROMPT=1`이면 이 보호는 풀립니다.
+
 *OpenCode의 이벤트가 플러그인으로 들어오면 TypeScript runtime이 route와 권한 경계를 적용하고, tool guard와 durable ledger로 결과를 남깁니다. 아래 흐름이 설치 후 실제로 연결되는 host surface입니다.*
 
 ```mermaid
@@ -263,6 +289,7 @@ flowchart LR
 npm uninstall -g @litfamily/litopencode
 ```
 
+설치가 전역 `AGENTS.md`에 LitFamily 블록을 넣었다면 그 전에 `litopencode agent-file remove`를 실행하세요.
 그 다음 OpenCode가 관리하는 `opencode.jsonc`(또는 custom root의 `opencode.json`)의
 `plugin` 배열에서 `@litfamily/litopencode` 또는 `@litfamily/litopencode@<version>` 항목을 제거합니다.
 더 이상 route가 필요하지 않을 때만 `~/.config/opencode/litopencode.json`을 제거하세요.

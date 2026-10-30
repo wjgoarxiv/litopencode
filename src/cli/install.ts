@@ -37,6 +37,7 @@ import { renderLitOpenCodeWordmark } from "./install-tui.ts";
 import { promptModelSelection, promptOutputStyle, promptPermissionMode } from "./model-routing.ts";
 import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } from "./native-skills.ts";
+import { installAgentFile, planAgentFile } from "./agent-file-command.ts";
 import { applyPluginMutation, describePluginMutation, isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { prewarmMotionRuntime } from "./motion-runtime.ts";
 import { applyCliJsonCleanup, applyTuiWrites, backupTuiFiles, inspectTuiPlugin, planCliJsonCleanup, planTuiInstall, skippedTuiPlan } from "./tui-config.ts";
@@ -322,7 +323,8 @@ export async function install(
   permissionPrompt: PermissionPromptMode = "auto",
   progress?: InstallProgress,
   outputStylePrompt: PermissionPromptMode = "auto",
-  host: HostChoice = "auto"
+  host: HostChoice = "auto",
+  agentFileChoice: { readonly assumeYes: boolean; readonly skip: boolean } = { assumeYes: false, skip: false }
 ): Promise<CliResult> {
   const retiredNotice = await migrateRetiredEfforts(root, dryRun);
   if (retiredNotice !== undefined) process.stdout.write(retiredNotice + "\n");
@@ -432,10 +434,12 @@ export async function install(
   }
   const { configFile, before, mutation, litopencodeConfig, commandAliases, nativeSkills, hostLimits, routes, tui, cliJson } = inspected;
   const v2PluginsChanged = resolved.forV2 && withoutV2PluginEntries(before) !== before;
+  const agentFileInput = { root, version: metadata.version, ...agentFileChoice };
   const report: InstallReport = {
     dryRun,
     path: configFile,
     litopencodeConfig,
+    ...(dryRun ? { agentFile: await planAgentFile(agentFileInput) } : {}),
     plugin: mutation.plugin,
     commandAliases,
     nativeSkills,
@@ -533,13 +537,15 @@ export async function install(
     )
   );
   await activeProgress?.complete();
+  // The block is the last step: it asks a question, and a refusal here never undoes a finished install.
+  const agentFileLine = wrapReceiptLine(await installAgentFile(agentFileInput));
   // MO-A-42: the installer attempts the motion pre-warm; a failure never fails the install.
   const motionReceipt = wrapReceiptLine(prewarmMotionRuntime(metadata.packageRoot));
 
   return {
     exitCode: 0,
     stdout: activeProgress === undefined
-      ? renderLitOpenCodeWordmark(pluginSpec(metadata), false) + "\n" + renderInstallReport(report) + "\n" + motionReceipt
-      : motionReceipt
+      ? renderLitOpenCodeWordmark(pluginSpec(metadata), false) + "\n" + renderInstallReport(report) + "\n" + agentFileLine + "\n" + motionReceipt
+      : agentFileLine + "\n" + motionReceipt
   };
 }

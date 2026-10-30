@@ -54,6 +54,32 @@ routes remain user-owned. The default OpenCode config is
 `~/.config/opencode/opencode.jsonc`, or `$XDG_CONFIG_HOME/opencode/opencode.jsonc`
 when `XDG_CONFIG_HOME` is set.
 
+### Global AGENTS.md block
+
+OpenCode's Rules page names `~/.config/opencode/AGENTS.md` as the global rules file, and OpenCode builds that
+folder from `$XDG_CONFIG_HOME` (`OPENCODE_CONFIG_DIR` does not move it; `opencode debug paths` prints it). The
+installer writes to `<root>/AGENTS.md` for the same root it uses everywhere else, so `--root` and
+`XDG_CONFIG_HOME` carry over. Only the lines between `<!-- litfamily:litopencode:start v=<version> -->` and
+`<!-- litfamily:litopencode:end -->` are written. The start marker also records what was added in front of the
+block, so removing it restores the original bytes under LF and CRLF alike. Writes use a temporary file and a
+rename; a second install changes nothing and makes no new backup.
+
+| Command | Effect |
+| --- | --- |
+| `install` (interactive) | Asks once, default yes; No stores `"agentFile": "off"` in `litopencode.json`. |
+| `install --yes` | Adds or refreshes the block, unless `agentFile` is `off`. |
+| `install --no-agent-file` | Leaves the file alone for that run and stores nothing. |
+| `install` (no terminal, no `--yes`) | Never adds a block; an older block is refreshed in place. |
+| `agent-file on` / `off` | Stores the setting and adds or removes the block at once. |
+| `agent-file remove` | Removes the block and, when install created the file, the file; the stored setting is untouched. |
+| `agent-file project [--dir <path>]` | Writes the project block into that folder's `AGENTS.md`, with no backup copy. |
+| `doctor` | `agentFile.state` is `present v=<x>`, `stale v=<x>`, `absent`, `off`, `malformed`, `symlink`, `not-file` or `not-utf8`. |
+
+`LITOPENCODE_AGENT_FILE=on|off` overrides the stored setting. A malformed marker pair, a symlink, a folder or a
+file that is not UTF-8 is reported as `refused-*` and left untouched. When `<root>/AGENTS.md` does not exist and
+`~/.claude/CLAUDE.md` does, nothing is created (`skipped-claude-fallback`), because OpenCode reads that Claude file
+only while its own global file is missing; `OPENCODE_DISABLE_CLAUDE_CODE_PROMPT=1` lifts the guard.
+
 *OpenCode provides the event surfaces; LitOpenCode turns them into bounded routes and guards, then records the durable ledger. This is the host connection behind the commands above.*
 
 ```mermaid
@@ -370,7 +396,8 @@ There is no `uninstall` subcommand. For a global install, remove the npm binary 
 npm uninstall -g @litfamily/litopencode
 ```
 
-Then remove the `@litfamily/litopencode` or `@litfamily/litopencode@<version>` entry from the `plugin` array in
+Run `litopencode agent-file remove` before that if install added the LitFamily block to the global
+`AGENTS.md`. Then remove the `@litfamily/litopencode` or `@litfamily/litopencode@<version>` entry from the `plugin` array in
 OpenCode's managed `opencode.jsonc` (or the custom root's `opencode.json`). Remove
 `~/.config/opencode/litopencode.json` only when you no longer need its user-owned routes.
 Project `.litopencode/` state is separate; preserve it for later resume or remove it only
