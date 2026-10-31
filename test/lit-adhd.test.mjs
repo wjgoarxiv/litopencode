@@ -713,3 +713,75 @@ test("a live lane outranks the HANDOFF Next item", async () => {
     }
   });
 });
+
+// The order the chooser keeps: a pending approval is the user's call and is always offered, then the lane
+// count; while other lanes work, nothing that resumes or continues this session's own work is offered.
+test("lanes hold this session's own paused spine: no continue, no go, no resume line", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working")]);
+    try {
+      buildStore(file, { sessions: [{ id: "ses_p", directory: dir, title: "Loop the migration", created: NOW - 60 * 60_000, updated: NOW - 30 * 60_000, messages: [{ role: "user", parts: [text("loop", "user")] }] }] });
+      await fs.mkdir(path.join(dir, ".litopencode", "workflow-stack"), { recursive: true });
+      await fs.writeFile(path.join(dir, ".litopencode", "workflow-stack", "ses_p.json"), JSON.stringify({ schema: "litopencode.workflow-stack/v1", sessionID: "ses_p", updatedAt: NOW, frames: [
+        { skill: "lit-loop", status: "paused", at: NOW, phase: "work", done: 2, total: 5 }] }));
+      const held = await collect({ root: dir, db: file, now: NOW, session: "ses_p", writeNext: true, env: herdr.env });
+      assert.equal(held.recommended.kind, "lanes");
+      assert.equal(held.recommended.lanes, 1);
+      assert.equal(held.nextRecord, null, "nothing is armed for go");
+      assert.equal(await consumeNext(dir, "ses_p", NOW), undefined);
+      const brief = renderBrief(held, { sessionID: "ses_p" });
+      assert.doesNotMatch(brief, /lit continue|Return to the paused|type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
+      assert.equal(brief.split("\n").at(-1), "Do not type `go` until they finish.");
+      const free = await collect({ root: dir, db: file, now: NOW, session: "ses_p", writeNext: true });
+      assert.equal(free.recommended.kind, "continue", "without a lane the paused spine is still offered");
+      assert.equal(free.nextRecord?.kind, "continue");
+    } finally {
+      await fs.rm(file, { force: true });
+      await fs.rm(herdr.bin, { recursive: true, force: true });
+    }
+  });
+});
+
+test("lanes hold this session's own running start-work run: no go", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working")]);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.mkdir(path.join(dir, "plans"));
+      await fs.writeFile(path.join(dir, "plans", "p.md"), "# Demo\n\n- [x] 1. one\n- [ ] 2. two\n");
+      const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop");
+      await fs.mkdir(loop, { recursive: true });
+      await fs.writeFile(path.join(loop, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID: "ses_me", status: "active", plan: { path: path.join(dir, "plans", "p.md") }, updatedAt: new Date(NOW).toISOString() }));
+      const held = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
+      assert.equal(held.recommended.kind, "lanes");
+      assert.equal(held.nextRecord, null);
+      assert.doesNotMatch(renderBrief(held, { sessionID: "ses_me" }), /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
+      const free = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
+      assert.equal(free.nextRecord?.kind, "work");
+    } finally {
+      await fs.rm(file, { force: true });
+      await fs.rm(herdr.bin, { recursive: true, force: true });
+    }
+  });
+});
+
+test("lanes do not hide a pending approval: it is still the step", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working")]);
+    try {
+      buildStore(file, { sessions: [{ id: "ses_me", directory: dir, title: "Run the plan", created: NOW - 30 * 60_000, updated: NOW - 10 * 60_000, messages: [{ role: "user", parts: [text("start-work", "user")] }] }] });
+      const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop");
+      await fs.mkdir(loop, { recursive: true });
+      await fs.writeFile(path.join(loop, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID: "ses_me", status: "paused", pendingBoundary: { action: "write", root: "/x/nested" }, plan: { path: "plans/p.md" }, updatedAt: new Date(NOW).toISOString() }));
+      const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
+      assert.equal(report.recommended.kind, "answer");
+      assert.doesNotMatch(renderBrief(report, { sessionID: "ses_me" }), /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
+    } finally {
+      await fs.rm(file, { force: true });
+      await fs.rm(herdr.bin, { recursive: true, force: true });
+    }
+  });
+});

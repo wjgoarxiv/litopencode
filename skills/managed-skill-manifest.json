@@ -92,11 +92,11 @@
         },
         {
           "path": "references/status-taxonomy.md",
-          "sha256": "9a03b1910165d039e5fb69e39eb7b6e800cbc44be824d0a8581525891ba60ab7"
+          "sha256": "00de506720908206f238edb01f410b5216483fbc291f232f46924ac4addbf7c6"
         },
         {
           "path": "scripts/rewind.mjs",
-          "sha256": "2f350ecadc99d4d991b041fa35632d735d2166da6a25aee0af2fea605da74d0d"
+          "sha256": "2d64bfda31edb07d86d94527bf9617b09c1b421e8de4f6258eb7ce31c9a10360"
         }
       ]
     },

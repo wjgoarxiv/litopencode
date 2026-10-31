@@ -674,17 +674,19 @@ export function recommend({ groups, sessionID, herdr = [] }) {
   }
   const blocked = cards.find(({ card }) => card.status === "blocked");
   if (blocked) return { kind: "session", sessionID: blocked.card.id, text: `Open "${clip(blocked.card.goal, 50)}": its last step failed and nothing has run since.` };
-  const paused = cards.find(({ card }) => card.status === "paused");
+  // Lanes: other sessions at work here, and herdr agents beside this one; one seen both ways counts once.
+  // They are counted before anything that resumes work here: while a lane runs, this session's own paused
+  // frame and its own run are held, and only an approval (above) stays the user's call.
+  const working = cards.filter(({ card }) => card.status === "working" && card.id !== sessionID);
+  const seen = new Set(working.flatMap(({ card }) => [card.id, card.pane].filter(Boolean)));
+  const agents = herdr.filter((agent) => agent.session === "" || (agent.session !== sessionID && !seen.has(agent.session))).filter((agent) => !seen.has(agent.pane));
+  const lanes = working.length + agents.length;
+  const paused = cards.find(({ card }) => card.status === "paused" && !(lanes > 0 && card.id === sessionID));
   if (paused) {
     return paused.card.id === sessionID
       ? { kind: "continue", sessionID, text: `Return to the paused discipline in "${clip(paused.card.goal, 50)}" where it stopped.` }
       : { kind: "session", sessionID: paused.card.id, text: `Open "${clip(paused.card.goal, 50)}" and say lit continue.` };
   }
-  // Lanes: other sessions at work here, and herdr agents beside this one; one seen both ways counts once.
-  const working = cards.filter(({ card }) => card.status === "working" && card.id !== sessionID);
-  const seen = new Set(working.flatMap(({ card }) => [card.id, card.pane].filter(Boolean)));
-  const agents = herdr.filter((agent) => agent.session === "" || (agent.session !== sessionID && !seen.has(agent.session))).filter((agent) => !seen.has(agent.pane));
-  const lanes = working.length + agents.length;
   if (lanes > 0) {
     const plural = `${lanes} lane${lanes === 1 ? "" : "s"}`;
     const waiting = agents.find((agent) => agent.status === "blocked");
