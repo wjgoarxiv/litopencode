@@ -652,7 +652,7 @@ test("operational reference reflects replayable verification without maintainer-
   assert.doesNotMatch(readme, /\.litcodex\/lit-loop\/evidence\/start-work\/FV-ALL-final\.txt/);
   assertContainsAll(readme, [
     "Native goal verdict",
-    "OpenCode host surface does not currently expose a native goal primitive",
+    "OpenCode 2\\.2 and later has a native `/goal`",
     "skills/\\*/SKILL\\.md"
   ]);
   assert.doesNotMatch(readme, /remaining work item is the final full verification wave/i);

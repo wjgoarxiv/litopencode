@@ -117,6 +117,14 @@ export function createFakeV2Context(options = {}) {
   const sessionCalls = [];
   const sessions = new Map(Object.entries(options.sessions ?? {}));
   const events = eventQueue();
+  // The built-in /goal plugin as OpenCode 2.2.x runs it: `opencode.goal` RPC `get`, and a `/goal` command
+  // that replaces any existing goal without asking. `goalHost: "none"` is a host without the RPC domain,
+  // "no-goal-plugin" is an OpenCode 2 whose RPC registry has no `opencode.goal`.
+  const goalHost = options.goalHost ?? "goal";
+  const goals = new Map(Object.entries(options.goals ?? {}));
+  const goalCommands = [];
+  const notices = [];
+  let goalSequence = 0;
   let subscriptions = 0;
   let aborted = 0;
   const hook = (domain) => async (name, callback) => {
@@ -163,8 +171,42 @@ export function createFakeV2Context(options = {}) {
       compact: async (input) => {
         compactions.push(input);
         return { id: `inb_compact_${compactions.length}` };
+      },
+      command: async (input) => {
+        sessionCalls.push({ call: "command", sessionID: input.sessionID, name: input.name });
+        goalCommands.push({ sessionID: input.sessionID, name: input.name, text: input.text, delivery: input.delivery });
+        if (input.name !== "goal") return undefined;
+        if (options.failGoalCommand === true) throw new Error("goal command rejected");
+        const goal = goals.get(input.sessionID);
+        const text = input.text.trim();
+        const control = text.toLowerCase();
+        if (control === "pause") goals.set(input.sessionID, { ...goal, status: "paused", reason: "Paused by the user" });
+        else if (control === "resume") {
+          if (goal?.status !== "paused") throw new Error("No paused goal to resume.");
+          goals.set(input.sessionID, { ...goal, status: "active", reason: undefined });
+        } else if (control === "clear") {
+          if (goal === undefined) throw new Error("No goal is set.");
+          goals.delete(input.sessionID);
+        } else goals.set(input.sessionID, { id: `goal_fake_${(goalSequence += 1)}`, objective: text, status: "active", rounds: 0 });
+        return undefined;
+      },
+      synthetic: async (input) => {
+        sessionCalls.push({ call: "synthetic", sessionID: input.sessionID });
+        notices.push(input);
+        return { id: `inb_synthetic_${notices.length}` };
       }
     },
+    ...(goalHost === "none"
+      ? {}
+      : {
+          rpc: (definition) => ({
+            get: async ({ sessionID }) => {
+              if (goalHost === "no-goal-plugin" || definition.id !== "opencode.goal") throw { type: "rpc.unavailable", message: `RPC is unavailable: ${definition.id}` };
+              if (options.failGoalRead === true) throw new Error("goal store unavailable");
+              return goals.get(sessionID) ?? null;
+            }
+          })
+        }),
     event: {
       subscribe: (subscribeOptions = {}) => {
         subscriptions += 1;
@@ -187,6 +229,9 @@ export function createFakeV2Context(options = {}) {
     hooks,
     prompts,
     compactions,
+    goals,
+    goalCommands,
+    notices,
     sessionCalls,
     sessions,
     emit: (event) => events.push(event),

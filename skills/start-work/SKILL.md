@@ -340,3 +340,7 @@ in your first response and continue with the one that injected you.
 It says nothing about how to execute — the sections above own that. Its only job is to answer three
 questions a skill body cannot answer for itself: how was I reached, have I already been reached, and
 whose contract am I under.
+
+## Native goal on OpenCode 2
+
+On OpenCode 2.2 and later, start-work gets a native `/goal` from LitOpenCode itself, set once when none exists and carrying the approved plan's completion conditions. A goal the user made is reported and left alone, and a host without `/goal` records `native-goal-unavailable`. The goal never widens the run's authority: scope roots, grants and the bounded-authority journal decide what the work may touch. Done needs OpenCode's verdict and the ledger together. See `native-goal-verdict`.

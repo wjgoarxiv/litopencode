@@ -128,7 +128,7 @@ litgoal sets and keeps the finish line; lit-loop and start-work run toward it.
 - **Keeps.** The goal survives context loss, compaction, and a new session. Status reads the ledger, not chat memory; an entry is a lead until the evidence is replayed.
 - **Does not run.** litgoal never edits product files and never executes the work. `lit-loop` pursues the criteria turn by turn, and `start-work` executes an approved plan against them under the schema-3 bounded-authority record. Both keep their progress and verification receipts in the same `.litopencode/litgoal` state.
 - **Does not decide completion.** A criterion is met when its evidence is replayed on the real surface, not when a turn says so. `review-work` challenges the claim before it stands.
-- **Is not the host's goal feature.** The verified OpenCode host exposes no native goal primitive, so litgoal is package-owned durable state. See `native-goal-verdict` before promising a host-side objective.
+- **Is not the host's goal feature.** litgoal is package-owned durable state on every host. OpenCode 2.2 and later also has a native `/goal`, which LitOpenCode sets for lit-loop, start-work and litwork and mirrors from this ledger; done needs both. See `native-goal-verdict` before promising a host-side objective.
 
 The route name, the command, and the skill are one word: `litgoal`. `/lit-goal` is the hyphenated alias.
 
@@ -188,7 +188,7 @@ remains denied.
 
 ## Ledger Operating Model
 
-The litgoal skill explains the package-owned state model that LitOpenCode uses when the verified OpenCode host does not expose a native goal primitive. The state root is `.litopencode/litgoal`, and the primary loop ledger is `.litopencode/litgoal/lit-loop/ledger.jsonl`. This path is local workflow state, not package source. It should never be treated as a release payload, a benchmark fixture, or a substitute for current tests. It exists so the loop can survive context loss, command interruption, and cross-session continuation without storing raw secrets or pretending that chat memory is durable.
+The litgoal skill explains the package-owned state model that LitOpenCode uses on every host, including OpenCode 2.2 and later where a native `/goal` also exists and the ledger stays the second half of done. The state root is `.litopencode/litgoal`, and the primary loop ledger is `.litopencode/litgoal/lit-loop/ledger.jsonl`. This path is local workflow state, not package source. It should never be treated as a release payload, a benchmark fixture, or a substitute for current tests. It exists so the loop can survive context loss, command interruption, and cross-session continuation without storing raw secrets or pretending that chat memory is durable.
 
 Each durable event should be understandable as a small fact about the work loop. Good events identify the phase, the goal or slice identifier, the relevant files or commands, the result, and a redacted evidence pointer. Bad events paste raw user data, full command output containing credentials, large source files, private URLs, or unreviewed external text. The ledger is evidence metadata, not a data lake. When in doubt, store a short summary and a path to a local evidence file whose contents were intentionally created for that purpose.
 

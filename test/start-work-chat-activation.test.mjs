@@ -125,7 +125,7 @@ test("inert start-work mentions append neither a prompt nor a ledger event", asy
     assert.equal(valid.parts.length, 2);
     assert.equal(valid.parts[1].metadata.litopencode.mode, "start-work");
     assert.deepEqual(
-      (await readLedgerEvents(dir)).map((event) => [event.type, event.mode]),
+      (await readLedgerEvents(dir)).filter((event) => !event.type.startsWith("native-goal.")).map((event) => [event.type, event.mode]),
       [["prompt.activated", "start-work"]]
     );
   });
@@ -184,7 +184,7 @@ test("a linked worktree nested inside another checkout keeps its state in the wo
 
     assert.equal(output.parts[1].metadata.litopencode.mode, "start-work");
     assert.deepEqual(
-      (await readLedgerEvents(linked)).map((event) => [event.type, event.mode]),
+      (await readLedgerEvents(linked)).filter((event) => !event.type.startsWith("native-goal.")).map((event) => [event.type, event.mode]),
       [["prompt.activated", "start-work"]]
     );
     for (const elsewhere of [outer, launch]) {

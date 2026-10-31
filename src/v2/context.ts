@@ -6,6 +6,7 @@ import type { AgentEditorLike, ModelEditorLike, PermissionEvaluationLike, Sessio
 import type { CommandEditorLike, CommandSessionLike } from "./commands.ts";
 import type { EventDomainLike, EventModelLike, EventSessionLike } from "./events.ts";
 import type { ToolAfterEvent, ToolBeforeEvent } from "./hooks.ts";
+import type { NativeGoalHostLike } from "./native-goal-runtime.ts";
 import type { ContextEvent, PromptEvent } from "./session-hooks.ts";
 import type { ToolEditorLike } from "./tools.ts";
 
@@ -29,6 +30,7 @@ type SessionHook = {
   (name: "prompt", callback: Callback<PromptEvent>): Promise<Registration>;
   (name: "context", callback: Callback<ContextEvent>): Promise<Registration>;
   (name: "compaction", callback: Callback<ContextEvent>): Promise<Registration>;
+  (name: "experimental.idle", callback: Callback<{ readonly sessionID: string }>): Promise<Registration>;
 };
 
 export type SessionDomainLike = {
@@ -41,7 +43,8 @@ export type ServerContextLike = {
   readonly tool: { readonly transform: Transform<ToolEditorLike>; readonly hook: ToolHook };
   readonly permission: { readonly hook: (name: "evaluate", callback: Callback<PermissionEvaluationLike>) => Promise<Registration> };
   readonly command: { readonly transform: Transform<CommandEditorLike> };
-  readonly session: SessionDomainLike & SessionModelDomainLike & CommandSessionLike & EventSessionLike & { readonly hook: SessionHook };
+  readonly rpc?: NativeGoalHostLike["rpc"];
+  readonly session: SessionDomainLike & SessionModelDomainLike & CommandSessionLike & EventSessionLike & NativeGoalHostLike["session"] & { readonly hook: SessionHook };
   readonly event: EventDomainLike;
   readonly model: EventModelLike & { readonly transform: Transform<ModelEditorLike> };
 };

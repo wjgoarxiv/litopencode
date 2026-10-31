@@ -11,6 +11,7 @@ import { applyLitAgents, createSessionModelRoute, enforcePlanningOnly, planLitAg
 import { createSessionLookupV2, projectRootFromLocation, type ServerContextLike } from "./context.ts";
 import { createV2Commands } from "./commands.ts";
 import { createV2Events } from "./events.ts";
+import { createNativeGoal } from "./native-goal-runtime.ts";
 import { createV2ToolHooks } from "./hooks.ts";
 import { createV2SessionHooks } from "./session-hooks.ts";
 import { addLitTools, litToolsForProject } from "./tools.ts";
@@ -50,6 +51,7 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
     model: context.model,
     onSessionDeleted: (sessionID) => sessionHooks.clear(sessionID)
   });
+  const nativeGoal = createNativeGoal({ projectRoot: root, host: { ...(context.rpc === undefined ? {} : { rpc: context.rpc }), session: context.session } });
   const sessionHooks = createV2SessionHooks({
     projectRoot: root,
     config: loaded.config,
@@ -58,15 +60,22 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
     requestOptions: agentPlan.requestOptions,
     autoHandoffRoute: events.route,
     extraSystem: events.systemText,
-    acceptCommandMark: commands.acceptMark
+    acceptCommandMark: commands.acceptMark,
+    nativeGoal
   });
   await context.session.hook("prompt", sessionHooks.prompt);
   await context.session.hook("context", sessionHooks.context);
   await context.session.hook("compaction", sessionHooks.compaction);
+  try {
+    await context.session.hook("experimental.idle", ({ sessionID }) => nativeGoal.idle(sessionID));
+  } catch { // no-excuse-ok: catch -- an OpenCode 2 build without the idle hook has no native /goal either; the plugin still starts.
+    // Activation-time goal handling still runs; only the finished-goal check is missing.
+  }
   const stopEvents = events.start(context.event);
 
   return async () => {
     await stopEvents();
+    await nativeGoal.settled();
     deliverableHedgeGuard.dispose();
     await logger.dispose();
   };

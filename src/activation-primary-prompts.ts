@@ -81,9 +81,13 @@ Checkpoint as you go so progress is durable and incremental — never batch it t
 
 # OpenCode goal handoff
 
-OpenCode does not expose a native goal primitive in the verified plugin or CLI surface.
-Use LitOpenCode-owned durable goal state under .litopencode/litgoal/lit-loop instead of
-claiming a host-native /goal integration. If a request refers to a Codex-native goal,
+OpenCode 2.2 and later has a native /goal. On such a host LitOpenCode sets, resumes and clears
+one for lit-loop, start-work and litwork by itself and prints a "LitOpenCode goal:" line for each
+change. Do not type /goal yourself, and never touch a goal the user made. OpenCode 1 and older
+OpenCode 2 hosts have none; the work then runs on the ledger alone (native-goal-unavailable).
+The durable ledger under .litopencode/litgoal/lit-loop is the evidence record on every host:
+a goal counts as done only when OpenCode's verdict and the ledger both say so, so never
+report done while the ledger is open. If a request refers to a Codex-native goal,
 translate it into LitOpenCode's durable ledger semantics and make that adaptation
 explicit before execution.
 

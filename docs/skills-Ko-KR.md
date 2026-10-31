@@ -43,9 +43,9 @@ Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](./referenc
 <td>요청에 <code>lit</code>만 붙이세요. 작업이 틀 잡기, 근거 찾기, 계획, 실행, 검증, 리뷰, 정리 순서로 진행됩니다.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/durable-litgoal.webp" width="240" alt="끝나는 지점을 정하고 지킵니다. OpenCode에 목표 기능이 없으므로 확인 가능한 기준이 붙은 목표 하나를 디스크에 남기고, lit-loop와 start-work가 그 목표를 향해 일합니다." /></td>
+<td><img src="./assets/skills/durable-litgoal.webp" width="240" alt="끝나는 지점을 정하고 지킵니다. 확인 가능한 기준이 붙은 목표 하나를 디스크에 남기고, OpenCode 2.2 이상이면 그 목표를 OpenCode의 /goal에도 세웁니다. lit-loop와 start-work가 그 목표를 향해 일합니다." /></td>
 <td><code>litgoal</code><br /><sub><code>/litgoal</code> · <code>/lit-goal</code></sub></td>
-<td>끝나는 지점을 정하고 지킵니다. OpenCode에 목표 기능이 없으므로 확인 가능한 기준이 붙은 목표 하나를 디스크에 남기고, <code>lit-loop</code>와 <code>start-work</code>가 그 목표를 향해 일합니다.</td>
+<td>끝나는 지점을 정하고 지킵니다. 확인 가능한 기준이 붙은 목표 하나를 디스크에 남기고, OpenCode 2.2 이상이면 그 목표를 OpenCode의 /goal에도 세웁니다. <code>lit-loop</code>와 <code>start-work</code>가 그 목표를 향해 일합니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-plan.webp" width="240" alt="승인 관문에서 멈추는 체크리스트를 만듭니다. lit-plan 에이전트는 파일 수정도, 셸 명령도 할 수 없습니다." /></td>

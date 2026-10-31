@@ -29,7 +29,7 @@ This guide describes the supported migration shape for moving an OpenCode workfl
 - Planning routes now produce proportionate objective-achievable checklists rather than relying on a later review pass to discover missing execution detail. Each retained item carries action/output/verification, while risky or multi-stage work receives SDD-like gates only when justified. `/review-work` accepts both draft plans (read-only `PASS`/`ITERATE`/`NEEDS-CONTEXT`) and completed work (the existing five-lane review); it never implements a draft plan.
 - Keep `/start-work` as the native executable handoff to `lit-implement`. Chat-only start-work activation must begin with `start-work` or `lit start work`; diagnostic, copied, quoted, and blockquote mentions must not select start-work or append a false start-work event. An independent final `lit` remains an ordinary `lit-loop` activation.
 - Schema-3 bounded-authority state is package-owned under `.litopencode/litgoal/lit-loop`. Existing activity ledgers remain readable; strict `/start-work init|resume|cancel|complete|status` directives create and advance the separate work snapshot and bounded journal. Resume is trusted-user-only and the generic `start-work` tool does not gain a resume action.
-- Do not claim native goal binding unless the current OpenCode CLI or plugin API exposes a goal primitive; use LitOpenCode-owned `.litopencode/litgoal` state for durable goal behavior.
+- Native goal binding exists only on OpenCode 2.2 and later (the `opencode.goal` RPC and the `/goal` command) and only for lit-loop, start-work and litwork; on OpenCode 1 and older OpenCode 2 hosts do not claim it, and keep LitOpenCode-owned `.litopencode/litgoal` state as the evidence record everywhere.
 
 ## Durable State
 

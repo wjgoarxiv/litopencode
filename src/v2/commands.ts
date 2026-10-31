@@ -46,11 +46,11 @@ export function pluginOwnedCommandIds(roots: readonly string[]): readonly string
   return litOpenCodeCommands.map((command) => command.id).filter((id) => !hasAliasFile(roots, id));
 }
 
-export type CommandMark = { readonly command: string; readonly banner: string };
+export type CommandMark = { readonly command: string; readonly banner: string; readonly work?: string };
 
 export function createV2Commands(roots: readonly string[], session: CommandSessionLike) {
   const owned = new Set(pluginOwnedCommandIds(roots));
-  const pending = new Map<string, { readonly nonce: string; readonly mark: CommandMark }>();
+  const pending = new Map<string, { readonly nonce: string; readonly mark: CommandMark; readonly work: string }>();
 
   const definitions: CommandDefinitionLike[] = litOpenCodeCommands
     .filter((command) => owned.has(command.id))
@@ -60,8 +60,8 @@ export function createV2Commands(roots: readonly string[], session: CommandSessi
       async execute(input) {
         const nonce = randomUUID();
         const mark = { command: command.id, banner: command.banner };
-        pending.set(input.sessionID, { nonce, mark });
         const argumentsText = input.prompt.text.trim();
+        pending.set(input.sessionID, { nonce, mark, work: argumentsText });
         if (command.agent !== undefined) await session.switchAgent({ sessionID: input.sessionID, agent: command.agent });
         await session.prompt({
           sessionID: input.sessionID,
@@ -81,7 +81,7 @@ export function createV2Commands(roots: readonly string[], session: CommandSessi
     const expected = pending.get(sessionID);
     if (expected === undefined || (marker as { nonce?: unknown }).nonce !== expected.nonce) return undefined;
     pending.delete(sessionID);
-    return expected.mark;
+    return { ...expected.mark, work: expected.work };
   }
 
   return {

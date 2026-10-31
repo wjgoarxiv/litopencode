@@ -43,9 +43,9 @@ Each row shows what a skill produces, how to open it, and what you get.
 <td>Add <code>lit</code> to a request. The work goes Frame, Ground, Plan, Execute, Verify, Review, Recap.</td>
 </tr>
 <tr>
-<td><img src="./assets/skills/durable-litgoal.webp" width="240" alt="Sets and keeps the finish line: one goal with checkable criteria, kept on disk because OpenCode has no native goal. lit-loop and start-work run toward it." /></td>
+<td><img src="./assets/skills/durable-litgoal.webp" width="240" alt="Sets and keeps the finish line: one goal with checkable criteria, kept on disk, and mirrored to OpenCode 2.2's native goal when the host has one. lit-loop and start-work run toward it." /></td>
 <td><code>litgoal</code><br /><sub><code>/litgoal</code> · <code>/lit-goal</code></sub></td>
-<td>Sets and keeps the finish line: one goal with checkable criteria, kept on disk because OpenCode has no native goal. <code>lit-loop</code> and <code>start-work</code> run toward it.</td>
+<td>Sets and keeps the finish line: one goal with checkable criteria, kept on disk, and mirrored to OpenCode 2.2's native goal when the host has one. <code>lit-loop</code> and <code>start-work</code> run toward it.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-plan.webp" width="240" alt="A checklist that stops at an approval gate. The lit-plan agent cannot edit files or run shell commands." /></td>

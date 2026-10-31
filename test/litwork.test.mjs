@@ -297,20 +297,21 @@ test("registers OpenCode tools and command hook through the plugin server", asyn
     assert.match(output.parts[1].messageID, /^msg/);
     assert.match(output.parts[1].text, /litresearch/);
     assertNoHtmlCommentArtifact(output.parts[1].text, "/lit-research command output");
-    assert.deepEqual(await readLedgerEvents(dir), [
+    const activations = (await readLedgerEvents(dir)).filter((event) => !event.type.startsWith("native-goal."));
+    assert.deepEqual(activations, [
       {
         type: "command.activated",
         command: "start-work",
         arguments: { present: false, redacted: false, length: 0 },
         sessionID: "session-command",
-        timestamp: (await readLedgerEvents(dir))[0].timestamp
+        timestamp: activations[0].timestamp
       },
       {
         type: "command.activated",
         command: "lit-research",
         arguments: { present: false, redacted: false, length: 0 },
         sessionID: "session-command",
-        timestamp: (await readLedgerEvents(dir))[1].timestamp
+        timestamp: activations[1].timestamp
       }
     ]);
   });
@@ -363,7 +364,7 @@ test("injects lit-loop prompt through chat.message when explicit long-work terms
     assert.match(output.parts[1].text, /TESTS ALONE NEVER PROVE DONE/);
     assert.match(output.parts[1].text, /# Checkpoint evidence/);
     assert.match(output.parts[1].text, /# OpenCode goal handoff/);
-    assert.match(output.parts[1].text, /OpenCode does not expose a native goal primitive/);
+    assert.match(output.parts[1].text, /OpenCode 2\.2 and later has a native \/goal/);
     assert.match(output.parts[1].text, /# Continue or stop/);
     assertNoHtmlCommentArtifact(output.parts[1].text, "explicit long-work lit chat output");
     assert.ok(!output.parts[1].text.includes(workflowSkill), "explicit long-work lit should point to the workflow-loop skill, not paste it");
@@ -372,7 +373,7 @@ test("injects lit-loop prompt through chat.message when explicit long-work terms
     const rawLedger = await fs.readFile(path.join(dir, ".litopencode", "litgoal", "lit-loop", "ledger.jsonl"), "utf8");
     assert.doesNotMatch(rawLedger, /please continue/);
     assert.deepEqual(
-      (await readLedgerEvents(dir)).map((event) => event.type),
+      (await readLedgerEvents(dir)).filter((event) => !event.type.startsWith("native-goal.")).map((event) => event.type),
       ["prompt.activated"]
     );
   });

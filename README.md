@@ -19,7 +19,7 @@
 
 ## Why you might want it
 
-OpenCode is good at the conversation in front of it. The trouble starts when that conversation ends. A long session gets compacted, you close the terminal, and the next morning you are piecing together what you decided, what you already checked and what was left. OpenCode keeps no goal of its own from one session to the next.
+OpenCode is good at the conversation in front of it. The trouble starts when that conversation ends. A long session gets compacted, you close the terminal, and the next morning you are piecing together what you decided, what you already checked and what was left. OpenCode 2.2 can hold a goal for a session, but nothing carries what you decided, checked and left open into the next one.
 
 LitOpenCode gives the work a routine and a memory. Add `lit` to a prompt and the task goes through the same steps each time: frame it, plan it, build it, check it, and write down the next step. Those notes go into `.litopencode/litgoal/` inside your project, so the next session reads them and carries on from there. Bigger jobs can be planned first by an agent that is locked out of your files, then carried out and reviewed.
 
@@ -151,6 +151,14 @@ When the turn ends the card settles: the title switches to `○ IDLE`, no step s
 The track is a map of the whole workflow. A request that starts with an interview walks through `interview › plan › work › review › done`, and the step you are on is lit with its count, such as `WORK 3/7` while `/start-work` works through a saved plan. A lit-loop goal counts its criteria and loop turns instead, and a litresearch run follows its own steps from `decompose` through each `wave` to `synthesis`. The chip beside the prompt shows the same map around the current step, the sidebar draws it top to bottom with a line that fills as you move forward, and while a tool runs its name and elapsed time sit beside it, like `⠹ bash · 0:48`. If you step away during long work, `{ "notify": true }` in the same `tui.json` entry sends a desktop notification and a sound when the mission finishes, once OpenCode's own `"attention": { "enabled": true }` is on as well; it stays off until you add it.
 
 The card is on by default. To keep the bottom of the screen clear, give the LitOpenCode entry in OpenCode's `tui.json` the option `{ "band": false }`. When you want more detail, `{ "band": { "card": true } }` adds a second card underneath with the goal, the next task and any warnings. The [reference](./docs/reference.md#tui-mission-panel) explains every part of the card.
+
+## Goals on OpenCode 2
+
+Long work needs a finish line, and OpenCode 2.2 added one: `/goal` keeps a session going until a reviewer agrees the objective is met. When you start a job with `lit loop`, `litwork` or `/start-work` on that version, LitOpenCode sets the goal for you. The objective is your task plus what finished means here: the tests pass, the path you touch was run for real, temporary files are cleaned up, and the ledger in `.litopencode/litgoal/` is closed. Whenever LitOpenCode creates, resumes or clears a goal it prints one line that starts with `LitOpenCode goal:`.
+
+It manages only the goals it made. If you typed your own `/goal` first, LitOpenCode says it left yours alone and carries on. Planning, research and review requests never set a goal. A goal counts as done when OpenCode's reviewer and the ledger agree, and when the reviewer says yes while the ledger is still open you see a conflict line instead of a done.
+
+OpenCode 1 and OpenCode 2 builds before 2.2 have no `/goal`. There the ledger carries the work as it always did, and LitOpenCode records `native-goal-unavailable` once so you can see why no goal appeared.
 
 ## Automatic handoff
 

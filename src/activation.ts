@@ -25,6 +25,8 @@ import { typedPromptReply } from "./adhd-next.ts";
 import { decideReentry, recordActivation, type ActivationMemory } from "./activation-reentry.ts";
 import { startTypedWork, typedStartArgument } from "./start-work-typed.ts";
 import { micro, supportsMarkGlyphs } from "./lit-mark.ts";
+import { recordNativeGoalUnavailable } from "./native-goal-ledger.ts";
+import { nativeGoalRoute } from "./v2/native-goal.ts";
 
 // Prompt modules preserve minimum-first, single-task or few-task planning, avoidable custom code review,
 // and external-source safety; this module only coordinates their unchanged activation surfaces.
@@ -327,6 +329,8 @@ export function createChatMessageActivationHook(
       return;
     }
     await options.onSkillActivation?.(input.sessionID, mode, appendedLit);
+    const goalRoute = nativeGoalRoute(mode, triggerText ?? "");
+    if (goalRoute !== undefined) await recordNativeGoalUnavailable(projectRoot, input.sessionID, goalRoute, "opencode-1");
 
     if (mode === "lit-scientific-visualization") {
       options.onScientificVisualizationActivation?.(input.sessionID);

@@ -389,3 +389,7 @@ a smaller task only if the deliverable is still required.
 
 A child's own done-claim is a claim, not verification. Silence is not failure and it is not success;
 it is absence of signal, and it must be recorded as such.
+
+## Native goal on OpenCode 2
+
+On OpenCode 2.2 and later, lit-loop gets a native `/goal` from LitOpenCode itself: it is set when none exists, carries the completion conditions of this ledger, and is resumed or cleared only when LitOpenCode created it. Do not type `/goal` for the user, and leave a goal the user made alone; the `LitOpenCode goal:` line reports what happened. A host without `/goal` records `native-goal-unavailable` and the ledger carries the loop. Done needs both OpenCode's verdict and the ledger, so never report done while a criterion, the real-surface check or the cleanup receipt is open. See `native-goal-verdict`.

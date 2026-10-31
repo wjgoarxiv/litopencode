@@ -53,6 +53,8 @@ import {
   resolveLatestDurablePlan
 } from "./durable-plan.ts";
 import { isWorkflowFamilyMode, workflowFamilyCommandDefinitions } from "./workflow-families.ts";
+import { recordNativeGoalUnavailable } from "./native-goal-ledger.ts";
+import { nativeGoalRoute } from "./v2/native-goal.ts";
 import {
   captureKnowledgeEvent,
   inspectKnowledge,
@@ -150,6 +152,15 @@ export type CommandActivationOptions = {
 
 export { litActivationBanner, startWorkPromptInjection } from "./activation.ts";
 
+/**
+ * The four loop commands share one prompt, and an installed alias file hands the host exactly that text,
+ * so the prompt alone cannot say which command was typed. A last line names it; the plugin reads it to tell
+ * `/lit-loop` and `/litwork` (which set a native goal) from bare `/lit` (which does not).
+ */
+function loopCommandText(id: string): string {
+  return `${litLoopPromptInjection}\nCommand route: "${id}"`;
+}
+
 export const litOpenCodeCommands = Object.freeze([
   ...workflowFamilyCommandDefinitions,
   {
@@ -174,7 +185,7 @@ export const litOpenCodeCommands = Object.freeze([
     title: "LitOpenCode",
     description: "Activate the LitOpenCode model probe line and durable goal loop.",
     banner: activationBanner("lit"),
-    activationText: litLoopPromptInjection
+    activationText: loopCommandText("lit")
   },
   {
     id: "lit-loop",
@@ -182,7 +193,7 @@ export const litOpenCodeCommands = Object.freeze([
     title: "LitOpenCode Lit Loop",
     description: "Activate the full LitOpenCode durable lit-loop prompt.",
     banner: activationBanner("lit-loop"),
-    activationText: litLoopPromptInjection
+    activationText: loopCommandText("lit-loop")
   },
   {
     id: "litwork",
@@ -190,7 +201,7 @@ export const litOpenCodeCommands = Object.freeze([
     title: "LitOpenCode Work Loop",
     description: "Resume a LitOpenCode work loop with durable ledger-backed progress.",
     banner: activationBanner("litwork"),
-    activationText: litLoopPromptInjection
+    activationText: loopCommandText("litwork")
   },
   {
     id: "lit-work",
@@ -198,7 +209,7 @@ export const litOpenCodeCommands = Object.freeze([
     title: "LitOpenCode Work Loop",
     description: "Hyphenated alias for /litwork.",
     banner: activationBanner("lit-work"),
-    activationText: litLoopPromptInjection
+    activationText: loopCommandText("lit-work")
   },
   {
     id: "start-work",
@@ -785,6 +796,8 @@ export function createCommandActivationHook(
     });
 
     await options.onSkillActivation?.(input.sessionID, command.id);
+    const goalRoute = nativeGoalRoute(command.id, "");
+    if (goalRoute !== undefined) await recordNativeGoalUnavailable(projectRoot, input.sessionID, goalRoute, "opencode-1");
 
     if (command.id === "lit-scientific-visualization") {
       options.onScientificVisualizationActivation?.(input.sessionID);

@@ -255,8 +255,11 @@ folder would cover it. Paths in code fences and commands quoted in an inline cod
 When typed start-work begins, each valid `Scope roots:` line becomes a grant of the run, so it does
 not pause for a folder the approved plan named; the folder must exist then.
 
-Native goal verdict: the OpenCode host surface does not currently expose a native goal primitive;
-LitOpenCode uses `.litopencode/litgoal` instead. Static skills are installed under
+Native goal verdict: OpenCode 2.2 and later has a native `/goal`, and LitOpenCode sets, resumes and
+clears one only for lit-loop, start-work and litwork, only for goals it created; a goal you made is
+reported and left alone. OpenCode 1 and older OpenCode 2 hosts record `native-goal-unavailable`.
+The ledger under `.litopencode/litgoal` is the evidence record on every host, and done needs both
+OpenCode's verdict and the ledger. Static skills are installed under
 `skills/*/SKILL.md` and remain documentation unless a documented OpenCode route selects them.
 
 ## Skill learning state

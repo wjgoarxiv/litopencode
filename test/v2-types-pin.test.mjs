@@ -8,7 +8,7 @@ import { test } from "node:test";
 const manifest = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8"));
 
 test("the OpenCode 2 plugin types are pinned as an exact dev dependency only", () => {
-  assert.equal(manifest.devDependencies?.["@opencode/plugin"], "2.0.32");
+  assert.equal(manifest.devDependencies?.["@opencode/plugin"], "2.2.5");
   assert.equal(manifest.dependencies?.["@opencode/plugin"], undefined);
   assert.equal(manifest.peerDependencies?.["@opencode/plugin"], undefined);
   assert.equal(manifest.optionalDependencies?.["@opencode/plugin"], undefined);

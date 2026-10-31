@@ -20,6 +20,8 @@ import { createLitGoalOperations } from "../ledger.ts";
 import { applyCompactionRuleReset, applyStaticRuleInjection } from "../rules/hooks.ts";
 import { isReadOnlyWorkflowFamilyPlan } from "../workflow-families.ts";
 import type { AgentRequestOptions } from "./agents.ts";
+import { aliasGoalRoute, type NativeGoal } from "./native-goal-runtime.ts";
+import { nativeGoalRoute } from "./native-goal.ts";
 
 export type SystemPartLike = { readonly type: "text"; readonly text: string };
 
@@ -55,7 +57,9 @@ export type V2SessionHookOptions = {
   readonly extraSystem?: (sessionID: string) => Promise<readonly string[]>;
   readonly onActivation?: (sessionID: string, mode: ChatActivationMode | string) => void;
   /** Accepts a command mark the plugin itself sent for this session; anything else is dropped. */
-  readonly acceptCommandMark?: (sessionID: string, marker: unknown) => { readonly command: string; readonly banner: string } | undefined;
+  readonly acceptCommandMark?: (sessionID: string, marker: unknown) => { readonly command: string; readonly banner: string; readonly work?: string } | undefined;
+  /** Sets and manages OpenCode 2's native goal for lit-loop, start-work and litwork. */
+  readonly nativeGoal?: NativeGoal;
 };
 
 type SessionContext = {
@@ -116,6 +120,12 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     return state;
   }
 
+  /** Starts the native-goal step for a qualifying route; it never holds up or fails the prompt. */
+  function startNativeGoal(sessionID: string, route: ReturnType<typeof nativeGoalRoute>, work: string): void {
+    if (route === undefined || options.nativeGoal === undefined) return;
+    void options.nativeGoal.activate(sessionID, route, work);
+  }
+
   async function lookup(sessionID: string): Promise<{ readonly child: boolean; readonly agent?: string }> {
     try {
       const session = await options.getSession(sessionID);
@@ -139,6 +149,7 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     }
     event.metadata = { ...rest, litopencode: { command: accepted.command, banner: accepted.banner, source: "command" } };
     options.onActivation?.(event.sessionID, accepted.command);
+    startNativeGoal(event.sessionID, nativeGoalRoute(accepted.command, ""), accepted.work ?? "");
     return true;
   }
 
@@ -200,8 +211,12 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
       return;
     }
 
+    const alias = aliasGoalRoute(input);
+    if (alias !== undefined) startNativeGoal(event.sessionID, alias.route, alias.work);
+
     const mode = detectChatActivationMode(input, session.agent);
     if (mode === undefined) return;
+    startNativeGoal(event.sessionID, nativeGoalRoute(mode, input), input);
     const trigger = mode === "lit-handoff" ? "handoff" : mode === "lit-scientific-visualization" ? mode : "lit";
     let activation = promptForChatActivationMode(mode, input);
     if (mode === "lit-adhd") activation = `${activation}\n${adhdSessionNote(event.sessionID)}`;

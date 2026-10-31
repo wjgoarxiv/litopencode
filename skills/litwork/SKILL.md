@@ -225,3 +225,7 @@ For any activation change, collect evidence by layer: source registration, runti
 ## Safe Defaults
 
 Default activation should be conservative. It should prefer planning or status over mutation when intent is unclear. It should ask for an approved plan before execution. It should preserve `lit-plan` boundaries even when permission mode is relaxed. It should keep recap read-only. It should avoid writing durable raw arguments. These defaults make accidental activation recoverable.
+
+## Native goal on OpenCode 2
+
+On OpenCode 2.2 and later, a `litwork` request gets a native `/goal` from LitOpenCode itself when the session has none; bare `lit` and the read-only routes do not. LitOpenCode resumes a goal it created only after a server restart, clears it only after OpenCode's verdict and the ledger both say done, and leaves a goal the user made alone. A host without `/goal` records `native-goal-unavailable`. See `native-goal-verdict`.
