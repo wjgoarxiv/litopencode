@@ -8,7 +8,7 @@ import { createBoundedAuthorityLifecycle } from "../src/bounded-authority.ts";
 import { readLivenessSync } from "../src/session-liveness.ts";
 import { createV2Events } from "../src/v2/events.ts";
 import { setupLitOpenCodeServer } from "../src/v2/server.ts";
-import { createFakeV2Context, settle } from "../test-support/opencode-v2-fake.mjs";
+import { createFakeV2Context, settle, until } from "../test-support/opencode-v2-fake.mjs";
 
 // OpenCode 2 has no plugin `event` hook; the plugin reads the event stream itself and stops reading when
 // its instance is cleaned up. Event names changed: a deleted session, step usage, status, idle and the
@@ -68,7 +68,8 @@ test("crossing the handoff percent asks for a handoff when the turn goes idle", 
     fake.emit(event("session.step.started", { sessionID: "ses_root", assistantMessageID: "msg_a1", agent: "lit-loop", model: { providerID: "openai", id: "gpt-test" }, started: Date.now() }));
     fake.emit(event("session.step.ended", { sessionID: "ses_root", assistantMessageID: "msg_a1", finish: "stop", cost: 0, tokens: { input: 500, output: 100, reasoning: 0, cache: { read: 0, write: 0 } } }));
     fake.emit(event("session.status", { sessionID: "ses_root", status: { type: "idle" } }));
-    await settle(20);
+    // The handlers read the handoff state from disk, so the wait is for the request, not for a count of turns.
+    await until(() => fake.prompts.length > 0).catch(() => undefined);
     const sent = fake.prompts.at(-1);
     assert.ok(sent, "a handoff request was sent");
     assert.equal(sent.sessionID, "ses_root");

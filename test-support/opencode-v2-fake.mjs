@@ -212,6 +212,18 @@ export function createFakeV2Context(options = {}) {
   };
 }
 
+/**
+ * Waits until `done()` holds, or fails after `timeoutMs`. For work that ends in real file I/O: a fixed
+ * number of `settle` turns finishes in well under a millisecond, which a slower disk outlasts.
+ */
+export async function until(done, timeoutMs = 5000) {
+  const deadline = Date.now() + timeoutMs;
+  while (!done()) {
+    if (Date.now() >= deadline) throw new Error("timed out waiting for the event subscriber");
+    await new Promise((resolve) => setTimeout(resolve, 2));
+  }
+}
+
 /** Lets queued microtasks and event-loop turns settle so an event subscriber can act. */
 export async function settle(turns = 5) {
   for (let index = 0; index < turns; index += 1) await new Promise((resolve) => setImmediate(resolve));
