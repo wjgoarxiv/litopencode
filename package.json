@@ -77,7 +77,7 @@
     "@opencode/plugin": "2.2.5",
     "@types/node": "^24.12.2",
     "picomatch": "^4.0.5",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
   "publishConfig": {
     "access": "public"
