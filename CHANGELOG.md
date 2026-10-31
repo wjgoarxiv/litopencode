@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.36 - 2026-10-31
+
 - On OpenCode 2.2 and later, `lit loop`, `litwork` and `/start-work` set OpenCode's native `/goal` for you. The goal carries your task plus what done means here (tests pass, a real-surface check ran, temporary files are cleaned up, the ledger is closed), and each change prints one `LitOpenCode goal:` line. LitOpenCode manages only goals it created: it resumes one that a server restart paused, clears one after OpenCode's verdict and the ledger both say done, and reports a goal you made as left alone without touching it. When OpenCode says the goal is met but the ledger is open, you get a conflict line and no done. Planning, research, review and bare `lit` never set a goal. OpenCode 1 and older OpenCode 2 builds have no `/goal`, so the ledger carries the work and `native-goal-unavailable` is recorded once.
 
 ## 1.0.35 - 2026-10-31

@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.36 Release Scope
+
+- On OpenCode 2.2 and later, `lit loop`, `litwork` and `/start-work` set OpenCode's native `/goal`; LitOpenCode resumes or clears only a goal it created, leaves a goal you made alone, and reports done only when OpenCode and its ledger agree. OpenCode 1 records `native-goal.unavailable`.
+
 ## 1.0.35 Release Scope
 
 - The installer can add a short LitFamily block to OpenCode's global `AGENTS.md` (on a yes only), with `litopencode agent-file on|off|remove|project`; it never creates that file over an existing `~/.claude/CLAUDE.md`.
