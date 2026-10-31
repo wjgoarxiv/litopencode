@@ -1,13 +1,13 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 일곱 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/docs/assets/cover-motion.webp" width="100%" alt="LitFamily 모션 커버: 일곱 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상" /></picture></p>
 
 # LitOpenCode
 
 **LitOpenCode는 OpenCode용 워크플로 플러그인입니다. 프롬프트에 `lit`만 붙이면 계획하고, 만들고, 확인하고, 기록까지 남겨서 다음 세션이 어디서 멈췄는지 바로 압니다.**
 
 <p align="center">
-<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/docs/assets/readme/badge-version.svg" alt="1.0.34" /></a>
+<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/docs/assets/readme/badge-version.svg" alt="1.0.35" /></a>
 <a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://img.shields.io/npm/dm/@litfamily/litopencode?label=downloads&color=D7F75B" alt="월간 npm 다운로드 수" /></a>
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/docs/assets/readme/badge-license.svg" alt="MIT 라이선스" /></a>
+<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/docs/assets/readme/badge-license.svg" alt="MIT 라이선스" /></a>
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub 스타" /></a>
 </p>
 
@@ -57,9 +57,9 @@ npm uninstall -g @litfamily/litopencode
 ## 더 보기
 
 - [GitHub의 사용 안내](https://github.com/wjgoarxiv/litopencode/blob/main/docs/guide-Ko-KR.md): 설치 옵션, 자동 인수인계, 문제 해결, 제거
-- [워크플로 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/docs/reference-Ko-KR.md) · [English reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/docs/reference.md)
-- [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/CHANGELOG.md) · [개인정보와 네트워크 동작](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/docs/privacy.md)
-- [LitFamily 허브](https://github.com/wjgoarxiv/litfamily) · [MIT 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/LICENSE) · [상표 정책](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/TRADEMARK.md) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.34/docs/assets/readme/JetBrainsMono-OFL.txt)
+- [워크플로 상세 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/docs/reference-Ko-KR.md) · [English reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/docs/reference.md)
+- [마이그레이션 안내](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/CHANGELOG.md) · [개인정보와 네트워크 동작](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/docs/privacy.md)
+- [LitFamily 허브](https://github.com/wjgoarxiv/litfamily) · [MIT 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/LICENSE) · [상표 정책](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/TRADEMARK.md) · [ASCII 글꼴 라이선스](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.35/docs/assets/readme/JetBrainsMono-OFL.txt)
 
 <details>
 <summary>ASCII 로고 복사</summary>

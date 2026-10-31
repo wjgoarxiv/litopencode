@@ -6,6 +6,11 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.35 Release Scope
+
+- The installer can add a short LitFamily block to OpenCode's global `AGENTS.md` (on a yes only), with `litopencode agent-file on|off|remove|project`; it never creates that file over an existing `~/.claude/CLAUDE.md`.
+- `lit adhd` holds this session's own paused discipline while other lanes work.
+
 ## 1.0.34 Release Scope
 
 - Publish from GitHub Actions (`publish.yml`, stage only) with npm provenance; the maintainer approves the staged version on npmjs.com.

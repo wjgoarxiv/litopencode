@@ -18,10 +18,10 @@ const tmp = (prefix) => fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 const python = (code, ...args) => spawnSync("python3", ["-B", "-c", code, ...args], { encoding: "utf8", timeout: 30_000, env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" } });
 
 test("a .cmd shim is started through a shell with every argument quoted, a .exe directly", () => {
-  const cmd = commandPlan("opencode", ["plugin", "@litfamily/litopencode@1.0.34", "--global", "--force"], { platform: "win32", find: () => "C:\\Program Files\\nodejs\\opencode.cmd" });
+  const cmd = commandPlan("opencode", ["plugin", "@litfamily/litopencode@1.0.35", "--global", "--force"], { platform: "win32", find: () => "C:\\Program Files\\nodejs\\opencode.cmd" });
   assert.equal(cmd.shell, true);
   assert.equal(cmd.command, '"C:\\Program Files\\nodejs\\opencode.cmd"');
-  assert.deepEqual(cmd.args, ['"plugin"', '"@litfamily/litopencode@1.0.34"', '"--global"', '"--force"']);
+  assert.deepEqual(cmd.args, ['"plugin"', '"@litfamily/litopencode@1.0.35"', '"--global"', '"--force"']);
   const exe = commandPlan("opencode", ["--version"], { platform: "win32", find: () => "C:\\bin\\opencode.exe" });
   assert.deepEqual(exe, { command: "C:\\bin\\opencode.exe", args: ["--version"], shell: false });
   assert.deepEqual(commandPlan("opencode", ["--version"], { platform: "win32", find: () => undefined }), { command: "opencode", args: ["--version"], shell: false });

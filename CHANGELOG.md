@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.35 - 2026-10-31
+
 - `lit adhd` counts the other lanes before it offers to resume this session's own work. A session that had started herdr lanes (or sat beside other running sessions) was still told to continue its paused discipline with `go` while they worked; now the box says to wait for them, arms nothing and ends with "Do not type `go` until they finish." A pending approval is still offered, and without lanes the paused discipline is offered as before.
 
 - OpenCode reads one global instruction file at the start of every session, `AGENTS.md` in its config folder, and until now LitOpenCode never put anything there. The installer can now add a short block to it that says what `lit` means, where plans, the handoff and run state live, and that nothing is pushed, published, tagged or version-bumped without your yes. An interactive install asks once, `--yes` adds it, `--no-agent-file` skips it for a run, and an install with no terminal and no `--yes` never writes it. Your own text stays byte for byte, the first change keeps one backup copy, and `litopencode agent-file remove` takes the block out and returns the file to what it was. `litopencode agent-file off` removes it and keeps the choice in `litopencode.json`; `on` brings it back; `doctor` prints the block's state. OpenCode falls back to `~/.claude/CLAUDE.md` only while its own `AGENTS.md` is missing, so the installer never creates that file over an existing `CLAUDE.md`. `litopencode agent-file project` writes the matching project block into a repo's `AGENTS.md`, and `lit-init` points to it.
