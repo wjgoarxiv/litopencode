@@ -498,12 +498,22 @@ settings but does not send them yet.
   TUI: the line under the prompt (`prompt.footer.status`) reads `🔥 LIT IGNITED · <discipline>` while the
   latest prompt of the session is a lit prompt. On OpenCode 1 the mark stays where it was.
 - *Toasts.* The server cannot show toasts on OpenCode 2. The TUI raises the ignition toast itself when a
-  user message arrives with the lit mark the server writes into its metadata. The automatic-handoff
-  notices and the skill hint, which only the server knew about, are not shown there.
-- *TUI.* The mission panel sits in the session sidebar as before. OpenCode 2 passes no options to a TUI
-  that comes with a server plugin, and it keeps no todo list, so mission progress comes from the ledger,
-  the work record and the plan. The status band under the session and the home-screen line are drawn on
-  OpenCode 1 only.
+  user message arrives with the lit mark the server writes into its metadata, and it raises the same gate
+  toasts as OpenCode 1 (plan saved, goal set, criterion passed, blockers, complete) plus three more that
+  only OpenCode 2 has: the workflow stage moving (`🔥 Stage`, `work 3/7`), a switch of discipline
+  (`🔥 lit-loop → start-work`) and a lane starting or finishing. A burst folds into one toast with a
+  `+N more` tail. The restart notice, the `lit adhd` suggestion and the opt-in finish alert work as on
+  OpenCode 1. The automatic-handoff notices and the skill hint, which only the server knew about, are
+  not shown there.
+- *TUI.* The HUD is placed in the slots OpenCode 2 publishes: the status card is claimed in `app`, under
+  the session and the sidebar, and keeps its four rows idle or working; the stage chip shares
+  `prompt.footer.status` with the ignition line, because there is no slot right of the agent and model
+  row; the home line is in `home.footer`; the mission panel sits in `sidebar.content`, so it shows when
+  the sidebar is open. The card, chip, panel and home line use the same text builders as OpenCode 1. The
+  `band` and `notify` options of the plugin entry are read from the options OpenCode 2 hands over. OpenCode 2
+  keeps no todo list, so mission progress comes from the ledger, the work record and the plan. It names
+  its tools differently (`shell`, `subagent`, a `skill` tool that takes `id`), and the card reads those
+  names. OpenCode 2 gives plugins no rate-limit figures, so none are drawn.
 - *Updates.* There is no automatic self-update inside the plugin on OpenCode 2. Run
   `opencode plugin update`, or let OpenCode 2's own update policy handle it.
 
@@ -586,7 +596,7 @@ What it draws:
     the colour wheel at one fixed lightness, four small colour steps a second with no flashing. It
     is off under `motion: false` and `NO_COLOR`. An idle session in a workspace with earlier work
     says `lit adhd to pick up where you left off`, and the first fresh session there raises one
-    toast with the same words (v1 TUI only; the v2 TUI has no band and no toast).
+    toast with the same words (OpenCode 1 and 2).
   - one look at a time, picked from a small registry in `src/tui/mission-looks.ts`. Every route that runs
     lit-adhd wears the rewind look: `lit adhd`/`lit rewind` in chat, `/lit-adhd`/`/lit-rewind` (also from an
     installed v2 alias file) and a native `skill` load. While the session waits on you (a permission or a

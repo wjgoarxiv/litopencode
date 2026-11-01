@@ -15,12 +15,19 @@ type V2Message = {
   readonly content?: ReadonlyArray<{
     readonly type: string;
     readonly name?: string;
-    readonly state?: { readonly status?: string };
-    readonly time?: { readonly created?: number; readonly ran?: number };
+    readonly text?: string;
+    readonly state?: { readonly status?: string; readonly input?: unknown; readonly metadata?: unknown };
+    readonly time?: { readonly created?: number; readonly ran?: number; readonly completed?: number };
   }>;
 };
 
+type V2Model = { readonly providerID: string; readonly modelID: string; readonly limit?: { readonly context?: number } };
+
 export type MissionDataV2 = {
+  readonly location?: {
+    readonly vcs?: { info(): { readonly branch?: { readonly current?: string } } | undefined };
+    readonly model?: { list(): ReadonlyArray<V2Model> | undefined };
+  };
   readonly session: {
     status(sessionID: string): "idle" | "running";
     readonly message: { list(sessionID: string): ReadonlyArray<unknown> };
@@ -38,11 +45,24 @@ export function sessionMessagesV2(data: MissionDataV2, sessionID: string): reado
   return (data.session.message.list(sessionID) ?? []).filter(isMessage).filter((message) => message.type === "user" || message.type === "assistant");
 }
 
+/** The provider table the context figure reads: each model's context window, from the host's model list. */
+function providersV2(data: MissionDataV2): MissionStateSource["provider"] {
+  const byProvider = new Map<string, Record<string, { limit?: { context?: number } }>>();
+  for (const model of data.location?.model?.list() ?? []) {
+    const models = byProvider.get(model.providerID) ?? {};
+    models[model.modelID] = { limit: { context: model.limit?.context } };
+    byProvider.set(model.providerID, models);
+  }
+  return [...byProvider].map(([id, models]) => ({ id, models }));
+}
+
 export function missionStateFromV2(data: MissionDataV2, directory: string | undefined): MissionStateSource {
   const index = new Map<string, V2Message>();
+  const branch = data.location?.vcs?.info()?.branch?.current?.trim();
   return {
     path: directory === undefined ? {} : { directory },
-    provider: [],
+    ...(branch === undefined || branch === "" ? {} : { vcs: { branch } }),
+    provider: providersV2(data),
     session: {
       messages(sessionID) {
         return sessionMessagesV2(data, sessionID).map((message) => {
@@ -66,9 +86,20 @@ export function missionStateFromV2(data: MissionDataV2, directory: string | unde
       const message = index.get(messageID);
       if (message === undefined) return [];
       if (message.type === "user") return message.metadata === undefined ? [] : [{ metadata: message.metadata }];
-      return (message.content ?? [])
-        .filter((item) => item.type === "tool" && typeof item.name === "string")
-        .map((item) => ({ type: "tool", tool: item.name, state: { status: item.state?.status, time: { start: item.time?.ran ?? item.time?.created } } }));
+      return (message.content ?? []).flatMap((item): ReturnType<MissionStateSource["part"]> => {
+        if (item.type === "text" && typeof item.text === "string") return [{ type: "text", text: item.text }];
+        if (item.type !== "tool" || typeof item.name !== "string") return [];
+        return [{
+          type: "tool",
+          tool: item.name,
+          state: {
+            status: item.state?.status,
+            input: item.state?.input,
+            metadata: item.state?.metadata,
+            time: { start: item.time?.ran ?? item.time?.created, ...(item.time?.completed === undefined ? {} : { end: item.time.completed }) }
+          }
+        }];
+      });
     }
   };
 }

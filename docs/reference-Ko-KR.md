@@ -380,10 +380,18 @@ Code Mode 밖, 모델의 도구 목록에 바로 있으므로 `lit-plan`도 계�
   lit 프롬프트이면 프롬프트 아래 줄(`prompt.footer.status`)에 `🔥 LIT IGNITED · <discipline>`이 나옵니다.
   OpenCode 1에서는 표시가 예전 자리에 그대로 있습니다.
 - *토스트.* OpenCode 2에서는 서버가 토스트를 띄울 수 없습니다. 서버가 사용자 메시지 메타데이터에 남긴 lit 표시를
-  TUI가 보고 점화 토스트를 직접 띄웁니다. 서버만 알던 자동 인수인계 알림과 스킬 힌트는 그곳에 나오지 않습니다.
-- *TUI.* 미션 패널은 전처럼 세션 사이드바에 있습니다. OpenCode 2는 서버 플러그인과 함께 오는 TUI에 옵션을
-  넘기지 않고 할 일 목록도 두지 않으므로, 미션 진행은 ledger와 작업 기록과 계획에서 읽습니다. 세션 아래 상태 띠와
-  홈 화면 한 줄은 OpenCode 1에서만 그립니다.
+  TUI가 보고 점화 토스트를 직접 띄우고, OpenCode 1과 같은 관문 토스트(계획 저장, 목표 설정, 기준 통과, 막힘, 완료)에
+  더해 OpenCode 2에만 있는 세 가지를 띄웁니다. 작업 단계가 넘어갈 때(`🔥 Stage`, `work 3/7`), 규율이 바뀔 때
+  (`🔥 lit-loop → start-work`), 레인이 시작되거나 끝날 때입니다. 한꺼번에 일어난 일은 `+N more`가 붙은 토스트
+  하나로 합칩니다. 재시작 안내, `lit adhd` 제안, 켜 두면 나오는 완료 알림은 OpenCode 1과 같습니다. 서버만 알던
+  자동 인수인계 알림과 스킬 힌트는 그곳에 나오지 않습니다.
+- *TUI.* HUD는 OpenCode 2가 공개한 슬롯에 놓입니다. 상태 카드는 `app` 슬롯에서 세션과 사이드바 아래에 그려지고,
+  쉬든 일하든 네 줄을 유지합니다. 단계 칩은 에이전트·모델 줄 오른쪽에 슬롯이 없어서 점화 줄과 함께
+  `prompt.footer.status`에 있고, 홈 줄은 `home.footer`, 미션 패널은 `sidebar.content`에 있으므로 사이드바를 열어
+  두면 보입니다. 카드, 칩, 패널, 홈 줄은 OpenCode 1과 같은 글자 빌더를 씁니다. 플러그인 항목의 `band`, `notify`
+  옵션은 OpenCode 2가 넘겨 주는 옵션에서 읽습니다. OpenCode 2는 할 일 목록을 두지 않으므로 미션 진행은 ledger와
+  작업 기록과 계획에서 읽습니다. 도구 이름도 다릅니다(`shell`, `subagent`, `id`를 받는 `skill` 도구). 카드는 그
+  이름을 읽습니다. OpenCode 2는 플러그인에 요금제 한도 수치를 주지 않으므로 그리지 않습니다.
 - *업데이트.* OpenCode 2에서는 플러그인 안의 자동 업데이트가 없습니다. `opencode plugin update`를 실행하거나
   OpenCode 2의 업데이트 방식에 맡기면 됩니다.
 
@@ -458,7 +466,7 @@ OpenCode 1.18은 `tui.json`이나 `tui.jsonc`의 `plugin` 배열에 적힌 TUI �
   - `lit-adhd`(별칭 `lit-rewind`)가 도는 동안 테두리, LIT 글자, 게이지가 같은 밝기의 색상환을 따라 돕니다.
     1초에 네 번 색이 조금씩 바뀌고 깜박이지 않습니다. `motion: false`와 `NO_COLOR`에서는 꺼집니다. 이전
     작업이 있는 작업 공간의 쉬는 세션은 `lit adhd to pick up where you left off`를 보여 주고, 그곳에서 처음 연
-    새 세션은 같은 문구로 토스트를 한 번 띄웁니다(v1 TUI만. v2 TUI에는 띠도 토스트도 없습니다).
+    새 세션은 같은 문구로 토스트를 한 번 띄웁니다(OpenCode 1과 2 모두).
   - 카드의 모양은 한 번에 하나이고, `src/tui/mission-looks.ts`의 작은 목록에서 고릅니다. lit-adhd를 실행하는
     길은 모두 되감기 모양이 됩니다. 채팅의 `lit adhd`/`lit rewind`, `/lit-adhd`/`/lit-rewind`(v2에 설치된 별칭
     파일에서 온 것도 포함), 네이티브 `skill` 로드가 그렇습니다. 세션이 사용자를 기다리는 동안(권한 요청이나 질문,

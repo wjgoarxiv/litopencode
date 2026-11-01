@@ -44,7 +44,7 @@ export type MissionStateSource = {
     permission(sessionID: string): ReadonlyArray<unknown>;
     question(sessionID: string): ReadonlyArray<unknown>;
   };
-  part(messageID: string): ReadonlyArray<{ readonly type?: string; readonly tool?: unknown; readonly state?: unknown; readonly metadata?: unknown }>;
+  part(messageID: string): ReadonlyArray<{ readonly type?: string; readonly tool?: unknown; readonly state?: unknown; readonly metadata?: unknown; readonly text?: unknown }>;
 };
 
 /** The same root the server plugin uses: the worktree unless it is the filesystem root, else the directory. */
@@ -380,7 +380,8 @@ function taskSources(state: MissionStateSource, sessionID: string, now: number):
   const assistants = state.session.messages(sessionID).filter((message) => message.role === "assistant").slice(-recentAssistantMessages);
   for (const message of assistants) {
     for (const part of state.part(message.id)) {
-      if (part.type !== "tool" || part.tool !== "task" || !isRecord(part.state)) continue;
+      // OpenCode 1 delegates through `task`, OpenCode 2 through `subagent`.
+      if (part.type !== "tool" || (part.tool !== "task" && part.tool !== "subagent") || !isRecord(part.state)) continue;
       const toolState = part.state;
       const status = toolState.status;
       const time = isRecord(toolState.time) ? toolState.time : {};
@@ -394,7 +395,7 @@ function taskSources(state: MissionStateSource, sessionID: string, now: number):
       if (child !== undefined) children.add(child);
       const todos = child === undefined ? [] : state.session.todo(child).filter((todo) => todo.status !== "cancelled");
       const done = todos.filter((todo) => todo.status === "completed").length;
-      const name = typeof input.description === "string" && input.description.trim() !== "" ? input.description.trim() : typeof input.subagent_type === "string" ? input.subagent_type : "subagent";
+      const name = typeof input.description === "string" && input.description.trim() !== "" ? input.description.trim() : typeof input.subagent_type === "string" ? input.subagent_type : typeof input.agent === "string" ? input.agent : "subagent";
       // A running task last moved when its own session did; its start time alone would read a long, busy run as idle.
       const moved = child === undefined ? undefined : lastActivity(state, child);
       sources.push({

@@ -109,7 +109,7 @@ test("the footer shows the ignition line for a lit turn and nothing otherwise", 
   const cleanup = await setupLitOpenCodeTui(fake.context, runtime());
   const footer = fake.claim("prompt.footer.status");
   assert.equal(textOf(footer.render({ mode: "normal", showDetails: false })), "");
-  assert.match(textOf(footer.render({ sessionID: "ses_lit", mode: "normal", showDetails: false })), /^🔥 LIT IGNITED · lit-task$/u);
+  assert.match(textOf(footer.render({ sessionID: "ses_lit", mode: "normal", showDetails: false })), /^🔥 LIT IGNITED · lit-task/u);
   assert.equal(textOf(footer.render({ sessionID: "ses_plain", mode: "normal", showDetails: false })), "");
   await cleanup();
 });

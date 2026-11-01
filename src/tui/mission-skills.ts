@@ -31,7 +31,9 @@ export function readSkillUse(part: unknown, at: number): SkillUse | undefined {
     const input = isRecord(state.input) ? state.input : {};
     const start = isRecord(state.time) && typeof state.time.start === "number" ? state.time.start : at;
     if (part.tool === "skill") {
-      return typeof input.name === "string" && ownSkills.has(input.name) ? { name: input.name, at: start } : undefined;
+      // OpenCode 1's skill tool takes `name`; OpenCode 2's takes `id`.
+      const skill = typeof input.name === "string" ? input.name : typeof input.id === "string" ? input.id : undefined;
+      return skill !== undefined && ownSkills.has(skill) ? { name: skill, at: start } : undefined;
     }
     const name = ownTools[part.tool];
     if (name === undefined || input.action === "status") return undefined;
