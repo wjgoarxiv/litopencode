@@ -108,7 +108,7 @@ function prepare(out) {
   const cover = loadCoverTreatment(out);
   const coverDir = path.join(out, "cover");
   if (!existsSync(path.join(coverDir, "index.html"))) throw stop(EXIT.STAGE_CONTRACT_ERROR, "STAGE_CONTRACT_ERROR", `no cover page at ${path.join(coverDir, "index.html")}; write it first (references/cover.md)`);
-  const scan = scanStage(coverDir);
+  const scan = scanStage(coverDir, { clips: false });
   const assets = checkAssets({ out, treatment: cover, rasters: scan.rasters });
   const state = inspectWarmState();
   if (state.blocked) throw stop(state.blocked.exit, state.blocked.name, `${state.blocked.detail}; fix: ${state.fix}`);

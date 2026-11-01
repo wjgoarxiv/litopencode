@@ -450,6 +450,7 @@ export async function renderStage(out, { round = 1, stillsOnly = false } = {}) {
       preview: preview ? { width: preview.width, height: preview.height, fps: preview.fps, bytes: preview.bytes } : null,
       posterFrame, posterSize: [poster.width, poster.height], stillFrame, determinismFrames: samples,
       timing: { ...master.timing, totalSec: Number(((performance.now() - began) / 1000).toFixed(1)) },
+      ...(context.scan.clips.length ? { clips: context.scan.clips.map((clip) => ({ id: clip.id, frames: clip.count, fps: clip.fps, width: clip.width, height: clip.height, bytes: clip.bytes })) } : {}),
       ...(context.plate ? { plate: { blender: context.plate.blender, engine: context.plate.engine, device: context.plate.device, samples: context.plate.samples, fps: context.plate.fps, frames: context.plate.frames.length } } : {}),
       sound, qa: { file: ".run/qa.json", samples: qaResult.samples.length, trackFrames: qaResult.trackFrames, allowedFaces: qaResult.allowedFaces },
       treatmentSha256: sha256(readFileSync(path.join(out, "treatment.json"))), stageSha256: stageSha(context.stageDir),

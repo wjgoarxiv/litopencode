@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync } from "node:
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromeFlagRungs } from "../constants.mjs";
-import { StageError, contentTypes, insideDir } from "./scan.mjs";
+import { StageError, clipsScript, contentTypes, insideDir } from "./scan.mjs";
 
 export const stageHost = "lit.stage";
 export const stageOrigin = `http://${stageHost}`;
@@ -108,7 +108,8 @@ export async function openStage(chromium, { chromePath, profile, stageDir, width
     const line = String(error?.message ?? error).split("\n").find((part) => part.trim()) ?? String(error);
     throw Object.assign(new Error(`BLOCKED_NO_CHROME (10): Chrome failed to launch headless: ${line}; fix: check that Chrome can start headless in this sandbox`), { exitCode: 10 });
   }
-  const { blocked, refused, missing } = await serveStage(context, { stageDir, fonts, scripts: { "/lit/stage-kit.js": kitSource(), ...styleFiles } });
+  const clips = clipsScript(stageDir);
+  const { blocked, refused, missing } = await serveStage(context, { stageDir, fonts, scripts: { "/lit/stage-kit.js": kitSource(), ...(clips ? { "/lit/clips.js": clips } : {}), ...styleFiles } });
   await context.addInitScript({ content: `window.__litStageConfig = ${JSON.stringify({ seed: seed >>> 0, fps })};\n${clockSource()}` });
   if (extraInit) await context.addInitScript({ content: extraInit });
   const page = context.pages()[0] ?? await context.newPage();

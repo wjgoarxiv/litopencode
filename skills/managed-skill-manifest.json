@@ -3389,7 +3389,7 @@
         },
         {
           "path": "engine/cover/render.mjs",
-          "sha256": "8b5cafb3830d6723c882af9ed704e68d8b7ba26fd124f9eff7c8ef9185fc3875"
+          "sha256": "8f819692910d35959aa86b61a271ca6fe4c74547d549a1c8d90da07bdffd62cf"
         },
         {
           "path": "engine/cover/sheet.mjs",
@@ -3477,7 +3477,7 @@
         },
         {
           "path": "engine/stage/capture.mjs",
-          "sha256": "5174a001ed40dcaf9dcfa692feb443f1fad771c942a8b1bd2df5a6b261e071c6"
+          "sha256": "58698c9ecfd1eb789aabc9f166706492b1f1f00e1fa8d09449ea62f479ccd558"
         },
         {
           "path": "engine/stage/clock.js",
@@ -3493,7 +3493,7 @@
         },
         {
           "path": "engine/stage/gate.mjs",
-          "sha256": "f806003a86d8d76c10934f644c8ee596a7b96bfab0ecceed78a71b9017722334"
+          "sha256": "81fa8be4d4ad45fe9b799d5b6765923a0de4fa2507223a9e26faed3420112473"
         },
         {
           "path": "engine/stage/loop-kit.js",
@@ -3509,15 +3509,15 @@
         },
         {
           "path": "engine/stage/render.mjs",
-          "sha256": "e01927e704083babb069e5664307cf179329231996c6ce8614eb80062e4ed6d8"
+          "sha256": "3f47ad9ed8e19763242af0b05359ae09031b76899939e170ef61bddbf9e261cf"
         },
         {
           "path": "engine/stage/scan.mjs",
-          "sha256": "478cd41f852f71a2d8c6ea6e53abcea95c4ca53a13399e0e8faebc89df87e70b"
+          "sha256": "0caaaeebcce7fd3b4d5c3ac5a1bf0f28d07c5c1f82202637a118941b309d3699"
         },
         {
           "path": "engine/stage/stage-kit.js",
-          "sha256": "a38d5c22f2f4148009b0ab89be228833457495565c559d061b36e3d14f694a76"
+          "sha256": "72776c1fd3642c3925da48adbc342234a4e8599e46d49e89962b4d77c7e6a7d2"
         },
         {
           "path": "engine/stills.mjs",
@@ -3741,7 +3741,7 @@
         },
         {
           "path": "references/cover.md",
-          "sha256": "ad7e980530282af2a48cd185d1fbbfecbcb1886377ff08eea16d2458b70fa157"
+          "sha256": "93658c3f3a08b7a9c71443df92db418c6839396a389ac480bd7ccf22faf4eb54"
         },
         {
           "path": "references/craft-loop.md",
@@ -3753,7 +3753,7 @@
         },
         {
           "path": "references/runtime.md",
-          "sha256": "c0c87c23a2d404df995fc4d5a6a544728709046c65a0bb84dcc3c782b92d6ef7"
+          "sha256": "15dc951960b2ae4b204aa094792d29e55829815894524556ebc00550655b325d"
         },
         {
           "path": "references/sound.md",
@@ -3761,7 +3761,7 @@
         },
         {
           "path": "references/stage.md",
-          "sha256": "0ecfb0aff75815a88ff0a0f277ab8aff45ff072be0fc0d57a969803246d78cae"
+          "sha256": "129c1ad6b67b629e8f7e022a705a289e889755f67532b311f19ff15cc7fa8251"
         },
         {
           "path": "references/studio.md",

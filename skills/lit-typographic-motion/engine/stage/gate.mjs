@@ -146,6 +146,7 @@ export function formatStageReport(result, context) {
     `outputs: ${out("film.mp4")} · ${out(manifest.previewEncoder === "gif" ? "preview.gif" : "preview.webp")} (encoder: ${manifest.previewEncoder}) · ${out("poster.png")} · ${out("reduced-motion.png")}`,
     `format / fps / length: ${manifest.format} ${manifest.resolution.join("x")} @ ${manifest.fps} fps, ${manifest.durationSec.toFixed(2)} s (treatment ${manifest.targetDurationSec} s)`,
     `renderer: stage ${manifest.rung === "gpu" ? `GPU rung (${manifest.renderer ?? "native ANGLE"})` : "software rung"} (flags: ${(manifest.chromeFlags ?? []).join(" ")})`,
+    ...(manifest.clips?.length ? [`clips: ${manifest.clips.map((clip) => `${clip.id} ${clip.frames} frames at ${clip.fps} fps`).join(", ")} (keyed overlays, chosen from film time)`] : []),
     ...(manifest.warnings ?? []).map((note) => `notice: ${note}`),
     `timing: master ${manifest.timing?.masterSec ?? "?"} s, per frame p50 ${manifest.timing?.frameP50 ?? "?"} ms / p95 ${manifest.timing?.frameP95 ?? "?"} ms, total ${manifest.timing?.totalSec ?? "?"} s`,
     "",

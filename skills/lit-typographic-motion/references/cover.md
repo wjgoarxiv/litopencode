@@ -33,7 +33,8 @@ mode (the stage and type paths) is unchanged and takes every other request.
   The renderer serves only that folder, the loop kit at `/lit/loop-kit.js` and the faces at
   `/lit/fonts.css`. The stage path's static scan applies unchanged: no network, no `<video>`,
   `<audio>` or `<iframe>`, no workers, no WebSocket, at most 24 rasters and 8 MB, no animated
-  raster, no flipbook of same-size frames.
+  raster, no flipbook of same-size frames; a cover takes no keyed clips either, so a folder of
+  frames there is a flipbook.
 - `<out>/assets.json`: every raster the page can load (below).
 
 Start from a recipe: copy `recipes/<name>/index.html` from the installed skill into `cover/`, then

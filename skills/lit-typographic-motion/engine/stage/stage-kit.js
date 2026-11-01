@@ -227,7 +227,7 @@
   }
 
   // ---- masks and clips ----
-  const clip = {
+  const clipMasks = {
     // A circle growing from (cx, cy) in percent of the element's box.
     circle(el, p, { cx = 50, cy = 50, max = 150 } = {}) { el.style.clipPath = `circle(${clamp(p) * max}% at ${cx}% ${cy}%)`; },
     // A straight wipe from one side: "left", "right", "top" or "bottom".
@@ -369,6 +369,44 @@
       return i;
     };
   }
+
+  // A declared keyed clip (stage/clips/clips.json, served as window.LitClips by /lit/clips.js): one wrapper
+  // at `box` over the film, holding the clip's frame for t. The frame is a pure function of film time,
+  // floor((t - start) * fps) + 1 within from..to, so no <video> and no real clock is involved. Before
+  // `start` and after `to` the wrapper is hidden (null) unless `hold` keeps the last frame or `loop` wraps
+  // by frame index. The <img> inside is replaced on a frame change; the renderer waits for its decode.
+  // The same name carries the clip-path helpers (clip.circle, clip.wipe, clip.iris), so both keep working.
+  function keyedClip({ parent, id, box } = {}) {
+    const all = window.LitClips;
+    if (!all) throw new Error("LitStage.clip: load <script src=\"/lit/clips.js\"></script> after the kit; the stage declares no clips (clips/clips.json)");
+    const c = all[id];
+    if (!c) throw new Error(`LitStage.clip: no clip "${id}" in clips/clips.json (declared: ${Object.keys(all).join(", ")})`);
+    if (!parent || !box || !(box.w > 0) || !(box.h > 0)) throw new Error("LitStage.clip: needs { parent, id, box: { x, y, w, h } }");
+    const wrap = document.createElement("div");
+    wrap.setAttribute("data-lit-clip", id);
+    Object.assign(wrap.style, { position: "absolute", left: `${box.x}px`, top: `${box.y}px`, width: `${box.w}px`, height: `${box.h}px`, display: "none", pointerEvents: "none" });
+    parent.append(wrap);
+    let shown = 0, img = null;
+    return (t, { start = 0, from = 1, to = c.count, loop = false, hold = false } = {}) => {
+      if (!(from >= 1 && to <= c.count && from <= to)) throw new Error(`LitStage.clip: from..to must lie within 1..${c.count} (got ${from}..${to})`);
+      const n = to - from + 1;
+      const k = Math.floor((t - start) * c.fps + 1e-6);
+      const i = k < 0 ? 0 : k < n ? from + k : loop ? from + (k % n) : hold ? to : 0;
+      wrap.style.display = i ? "block" : "none";
+      if (!i) return null;
+      if (i !== shown) {
+        const next = document.createElement("img");
+        next.src = `${c.src}/frame_${String(i).padStart(4, "0")}.png`;
+        next.alt = "";
+        Object.assign(next.style, { display: "block", width: "100%", height: "100%", objectFit: "contain" });
+        if (img) img.replaceWith(next); else wrap.append(next);
+        img = next;
+        shown = i;
+      }
+      return wrap;
+    };
+  }
+  const clip = Object.assign(keyedClip, clipMasks);
 
   // ---- the stage contract ----
   let definition = null;

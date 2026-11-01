@@ -39,7 +39,7 @@ warning, and the pre-warm state naming what is missing and the command that fixe
 | 14 | BLOCKED_DEPS_NOT_PREWARMED | the pinned packages are absent (or Tier-3 models are requested) | `litopencode motion-runtime install` outside the session |
 | 15 | BLOCKED_FONT_FETCH | a required font is missing or its bytes do not match the pin | `litopencode motion-runtime install`; a mismatch is never accepted |
 | 16 | BLOCKED_TREATMENT_INVALID | `treatment.json` is missing or a field breaks its rule; the message names the field | fix that field (`treatment.md`) |
-| 17 | STAGE_CONTRACT_ERROR | the stage page broke its contract: no `LitStage.define`, a wrong size, a forbidden element or API, a flipbook or animated raster, a path outside `stage/`, or a copy line never found on screen | fix the page (`stage.md`) |
+| 17 | STAGE_CONTRACT_ERROR | the stage page broke its contract: no `LitStage.define`, a wrong size, a forbidden element or API, a flipbook or animated raster, a keyed clip that breaks its declaration or limits, a path outside `stage/`, or a copy line never found on screen | fix the page (`stage.md`) |
 | 18 | STAGE_NONDETERMINISTIC | a sample frame differs between the master and a fresh replay from 0; the message names the frame and the first region | remove the clock or random source the renderer does not drive |
 | 19 | STAGE_NETWORK_REQUEST | the page requested something outside the stage origin, or a stage file names an external URL | make the asset local |
 | 20 | SOUND_INVALID | the planned track is missing from the film, too long or short, too loud, or a generated bed starts silent; a score that cannot be built | fix the track or its plan |

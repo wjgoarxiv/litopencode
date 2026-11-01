@@ -16,7 +16,7 @@ loop time the renderer seeks in any order, with the loop kit instead of this one
   into the stage directory.
 - Rasters are textures and stills, never a frame sequence: at most 24 raster files and 8 MB in total.
   Ten or more rasters of one size (a flipbook), or any animated GIF, APNG or WebP, stops the render
-  with exit 17.
+  with exit 17. The one frame sequence a page may carry is a declared keyed clip (Clips).
 - `<out>/stage/assets/`: the real logo, screenshots and README images of a named product, written by
   `render.mjs assets` (`treatment.md`, Named products). Show them; never redraw them.
 - A film about a thing with a back and an inside takes the 3D route: the renderer serves a pinned
@@ -76,7 +76,7 @@ unless the film needs another structure.
 
 | Stops with | What |
 | --- | --- |
-| 17 `STAGE_CONTRACT_ERROR` | `<video>`, `<audio>`, `<iframe>`, `<object>`, `<embed>`, `<frame>`; `new Audio()`, `AudioContext`, `OfflineAudioContext`; `Worker`, `SharedWorker`, service workers; no `LitStage.define`; a wrong size; a flipbook or animated raster; a copy line never found on screen |
+| 17 `STAGE_CONTRACT_ERROR` | `<video>`, `<audio>`, `<iframe>`, `<object>`, `<embed>`, `<frame>`; `new Audio()`, `AudioContext`, `OfflineAudioContext`; `Worker`, `SharedWorker`, service workers; no `LitStage.define`; a wrong size; a flipbook or animated raster; a clip that breaks its declaration or limits; a copy line never found on screen |
 | 18 `STAGE_NONDETERMINISTIC` | a frame that differs between two fresh replays: wall-clock reads such as `performance.timeOrigin`, `crypto.getRandomValues`, or state that depends on how fast frames arrive |
 | 19 `STAGE_NETWORK_REQUEST` | any request outside the stage origin; an absolute `http(s)://` or `//host` URL in a stage file (W3C namespace URIs such as `http://www.w3.org/2000/svg` are fine); `preconnect`, `dns-prefetch`, `prefetch` or `prerender` links; `WebSocket`, `WebTransport`, `RTCPeerConnection` |
 
@@ -146,6 +146,52 @@ LitStage.text(titleEl);                                   // one reading run
 LitStage.text(signEl, { decor: true });                   // illustrative text inside a drawn subject
 LitStage.text({ content: "…", x, y, w, h });              // canvas or WebGL text, every frame it is drawn
 ```
+
+Keyed footage (a declared clip, see Clips): `LitStage.clip` is a function as well as the mask
+namespace above, so `LitStage.clip.wipe(el, p)` and the keyed call live side by side.
+
+```js
+const boom = LitStage.clip({ parent: stageEl, id: "boom", box: { x: 1200, y: 300, w: 520, h: 511 } });
+boom(t, { start: 2.1 });                                   // inside render(t); returns the wrapper, or null while hidden
+```
+
+## Clips
+
+Real keyed footage (a reaction clip, a spinning-cat loop shot on a green screen) joins the film as a
+layer inside the page. The video is keyed outside the renderer into one 8-bit RGBA PNG per frame, the
+frames are declared, and the page picks the frame from film time. A declared clip is exempt from the
+flipbook and count rule; every other raster keeps its limits. Nothing is encoded by hand: the frames
+are captured with the page, so the flash audit, the determinism replay and the text checks run on the
+final pixels as for any other film.
+
+1. Copy each clip's frames into `stage/clips/<dir>/frame_0001.png`, `frame_0002.png` and so on, with
+   no gaps and no other image in the folder.
+2. Declare them in `stage/clips/clips.json`:
+
+   ```json
+   { "clips": [ { "id": "boom", "dir": "01-vine-boom", "count": 122, "fps": 30 } ] }
+   ```
+
+   `id` is the name the page uses; `dir` is a folder directly under `clips/`; `count` is the number of
+   frames; `fps` is the clip's own rate, 1 to 30. A clip used twice is declared once.
+3. The page loads `<script src="/lit/clips.js"></script>` after the kit, registers each use once with
+   `LitStage.clip({ parent, id, box })` and calls the returned `show(t, opts)` from `render(t)`.
+   `parent` is the element the clip sits in; `box` is its place in pixels, the frame fitted inside it.
+   `show` returns the wrapper element, or `null` while hidden; scale, fade or move that wrapper from
+   `t` like any other layer. The frame is `floor((t - start) * fps) + 1`, counted from `from`, so the
+   cue is plain arithmetic: a clip whose own sound starts at frame 85 and must land on a cue at 0.12 s
+   has `start = 0.12 - 84 / 30`. Options: `start` (film seconds, default 0), `from` and `to` (the
+   frame range, default the whole clip), `loop` (wrap by frame index), `hold` (keep the last frame).
+   Before `start` and past `to`, without `loop` or `hold`, the clip is hidden.
+
+The scan refuses, with exit 17 and the clip named: more than 12 clips, more than 360 frames in a clip
+or 1500 in all, 40 MB in a clip or 128 MB in all, a frame whose long side is above 720 px (a clip is
+an overlay, not the film), a rate above 30 fps, frames of mixed sizes, a missing or extra frame, a
+frame that is not an 8-bit RGBA PNG or that has no transparent pixel in its first, middle and last
+frame (an opaque video is not keyed), an animated image, and a duplicate `id`. A folder that is not
+declared, or any frame sequence beside a declared clip, is a flipbook as before. A cover takes no
+clips. The text checks read DOM text, so a clip laid over a line is yours to catch on the stills. The
+manifest and the report list each clip.
 
 ## How the QA reads the stage
 

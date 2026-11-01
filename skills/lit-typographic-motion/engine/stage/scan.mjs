@@ -5,6 +5,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
+import { decodePng } from "../png.mjs";
 
 export const STAGE_CONTRACT = 17;
 export const STAGE_NETWORK = 19;
@@ -32,6 +33,11 @@ export function readPlate(stageDir, sub = "plate") {
 }
 
 export const rasterLimits = Object.freeze({ files: 24, bytes: 8 * 1024 * 1024, sameSizeFlipbook: 10 });
+// Keyed overlay clips: frame folders that stage/clips/clips.json declares are held to these caps instead of
+// rasterLimits. A clip is a sticker on the film, never the film: 8-bit RGBA PNG frames with real
+// transparency, at most `side` px on the long side, at most `fps` frames a second.
+export const clipLimits = Object.freeze({ clips: 12, framesPerClip: 360, framesTotal: 1500, bytesPerClip: 40 * 1024 * 1024, bytesTotal: 128 * 1024 * 1024, side: 720, fps: 30 });
+export const clipsDir = "clips";
 // XML namespace identifiers are names, not requests.
 const namespaceUris = /https?:\/\/www\.w3\.org\/(?:2000\/svg|1999\/xlink|1999\/xhtml|XML\/1998\/namespace|2000\/xmlns\/?|1998\/Math\/MathML)/gu;
 
@@ -76,7 +82,7 @@ export function rasterInfo(bytes, ext) {
       if (type === "IDAT" || type === "IEND") break;
       offset += 12 + length;
     }
-    return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), animated };
+    return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), animated, bitDepth: bytes[24], colorType: bytes[25] };
   }
   if (ext === ".gif") {
     const width = bytes.readUInt16LE(6), height = bytes.readUInt16LE(8);
@@ -123,10 +129,108 @@ export function rasterInfo(bytes, ext) {
   return null;
 }
 
-// Throws a StageError for the first violation; returns the raster list for pre-decoding.
-export function scanStage(stageDir) {
+// ---- declared clips: stage/clips/clips.json and the frame folders it names ----
+const clipFrame = (n) => `frame_${String(n).padStart(4, "0")}.png`;
+const clipId = /^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$/u;
+const clipFolder = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/u;
+
+// The clips stage/clips/clips.json declares ([] without the file), checked for shape only. Throws exit 17.
+export function declaredClips(stageDir, limits = clipLimits) {
+  const file = path.join(stageDir, clipsDir, "clips.json");
+  if (!existsSync(file)) return [];
+  let doc;
+  try { doc = JSON.parse(readFileSync(file, "utf8")); } catch (error) { throw contract(`${clipsDir}/clips.json is not valid JSON (${error.message})`); }
+  if (!doc || !Array.isArray(doc.clips)) throw contract(`${clipsDir}/clips.json needs { "clips": [ { "id", "dir", "count", "fps" } ] }`);
+  if (doc.clips.length > limits.clips) throw contract(`${doc.clips.length} clips declared (at most ${limits.clips} clips)`);
+  const ids = new Set();
+  const dirs = new Set();
+  return doc.clips.map((entry, n) => {
+    const at = `${clipsDir}/clips.json clip #${n + 1}`;
+    if (!entry || typeof entry !== "object") throw contract(`${at} is not an object`);
+    if (typeof entry.id !== "string" || !clipId.test(entry.id)) throw contract(`${at}: id must be a plain token of letters, digits, - and _ (got ${JSON.stringify(entry.id)})`);
+    if (ids.has(entry.id)) throw contract(`${at}: duplicate id ${entry.id}`);
+    ids.add(entry.id);
+    if (typeof entry.dir !== "string" || !clipFolder.test(entry.dir) || entry.dir.includes("..")) throw contract(`clip "${entry.id}": dir must be a folder name directly under ${clipsDir}/ (got ${JSON.stringify(entry.dir)})`);
+    if (dirs.has(entry.dir)) throw contract(`clip "${entry.id}": dir ${entry.dir} is already declared by another clip`);
+    dirs.add(entry.dir);
+    if (!Number.isInteger(entry.count) || entry.count < 1) throw contract(`clip "${entry.id}": count must be a whole number of frames (got ${JSON.stringify(entry.count)})`);
+    if (!Number.isInteger(entry.fps) || entry.fps < 1 || entry.fps > limits.fps) throw contract(`clip "${entry.id}": fps must be a whole number from 1 to ${limits.fps} (got ${JSON.stringify(entry.fps)})`);
+    return { id: entry.id, dir: entry.dir, count: entry.count, fps: entry.fps };
+  });
+}
+
+// Checks every declared clip against its bytes: exactly frame_0001.png..frame_<count>.png in clips/<dir>/,
+// each an 8-bit still RGBA PNG of one size within the overlay cap, real transparency in the first, middle
+// and last frame, and the per-clip and total caps. Returns [{ id, dir, count, fps, width, height, bytes,
+// frames }], `frames` being stage-relative paths.
+export function scanClips(stageDir, { limits = clipLimits, files = listStage(stageDir) } = {}) {
+  let totalFrames = 0;
+  let totalBytes = 0;
+  const clips = declaredClips(stageDir, limits).map((declared) => {
+    const prefix = `${clipsDir}/${declared.dir}/`;
+    if (declared.count > limits.framesPerClip) throw contract(`clip "${declared.id}": ${declared.count} frames (at most ${limits.framesPerClip} per clip)`);
+    const have = new Set(files.filter((rel) => rel.startsWith(prefix) && rasterExtensions.has(path.extname(rel).toLowerCase())).map((rel) => rel.slice(prefix.length)));
+    const frames = [];
+    for (let n = 1; n <= declared.count; n++) {
+      if (!have.has(clipFrame(n))) throw contract(`clip "${declared.id}": ${prefix}${clipFrame(n)} is missing (declared ${declared.count} frames, named frame_0001.png onward)`);
+      frames.push(`${prefix}${clipFrame(n)}`);
+    }
+    if (have.size !== declared.count) {
+      const stray = [...have].find((name) => !frames.includes(`${prefix}${name}`));
+      throw contract(`clip "${declared.id}": ${prefix}${stray} is not one of the ${declared.count} declared frames; raise count or remove it`);
+    }
+    let size = null;
+    let bytes = 0;
+    for (const rel of frames) {
+      const data = readFileSync(path.join(stageDir, rel));
+      bytes += data.length;
+      const info = path.extname(rel).toLowerCase() === ".png" && data.length > 33 ? rasterInfo(data, ".png") : null;
+      if (!info) throw contract(`clip "${declared.id}": ${rel} is not a readable PNG`);
+      if (info.animated) throw contract(`clip "${declared.id}": ${rel} is an animated image; a clip is a folder of still frames`);
+      if (info.colorType !== 6 || info.bitDepth !== 8) throw contract(`clip "${declared.id}": ${rel} must be an 8-bit RGBA PNG with an alpha channel (a keyed frame), not an opaque image`);
+      if (Math.max(info.width, info.height) > limits.side) throw contract(`clip "${declared.id}": ${rel} is ${info.width}x${info.height}; a clip is an overlay of at most ${limits.side} px on the long side`);
+      if (size && (size.width !== info.width || size.height !== info.height)) throw contract(`clip "${declared.id}": ${rel} is ${info.width}x${info.height} but frame_0001.png is ${size.width}x${size.height}; one size per clip`);
+      size = { width: info.width, height: info.height };
+    }
+    if (bytes > limits.bytesPerClip) throw contract(`clip "${declared.id}": ${(bytes / 1048576).toFixed(1)} MB (at most ${(limits.bytesPerClip / 1048576).toFixed(0)} MB per clip)`);
+    for (const rel of [frames[0], frames[Math.floor((frames.length - 1) / 2)], frames.at(-1)]) {
+      let pixels;
+      try { ({ pixels } = decodePng(readFileSync(path.join(stageDir, rel)))); } catch (error) { throw contract(`clip "${declared.id}": ${rel} cannot be decoded (${error.message}); use a non-interlaced 8-bit RGBA PNG`); }
+      let transparent = false;
+      for (let i = 3; i < pixels.length && !transparent; i += 4) transparent = pixels[i] < 255;
+      if (!transparent) throw contract(`clip "${declared.id}": ${rel} has no transparent pixel; a clip is keyed, not a full-frame video`);
+    }
+    totalFrames += declared.count;
+    totalBytes += bytes;
+    return { ...declared, ...size, bytes, frames };
+  });
+  if (totalFrames > limits.framesTotal) throw contract(`${totalFrames} clip frames in all (at most ${limits.framesTotal})`);
+  if (totalBytes > limits.bytesTotal) throw contract(`${(totalBytes / 1048576).toFixed(1)} MB of clip frames in all (at most ${(limits.bytesTotal / 1048576).toFixed(0)} MB)`);
+  return clips;
+}
+
+// window.LitClips for LitStage.clip: id -> { src, count, fps, width, height }, written from clips.json and
+// the first frame's header. null when the stage declares no clips (or one the scan would refuse).
+export function clipsScript(stageDir) {
+  let table;
+  try {
+    table = Object.fromEntries(declaredClips(stageDir).map((clip) => {
+      const first = path.join(stageDir, clipsDir, clip.dir, clipFrame(1));
+      const info = rasterInfo(readFileSync(first), ".png");
+      return [clip.id, { src: `${clipsDir}/${clip.dir}`, count: clip.count, fps: clip.fps, width: info.width, height: info.height }];
+    }));
+  } catch { return null; }
+  return Object.keys(table).length ? `window.LitClips = ${JSON.stringify(table)};\n` : null;
+}
+
+// Throws a StageError for the first violation; returns the raster list for pre-decoding and the declared
+// clips, whose frames are not page rasters. `clips: false` (a cover page) ignores clips.json, so a clip
+// folder there is held to the raster limits.
+export function scanStage(stageDir, { clips: allowClips = true } = {}) {
   const files = listStage(stageDir);
   if (!files.includes("index.html")) throw contract("stage/index.html is missing");
+  const clips = allowClips ? scanClips(stageDir, { files }) : [];
+  const clipped = new Set(clips.flatMap((clip) => clip.frames));
   const rasters = [];
   let rasterBytes = 0;
   const plates = ["plate", "plate-preview"].map((sub) => readPlate(stageDir, sub)).filter(Boolean);
@@ -134,7 +238,7 @@ export function scanStage(stageDir) {
   for (const rel of files) {
     const ext = path.extname(rel).toLowerCase();
     const full = path.join(stageDir, rel);
-    if (rel === "scene.py" || plated.has(rel)) continue;
+    if (rel === "scene.py" || plated.has(rel) || clipped.has(rel)) continue;
     if (!Object.hasOwn(contentTypes, ext)) throw contract(`${rel}: ${ext || "extensionless"} files are not served on the stage`);
     if (rasterExtensions.has(ext)) {
       const bytes = readFileSync(full);
@@ -170,7 +274,7 @@ export function scanStage(stageDir) {
   const bySize = new Map();
   for (const raster of rasters) bySize.set(`${raster.width}x${raster.height}`, [...(bySize.get(`${raster.width}x${raster.height}`) ?? []), raster.rel]);
   for (const [size, list] of bySize) if (list.length >= rasterLimits.sameSizeFlipbook) throw contract(`${list.length} rasters share the size ${size} (a flipbook); rasters are textures and stills, never a frame sequence`);
-  return { files, rasters };
+  return { files, rasters, clips };
 }
 
 // One hash over every stage file's name and bytes: a render records it, the done check compares it.
