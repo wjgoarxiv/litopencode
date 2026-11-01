@@ -258,7 +258,8 @@ test("the expanded alias bodies of /litwork and /start-work qualify, and bare /l
   for (const [id, route] of [["litwork", "litwork"], ["lit-work", "litwork"], ["start-work", "start-work"]]) {
     await withHost({}, async (dir, fake) => {
       await fake.run("session", "prompt", prompt(`${findLitOpenCodeCommand(id).activationText}\n\nship the thing`));
-      await until(() => fake.goals.has("ses_root"));
+      // The notice is sent after the ledger event is written; the goal alone shows up in the fake host earlier.
+      await until(() => fake.goals.has("ses_root") && lines(fake).length > 0);
       assert.equal(slashGoal(fake).length, 1, id);
       assert.equal((await ledgerEvents(dir)).find((event) => event.type === "native-goal.created")?.route, route, id);
     });
