@@ -6,6 +6,11 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.37 Release Scope
+
+- `lit-typographic-motion` films can carry declared keyed overlay clips (`stage/clips/clips.json`, `LitStage.clip`, `/lit/clips.js`), checked against fixed limits and still refused as a flipbook when undeclared; a cover takes no clips.
+- On OpenCode 2 the lit HUD matches OpenCode 1: the status card, stage chip, home line and pop-ups for the workflow stage, a discipline switch and a lane starting or finishing.
+
 ## 1.0.36 Release Scope
 
 - On OpenCode 2.2 and later, `lit loop`, `litwork` and `/start-work` set OpenCode's native `/goal`; LitOpenCode resumes or clears only a goal it created, leaves a goal you made alone, and reports done only when OpenCode and its ledger agree. OpenCode 1 records `native-goal.unavailable`.
