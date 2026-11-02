@@ -7,6 +7,9 @@ are tracked separately from this product history.
 
 - Dependency alerts cleared: zod 4.6.6 (the runtime dependency and the Remotion cover template), the audio runtime's msgpack 1.2.3, @hono/node-server 2.1.5 in the HyperFrames cover template, and toml 5.0.1 in the development tree.
 - Releases are faster: the publish workflow no longer repeats the test suite and the QA probes. It checks with GitHub that CI already passed on the exact commit being released and stops if it did not. A publish from your own machine still runs the full suite first.
+- On OpenCode 2 the footer line beside the prompt now steps down with the terminal width instead of being clipped by the host: the ignition mark with the whole stage chip, the mark with a smaller chip, the chip alone, `🔥 1/3`, the bare flame, then nothing. Before, a narrow terminal cut the mark mid-word and mangled the host's own figures next to it.
+- On OpenCode 2 the status card shows the OpenCode Go plan windows (`5h 42% · 1w 18%`) for sessions on the `opencode-go` provider, read from the host's usage source and asked at most once a minute. Other providers and signed-out hosts show nothing, because OpenCode 2 gives a plugin no other usage data.
+- The automatic-handoff notices now reach the screen on OpenCode 2. The server plugin cannot raise a toast there, so it leaves each notice in `.litopencode/notices.jsonl` and the TUI plugin shows it.
 
 ## 1.0.37 - 2026-11-01
 

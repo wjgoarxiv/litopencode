@@ -16,6 +16,7 @@ import type { AutoHandoffConfig } from "../config.ts";
 import type { SessionLookup } from "../session-lineage.ts";
 import { markLiveness } from "../session-liveness.ts";
 import type { RuntimePaths } from "../state.ts";
+import { appendNotice, type NoticeVariant } from "./notices.ts";
 
 export type StreamEvent = { readonly type: string; readonly data?: unknown };
 
@@ -46,10 +47,20 @@ type StepModel = { readonly sessionID: string; readonly providerID: string; read
 
 /**
  * The calls the OpenCode 1 automatic handoff makes, answered by OpenCode 2. There is no server toast on
- * OpenCode 2, so the client has no `tui`; the handoff's own notices are not shown there.
+ * OpenCode 2, so `tui.showToast` leaves the notice in the project's notices file, which the TUI plugin
+ * reads and shows (notices.ts). Without a notices file the call is accepted and dropped.
  */
-function handoffClient(session: EventSessionLike, model: EventModelLike, statuses: ReadonlyMap<string, unknown>): PluginInput["client"] {
+function handoffClient(session: EventSessionLike, model: EventModelLike, statuses: ReadonlyMap<string, unknown>, noticesFile: string | undefined): PluginInput["client"] {
   const client = {
+    tui: {
+      async showToast(input: { body?: { title?: string; message?: string; variant?: string; duration?: number } }) {
+        const body = input.body;
+        if (noticesFile !== undefined && body !== undefined && typeof body.message === "string") {
+          appendNotice(noticesFile, { title: body.title ?? "🔥 LIT", message: body.message, variant: (body.variant ?? "info") as NoticeVariant, duration: body.duration ?? 8000 });
+        }
+        return { data: true };
+      }
+    },
     session: {
       async promptAsync(input: { path: { id: string }; body: { system?: string; parts?: readonly { text?: string }[] } }) {
         const text = [input.body.system, ...(input.body.parts ?? []).map((part) => part.text)].filter((part): part is string => typeof part === "string" && part !== "").join("\n\n");
@@ -83,7 +94,7 @@ function handoffClient(session: EventSessionLike, model: EventModelLike, statuse
 
 export type V2EventOptions = {
   readonly projectRoot: string;
-  readonly paths: Pick<RuntimePaths, "autoHandoffFile">;
+  readonly paths: Pick<RuntimePaths, "autoHandoffFile"> & Partial<Pick<RuntimePaths, "noticesFile">>;
   readonly autoHandoffConfig: AutoHandoffConfig;
   readonly boundedAuthority: BoundedAuthorityOptions;
   readonly getSession: SessionLookup;
@@ -99,7 +110,7 @@ export function createV2Events(options: V2EventOptions) {
   const autoHandoff: AutoHandoff = createAutoHandoff({
     projectRoot: options.projectRoot,
     paths: options.paths,
-    client: handoffClient(options.session, options.model, statuses),
+    client: handoffClient(options.session, options.model, statuses, options.paths.noticesFile),
     config: options.autoHandoffConfig,
     getSession: options.getSession
   });

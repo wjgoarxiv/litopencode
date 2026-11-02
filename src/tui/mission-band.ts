@@ -171,6 +171,8 @@ function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette,
   return fitLine([{ text: "╭" + "─".repeat(Math.max(0, width)), fg: border }], width, palette);
 }
 
+const limitWarnPercent = 90;
+
 /** The figures in the bottom border, most important first; the last ones go first when room runs out. */
 function figureParts(view: MissionView, figures: CardFigures, palette: MissionPalette): Segment[] {
   const parts: Segment[] = [];
@@ -178,6 +180,9 @@ function figureParts(view: MissionView, figures: CardFigures, palette: MissionPa
   if (figures.contextPercent !== null) {
     const percent = Math.round(figures.contextPercent);
     parts.push({ text: `ctx ${percent}%`, fg: percent >= contextWarnPercent ? palette.warning : palette.muted });
+  }
+  for (const limit of figures.limits ?? []) {
+    parts.push({ text: `${limit.label} ${limit.percent}%${limit.limited ? " limited" : ""}`, fg: limit.limited || limit.percent >= limitWarnPercent ? palette.warning : palette.muted });
   }
   if (view.active) parts.push({ text: `⟳ ${elapsedText(view.elapsedMinutes)}${figures.inLane ? " · in lane" : ""}`, fg: palette.muted });
   if (figures.branch !== undefined) parts.push({ text: `⎇ ${truncateCells(figures.branch, 24)}`, fg: palette.muted });
@@ -304,7 +309,10 @@ export function skillRow(chips: readonly SkillChip[], shimmer: ChipShimmer | und
 }
 
 /** `restartTo`: an installed LitOpenCode version newer than the code this OpenCode start loaded. */
-export type CardFigures = { readonly contextPercent: number | null; readonly branch?: string; readonly inLane: boolean; readonly restartTo?: string };
+export type CardFigures = { readonly contextPercent: number | null; readonly branch?: string; readonly inLane: boolean; readonly restartTo?: string; readonly limits?: readonly CardLimit[] };
+
+/** A plan window the host reports (`5h 42%`), shown after the context figure; absent when the host reports none. */
+export type CardLimit = { readonly label: string; readonly percent: number; readonly limited: boolean };
 
 export type CardInputs = {
   readonly view: MissionView;

@@ -13,7 +13,7 @@ import { micro, supportsMarkGlyphs } from "../lit-mark.ts";
 import { readInstalledVersions, restartVersion } from "../restart-notice.ts";
 import { buildMissionView, lastMission, leadingNotice, missionNotices, type MissionNotice, type MissionView } from "../tui/mission-model.ts";
 import { idleMotion, motionTiming, planMotion, sampleMotion, type MotionState } from "../tui/mission-motion.ts";
-import { latestLitMarkV2, missionStateFromV2, type MissionDataV2 } from "../tui/mission-source-v2.ts";
+import { latestLitMarkV2, missionStateFromV2, sessionMessagesV2, type MissionDataV2 } from "../tui/mission-source-v2.ts";
 import {
   adhdSuggestDue,
   createLedgerReader,
@@ -35,8 +35,12 @@ import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "../tui
 import { activeSkillLook, turnGlow, waitingOnYou } from "../tui/mission-looks.ts";
 import { rainbowActive, rainbowAllowed, rainbowAt, rainbowShows, rainbowTickMs } from "../tui/mission-rainbow.ts";
 import { threadLineCount, threadsOf } from "../tui/mission-threads.ts";
-import { chipLine, cellWidth, homeLine, lineWidth, missionPanel, paletteFromTheme, panelWidth, type Line, type MissionPalette } from "../tui/mission-text.ts";
+import { homeLine, missionPanel, paletteFromTheme, panelWidth, type Line, type MissionPalette } from "../tui/mission-text.ts";
+import { createRuntimePaths } from "../state.ts";
+import { footerBudget, footerStatus, sidebarCells } from "./tui-footer.ts";
+import { createNoticeTail } from "./notices.ts";
 import { v2StageNotices } from "./tui-notices.ts";
+import { createUsageLimits } from "./usage-limits.ts";
 
 export type TuiRuntime = {
   readonly jsx: (type: string, props?: Record<string, unknown>) => unknown;
@@ -60,6 +64,8 @@ export type TuiContextLike = {
   readonly location: { readonly directory: string } | undefined;
   readonly theme: unknown;
   readonly themeMode: "dark" | "light";
+  /** The host's API client; only `usage.limits` is read, and a host without it simply shows no plan figures. */
+  readonly client?: { readonly usage?: { readonly limits?: () => Promise<unknown> } };
   readonly attention?: { readonly notify: (options: { readonly title?: string; readonly message: string; readonly notification?: boolean; readonly sound?: boolean | { readonly name?: "done" } }) => Promise<unknown> };
   readonly ui: {
     readonly slot: (claim: SlotClaimLike) => () => void;
@@ -85,11 +91,12 @@ const homeLineWidth = 69;
 // A lit mark older than the moment a session is first drawn is history being loaded, not a new turn.
 const historySlackMs = 2000;
 const defaultWidth = 120;
-// What the footer row holds besides our line: the host's spinner and hint on the left, its token, cost,
-// goal and `ctrl+p commands` figures on the right (measured with a turn running, when they are widest).
-const hostFooterCells = 68;
-const sidebarCells = 42;
 const sidebarMinWidth = 120;
+// The plan windows change slowly; asking the host more than once a minute would only add requests.
+const limitsPollMs = 60_000;
+// Only the OpenCode Go allowance has a source on OpenCode 2, so the windows belong to a Go session alone.
+const goProviderID = "opencode-go";
+const noticeBurst = 3;
 
 type Entry = { view: MissionView; card: CardInput; motion: MotionState; chipMotion: ChipMotion; reserve: number; rainbowSeen?: number; lastPromptAt?: number; waiting: boolean };
 
@@ -159,6 +166,29 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
   let liveTimer: ReturnType<typeof setInterval> | undefined;
   let bandTimer: ReturnType<typeof setInterval> | undefined;
   let restartTimer: ReturnType<typeof setInterval> | undefined;
+
+  const readUsage = context.client?.usage?.limits;
+  const limits = createUsageLimits({
+    read: readUsage === undefined ? undefined : () => readUsage.call(context.client?.usage),
+    now: Date.now,
+    intervalMs: limitsPollMs,
+    onChange: () => setRevision(revision() + 1)
+  });
+  const noticeTail = createNoticeTail(root === undefined ? "" : createRuntimePaths(root).noticesFile);
+
+  // The provider of the session's latest assistant message decides whether the Go allowance applies to it.
+  function goSession(sessionID: string): boolean {
+    const latest = sessionMessagesV2(context.data, sessionID).filter((message) => message.type === "assistant").at(-1);
+    return latest?.model?.providerID === goProviderID;
+  }
+
+  // Popups the server could not raise (the automatic handoff) arrive as lines in the notices file.
+  function showServerNotices(): void {
+    if (disposed) return;
+    for (const notice of noticeTail.poll().slice(-noticeBurst)) {
+      context.ui.toast.show({ title: notice.title, message: notice.message, variant: notice.variant, duration: notice.duration });
+    }
+  }
 
   const palette = (): MissionPalette => paletteFromV2Theme(context.theme, context.themeMode);
 
@@ -329,6 +359,7 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
       ignitions.set(sessionID, mark?.messageID);
       if (mark !== undefined && mark.at >= (trackedAt.get(sessionID) ?? 0) - historySlackMs) ignitionToast(sessionID, mark.name);
     }
+    if (goSession(sessionID)) void limits.poll();
     const entry = sessions.get(sessionID);
     const { next, changed, notices } = build(sessionID, entry, now);
     if (!changed) return;
@@ -359,6 +390,7 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     refreshTimer = undefined;
     if (disposed) return;
     for (const sessionID of tracked) refresh(sessionID);
+    showServerNotices();
     syncPoll();
   }
 
@@ -439,6 +471,7 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
         contextPercent: current.card.contextPercent,
         ...(current.card.branch === undefined ? {} : { branch: current.card.branch }),
         inLane,
+        ...(goSession(sessionID) && limits.windows().length > 0 ? { limits: limits.windows() } : {}),
         ...(restartTo() === undefined ? {} : { restartTo: restartTo() })
       },
       ...(last === undefined ? {} : { last })
@@ -474,19 +507,23 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
           revision();
           const mark = latestLitMarkV2(context.data, sessionID);
           if (mark === undefined) return null;
-          const ignition = ignitionLine(mark.name);
           const current = snapshot(sessionID);
           // The sidebar setting is not readable here, so a wide terminal is taken to have it open.
-          const sidebar = parentOf(sessionID) === undefined && columns() > sidebarMinWidth ? sidebarCells : 0;
-          const budget = columns() - sidebar - hostFooterCells - cellWidth(ignition);
-          const drawn = current === undefined || !current.view.active ? [] : chipLine(current.view, current.frame, palette(), budget);
-          const chip = lineWidth(drawn) > budget ? [] : drawn;
+          const sidebar = parentOf(sessionID) === undefined && columns() > sidebarMinWidth;
+          const footer = footerStatus({
+            name: mark.name,
+            view: current?.view,
+            frame: current?.frame ?? sampleMotion(idleMotion, clock()),
+            palette: palette(),
+            budget: footerBudget({ columns: columns(), sidebar, busy: current?.card.busy === true })
+          });
+          if (footer.length === 0) return null;
           return ui.jsx("box", {
             flexShrink: 1,
             minWidth: 0,
             overflow: "hidden",
             flexDirection: "row",
-            children: [line([{ text: ignition, fg: palette().primary, bold: true }]), ...(chip.length === 0 ? [] : [line([{ text: "  ", fg: palette().muted }]), line(chip)])]
+            children: line(footer)
           });
         };
       }

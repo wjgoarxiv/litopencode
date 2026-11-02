@@ -438,8 +438,8 @@ export function chipSparkCells(t: number, palette: MissionPalette): Segment[] | 
   return cells;
 }
 
-export function chipTier(view: MissionView, frame: MotionFrame, palette: MissionPalette, budget: number): ChipTier {
-  for (const tier of ["full", "medium"] as const) {
+export function chipTier(view: MissionView, frame: MotionFrame, palette: MissionPalette, budget: number, largest: ChipTier = "full"): ChipTier {
+  for (const tier of largest === "full" ? (["full", "medium"] as const) : largest === "medium" ? (["medium"] as const) : []) {
     if (groupsWidth(chipGroups(view, frame, palette, tier)) <= budget) return tier;
   }
   return "tight";
@@ -448,11 +448,11 @@ export function chipTier(view: MissionView, frame: MotionFrame, palette: Mission
 /**
  * The map chip on the right of the prompt's agent/model row: `🔥 LIT  plan ✓ › WORK ▰▰▰▱▱▱▱ 3/7 › review`,
  * then the live step when the full chip leaves room for it, shedding labels before values as `budget`
- * shrinks. Idle sessions render nothing.
+ * shrinks, and never larger than `largest`. Idle sessions render nothing.
  */
-export function chipLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, budget: number): Line {
+export function chipLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, budget: number, largest: ChipTier = "full"): Line {
   if (!view.active) return [];
-  const tier = chipTier(view, frame, palette, budget);
+  const tier = chipTier(view, frame, palette, budget, largest);
   const groups = chipGroups(view, frame, palette, tier);
   if (tier === "full") {
     const live = liveSegments(view, frame, palette, 24);

@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { setupLitOpenCodeTui } from "../src/v2/tui.ts";
+import { appendNotice } from "../src/v2/notices.ts";
 import { v2StageNotices } from "../src/v2/tui-notices.ts";
 
 // The OpenCode 2 HUD, driven with a stand-in context and UI runtime. The slots are the ones OpenCode 2
@@ -200,13 +201,70 @@ test("the footer status line carries the stage chip beside the ignition line", a
   await cleanup();
 });
 
-test("a narrow footer keeps the ignition line and drops the chip rather than crowd the host's own figures", async () => {
+test("the footer line steps down with the terminal width and is never cut mid-word", async () => {
+  const messages = { ses_lit: [user("m1", "lit loop fix it", mark("lit-loop"))] };
+  const widths = [];
+  for (const columns of [200, 130, 100, 90, 70, 50, 30]) {
+    const fake = fakeTui({ messages });
+    const cleanup = await setupLitOpenCodeTui(fake.context, runtime([], columns));
+    const text = textOf(fake.find("append", "prompt.footer.status").render({ sessionID: "ses_lit", mode: "normal", showDetails: false }));
+    widths.push([columns, text]);
+    await cleanup();
+  }
+  const at = (columns) => widths.find(([width]) => width === columns)?.[1] ?? "";
+  assert.match(at(200), /🔥 LIT IGNITED · lit-loop {3}🔥 LIT.*review/u, "wide: mark and the whole chip");
+  assert.match(at(100), /^🔥 LIT IGNITED · lit-loop {2}🔥 {2}\S+ $/u, "100 columns: mark and the small chip");
+  assert.match(at(90), /^🔥 {2}\S+ {2}› review$/u, "90 columns: the mark's words go, the chip stays");
+  assert.match(at(70), /^🔥 {2}\S+ $/u, "70 columns: the small chip");
+  assert.equal(at(50), "", "50 columns: the host's own figures leave no room, so nothing");
+  assert.equal(at(30), "");
+  for (const [columns, text] of widths) assert.doesNotMatch(text, /IGNIT\b|IGNITE\b|lit-loo\b/u, `no cut word at ${columns}`);
+});
+
+test("the plan windows show on a Go session's card from the host's usage source, and nowhere else", async () => {
+  const goMessage = (id) => ({ ...assistant(id), model: { providerID: "opencode-go", id: "glm" } });
+  const reply = { data: { workspace: { id: "w", usageURL: "u" }, go: { rolling: { percent: 42, limited: false, resetsAt: 1 }, weekly: { percent: 18, limited: false, resetsAt: 1 }, monthly: { percent: 3, limited: false, resetsAt: 1 } }, budgets: [] } };
+  let calls = 0;
+  const messages = { ses_go: [user("m1", "lit fix it", mark("lit-task")), goMessage("m2")], ses_other: [user("m3", "lit fix it", mark("lit-task")), assistant("m4")] };
+  const fake = fakeTui({ messages });
+  fake.context.client = { usage: { limits: async () => { calls += 1; return reply; } } };
+  const cleanup = await setupLitOpenCodeTui(fake.context, runtime());
+  assert.doesNotMatch(band(fake, "ses_go"), /5h/u, "nothing before the first answer");
+  await settle();
+  assert.equal(calls, 1);
+  assert.match(band(fake, "ses_go"), /5h 42% · 1w 18% · ⟳/u);
+  assert.doesNotMatch(band(fake, "ses_other"), /5h|1w/u, "another provider's session has no such allowance");
+  await cleanup();
+});
+
+test("a host with no usage source, or one that errors or is signed out, draws no figure and asks no more than needed", async () => {
+  const messages = { ses_go: [user("m1", "lit fix it", mark("lit-task")), { ...assistant("m2"), model: { providerID: "opencode-go", id: "glm" } }] };
+  for (const client of [undefined, {}, { usage: {} }, { usage: { limits: async () => { throw new Error("offline"); } } }, { usage: { limits: async () => ({ data: null }) } }]) {
+    const fake = fakeTui({ messages });
+    if (client !== undefined) fake.context.client = client;
+    const cleanup = await setupLitOpenCodeTui(fake.context, runtime());
+    band(fake, "ses_go");
+    await settle();
+    assert.doesNotMatch(band(fake, "ses_go"), /5h|1w/u);
+    await cleanup();
+  }
+});
+
+test("popups the server left in the notices file are shown, only the ones after the TUI started", async () => {
   const messages = { ses_lit: [user("m1", "lit loop fix it", mark("lit-loop"))] };
   const fake = fakeTui({ messages });
-  const cleanup = await setupLitOpenCodeTui(fake.context, runtime([], 90));
-  const text = textOf(fake.find("append", "prompt.footer.status").render({ sessionID: "ses_lit", mode: "normal", showDetails: false }));
-  assert.match(text, /🔥 LIT IGNITED · lit-loop/u);
-  assert.doesNotMatch(text, /review/u);
+  const file = path.join(fake.project, ".litopencode", "notices.jsonl");
+  appendNotice(file, { title: "LitOpenCode auto-handoff", message: "from before", variant: "info", duration: 8000 });
+  const cleanup = await setupLitOpenCodeTui(fake.context, runtime());
+  fake.find("append", "prompt.footer.status").render({ sessionID: "ses_lit", mode: "normal", showDetails: false });
+  await settle();
+  appendNotice(file, { title: "LitOpenCode auto-handoff", message: "Handoff saved. Compacting the conversation now.", variant: "info", duration: 8000 });
+  fake.emit({ type: "session.status", data: { sessionID: "ses_lit" } });
+  await settle();
+  const shown = fake.toasts.filter((toast) => toast.title === "LitOpenCode auto-handoff");
+  assert.deepEqual(shown.map((toast) => toast.message), ["Handoff saved. Compacting the conversation now."]);
+  assert.equal(shown[0].variant, "info");
+  assert.equal(shown[0].duration, 8000);
   await cleanup();
 });
 

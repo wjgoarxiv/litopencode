@@ -503,17 +503,29 @@ settings but does not send them yet.
   only OpenCode 2 has: the workflow stage moving (`🔥 Stage`, `work 3/7`), a switch of discipline
   (`🔥 lit-loop → start-work`) and a lane starting or finishing. A burst folds into one toast with a
   `+N more` tail. The restart notice, the `lit adhd` suggestion and the opt-in finish alert work as on
-  OpenCode 1. The automatic-handoff notices and the skill hint, which only the server knew about, are
-  not shown there.
+  OpenCode 1. The automatic-handoff notices, which only the server knew about, reach the screen through
+  `.litopencode/notices.jsonl`: the OpenCode 2 server plugin can only subscribe to events and has no way to
+  raise a toast, so it appends each notice there and the TUI plugin shows the lines that appear after it
+  started (the file is capped and never follows a symbolic link). The one popup the server raised besides
+  those, the ignition toast, is already the TUI's own, so there is no separate skill hint left to port.
 - *TUI.* The HUD is placed in the slots OpenCode 2 publishes: the status card is claimed in `app`, under
   the session and the sidebar, and keeps its four rows idle or working; the stage chip shares
   `prompt.footer.status` with the ignition line, because there is no slot right of the agent and model
   row; the home line is in `home.footer`; the mission panel sits in `sidebar.content`, so it shows when
   the sidebar is open. The card, chip, panel and home line use the same text builders as OpenCode 1. The
-  `band` and `notify` options of the plugin entry are read from the options OpenCode 2 hands over. OpenCode 2
+  `band` and `notify` options of the plugin entry are read from the options OpenCode 2 hands over. The footer
+  line steps down with the terminal width instead of being clipped by the host: mark plus the whole chip,
+  mark plus a smaller chip, the chip alone, the chip as `🔥 1/3`, the bare flame, then nothing; the room is the
+  width less the sidebar (assumed open above 120 columns) and the host's own spinner and figures. OpenCode 2
   keeps no todo list, so mission progress comes from the ledger, the work record and the plan. It names
   its tools differently (`shell`, `subagent`, a `skill` tool that takes `id`), and the card reads those
-  names. OpenCode 2 gives plugins no rate-limit figures, so none are drawn.
+  names. OpenCode 2 gives plugins one usage source, `client.usage.limits()`: the OpenCode Go allowance of the
+  Console workspace the location is signed in to (a rolling five-hour window, a weekly one and a monthly
+  one). For a session whose latest answer came from the `opencode-go` provider the card's bottom border shows
+  `5h 42% · 1w 18%` after the context figure (the monthly window only from 90%, and a window the host reports
+  as refusing requests reads `limited`). It asks at most once a minute. For any other provider, a signed-out
+  host (the reply is `null`) or an error, nothing is drawn; OpenCode 2 exposes no provider rate-limit headers or
+  events to a plugin, so there is no 5-hour or weekly figure for the Anthropic or OpenAI plans.
 - *Updates.* There is no automatic self-update inside the plugin on OpenCode 2. Run
   `opencode plugin update`, or let OpenCode 2's own update policy handle it.
 
