@@ -6,6 +6,12 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.38 Release Scope
+
+- On OpenCode 2 the footer line steps down with the terminal width, the status card shows the OpenCode Go plan windows, and automatic-handoff notices reach the screen through `.litopencode/notices.jsonl`.
+- Automatic handoff fires on OpenCode 2, which ends a turn with `session.execution.succeeded` instead of `session.idle`.
+- Dependency alerts cleared in the package and template locks (zod, toml, msgpack, hono); `publish.yml` trusts the green `ci.yml` run on the same commit; the alias goal test waits for the ledger event.
+
 ## 1.0.37 Release Scope
 
 - `lit-typographic-motion` films can carry declared keyed overlay clips (`stage/clips/clips.json`, `LitStage.clip`, `/lit/clips.js`), checked against fixed limits and still refused as a flipbook when undeclared; a cover takes no clips.
