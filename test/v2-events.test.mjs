@@ -146,3 +146,50 @@ test("review L6: a step that never ends is forgotten when its session is deleted
     assert.equal(events.pendingSteps(), 0);
   });
 });
+
+// Event envelopes as OpenCode 2.2.5 publishes them on a real turn (captured from the real host with a mock
+// model): the stream has no `session.status` and no `session.idle`; the end of a turn is
+// `session.execution.succeeded` (or `.failed` / `.interrupted`), its start is `session.execution.started`.
+const realTurn = (sessionID, tokens, end = "session.execution.succeeded") => [
+  { id: "evt_19bc92e60001qEsHAJQ54MvmY2", created: 1793615015520, type: "session.execution.started", durable: { aggregateID: sessionID, seq: 2, version: 1 }, data: { sessionID } },
+  { id: "evt_19bc92ed8001IhSoXjrZQ65tXg", created: 1793615015640, type: "session.step.started", durable: { aggregateID: sessionID, seq: 7, version: 1 }, location: { directory: "/proj" }, data: { sessionID, assistantMessageID: "msg_19bc92e77001uUp1aq3bXthA7z", agent: "lit-loop", model: { id: "gpt-test", providerID: "openai", variant: "default" }, snapshot: "aa1731625c66d20a520dc7c83bd8899a0a8e4ccc", started: Date.now() } },
+  { id: "evt_19bc94e3b001HgJCMkFPpr2XZS", created: 1793615023675, type: "session.step.ended", durable: { aggregateID: sessionID, seq: 13, version: 1 }, location: { directory: "/proj" }, data: { sessionID, assistantMessageID: "msg_19bc92e77001uUp1aq3bXthA7z", finish: "stop", rawFinish: "stop", cost: 0, tokens, snapshot: "aa1731625c66d20a520dc7c83bd8899a0a8e4ccc", files: [] } },
+  { id: "evt_19bc92e81001n3joIW3FEmto7r", created: 1793615023676, type: "session.usage.updated", data: { sessionID, cost: 0, tokens } },
+  { id: "evt_19bc94e7c001k1h9UsAJOxLN8H", created: 1793615023740, type: end, durable: { aggregateID: sessionID, seq: 26, version: 1 }, data: { sessionID } }
+];
+
+test("real host: a turn that crossed the handoff percent asks for a handoff when the execution succeeds", async () => {
+  await withEvents({ autoHandoff: { enabled: true, percent: 50 } }, async (_dir, fake) => {
+    for (const e of realTurn("ses_root", { input: 500, output: 100, reasoning: 0, cache: { read: 0, write: 0 } })) fake.emit(e);
+    await until(() => fake.prompts.length > 0).catch(() => undefined);
+    const sent = fake.prompts.at(-1);
+    assert.ok(sent, "a handoff request was sent");
+    assert.equal(sent.sessionID, "ses_root");
+    assert.match(sent.text, /Auto-handoff marker: ses_root/u);
+  });
+});
+
+test("real host: a turn below the handoff percent sends nothing", async () => {
+  await withEvents({ autoHandoff: { enabled: true, percent: 50 } }, async (_dir, fake) => {
+    for (const e of realTurn("ses_root", { input: 100, output: 50, reasoning: 0, cache: { read: 0, write: 0 } })) fake.emit(e);
+    await settle();
+    assert.equal(fake.prompts.length, 0);
+  });
+});
+
+for (const end of ["session.execution.failed", "session.execution.interrupted"]) {
+  test(`real host: ${end} also ends the turn that crossed the percent`, async () => {
+    await withEvents({ autoHandoff: { enabled: true, percent: 50 } }, async (_dir, fake) => {
+      for (const e of realTurn("ses_root", { input: 500, output: 100, reasoning: 0, cache: { read: 0, write: 0 } }, end)) fake.emit(e);
+      await until(() => fake.prompts.length > 0).catch(() => undefined);
+      assert.ok(fake.prompts.at(-1), "a handoff request was sent");
+    });
+  });
+}
+
+test("real host: the end of an execution records idle liveness for the session", async () => {
+  await withLifecycle(async (events, _state, _prompts, dir) => {
+    for (const e of realTurn("ses_root", { input: 10, output: 1, reasoning: 0, cache: { read: 0, write: 0 } })) await events.handle(e);
+    assert.equal(readLivenessSync(dir, "ses_root")?.state, "idle");
+  });
+});

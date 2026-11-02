@@ -145,6 +145,12 @@ export function createV2Events(options: V2EventOptions) {
     }
   }
 
+  async function idle(sessionID: string): Promise<void> {
+    statuses.set(sessionID, { type: "idle" });
+    await markLiveness(options.projectRoot, sessionID, "idle");
+    await toHandoff("session.idle", { sessionID });
+  }
+
   async function handle(event: StreamEvent): Promise<void> {
     const data = isRecord(event.data) ? event.data : {};
     const sessionID = str(data.sessionID);
@@ -187,13 +193,23 @@ export function createV2Events(options: V2EventOptions) {
         });
         return;
       }
+      // OpenCode 2.2.5 publishes no `session.status` or `session.idle`. A turn runs from
+      // `session.execution.started` to one of three endings, and the handoff reads them as busy and idle.
+      case "session.execution.started":
+        statuses.set(sessionID, { type: "busy" });
+        await toHandoff("session.status", { sessionID, status: { type: "busy" } });
+        return;
+      case "session.execution.succeeded":
+      case "session.execution.failed":
+      case "session.execution.interrupted":
+        await idle(sessionID);
+        return;
       case "session.status":
         statuses.set(sessionID, data.status);
         await toHandoff("session.status", { sessionID, status: data.status });
         return;
       case "session.idle":
-        await markLiveness(options.projectRoot, sessionID, "idle");
-        await toHandoff("session.idle", { sessionID });
+        await idle(sessionID);
         return;
       case "session.compaction.ended":
         await toHandoff("session.compacted", { sessionID });

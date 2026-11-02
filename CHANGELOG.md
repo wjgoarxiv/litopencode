@@ -10,6 +10,7 @@ are tracked separately from this product history.
 - On OpenCode 2 the footer line beside the prompt now steps down with the terminal width instead of being clipped by the host: the ignition mark with the whole stage chip, the mark with a smaller chip, the chip alone, `🔥 1/3`, the bare flame, then nothing. Before, a narrow terminal cut the mark mid-word and mangled the host's own figures next to it.
 - On OpenCode 2 the status card shows the OpenCode Go plan windows (`5h 42% · 1w 18%`) for sessions on the `opencode-go` provider, read from the host's usage source and asked at most once a minute. Other providers and signed-out hosts show nothing, because OpenCode 2 gives a plugin no other usage data.
 - The automatic-handoff notices now reach the screen on OpenCode 2. The server plugin cannot raise a toast there, so it leaves each notice in `.litopencode/notices.jsonl` and the TUI plugin shows it.
+- Automatic handoff now fires on OpenCode 2. The plugin waited for a `session.status` or `session.idle` event that OpenCode 2 never publishes, so a turn that crossed the percent was never followed by the handoff request. It now reads the end of a turn from `session.execution.succeeded`, `failed` and `interrupted` (and the start from `session.execution.started`), which also records the session as idle for the status card.
 
 ## 1.0.37 - 2026-11-01
 
