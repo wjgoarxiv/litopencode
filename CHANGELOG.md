@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- Dependency alerts cleared: minimatch is held at 11.0.4 across the development tree, and zod 4.6.7, yaml 2.9.1 and the OpenCode plugin types 1.19.5 are picked up.
+
 ## 1.0.39 - 2026-11-03
 
 - On OpenCode 1 the repository rules block now reaches the model on every call, written the same way each time. Before, the first call of a session (the title call) used it up, so the main model missed the rules on turn one and lost them from the second step of later turns, which also changed the prompt and broke the provider cache.
