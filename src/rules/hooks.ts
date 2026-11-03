@@ -49,6 +49,8 @@ export async function applyStaticRuleInjection(
   for (let index = output.system.length - 1; index >= 0; index -= 1) {
     if (output.system[index]?.trimEnd() === readerFacingCommunicationContract) output.system.splice(index, 1);
   }
+  // LitOpenCode's own agent prompts already embed the contract; a second copy only costs tokens.
+  if (output.system.some((entry) => entry.includes(readerFacingCommunicationContract))) return;
   output.system.push(readerFacingCommunicationContract);
 }
 

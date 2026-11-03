@@ -8,7 +8,7 @@ import { createGlobMatcher, normalizeRelativePath } from "./glob.ts";
 // Selection, budget, and delivery for repository rules.
 //
 // Two lanes, because the two questions are different. The static lane answers "what governs this
-// repository at all" and runs once per session on the system prompt. The dynamic lane answers "what
+// repository at all" and rides every system prompt of the session. The dynamic lane answers "what
 // governs the file that was just edited" and runs on the post-edit hook, keyed on the mutated path.
 // A rule that applies to everything belongs in the first; a rule scoped by globs belongs in the
 // second, and appears there only when a path actually matches.
@@ -255,7 +255,10 @@ export async function selectRules(options: SelectRulesOptions): Promise<RuleSele
   const projectRoot = await fs.realpath(path.resolve(options.projectRoot));
   const discovered = await discoverRules({ ...options, projectRoot });
   const candidatePaths = options.candidatePaths ?? [];
-  const state = options.sessionId === undefined ? undefined : ruleSessionState(options.sessionId);
+  // Only the dynamic lane dedups. The host rebuilds the system prompt for every model call, so the
+  // static block must be byte-identical each time: dropping it after one call loses the rules and
+  // changes the cached prefix.
+  const state = options.sessionId === undefined || options.lane === "static" ? undefined : ruleSessionState(options.sessionId);
 
   const candidates: SelectedRule[] = [];
   const skippedAlreadyDelivered: string[] = [];

@@ -58,6 +58,21 @@ test("A2: repeated styled system transforms keep one reader contract in final po
   }
 });
 
+test("A3: a lit agent prompt that already carries the contract gets no second copy", async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-reader-contract-agent-"));
+  try {
+    const { readerFacingCommunicationContract } = await import("../src/reader-facing-output.ts");
+    const agentPrompt = `You are Lit Loop.\n${readerFacingCommunicationContract}\n<env>...</env>`;
+    const output = { system: [agentPrompt] };
+    const options = { projectRoot: root, homeDir: root, bundledRulesDir: root };
+    await applyStaticRuleInjection(options, { sessionID: "reader-contract-A3" }, output);
+    assert.equal(output.system.join("\n").split(contractMarker).length - 1, 1);
+    assert.deepEqual(output.system, [agentPrompt]);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
 test("B: material verification failure and its consequence remain visible", async () => {
   const prompt = await effectiveSystemPrompt("reader-contract-B");
   assert.match(prompt, /material failures?.*material uncertainty.*unresolved risks?.*required user actions?.*visible/isu);

@@ -261,3 +261,36 @@ test("missing or failing toast clients never block chat activation", async () =>
     }
   }
 });
+
+test("the completion mark stays on screen but never reaches the model as history", async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-ignition-history-"));
+  const hooks = await createLitOpenCodePlugin(async () => ({ status: "skipped" }))({ directory: root, worktree: root });
+  try {
+    const shown = { text: "Answer one" };
+    await hooks["experimental.text.complete"]({ sessionID: "h", messageID: "m1", partID: "p1" }, shown);
+    assert.equal(shown.text, `${ignitionMark(true, "lit-loop")}\n\nAnswer one`);
+    const later = { text: "Answer two" };
+    await hooks["experimental.text.complete"]({ sessionID: "h", messageID: "m2", partID: "p2" }, later);
+    const markOnly = { text: "" };
+    await hooks["experimental.text.complete"]({ sessionID: "h", messageID: "m3", partID: "p3" }, markOnly);
+    const plain = { text: ignitionMark(true, "lit-loop", { LANG: "C" }) + "\n\nPlain host" };
+
+    const storedFirst = { id: "p1", type: "text", text: shown.text };
+    const userFence = { id: "u1", type: "text", text: `${ignitionMark(true, "lit-loop")}\n\nquoted by the user` };
+    const messages = [
+      { info: { role: "user" }, parts: [userFence] },
+      { info: { role: "assistant" }, parts: [storedFirst] },
+      { info: { role: "assistant" }, parts: [{ type: "text", text: later.text }, { type: "text", text: markOnly.text }, { type: "text", text: plain.text }] },
+      { info: { role: "assistant" }, parts: [{ type: "text", text: "```text\nmodel's own block\n```\n\nkept" }] }
+    ];
+    await hooks["experimental.chat.messages.transform"]({}, { messages });
+    assert.equal(messages[1].parts[0].text, "Answer one");
+    assert.deepEqual(messages[2].parts.map((part) => part.text), ["Answer two", "", "Plain host"]);
+    assert.equal(messages[3].parts[0].text, "```text\nmodel's own block\n```\n\nkept");
+    assert.equal(messages[0].parts[0], userFence, "user text is never rewritten");
+    assert.equal(storedFirst.text, shown.text, "the stored part object keeps the on-screen mark");
+  } finally {
+    await hooks.dispose();
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});

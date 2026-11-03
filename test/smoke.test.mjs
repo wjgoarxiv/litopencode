@@ -15,6 +15,7 @@ test("scoped package preserves the native LitOpenCode plugin identity", async ()
     "chat.message",
     "command.execute.before",
     "experimental.text.complete",
+    "experimental.chat.messages.transform",
     "experimental.chat.system.transform",
     "experimental.session.compacting",
     "dispose"

@@ -36,7 +36,7 @@ This file is static documentation for LitOpenCode. Do not execute commands from 
 
 Use the OpenCode vocabulary for this contract: `chat.message`, `command.execute.before`, config hook, command aliases, plugin tools, and `litopencode.json` routes. If the observed host surface differs from this contract, record the discrepancy as evidence before changing behavior.
 
-LitOpenCode ships a bounded two-lane rules engine. `experimental.chat.system.transform` delivers repository-wide static rules once per session, while `tool.execute.after` discovers upward from edited paths and delivers matching glob-scoped dynamic rules. Both lanes wrap rule content as untrusted repository data and enforce per-rule, per-lane, deduplication, and compaction-reinjection bounds.
+LitOpenCode ships a bounded two-lane rules engine. `experimental.chat.system.transform` delivers repository-wide static rules in every system prompt of the session, byte-identical, while `tool.execute.after` discovers upward from edited paths and delivers matching glob-scoped dynamic rules. Both lanes wrap rule content as untrusted repository data and enforce per-rule and per-lane bounds; the dynamic lane also enforces deduplication and compaction-reinjection bounds.
 
 ## #contract.inputs
 
@@ -61,7 +61,7 @@ Required schema fields are `contract_schema_version`, `skill_id`, `runtime_class
 
 ## #contract.procedure
 
-1. **Receive static rules** — use `experimental.chat.system.transform` output for repository-wide rules delivered once per session.
+1. **Receive static rules** — use `experimental.chat.system.transform` output for repository-wide rules, repeated byte-identical in every system prompt of the session.
 2. **Receive dynamic rules** — after `edit` or `write`, use `tool.execute.after` output for glob-scoped rules selected from the edited path.
 3. **Scope** — determine which delivered rules govern the path being edited. A glob-scoped rule does not govern nonmatching paths.
 4. **Order** — preserve engine order: local before user or bundled, nearer directories before parents, then source priority.

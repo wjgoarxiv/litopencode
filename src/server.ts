@@ -10,7 +10,7 @@ import { loadConfig } from "./config.ts";
 import { createDeliverableHedgeGuard } from "./deliverable-hedge-guard.ts";
 import { createToolExecuteAfterHook, createToolExecuteBeforeHook } from "./hooks.ts";
 import { createLogger } from "./logger.ts";
-import { createIgnitionState } from "./ignition.ts";
+import { createIgnitionState, stripIgnitionMarksFromHistory } from "./ignition.ts";
 import { createSessionLookup } from "./session-lineage.ts";
 import { markLiveness } from "./session-liveness.ts";
 import { applyCompactionRuleReset, applyStaticRuleInjection } from "./rules/hooks.ts";
@@ -124,6 +124,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         else trustedCommandActivations.set(commandInput.sessionID, skillId);
       },
       "experimental.text.complete": ignitionState.complete,
+      "experimental.chat.messages.transform": stripIgnitionMarksFromHistory,
       "experimental.chat.system.transform": async (transformInput, transformOutput) => {
         await applyStaticRuleInjection({
           projectRoot: root,

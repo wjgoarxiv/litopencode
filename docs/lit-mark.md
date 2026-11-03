@@ -40,6 +40,9 @@ and a trusted chat, command, or successful activation-tool result selects the cu
 one. Status and blocked tool results do not change the discipline. Unactivated turns use `lit-loop`.
 Marks are fenced Markdown without ANSI because OpenCode renders completion text as
 Markdown, including when its process owns a colored terminal.
+The mark is for the screen only: `experimental.chat.messages.transform` removes an exact
+leading mark from earlier assistant replies before each request, so the model never reads
+it back as input.
 
 The model must begin its reply with exactly one `🔥 **LIT IGNITED · <discipline>** 🔥` line. Prompts
 require this explicitly. Activation messages use the plain `🔥 LIT IGNITED · <discipline> 🔥`

@@ -1007,7 +1007,7 @@ export const litOpenCodeFeatures = Object.freeze([
         kind: "hook",
         id: "experimental.chat.system.transform",
         surface: "OpenCode experimental.chat.system.transform hook",
-        description: "Delivers repository-wide static rules once per session within the static lane budget."
+        description: "Delivers repository-wide static rules in every system prompt of the session, byte-identical, within the static lane budget."
       },
       {
         kind: "hook",

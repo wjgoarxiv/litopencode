@@ -581,25 +581,27 @@ test("delivered rule text is fenced as untrusted repository data", async () => {
   });
 });
 
-test("per-session dedup suppresses a second delivery and a body edit re-delivers", async () => {
+test("the static lane repeats byte-identical text every call", async () => {
   await withProject(async (dir, write) => {
     resetRuleSessions();
     await write(".cursor/rules/a.mdc", "---\nalwaysApply: true\n---\nfirst body");
 
+    // The host rebuilds the system prompt for every model call (title generation, each tool step,
+    // each turn), so a deliver-once static block would vanish after the first call and change the
+    // cached prefix. The static lane is therefore a pure function of the rule files.
     const first = await selectRules({ lane: "static", projectRoot: dir, homeDir: "", sessionId: "s1" });
     assert.equal(first.selected.length, 1);
     const second = await selectRules({ lane: "static", projectRoot: dir, homeDir: "", sessionId: "s1" });
-    assert.equal(second.selected.length, 0);
-    assert.equal(second.skippedAlreadyDelivered.length, 1);
+    assert.equal(second.selected.length, 1);
+    assert.equal(second.text, first.text);
+    assert.equal(second.skippedAlreadyDelivered.length, 0);
 
-    // A different session is unaffected.
-    const other = await selectRules({ lane: "static", projectRoot: dir, homeDir: "", sessionId: "s2" });
-    assert.equal(other.selected.length, 1);
-
-    // Editing the rule changes its digest, so the same session sees it again.
+    // Editing the rule changes the static text from then on.
     await write(".cursor/rules/a.mdc", "---\nalwaysApply: true\n---\nedited body");
     const afterEdit = await selectRules({ lane: "static", projectRoot: dir, homeDir: "", sessionId: "s1" });
-    assert.equal(afterEdit.selected.length, 1);
+    assert.match(afterEdit.text, /edited body/u);
+    const again = await selectRules({ lane: "static", projectRoot: dir, homeDir: "", sessionId: "s1" });
+    assert.equal(again.text, afterEdit.text);
   });
 });
 

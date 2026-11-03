@@ -88,6 +88,8 @@ test("exports an OpenCode plugin function with agent config and dispose lifecycl
     "chat.message",
     "command.execute.before",
     "experimental.text.complete",
+    // Keeps the completion mark on screen and out of the model's history.
+    "experimental.chat.messages.transform",
     // The rules engine's static lane and its post-compact budget reset.
     "experimental.chat.system.transform",
     "experimental.session.compacting",
