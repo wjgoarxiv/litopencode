@@ -69,6 +69,16 @@ test("a plain prompt gets no mark and no activation, but the static rules and th
   });
 });
 
+test("the reader contract is not added again when the agent prompt already carries it", async () => {
+  await withSession(async (_dir, fake) => {
+    const agentPrompt = `You are Lit Loop.\n${readerFacingCommunicationContract}\nMore agent text.`;
+    const event = await fake.run("session", "context", { ...context(), system: [{ type: "text", text: agentPrompt }] });
+    const copies = event.system.reduce((sum, part) => sum + part.text.split(readerFacingCommunicationContract).length - 1, 0);
+    assert.equal(copies, 1);
+    assert.equal(event.system[0].text, agentPrompt);
+  });
+});
+
 test("a delegated child session never re-enters a lit workflow", async () => {
   await withSession(async (_dir, fake) => {
     const admitted = await fake.run("session", "prompt", prompt("lit fix it", "ses_child"));

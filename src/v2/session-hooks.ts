@@ -17,6 +17,7 @@ import type { LitOpenCodeConfig } from "../config.ts";
 import { queryKnowledge } from "../knowledge.ts";
 import { startTypedWork, typedStartArgument } from "../start-work-typed.ts";
 import { createLitGoalOperations } from "../ledger.ts";
+import { readerFacingCommunicationContract } from "../reader-facing-output.ts";
 import { applyCompactionRuleReset, applyStaticRuleInjection } from "../rules/hooks.ts";
 import { isReadOnlyWorkflowFamilyPlan } from "../workflow-families.ts";
 import type { AgentRequestOptions } from "./agents.ts";
@@ -301,7 +302,12 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
       { sessionID: event.sessionID } as Parameters<typeof applyStaticRuleInjection>[1],
       rules as Parameters<typeof applyStaticRuleInjection>[2]
     );
-    for (const entry of rules.system) event.system.push(text(entry));
+    // The lit agents' own system prompts already embed the reader contract; a second copy only costs tokens.
+    const contractPresent = event.system.some((part) => part.text.includes(readerFacingCommunicationContract));
+    for (const entry of rules.system) {
+      if (contractPresent && entry === readerFacingCommunicationContract) continue;
+      event.system.push(text(entry));
+    }
     const request = options.requestOptions.get(event.agent);
     if (request !== undefined) {
       for (const [key, value] of Object.entries(request)) if (event.options[key] === undefined) event.options[key] = value;
