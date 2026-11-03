@@ -5,6 +5,13 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.39 - 2026-11-03
+
+- On OpenCode 1 the repository rules block now reaches the model on every call, written the same way each time. Before, the first call of a session (the title call) used it up, so the main model missed the rules on turn one and lost them from the second step of later turns, which also changed the prompt and broke the provider cache.
+- The reader contract is no longer added a second time when the agent prompt already carries it.
+- The LIT mark at the top of a reply stays on screen but is left out of the history sent back to the model, so it no longer costs input tokens on every later request.
+- Together these raise the cached share of input on OpenCode 1 from about 40% to about 60%, slightly above the plugin turned off.
+
 ## 1.0.38 - 2026-11-02
 
 - Dependency alerts cleared: zod 4.6.6 (the runtime dependency and the Remotion cover template), the audio runtime's msgpack 1.2.3, @hono/node-server 2.1.5 in the HyperFrames cover template, and toml 5.0.1 in the development tree.

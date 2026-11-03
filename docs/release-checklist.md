@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.39 Release Scope
+
+- OpenCode 1: the static rules block is injected byte-identically on every call (dynamic rules keep their session dedup), the reader contract is not appended when the agent prompt already holds it, and `experimental.chat.messages.transform` strips the leading reply mark from earlier assistant messages sent to the model while the stored reply keeps it.
+
 ## 1.0.38 Release Scope
 
 - On OpenCode 2 the footer line steps down with the terminal width, the status card shows the OpenCode Go plan windows, and automatic-handoff notices reach the screen through `.litopencode/notices.jsonl`.
