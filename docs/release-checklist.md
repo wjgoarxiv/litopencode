@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.40 Release Scope
+
+- OpenCode 2: the `context` hook skips the reader contract when an `event.system` entry already holds it; rules and the output style still attach. Dependency hygiene: minimatch override to 11.0.4, zod 4.6.7, yaml 2.9.1, `@opencode-ai/plugin` 1.19.5.
+
 ## 1.0.39 Release Scope
 
 - OpenCode 1: the static rules block is injected byte-identically on every call (dynamic rules keep their session dedup), the reader contract is not appended when the agent prompt already holds it, and `experimental.chat.messages.transform` strips the leading reply mark from earlier assistant messages sent to the model while the stored reply keeps it.

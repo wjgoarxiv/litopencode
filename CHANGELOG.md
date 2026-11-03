@@ -5,6 +5,9 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.40 - 2026-11-04
+
+- On OpenCode 2 the reader contract is no longer sent twice when the agent prompt already carries it. Each request is about 710 tokens smaller, and the cached share of input rises from about 91% to about 96%.
 - Dependency alerts cleared: minimatch is held at 11.0.4 across the development tree, and zod 4.6.7, yaml 2.9.1 and the OpenCode plugin types 1.19.5 are picked up.
 
 ## 1.0.39 - 2026-11-03
