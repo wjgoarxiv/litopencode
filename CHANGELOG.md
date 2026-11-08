@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.41 - 2026-11-09
+
 - TypeScript language-server install hints pin `typescript@6`. TypeScript 7 ships no `lib/tsserver.js`, which typescript-language-server loads.
 
 ## 1.0.40 - 2026-11-04

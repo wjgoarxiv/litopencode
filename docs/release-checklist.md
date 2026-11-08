@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.41 Release Scope
+
+- TypeScript language-server install hint in `skills/lsp-setup/references/typescript.md` pins `typescript@6` (TypeScript 7 ships no `lib/tsserver.js`); `test/lsp-setup-server-catalog.test.mjs` guards it.
+
 ## 1.0.40 Release Scope
 
 - OpenCode 2: the `context` hook skips the reader contract when an `event.system` entry already holds it; rules and the output style still attach. Dependency hygiene: minimatch override to 11.0.4, zod 4.6.7, yaml 2.9.1, `@opencode-ai/plugin` 1.19.5.
