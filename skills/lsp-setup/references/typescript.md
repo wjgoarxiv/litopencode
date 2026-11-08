@@ -7,12 +7,12 @@
 ## Install
 
 ```bash
-npm install -g typescript-language-server typescript
+npm install -g typescript-language-server typescript@6
 command -v typescript-language-server
 ```
 
 Both packages are needed: the server is a thin protocol wrapper around `tsserver`, which ships in
-`typescript`.
+`typescript`. TypeScript 7 ships no lib/tsserver.js, which typescript-language-server loads.
 
 ## Alternatives
 

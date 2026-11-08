@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- TypeScript language-server install hints pin `typescript@6`. TypeScript 7 ships no `lib/tsserver.js`, which typescript-language-server loads.
+
 ## 1.0.40 - 2026-11-04
 
 - On OpenCode 2 the reader contract is no longer sent twice when the agent prompt already carries it. Each request is about 710 tokens smaller, and the cached share of input rises from about 91% to about 96%.

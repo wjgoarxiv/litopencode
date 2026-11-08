@@ -37,6 +37,19 @@ test("every catalog entry names a server command and an extension set", () => {
   }
 });
 
+test("the typescript install hint stays on typescript@6", () => {
+  const body = fs.readFileSync(path.join(referencesDir, "typescript.md"), "utf8");
+  const commands = [...body.matchAll(/^npm install -g typescript-language-server typescript(@6)?$/gm)];
+  assert.deepEqual(
+    commands.map((match) => match[1] ?? ""),
+    ["@6"],
+  );
+  assert.deepEqual(
+    body.match(/TypeScript 7 ships no lib\/tsserver\.js, which typescript-language-server loads/g),
+    ["TypeScript 7 ships no lib/tsserver.js, which typescript-language-server loads"],
+  );
+});
+
 test("the catalog does not smuggle behavior config into host routing", () => {
   for (const language of languages) {
     const body = fs.readFileSync(path.join(referencesDir, `${language}.md`), "utf8");
