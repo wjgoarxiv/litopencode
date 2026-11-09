@@ -102,7 +102,7 @@ function shadowSkillCandidateRoots(homeDir: string, workDir: string): readonly S
   ];
 }
 
-async function statIfPresent(filePath: string): Promise<Awaited<ReturnType<typeof fs.stat>> | null> {
+async function statIfPresent(filePath: string): Promise<import("node:fs").Stats | null> {
   try {
     return await fs.stat(filePath);
   } catch (error) {
