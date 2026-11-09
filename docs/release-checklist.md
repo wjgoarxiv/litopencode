@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.42 Release Scope
+
+- Dependency refresh only: TypeScript 7.0.2 (`"types": ["node"]` in `tsconfig.json`), @types/node 26.6.6 (`statIfPresent` typed as `fs.Stats`), picomatch 4.0.7, and checkout v7.0.1 / setup-node v7.1.0 in `ci.yml`. No runtime change.
+
 ## 1.0.41 Release Scope
 
 - TypeScript language-server install hint in `skills/lsp-setup/references/typescript.md` pins `typescript@6` (TypeScript 7 ships no `lib/tsserver.js`); `test/lsp-setup-server-catalog.test.mjs` guards it.

@@ -5,6 +5,10 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.42 - 2026-11-10
+
+- Development dependencies move to TypeScript 7 and @types/node 26, and CI uses actions/checkout 7 and actions/setup-node 7. The installed plugin behaves the same.
+
 ## 1.0.41 - 2026-11-09
 
 - TypeScript language-server install hints pin `typescript@6`. TypeScript 7 ships no `lib/tsserver.js`, which typescript-language-server loads.
