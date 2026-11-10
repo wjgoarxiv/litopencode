@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+## 1.0.43 - 2026-11-11
+
 - `lit adhd` now opens with a KPI board: the one thing to do now and exactly what to type, four counts (done, in progress, waiting on you, left) with an overall bar, milestones with their own bars, what was done lately, what is still to do, and up to five reminders shaped "thing → what to do" (a session waiting on you, lanes still working, uncommitted changes, unpushed commits, plans untouched for a week, the handoff's next item). The collector computes every figure and writes the board in Korean with `--lang ko`. The per-session cards are still there with `lit adhd detail` or `lit adhd 자세히`, under the board.
 - Typing `lit cancel` (or `lit 취소`) as the whole message ends the project's start-work run from any window, including one opened in a nested folder or a linked worktree, with no JSON to paste. The session that owned the run is told on its next message.
 - A step outside the run's grants no longer stops the run. It is parked (up to 16), the run keeps working on the rest, and a run with nothing else left ends its turn with one list. `lit approve` grants every parked step and `lit deny` refuses them; both are optional, and `lit deny` no longer ends the run. A run with parked steps cannot be marked complete until the queue is empty.

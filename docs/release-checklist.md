@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.43 Release Scope
+
+- start-work: typed `lit cancel` / `lit 취소` from any session or linked worktree (`src/run-paths.ts`), out-of-grant steps parked (up to 16) with `lit approve` / `lit deny`, secret and settings files refused for the run (`src/run-path-guard.ts`), legacy paused records opened as an active run with that step parked, and a progress fence read when it shares its text part with the ignition block. lit-adhd: the KPI board computed by `skills/lit-adhd/scripts/rewind.mjs` (`--lang ko`), with the per-session cards under `lit adhd detail`.
+
 ## 1.0.42 Release Scope
 
 - Dependency refresh only: TypeScript 7.0.2 (`"types": ["node"]` in `tsconfig.json`), @types/node 26.6.6 (`statIfPresent` typed as `fs.Stats`), picomatch 4.0.7, and checkout v7.0.1 / setup-node v7.1.0 in `ci.yml`. No runtime change.
