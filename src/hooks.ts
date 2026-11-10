@@ -12,6 +12,7 @@ import {
 } from "./tool-guards.ts";
 import { captureKnowledgeEvent } from "./knowledge.ts";
 import { recordMotionImageRead } from "./motion-image-reads.ts";
+import { createRunPathGuard } from "./run-path-guard.ts";
 import { markLiveness } from "./session-liveness.ts";
 
 type ToolExecuteBeforeHook = NonNullable<Hooks["tool.execute.before"]>;
@@ -20,12 +21,24 @@ type ToolExecuteAfterHook = NonNullable<Hooks["tool.execute.after"]>;
 export type ToolExecuteHookOptions = {
   readonly getSession?: SessionLookup;
   readonly deliverableHedgeGuard?: DeliverableHedgeGuardState;
+  /** With a project root, protected files are refused while a start-work run is live. */
+  readonly projectRoot?: string;
+  /** The host launch directory a relative tool path resolves against. */
+  readonly baseDirectory?: string;
 };
 
 export function createToolExecuteBeforeHook(options: ToolExecuteHookOptions = {}): ToolExecuteBeforeHook {
+  const runPathGuard = options.projectRoot === undefined
+    ? undefined
+    : createRunPathGuard({
+        projectRoot: options.projectRoot,
+        ...(options.baseDirectory === undefined ? {} : { baseDirectory: options.baseDirectory }),
+        ...(options.getSession === undefined ? {} : { getSession: options.getSession })
+      });
   return async (input, output) => {
     await applyTaskRecursionGuard(input, options.getSession);
     applyLitOpenCodeToolBeforeHook(input, output);
+    await runPathGuard?.before(input, output.args ?? (input as { args?: unknown }).args);
     // OpenCode sends the tool arguments only in output.args before a call.
     await options.deliverableHedgeGuard?.before({ ...input, args: output.args ?? (input as { args?: unknown }).args });
   };

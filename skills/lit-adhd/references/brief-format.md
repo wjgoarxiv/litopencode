@@ -1,8 +1,48 @@
 # Brief format
 
-The collector's `--brief` output is the only format; paste it as printed. This file lists every rule behind it so a change to the collector can be checked against them.
+The collector's `--brief` output is the only format; show it as printed. By default it is the KPI board; with `--detail` the per-session detail follows the board. This file lists every rule behind both so a change to the collector can be checked against them.
 
-## Layout, top to bottom
+## The board, top to bottom
+
+Markdown, labels in the language `--lang` names (`en` by default, `ko` for Korean). Six sections under `##` headings, always in this order, one blank line between them.
+
+1. `## 🎯 Do this now` (`지금 할 일`): one line `**<action>** — <reason>`, then `👉 Type: <exact text>` (`입력`) or, while lanes work, `👉 Wait: until "<lane>" finishes` (`기다리기: "<lane>" 끝날 때까지`). The text to type is `` `go` `` only when the next-step record was written for this session; otherwise the command the step needs (`` `lit approve` or `lit deny` ``, `` `lit continue` ``, `` `start-work` ``) or where to act (`open that session and reply there`). A HANDOFF item says `` tell me to start it; `go` does not run it ``.
+2. `## 📊 At a glance` (`한눈에 보기`): a centred four-column table `✅ Done | 🔄 In progress | ⏳ Waiting on you | ⬜ Left` with one row of counts, a blank line, then `Overall  <bar>` (`전체 진행`). With no checklist row anywhere the line reads `Overall  no checklist on record yet`.
+3. `## 🏁 Milestones` (`마일스톤`): a table `Milestone | Status | Progress | Last move`. Status is one of `✅ Done`, `🔄 In progress`, `⏳ Waiting on you`, `⬜ Not started` (`끝남`, `진행 중`, `나를 기다림`, `시작 전`). Last move is relative: `just now`, `25m ago`, `3h ago`, `2d ago` (`방금`, `25분 전`, `3시간 전`, `2일 전`). Four rows at most; with more, three rows and a last row `| …and N more | | | |`. Empty: `No open plan or goal`.
+4. `## ✅ Done lately` (`최근 끝낸 일`): a bullet list, newest first, five at most. Empty: `Nothing finished lately`.
+5. `## ⬜ Still to do` (`남은 일`): a numbered list, seven at most, then `…and N more` (`…외 N개`). Empty: `Nothing left`.
+6. `## 🔔 Don't forget` (`잊지 말 것`): five bullets at most, each `- <icon> <thing> → <what to do>`. Empty: `Nothing to remember`.
+
+### How the board counts
+
+- Items are the checklist rows of every plan in the seven-day window, in every worktree of the family, plus the active goal's criteria, plus one item per session question or herdr agent waiting on the user. A start-work boundary does not add an item: its plan's current row is the waiting item.
+- A milestone is done when every row is ticked; waiting when its start-work run is paused at a boundary; in progress when its run is active or at least one row is ticked; otherwise not started. Its first open row is counted in progress (or waiting); its other open rows are left.
+- `Overall` is done items over all items. Bars are ten cells, `█` filled and `░` empty, the filled count rounded from the share, then `k/n (p%)` with the percentage rounded. `--ascii` draws `#` and `-`. A bar exists only for a real total.
+- Done lately: ticked rows (the most recently changed plan first, its later rows first), a completed start-work run in the window (`start-work finished: <plan title>`), passed goal criteria. A row's own numbering (`3.`) is dropped.
+- Still to do: open rows of the plan the active or paused run drives, then this worktree's plans by last change, then other worktrees', then open goal criteria.
+
+### Reminders, most urgent first
+
+| Icon | Reminder | Record behind it |
+| --- | --- | --- |
+| ⏳ | `"<goal>" asks you a question → open that session and answer it`; `"<goal>" waits for approval of <action on dir> → type lit approve or lit deny`; `the agent in pane <id> waits on you → answer it in that pane` | A running `question` tool part, a paused run with a pending boundary, a blocked herdr agent. |
+| 🏃 | `<n> lanes still working → don't type go until they finish` | Other working sessions of the family and herdr agents at work, counted once each. |
+| 💾 | `<n> uncommitted changes (<worktree>) → review them, then commit or discard` | `git status --porcelain` lines. |
+| ⬆️ | `<n> commits not pushed (<worktree>) → push when you are ready` | `git rev-list --count @{upstream}..HEAD`; nothing without an upstream. |
+| 🕰️ | `Plan untouched for <n> days: <title> → decide whether to resume or drop it` | An open plan whose file has not changed for seven days; the two most recent at most. |
+| 📌 | `HANDOFF.md next: <item> → start it when you are ready` | This worktree's newest open `Next` item, unless it is already the step. |
+
+### What the board never shows
+
+Session ids, commit hashes, raw status words (`waits-on-you`, `idle`, `ended`), plan file paths and other internal paths. A plan is named by its `#` heading. A worktree is named by its folder name only where the reader must open it.
+
+### Size
+
+About forty lines; the fullest case, every list overflowing, is 42. Every line fits in 120 cells.
+
+## The per-session detail, top to bottom (`--detail` only)
+
+Printed under the board after a rule and `## 🔎 Session detail` (`세션 자세히`).
 
 The brief is Markdown, so OpenCode's chat draws it with the theme's colours.
 
@@ -43,4 +83,4 @@ Each string passes `redact()` and then `clip()`: the goal is at most 160 charact
 
 ## What the model adds
 
-Nothing inside the brief. After it, the model says in one line which step the box recommends and whether `go` is armed.
+Nothing inside the board or the detail. After them, at most one short line when it helps; the board's own `Do this now` line already names the step and what to type.

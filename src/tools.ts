@@ -199,7 +199,7 @@ export const startWorkTool = tool({
         }
         const lifecycleLine = lifecycle === undefined
           ? "schema 3 bounded-authority: no work initialized"
-          : `schema 3 bounded-authority: ${lifecycle.status}; revision ${lifecycle.revision}; work ${lifecycle.workId}`;
+          : `schema 3 bounded-authority: ${lifecycle.status}; revision ${lifecycle.revision}; work ${lifecycle.workId}${lifecycle.parkedBoundaries.length > 0 ? `; ${lifecycle.parkedBoundaries.length} parked` : ""}`;
         return {
           title: "LitOpenCode start-work status",
           output: `${lifecycleLine}\n${summarizeEventTypes(lenient.events)}${formatLenientDiagnostic(lenient)}`,

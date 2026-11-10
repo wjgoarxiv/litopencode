@@ -282,7 +282,7 @@ function handoffNextOf(text) {
 }
 
 export function readLocalState(dir) {
-  const state = { plans: [], plansSkipped: 0, goal: undefined, work: undefined, stacks: new Map(), liveness: new Map(), handoff: [], handoffNext: undefined, commits: [] };
+  const state = { plans: [], plansSkipped: 0, goal: undefined, goalChangedMs: 0, work: undefined, stacks: new Map(), liveness: new Map(), handoff: [], handoffNext: undefined, commits: [], dirty: 0, ahead: undefined };
   const litLoop = join(dir, ".litopencode", "litgoal", "lit-loop");
   const skippedBefore = budget.skipped;
   for (const planDir of [join(dir, "plans"), join(dir, ".litopencode", "plans")]) {
@@ -308,6 +308,11 @@ export function readLocalState(dir) {
   }
   state.plansSkipped = budget.skipped - skippedBefore;
   state.goal = goalOf(readJson(join(litLoop, "goals.json")));
+  try {
+    state.goalChangedMs = lstatSync(join(litLoop, "goals.json")).mtimeMs;
+  } catch {
+    // no goal file
+  }
   const work = readJson(join(litLoop, "work-schema-3.json"));
   if (isRecord(work) && work.schemaVersion === 3) {
     const planPath = isRecord(work.plan) ? str(work.plan.path) : "";
@@ -318,6 +323,8 @@ export function readLocalState(dir) {
       plan: planPath === "" ? "" : !isAbsolute(planPath) ? planPath : relative(dir, planPath).startsWith("..") ? basename(planPath) : relative(dir, planPath),
       updatedMs: Date.parse(str(work.updatedAt)),
       boundary: isRecord(work.pendingBoundary) ? `${str(work.pendingBoundary.action)} on ${basename(str(work.pendingBoundary.root))}` : undefined,
+      // Steps the run parked while it keeps working; a count only, never a reason to wait.
+      parked: Array.isArray(work.parkedBoundaries) ? work.parkedBoundaries.filter(isRecord).length : 0,
     };
   }
   // Each session's last lifecycle signal (alive, idle, ended), written by the plugin's hooks.
@@ -369,6 +376,11 @@ export function readLocalState(dir) {
       const [at, ...subject] = line.split("\t");
       return { at, subject: clean(subject.join("\t"), 90) };
     });
+  // For the board's reminders: changed or untracked paths, and commits the upstream does not have yet. A
+  // branch without an upstream gives no count, so no reminder is made up for it.
+  state.dirty = git(dir, ["status", "--porcelain"]).split("\n").filter(Boolean).length;
+  const ahead = git(dir, ["rev-list", "--count", "@{upstream}..HEAD"]).trim();
+  state.ahead = /^\d+$/u.test(ahead) ? Number(ahead) : undefined;
   return state;
 }
 
@@ -619,6 +631,7 @@ export function buildCard({ row, detail, local, lanes, now, self = false }) {
     },
     updated: new Date(row.updated).toISOString(),
     boundary: local.work?.sessionID === row.id && local.work.boundary ? clean(local.work.boundary, 80) : undefined,
+    parked: local.work?.sessionID === row.id && local.work.parked > 0 ? local.work.parked : undefined,
     ...(local.liveness?.get(row.id)?.pane ? { pane: local.liveness.get(row.id).pane } : {}),
   };
 }
@@ -665,27 +678,33 @@ export function readHerdrLanes(dirs, env = process.env) {
   return { state: "read", agents };
 }
 
+/** Other working sessions here and herdr agents beside this one; a lane seen both ways counts once. */
+export function laneCount({ groups, sessionID, herdr = [] }) {
+  const cards = groups.flatMap((group) => group.sessions.map((card) => ({ card, group })));
+  const working = cards.filter(({ card }) => card.status === "working" && card.id !== sessionID);
+  const seen = new Set(working.flatMap(({ card }) => [card.id, card.pane].filter(Boolean)));
+  const agents = herdr.filter((agent) => agent.session === "" || (agent.session !== sessionID && !seen.has(agent.session))).filter((agent) => !seen.has(agent.pane));
+  return { working, agents, lanes: working.length + agents.length };
+}
+
 export function recommend({ groups, sessionID, herdr = [] }) {
   const cards = groups.flatMap((group) => group.sessions.map((card) => ({ card, group })));
   const waiting = cards.find(({ card }) => card.status === "waits-on-you");
   if (waiting) {
     const where = waiting.card.boundary ? `approve or deny ${waiting.card.boundary}` : "answer the open question";
-    return { kind: "answer", sessionID: waiting.card.id, text: `In "${clip(waiting.card.goal, 50)}", ${where}.` };
+    return { kind: "answer", sessionID: waiting.card.id, text: `In "${clip(waiting.card.goal, 50)}", ${where}.`, say: { goal: waiting.card.goal, boundary: waiting.card.boundary, own: waiting.card.id === sessionID } };
   }
   const blocked = cards.find(({ card }) => card.status === "blocked");
-  if (blocked) return { kind: "session", sessionID: blocked.card.id, text: `Open "${clip(blocked.card.goal, 50)}": its last step failed and nothing has run since.` };
+  if (blocked) return { kind: "session", sessionID: blocked.card.id, text: `Open "${clip(blocked.card.goal, 50)}": its last step failed and nothing has run since.`, say: { reason: "blocked", goal: blocked.card.goal } };
   // Lanes: other sessions at work here, and herdr agents beside this one; one seen both ways counts once.
   // They are counted before anything that resumes work here: while a lane runs, this session's own paused
   // frame and its own run are held, and only an approval (above) stays the user's call.
-  const working = cards.filter(({ card }) => card.status === "working" && card.id !== sessionID);
-  const seen = new Set(working.flatMap(({ card }) => [card.id, card.pane].filter(Boolean)));
-  const agents = herdr.filter((agent) => agent.session === "" || (agent.session !== sessionID && !seen.has(agent.session))).filter((agent) => !seen.has(agent.pane));
-  const lanes = working.length + agents.length;
+  const { working, agents, lanes } = laneCount({ groups, sessionID, herdr });
   const paused = cards.find(({ card }) => card.status === "paused" && !(lanes > 0 && card.id === sessionID));
   if (paused) {
     return paused.card.id === sessionID
-      ? { kind: "continue", sessionID, text: `Return to the paused discipline in "${clip(paused.card.goal, 50)}" where it stopped.` }
-      : { kind: "session", sessionID: paused.card.id, text: `Open "${clip(paused.card.goal, 50)}" and say lit continue.` };
+      ? { kind: "continue", sessionID, text: `Return to the paused discipline in "${clip(paused.card.goal, 50)}" where it stopped.`, say: { goal: paused.card.goal } }
+      : { kind: "session", sessionID: paused.card.id, text: `Open "${clip(paused.card.goal, 50)}" and say lit continue.`, say: { reason: "paused", goal: paused.card.goal } };
   }
   if (lanes > 0) {
     const plural = `${lanes} lane${lanes === 1 ? "" : "s"}`;
@@ -696,28 +715,29 @@ export function recommend({ groups, sessionID, herdr = [] }) {
     const text = waiting
       ? `A lane waits on you: answer the one waiting on you in pane ${waiting.pane}, then wait for ${plural} to finish before starting more.`
       : `Wait for ${plural} to finish before starting more: ${what}.`;
-    return { kind: "lanes", sessionID: first?.card.id ?? sessionID, lanes, text, short: waiting ? `answer pane ${waiting.pane}, then wait for ${plural}` : `wait for ${plural} to finish` };
+    const lane = first ? first.card.goal : agents[0].title || `pane ${agents[0].pane}`;
+    return { kind: "lanes", sessionID: first?.card.id ?? sessionID, lanes, text, short: waiting ? `answer pane ${waiting.pane}, then wait for ${plural}` : `wait for ${plural} to finish`, say: { lane, lanes, pane: waiting?.pane } };
   }
   const run = groups.find((group) => group.work?.status === "active");
-  if (sessionID !== undefined && run?.work.sessionID === sessionID) return { kind: "work", sessionID, text: "Keep the running start-work run going from its checked plan." };
+  if (sessionID !== undefined && run?.work.sessionID === sessionID) return { kind: "work", sessionID, text: "Keep the running start-work run going from its checked plan.", say: {} };
   // Another session's active run is followed from that session, never started again here.
-  if (run) return { kind: "session", sessionID: run.work.sessionID || undefined, text: `start-work on ${run.work.plan || "its plan"} is running in another session; open that session to follow it.` };
+  if (run) return { kind: "session", sessionID: run.work.sessionID || undefined, text: `start-work on ${run.work.plan || "its plan"} is running in another session; open that session to follow it.`, say: { reason: "run-elsewhere", plan: run.plans.find((plan) => run.work.plan.endsWith(plan.path))?.title || basename(run.work.plan || "its plan") } };
   const here = groups.find((group) => group.current);
   const open = here?.plans.filter((plan) => plan.done < plan.total) ?? [];
-  if (open.length === 1) return { kind: "plan", sessionID, target: open[0].path, text: `Start work on ${open[0].path}: ${open[0].total - open[0].done} step${open[0].total - open[0].done === 1 ? "" : "s"} left.` };
+  if (open.length === 1) return { kind: "plan", sessionID, target: open[0].path, text: `Start work on ${open[0].path}: ${open[0].total - open[0].done} step${open[0].total - open[0].done === 1 ? "" : "s"} left.`, say: { plan: open[0].title, left: open[0].total - open[0].done } };
   // With nothing for go to run here, this worktree's own HANDOFF.md Next item comes before older sessions.
-  if (here?.handoffNext) return { kind: "handoff", sessionID, text: `From HANDOFF.md: ${clip(here.handoffNext, 100)}`, short: clip(here.handoffNext, 60) };
+  if (here?.handoffNext) return { kind: "handoff", sessionID, text: `From HANDOFF.md: ${clip(here.handoffNext, 100)}`, short: clip(here.handoffNext, 60), say: { item: here.handoffNext } };
   const unfinished = cards.find(({ card }) => card.status === "idle" && card.next);
-  if (unfinished) return { kind: "session", sessionID: unfinished.card.id, text: `Pick up "${clip(unfinished.card.goal, 50)}": next is ${clip(unfinished.card.next, 60)}.` };
+  if (unfinished) return { kind: "session", sessionID: unfinished.card.id, text: `Pick up "${clip(unfinished.card.goal, 50)}": next is ${clip(unfinished.card.next, 60)}.`, say: { reason: "unfinished", goal: unfinished.card.goal, next: unfinished.card.next } };
   // Nothing can run on go, so the box still names a real step from the records: an open plan in another
   // worktree, else the most recent session that stopped, else what to do with an empty window.
   for (const group of groups.filter((entry) => !entry.current)) {
     const elsewhere = group.plans.filter((plan) => plan.done < plan.total);
-    if (elsewhere.length === 1 && elsewhere[0].next) return { kind: "suggest", sessionID, text: `Next in ${group.worktree}/${elsewhere[0].path}: ${clip(elsewhere[0].next, 60)}.`, short: `${clip(elsewhere[0].next, 40)} (${group.worktree})` };
+    if (elsewhere.length === 1 && elsewhere[0].next) return { kind: "suggest", sessionID, text: `Next in ${group.worktree}/${elsewhere[0].path}: ${clip(elsewhere[0].next, 60)}.`, short: `${clip(elsewhere[0].next, 40)} (${group.worktree})`, say: { item: elsewhere[0].next, worktree: group.worktree } };
   }
   const stopped = cards.find(({ card }) => card.id !== sessionID && (card.status === "idle" || card.status === "done"));
-  if (stopped) return { kind: "session", sessionID: stopped.card.id, text: `Pick up "${clip(stopped.card.goal, 50)}" in ${stopped.group.worktree}${stopped.card.status === "done" ? ": it finished; check the result" : ""}.` };
-  return { kind: "none", sessionID, text: "No earlier session or open plan here: say what to start." };
+  if (stopped) return { kind: "session", sessionID: stopped.card.id, text: `Pick up "${clip(stopped.card.goal, 50)}" in ${stopped.group.worktree}${stopped.card.status === "done" ? ": it finished; check the result" : ""}.`, say: { reason: stopped.card.status === "done" ? "finished" : "stopped", goal: stopped.card.goal, worktree: stopped.group.worktree } };
+  return { kind: "none", sessionID, text: "No earlier session or open plan here: say what to start.", say: {} };
 }
 
 export function writeNext(root, record) {
@@ -749,6 +769,8 @@ export async function collect(options = {}) {
   const locals = family.map((entry) => {
     const dir = resolve(entry.dir);
     const local = readLocalState(dir);
+    // An open plan outside the window is history for the roadmap, and one reminder line on the board.
+    local.stale = local.plans.filter((plan) => !plan.complete && now - plan.changedMs > PLAN_WINDOW_MS);
     local.plans = local.plans.filter((plan) => now - plan.changedMs <= PLAN_WINDOW_MS);
     return { entry, dir, local };
   });
@@ -804,6 +826,7 @@ export async function collect(options = {}) {
     const record = { kind: "elsewhere", target: clip(report.recommended.text, 300), at: now, sessionID: options.session };
     if (writeNext(root, record)) report.nextRecord = { kind: "elsewhere", target: record.target };
   }
+  report.board = buildBoard({ report, locals, root, sessionID: options.session, herdr: herdr.agents, now });
   return report;
 }
 
@@ -856,7 +879,7 @@ function wrapCells(text, width, most = 3) {
 function cardLines(card, now, sessionID, ascii) {
   const [emoji, plainMark, word] = BADGE[card.status] ?? BADGE.idle;
   const ago = agoOf(card.updated, now);
-  const head = `${ascii ? `[${plainMark}]` : emoji} **${word}** · ${code(shortId(card.id))}${ago ? ` · ${ago}` : ""}${card.id === sessionID ? " · this session" : ""}${card.boundary ? ` · waits for approval of ${md(card.boundary)}` : ""}`;
+  const head = `${ascii ? `[${plainMark}]` : emoji} **${word}** · ${code(shortId(card.id))}${ago ? ` · ${ago}` : ""}${card.id === sessionID ? " · this session" : ""}${card.boundary ? ` · waits for approval of ${md(card.boundary)}` : ""}${card.parked ? ` · ${card.parked} parked (lit approve optional)` : ""}`;
   const lines = [head, `**${md(cutCells(card.goal, 100))}**`];
   const bar = card.counts ? gauge(card.counts.done, card.counts.total, { ascii }) : undefined;
   const hourglass = ascii ? "~" : "⏳";
@@ -910,7 +933,7 @@ function openerLines(report, sessionID, runsHere) {
   return [`**Done so far:** ${cutCells(done, 100)}  `, `**Doing now:** ${doing}  `, `**Next:** ${step}${runsHere ? " (type `go`)" : ""}`];
 }
 
-export function renderBrief(report, { ascii = false, width = 72, sessionID } = {}) {
+export function renderDetail(report, { ascii = false, width = 72, sessionID } = {}) {
   const glyph = (fancy, plain) => (ascii ? plain : fancy);
   const now = Date.parse(report.generatedAt) || Date.now();
   const runsHere = Boolean(report.nextRecord && report.nextRecord.kind !== "elsewhere");
@@ -954,6 +977,231 @@ export function renderBrief(report, { ascii = false, width = 72, sessionID } = {
 }
 
 // ---------------------------------------------------------------------------------------------
+// The KPI board, the default brief: the one step to take now and what to type, four bucket counts and an
+// overall bar, milestones, what was done lately, what is left, and action-shaped reminders. Every figure is
+// computed here from the records above; the model shows the text as given.
+
+const BOARD_DONE = 5;
+const BOARD_LEFT = 7;
+const BOARD_MILESTONES = 4;
+const BOARD_REMINDERS = 5;
+const BOARD_STALE = 2;
+const BUCKETS = ["waiting", "active", "todo", "done"];
+
+/** Ten cells of █ and ░ (or # and - under --ascii), then `k/n (p%)`; nothing without a real total. */
+export function kpiBar(done, total, { ascii = false, cells = 10 } = {}) {
+  if (!isRealCount(done, total)) return undefined;
+  const filled = Math.min(cells, Math.round((done / total) * cells));
+  return `${(ascii ? "#" : "█").repeat(filled)}${(ascii ? "-" : "░").repeat(cells - filled)} ${done}/${total} (${Math.round((done / total) * 100)}%)`;
+}
+
+// A checklist row as a plain sentence: its own numbering goes, the list numbers it again.
+const plainRow = (title) => clean(String(title).replace(/^\d+[.)]\s+/u, ""), 90);
+
+export function buildBoard({ report, locals, root, sessionID, herdr = [], now }) {
+  const tiles = { done: 0, active: 0, waiting: 0, left: 0 };
+  const milestones = [];
+  const doneItems = [];
+  const leftItems = [];
+  const counted = new Set();
+  const ordered = [...locals].sort((a, b) => Number(b.dir === root) - Number(a.dir === root));
+  for (const { dir, local } of ordered) {
+    const current = dir === root;
+    const worktree = current ? undefined : clean(basename(dir), 60);
+    const run = local.work;
+    for (const plan of [...local.plans].sort((a, b) => b.changedMs - a.changedMs)) {
+      const ofRun = run !== undefined && run.planPath !== "" && run.planPath.endsWith(plan.path);
+      const bucket = plan.complete ? "done" : ofRun && run.status === "paused" && run.boundary ? "waiting" : (ofRun && run.status === "active") || plan.done > 0 ? "active" : "todo";
+      if (bucket === "waiting") counted.add(run.sessionID);
+      milestones.push({ title: clean(plan.title, 80), ...(worktree ? { worktree } : {}), bucket, done: plan.done, total: plan.total, changedMs: plan.changedMs, first: ofRun && run.status !== "completed" });
+      plan.rows.forEach((row, index) => {
+        if (row.done) doneItems.push({ text: plainRow(row.title), at: plan.changedMs, index });
+      });
+      const open = plan.rows.filter((row) => !row.done).map((row) => plainRow(row.title));
+      leftItems.push({ first: ofRun && run.status !== "completed", current, at: plan.changedMs, rows: open });
+      tiles.done += plan.done;
+      if (bucket === "waiting") tiles.waiting += 1;
+      if (bucket === "active") tiles.active += 1;
+      tiles.left += open.length - (bucket === "waiting" || bucket === "active" ? 1 : 0);
+    }
+    if (run?.status === "completed" && run.plan !== "" && now - run.updatedMs <= PLAN_WINDOW_MS) {
+      const plan = local.plans.find((entry) => run.planPath.endsWith(entry.path));
+      doneItems.push({ text: clean(`start-work finished: ${plan?.title ?? basename(run.plan)}`, 90), at: run.updatedMs, index: Number.MAX_SAFE_INTEGER });
+    }
+    const goal = local.goal;
+    if (goal && goal.total > 0) {
+      const bucket = goal.done === goal.total ? "done" : goal.done > 0 ? "active" : "todo";
+      milestones.push({ title: clean(goal.title || "Goal", 80), ...(worktree ? { worktree } : {}), bucket, done: goal.done, total: goal.total, changedMs: local.goalChangedMs, first: false });
+      goal.closed.forEach((text, index) => doneItems.push({ text: clean(text, 90), at: local.goalChangedMs, index }));
+      leftItems.push({ first: false, current, at: local.goalChangedMs, rows: goal.open.map((text) => clean(text, 90)) });
+      tiles.done += goal.done;
+      if (bucket === "active") tiles.active += 1;
+      tiles.left += goal.total - goal.done - (bucket === "active" ? 1 : 0);
+    }
+  }
+  const cards = report.groups.flatMap((group) => group.sessions);
+  const waitingCards = cards.filter((card) => card.status === "waits-on-you");
+  const blockedAgents = herdr.filter((agent) => agent.status === "blocked" && agent.session !== sessionID);
+  tiles.waiting += waitingCards.filter((card) => !counted.has(card.id)).length + blockedAgents.length;
+
+  const reminders = [];
+  for (const card of waitingCards) reminders.push({ kind: "waiting", goal: clip(card.goal, 40), ...(card.boundary ? { boundary: card.boundary, own: card.id === sessionID } : {}) });
+  for (const agent of blockedAgents) reminders.push({ kind: "waiting", pane: agent.pane });
+  const { lanes } = laneCount({ groups: report.groups, sessionID, herdr });
+  if (lanes > 0) reminders.push({ kind: "lanes", count: lanes });
+  for (const { dir, local } of ordered) if (local.dirty > 0) reminders.push({ kind: "uncommitted", count: local.dirty, worktree: clean(basename(dir), 40) });
+  for (const { dir, local } of ordered) if (local.ahead > 0) reminders.push({ kind: "unpushed", count: local.ahead, worktree: clean(basename(dir), 40) });
+  const stale = ordered.flatMap(({ local }) => local.stale ?? []).sort((a, b) => b.changedMs - a.changedMs).slice(0, BOARD_STALE);
+  for (const plan of stale) reminders.push({ kind: "stale", days: Math.floor((now - plan.changedMs) / (24 * 60 * 60_000)), title: clip(clean(plan.title, 80), 50) });
+  const here = report.groups.find((group) => group.current);
+  if (here?.handoffNext && report.recommended.kind !== "handoff") reminders.push({ kind: "handoff", item: clip(here.handoffNext, 60) });
+
+  milestones.sort((a, b) => Number(b.first) - Number(a.first) || BUCKETS.indexOf(a.bucket) - BUCKETS.indexOf(b.bucket) || b.changedMs - a.changedMs);
+  doneItems.sort((a, b) => b.at - a.at || b.index - a.index);
+  const left = leftItems.sort((a, b) => Number(b.first) - Number(a.first) || Number(b.current) - Number(a.current) || b.at - a.at).flatMap((entry) => entry.rows);
+  return {
+    now: { kind: report.recommended.kind, ...(report.recommended.say ?? {}), armed: Boolean(report.nextRecord && report.nextRecord.kind !== "elsewhere") },
+    tiles,
+    overall: { done: tiles.done, total: tiles.done + tiles.active + tiles.waiting + tiles.left },
+    milestones: milestones.map(({ first, ...rest }) => rest),
+    doneLately: doneItems.slice(0, BOARD_DONE).map((item) => item.text),
+    doneMore: Math.max(0, doneItems.length - BOARD_DONE),
+    remaining: left.slice(0, BOARD_LEFT),
+    remainingMore: Math.max(0, left.length - BOARD_LEFT),
+    reminders: reminders.slice(0, BOARD_REMINDERS),
+  };
+}
+
+const LABELS = {
+  en: {
+    now: "Do this now", glance: "At a glance", milestones: "Milestones", done: "Done lately", left: "Still to do", forget: "Don't forget",
+    type: "Type", wait: "Wait", tiles: ["Done", "In progress", "Waiting on you", "Left"], overall: "Overall", noOverall: "no checklist on record yet",
+    columns: ["Milestone", "Status", "Progress", "Last move"], status: { done: "Done", active: "In progress", waiting: "Waiting on you", todo: "Not started" },
+    empty: { milestones: "No open plan or goal", done: "Nothing finished lately", left: "Nothing left", forget: "Nothing to remember" },
+    more: (n) => `…and ${n} more`, detail: "Session detail",
+    ago: (minutes) => (minutes < 1 ? "just now" : minutes < 60 ? `${minutes}m ago` : minutes < 1440 ? `${Math.floor(minutes / 60)}h ago` : `${Math.floor(minutes / 1440)}d ago`),
+  },
+  ko: {
+    now: "지금 할 일", glance: "한눈에 보기", milestones: "마일스톤", done: "최근 끝낸 일", left: "남은 일", forget: "잊지 말 것",
+    type: "입력", wait: "기다리기", tiles: ["끝남", "진행 중", "나를 기다림", "남음"], overall: "전체 진행", noOverall: "아직 기록된 체크리스트가 없어요",
+    columns: ["마일스톤", "상태", "진행", "최근"], status: { done: "끝남", active: "진행 중", waiting: "나를 기다림", todo: "시작 전" },
+    empty: { milestones: "열린 계획이나 목표가 없어요", done: "최근 끝낸 일이 없어요", left: "남은 일이 없어요", forget: "잊지 말 것이 없어요" },
+    more: (n) => `…외 ${n}개`, detail: "세션 자세히",
+    ago: (minutes) => (minutes < 1 ? "방금" : minutes < 60 ? `${minutes}분 전` : minutes < 1440 ? `${Math.floor(minutes / 60)}시간 전` : `${Math.floor(minutes / 1440)}일 전`),
+  },
+};
+export const BOARD_LANGS = Object.keys(LABELS);
+
+const BUCKET_ICON = { done: ["✅", "[v]"], active: ["🔄", "[~]"], waiting: ["⏳", "[!]"], todo: ["⬜", "[ ]"] };
+const SECTION_ICON = { now: "🎯", glance: "📊", milestones: "🏁", done: "✅", left: "⬜", forget: "🔔" };
+const REMINDER_ICON = { waiting: ["⏳", "!"], lanes: ["🏃", ">"], uncommitted: ["💾", "*"], unpushed: ["⬆️", "^"], stale: ["🕰️", "~"], handoff: ["📌", "#"] };
+
+const q = (text, cells = 40) => `"${md(cutCells(text, cells))}"`;
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+// The step in plain words, one reason and the exact text to type. Kinds and their order come from
+// recommend(); only the wording lives here.
+function nowLines(step, lang) {
+  const ko = lang === "ko";
+  const c = (text) => code(text);
+  const go = step.armed ? c("go") : undefined;
+  const say = (en, kr) => (ko ? kr : en);
+  switch (step.kind) {
+    case "answer":
+      return step.boundary
+        ? { action: say(`Approve or deny ${md(step.boundary)} in ${q(step.goal)}`, `${q(step.goal)}에서 ${md(step.boundary)} 승인 또는 거절하기`), why: say("the run stays stopped until you decide", "결정할 때까지 실행이 멈춰 있어요"), type: step.own ? say(`${c("lit approve")} or ${c("lit deny")}`, `${c("lit approve")} 또는 ${c("lit deny")}`) : say(`open that session, then ${c("lit approve")} or ${c("lit deny")}`, `그 세션을 열고 ${c("lit approve")} 또는 ${c("lit deny")}`) }
+        : { action: say(`Answer the question in ${q(step.goal)}`, `${q(step.goal)}의 질문에 답하기`), why: say("that session is stopped until you reply", "답할 때까지 그 세션이 멈춰 있어요"), type: say("open that session and reply there", "그 세션을 열고 거기서 답하기") };
+    case "continue":
+      return { action: say(`Return to the paused work in ${q(step.goal)}`, `${q(step.goal)}의 멈춘 작업으로 돌아가기`), why: say("it kept its place and its count", "멈춘 자리와 진행 수를 그대로 기억해요"), type: go ?? c("lit continue") };
+    case "lanes":
+      return step.pane
+        ? { action: say(`Answer the agent waiting in pane ${md(step.pane)}`, `${md(step.pane)} 창에서 기다리는 에이전트에 답하기`), why: say(`then let ${plural(step.lanes, "lane")} finish`, `그다음 레인 ${step.lanes}개가 끝나길 기다려요`), type: say(`open pane ${md(step.pane)} and reply there`, `${md(step.pane)} 창을 열고 답하기`) }
+        : { action: say(`Wait for ${plural(step.lanes, "lane")} to finish`, `레인 ${step.lanes}개가 끝날 때까지 기다리기`), why: say("starting more now would run into them", "지금 새로 시작하면 서로 부딪혀요"), wait: say(`until ${q(step.lane)} finishes`, `${q(step.lane)} 끝날 때까지`) };
+    case "work":
+      return { action: say("Keep the start-work run going", "start-work 실행 이어 가기"), why: say("it is running from its checked plan", "체크된 계획대로 돌고 있어요"), type: go ?? say("keep this session open", "이 세션을 그대로 두기") };
+    case "plan":
+      return { action: say(`Start the plan ${q(step.plan, 50)}`, `${md(cutCells(step.plan, 50))} 계획 시작하기`), why: say(`${plural(step.left, "step")} left`, `남은 단계 ${step.left}개`), type: go ?? c("start-work") };
+    case "handoff":
+      return { action: md(cutCells(step.item, 70)), why: say("the next item in HANDOFF.md", "HANDOFF.md의 다음 항목이에요"), type: say(`tell me to start it; ${c("go")} does not run it`, `시작하라고 말하기 (${c("go")}로는 시작하지 않아요)`) };
+    case "suggest":
+      return { action: md(cutCells(step.item, 70)), why: say(`the open plan in ${md(step.worktree)}`, `${md(step.worktree)}의 열린 계획이에요`), type: say(`open ${md(step.worktree)}`, `${md(step.worktree)} 열기`) };
+    case "session": {
+      const open = say("open that session", "그 세션 열기");
+      if (step.reason === "blocked") return { action: say(`Open ${q(step.goal)}`, `${q(step.goal)} 세션 열어 보기`), why: say("its last step failed and nothing has run since", "마지막 단계가 실패한 뒤 멈춰 있어요"), type: open };
+      if (step.reason === "paused") return { action: say(`Return to ${q(step.goal)}`, `${q(step.goal)}로 돌아가기`), why: say("its work is paused where it stopped", "멈춘 자리에서 쉬고 있어요"), type: say(`open that session, then ${c("lit continue")}`, `그 세션을 열고 ${c("lit continue")}`) };
+      if (step.reason === "run-elsewhere") return { action: say(`Follow start-work on ${q(step.plan)}`, `${q(step.plan)} start-work 지켜보기`), why: say("it is running in another session", "다른 세션에서 돌고 있어요"), type: open };
+      if (step.reason === "unfinished") return { action: say(`Pick up ${q(step.goal)}`, `${q(step.goal)} 이어 하기`), why: say(`next: ${md(cutCells(step.next, 50))}`, `다음: ${md(cutCells(step.next, 50))}`), type: open };
+      if (step.reason === "finished") return { action: say(`Check the result of ${q(step.goal)}`, `${q(step.goal)} 결과 확인하기`), why: say("it finished; only the result needs a look", "끝났으니 결과만 보면 돼요"), type: open };
+      return { action: say(`Pick up ${q(step.goal)}`, `${q(step.goal)} 이어 하기`), why: say(`it stopped in ${md(step.worktree ?? "")}`, `${md(step.worktree ?? "")}에서 멈췄어요`), type: open };
+    }
+    default:
+      return { action: say("Say what to start", "무엇을 시작할지 말하기"), why: say("no open plan, goal or earlier session is on record here", "여기엔 아직 열린 계획이나 이전 세션 기록이 없어요"), type: say("say it in your own words", "하고 싶은 일을 말하기") };
+  }
+}
+
+function reminderLine(entry, lang, ascii) {
+  const ko = lang === "ko";
+  const say = (en, kr) => (ko ? kr : en);
+  const arrow = ascii ? "->" : "→";
+  const [icon, plain] = REMINDER_ICON[entry.kind];
+  let body;
+  if (entry.kind === "waiting" && entry.pane) body = say(`the agent in pane ${md(entry.pane)} waits on you ${arrow} answer it in that pane`, `${md(entry.pane)} 창의 에이전트가 기다려요 ${arrow} 그 창에서 답하기`);
+  else if (entry.kind === "waiting" && entry.boundary) body = say(`${q(entry.goal)} waits for approval of ${md(entry.boundary)} ${arrow} ${entry.own ? "" : "in that session, "}type ${code("lit approve")} or ${code("lit deny")}`, `승인 대기: ${q(entry.goal)} (${md(entry.boundary)}) ${arrow} ${entry.own ? "" : "그 세션에서 "}${code("lit approve")} 또는 ${code("lit deny")} 입력`);
+  else if (entry.kind === "waiting") body = say(`${q(entry.goal)} asks you a question ${arrow} open that session and answer it`, `질문 대기: ${q(entry.goal)} ${arrow} 그 세션을 열고 답하기`);
+  else if (entry.kind === "lanes") body = say(`${plural(entry.count, "lane")} still working ${arrow} don't type ${code("go")} until ${entry.count === 1 ? "it finishes" : "they finish"}`, `아직 일하는 레인 ${entry.count}개 ${arrow} 끝날 때까지 ${code("go")} 치지 않기`);
+  else if (entry.kind === "uncommitted") body = say(`${entry.count} uncommitted change${entry.count === 1 ? "" : "s"} (${md(entry.worktree)}) ${arrow} review them, then commit or discard`, `커밋 안 된 변경 ${entry.count}개 (${md(entry.worktree)}) ${arrow} 확인하고 커밋하거나 되돌리기`);
+  else if (entry.kind === "unpushed") body = say(`${plural(entry.count, "commit")} not pushed (${md(entry.worktree)}) ${arrow} push when you are ready`, `푸시 안 한 커밋 ${entry.count}개 (${md(entry.worktree)}) ${arrow} 준비되면 푸시하기`);
+  else if (entry.kind === "stale") body = say(`Plan untouched for ${entry.days} days: ${md(entry.title)} ${arrow} decide whether to resume or drop it`, `${entry.days}일째 멈춘 계획: ${md(entry.title)} ${arrow} 이어 할지, 접을지 정하기`);
+  else body = say(`HANDOFF.md next: ${md(entry.item)} ${arrow} start it when you are ready`, `HANDOFF.md 다음 할 일: ${md(entry.item)} ${arrow} 준비되면 시작하기`);
+  return cutCells(`- ${ascii ? plain : icon} ${body}`, 118);
+}
+
+export function renderBoard(report, { ascii = false, lang = "en" } = {}) {
+  const L = LABELS[lang] ?? LABELS.en;
+  const board = report.board;
+  const now = Date.parse(report.generatedAt) || Date.now();
+  const head = (key) => `## ${ascii ? "" : `${SECTION_ICON[key]} `}${L[key]}`;
+  const bucket = (key) => `${BUCKET_ICON[key][ascii ? 1 : 0]} ${L.status[key]}`;
+  const step = nowLines(board.now, lang);
+  const lines = [head("now"), cutCells(`**${step.action}** — ${step.why}`, 118)];
+  lines.push(step.wait ? `${ascii ? "=>" : "👉"} ${L.wait}: ${step.wait}` : `${ascii ? "=>" : "👉"} ${L.type}: ${step.type}`);
+  lines.push("", head("glance"));
+  const tileHead = ["done", "active", "waiting", "todo"].map((key, index) => `${ascii ? "" : `${BUCKET_ICON[key][0]} `}${L.tiles[index]}`);
+  lines.push(`| ${tileHead.join(" | ")} |`, "|:--:|:--:|:--:|:--:|", `| ${board.tiles.done} | ${board.tiles.active} | ${board.tiles.waiting} | ${board.tiles.left} |`, "");
+  lines.push(`${L.overall}  ${kpiBar(board.overall.done, board.overall.total, { ascii }) ?? L.noOverall}`, "", head("milestones"));
+  if (board.milestones.length === 0) lines.push(L.empty.milestones);
+  else {
+    const shown = board.milestones.length > BOARD_MILESTONES ? board.milestones.slice(0, BOARD_MILESTONES - 1) : board.milestones;
+    lines.push(`| ${L.columns.join(" | ")} |`, "|---|---|---|---|");
+    for (const entry of shown) {
+      const name = `${md(cutCells(entry.title, 36))}${entry.worktree ? ` (${md(cutCells(entry.worktree, 20))})` : ""}`;
+      const ago = entry.changedMs > 0 ? L.ago(Math.max(0, Math.floor((now - entry.changedMs) / 60_000))) : "·";
+      lines.push(`| ${name} | ${bucket(entry.bucket)} | ${kpiBar(entry.done, entry.total, { ascii }) ?? "·"} | ${ago} |`);
+    }
+    if (shown.length < board.milestones.length) lines.push(`| ${L.more(board.milestones.length - shown.length)} | | | |`);
+  }
+  lines.push("", head("done"));
+  if (board.doneLately.length === 0) lines.push(L.empty.done);
+  for (const item of board.doneLately) lines.push(cutCells(`- ${md(item)}`, 118));
+  lines.push("", head("left"));
+  if (board.remaining.length === 0) lines.push(L.empty.left);
+  board.remaining.forEach((item, index) => lines.push(cutCells(`${index + 1}. ${md(item)}`, 118)));
+  if (board.remainingMore > 0) lines.push(L.more(board.remainingMore));
+  lines.push("", head("forget"));
+  if (board.reminders.length === 0) lines.push(L.empty.forget);
+  for (const entry of board.reminders) lines.push(reminderLine(entry, lang, ascii));
+  return lines.join("\n");
+}
+
+/** The default brief is the board; the older per-session detail follows it only when asked for. */
+export function renderBrief(report, { ascii = false, width = 72, sessionID, lang = "en", detail = false } = {}) {
+  const board = renderBoard(report, { ascii, lang });
+  if (!detail) return board;
+  const L = LABELS[lang] ?? LABELS.en;
+  return `${board}\n\n---\n\n## ${ascii ? "" : "🔎 "}${L.detail}\n\n${renderDetail(report, { ascii, width, sessionID })}`;
+}
+
+// ---------------------------------------------------------------------------------------------
 
 function parseArgs(argv) {
   const options = { format: "json" };
@@ -963,6 +1211,8 @@ function parseArgs(argv) {
     if (arg === "--json") options.format = "json";
     else if (arg === "--brief") options.format = "brief";
     else if (arg === "--ascii") options.ascii = true;
+    else if (arg === "--detail") options.detail = true;
+    else if (arg === "--lang") options.lang = value();
     else if (arg === "--write-next") options.writeNext = true;
     else if (arg === "--all-dirs") options.allDirs = true;
     else if (arg === "--root") options.root = value();
@@ -975,6 +1225,7 @@ function parseArgs(argv) {
   }
   if (options.session !== undefined && !SAFE_SESSION.test(options.session)) throw new Error("--session must match [A-Za-z0-9_-]");
   if (options.now !== undefined && Number.isNaN(options.now)) throw new Error("--now must be an ISO date");
+  if (options.lang !== undefined && !BOARD_LANGS.includes(options.lang)) throw new Error(`--lang must be one of ${BOARD_LANGS.join(", ")}`);
   return options;
 }
 
@@ -982,7 +1233,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   try {
     const options = parseArgs(process.argv.slice(2));
     const report = await collect(options);
-    process.stdout.write(`${options.format === "brief" ? renderBrief(report, { ascii: options.ascii === true || process.env.NO_COLOR !== undefined && process.env.TERM === "dumb", sessionID: options.session }) : JSON.stringify(report, null, 2)}\n`);
+    const view = { ascii: options.ascii === true || process.env.NO_COLOR !== undefined && process.env.TERM === "dumb", sessionID: options.session, lang: options.lang ?? "en", detail: options.detail === true };
+    process.stdout.write(`${options.format === "brief" ? renderBrief(report, view) : JSON.stringify({ ...report, boardText: renderBoard(report, view) }, null, 2)}\n`);
   } catch (error) {
     process.stderr.write(`rewind: ${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 2;

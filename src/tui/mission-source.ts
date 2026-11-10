@@ -107,7 +107,7 @@ export function createWorkReader(): (root: string | undefined, sessionID: string
     if (work === undefined) return undefined;
     const inside = work.planPath !== "" && path.isAbsolute(work.planPath) && !path.relative(path.resolve(root), work.planPath).startsWith("..");
     const plan = inside ? readPlan(work.planPath) : undefined;
-    return { status: work.status, iterations: work.iterations, ...(plan === undefined ? {} : { plan }), ...(work.boundary === true ? { boundary: true } : {}) };
+    return { status: work.status, iterations: work.iterations, ...(plan === undefined ? {} : { plan }), ...(work.boundary === true ? { boundary: true } : {}), ...(work.parked === undefined ? {} : { parked: work.parked }) };
   };
 }
 

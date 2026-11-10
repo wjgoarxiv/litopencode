@@ -1,6 +1,64 @@
 # Card examples
 
-A complete brief as the collector prints it, from a fixture store with invented facts. OpenCode's chat draws the
+## The board
+
+The default brief from a fixture worktree with invented facts: two plans in the window (one finished, one half
+done), one open plan untouched for twelve days, a session waiting on a question, an idle session, two
+untracked files and a `HANDOFF.md` with a `Next` item.
+
+````markdown
+## 🎯 Do this now
+**Answer the question in "Migrate the billing tables"** — that session is stopped until you reply
+👉 Type: open that session and reply there
+
+## 📊 At a glance
+| ✅ Done | 🔄 In progress | ⏳ Waiting on you | ⬜ Left |
+|:--:|:--:|:--:|:--:|
+| 5 | 1 | 1 | 1 |
+
+Overall  ██████░░░░ 5/8 (63%)
+
+## 🏁 Milestones
+| Milestone | Status | Progress | Last move |
+|---|---|---|---|
+| Billing migration | 🔄 In progress | █████░░░░░ 2/4 (50%) | 25m ago |
+| Ship the CSV exporter | ✅ Done | ██████████ 3/3 (100%) | just now |
+
+## ✅ Done lately
+- docs and gates
+- port the exporter
+- pin the base
+- dry run on a copy
+- write the migration
+
+## ⬜ Still to do
+1. run it against staging
+2. verify the totals
+
+## 🔔 Don't forget
+- ⏳ "Migrate the billing tables" asks you a question → open that session and answer it
+- 💾 2 uncommitted changes (billing-api) → review them, then commit or discard
+- 🕰️ Plan untouched for 12 days: Old dashboard idea → decide whether to resume or drop it
+- 📌 HANDOFF.md next: Wire the exporter to the CLI → start it when you are ready
+````
+
+What each part shows:
+
+- The step is the same one the detail's box recommends (a question outranks an open plan); the board only words
+  it as one action, one reason and what to type. Nothing is armed, so the line names where to act, not `go`.
+- Eight items: seven checklist rows of the two plans and the open question. The half plan's current row is in
+  progress and its last row is left. The stale plan is not counted; it is a reminder.
+- The milestone rows carry the plan titles, never their paths, and the time since each file last changed.
+- With `--lang ko` the same board reads `지금 할 일`, `한눈에 보기`, `마일스톤`, `최근 끝낸 일`, `남은 일`,
+  `잊지 말 것`, and the reminders read `질문 대기: … → 그 세션을 열고 답하기`, `커밋 안 된 변경 2개 (billing-api) →
+  확인하고 커밋하거나 되돌리기`, `12일째 멈춘 계획: … → 이어 할지, 접을지 정하기`.
+- When the half plan is the step and the record is written for this session, the step reads
+  `**Start the plan "Billing migration"** — 2 steps left` and ``👉 Type: `go` ``. While other lanes work it reads
+  `👉 Wait: until "<lane>" finishes`, and a `🏃` reminder says not to type `go` until they finish.
+
+## The per-session detail (`--detail`)
+
+The detail under the board, as the collector prints it with `--detail`, from a fixture store with invented facts. OpenCode's chat draws the
 Markdown: the headings, bold status words, emoji badges, inline code and the table come out in the theme's colours.
 
 ````markdown

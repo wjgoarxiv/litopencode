@@ -11,11 +11,13 @@ import {
 import { resolveLatestDurablePlan } from "./durable-plan.ts";
 import { parseScopeRoots } from "./plan-scope-roots.ts";
 
-// Typed start-work: the user's own typed `start-work [plan]`, `/start-work [plan]`, `lit approve` and
-// `lit deny` drive the schema-3 bounded-authority lifecycle without a pasted JSON directive. The grants
-// stay what the strict `start-work init {json}` path would need for an ordinary run: read, write and
-// execute under the worktree root. Commit, push, publish, release, version-bump, host-config and
-// destructive actions are still refused by the lifecycle itself, so nothing here can grant them.
+// Typed start-work: the user's own typed `start-work [plan]`, `/start-work [plan]`, `lit approve`,
+// `lit deny` and `lit cancel` drive the schema-3 bounded-authority lifecycle without a pasted JSON
+// directive. The grants stay what the strict `start-work init {json}` path would need for an ordinary run:
+// read, write and execute under the worktree root. A step outside them is parked while the run keeps
+// going; approve and deny settle the parked queue and are optional, and cancel ends the run from any
+// window of the project. Commit, push, publish, release, version-bump, host-config and destructive
+// actions are still refused by the lifecycle itself, so nothing here can grant them.
 
 export type TypedStartResult = {
   readonly started: boolean;
@@ -88,7 +90,8 @@ function receipt(state: BoundedAuthorityState): string {
     workId: state.workId,
     revision: state.revision,
     status: state.status,
-    pendingBoundary: state.pendingBoundary === null ? null : { id: state.pendingBoundary.id, action: state.pendingBoundary.action }
+    pendingBoundary: null,
+    parked: state.parkedBoundaries.length
   })}\n</bounded-authority-lifecycle>`;
 }
 
@@ -113,7 +116,7 @@ export async function startTypedWork(input: {
     if (state !== undefined && state.status !== "cancelled" && state.status !== "completed") {
       return {
         started: false,
-        text: `LitOpenCode: a start-work run is already ${state.status} in this workspace. Continue it, or finish or cancel it before starting another.`
+        text: `LitOpenCode: a start-work run is already ${state.status} in this workspace. Continue it, or finish it, or type lit cancel to end it before starting another.`
       };
     }
     const started = await lifecycle.init({
@@ -146,16 +149,18 @@ export async function startTypedWork(input: {
 
 export type BoundaryVerdict = "approve" | "deny";
 
-/** `lit approve` / `lit deny` as the whole prompt. */
+/** `lit approve` / `lit deny` as the whole prompt; both settle the whole parked queue. */
 export function boundaryVerdict(text: string): BoundaryVerdict | undefined {
   const match = /^lit\s+(approve|deny)[.!?]*$/iu.exec(text.trim());
   return match === null ? undefined : (match[1].toLowerCase() as BoundaryVerdict);
 }
 
+const describe = (entry: { readonly action: string; readonly root: string }): string => `${entry.action} on ${entry.root}`;
+
 /**
- * Answers the pending boundary of the run this session owns. Approve resumes with exactly that boundary;
- * deny cancels the run, because the lifecycle has no refused-and-still-paused state. Anything else is a
- * sentence and no change.
+ * Settles the parked steps of the run this session owns, all at once. Approve grants each of them (up to
+ * the grant cap; the rest stay parked) and deny refuses each of them for the rest of the run. The run keeps
+ * going either way; only `lit cancel` ends it. Anything else is a sentence and no change.
  */
 export async function answerBoundary(input: {
   readonly projectRoot: string;
@@ -165,32 +170,120 @@ export async function answerBoundary(input: {
 }): Promise<string> {
   const lifecycle = createBoundedAuthorityLifecycle(input.projectRoot, input.options);
   const state = await currentState(lifecycle).catch(() => undefined);
-  if (state === undefined || state.status !== "paused" || state.pendingBoundary === null) {
-    return "LitOpenCode: nothing is waiting for your approval, so lit approve and lit deny change nothing.";
+  if (state === undefined || state.status !== "active" || state.parkedBoundaries.length === 0) {
+    return "LitOpenCode: nothing is waiting for your approval (no step is parked), so lit approve and lit deny change nothing.";
   }
   if (state.sessionID !== input.sessionID) {
-    return "LitOpenCode: the run waiting for approval belongs to another session; answer it there. Nothing changed.";
+    return "LitOpenCode: the parked steps belong to a run owned by another session; answer them there. Nothing changed.";
   }
-  const boundary = state.pendingBoundary;
-  const base = {
-    schemaVersion: 3 as const,
-    requestId: `typed-${input.verdict}-${randomUUID()}`,
-    workId: state.workId,
-    sessionID: input.sessionID,
-    expectedRevision: state.revision,
-    trustedUser: true
-  };
   try {
-    if (input.verdict === "approve") {
-      const resumed = await lifecycle.resume({ ...base, grant: { action: boundary.action, root: boundary.root } });
-      return `${receipt(resumed.state)}\nLitOpenCode: approved ${boundary.action} on ${boundary.root}. The run continues; that one boundary is now granted and nothing else was widened.`;
+    const result = await lifecycle.settleParked({
+      schemaVersion: 3,
+      requestId: `typed-${input.verdict}-${randomUUID()}`,
+      workId: state.workId,
+      sessionID: input.sessionID,
+      trustedUser: true,
+      verdict: input.verdict
+    });
+    const listed = result.settled.map(describe).join("; ");
+    if (input.verdict === "deny") {
+      return `${receipt(result.state)}\nLitOpenCode: refused ${result.settled.length} parked step${result.settled.length === 1 ? "" : "s"} (${listed}); the run keeps going without them. Type lit cancel to end it.`;
     }
-    const cancelled = await lifecycle.cancel(base);
-    return `${receipt(cancelled.state)}\nLitOpenCode: denied ${boundary.action} on ${boundary.root}. The start-work run has ended, because a refused boundary cannot stay paused. Nothing was changed by that step. To run it again, say start-work (or /start-work) and answer the boundary differently.`;
+    const extra = [
+      result.remaining.length > 0 ? ` ${result.remaining.length} stayed parked because the run already holds the most grants it can (${result.remaining.map(describe).join("; ")}).` : "",
+      result.dropped.length > 0 ? ` ${result.dropped.length} were dropped because the path is gone or is a link (${result.dropped.map(describe).join("; ")}).` : ""
+    ].join("");
+    return `${receipt(result.state)}\nLitOpenCode: approved ${listed}. The run continues; only those steps were granted and nothing else was widened.${extra}`;
   } catch (error) {
     if (error instanceof LifecycleConflictError || error instanceof LifecycleSafetyError) {
       return `LitOpenCode: the answer was not applied (${error.message}). Nothing changed.`;
     }
     throw error;
+  }
+}
+
+/** `lit cancel` / `lit 취소` as the whole prompt, spaces or tabs between the words. */
+export function typedCancel(text: string): boolean {
+  if (typeof text !== "string" || text.length > 512) return false;
+  return /^lit[ \t]+(?:cancel|취소)[.!?]*$/iu.test(text.trim());
+}
+
+async function lifecycleStatusAt(root: string): Promise<string | undefined> {
+  try {
+    const raw = await fs.readFile(path.join(root, ".litopencode", "litgoal", "lit-loop", "work-schema-3.json"), "utf8");
+    const status = (JSON.parse(raw) as { status?: unknown }).status;
+    return typeof status === "string" ? status : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The main checkout of a linked worktree: `.git` is a file naming the gitdir, whose commondir is the shared one. */
+async function mainCheckoutOf(root: string): Promise<string | undefined> {
+  const dotGit = path.join(root, ".git");
+  const stat = await fs.lstat(dotGit).catch(() => undefined);
+  if (stat === undefined || !stat.isFile() || stat.size > 4096) return undefined;
+  const match = /^gitdir:\s*(.+)$/mu.exec(await fs.readFile(dotGit, "utf8"));
+  if (match === null) return undefined;
+  const gitdir = path.resolve(root, match[1].trim());
+  const commonText = await fs.readFile(path.join(gitdir, "commondir"), "utf8").catch(() => undefined);
+  if (commonText === undefined) return undefined;
+  const common = path.resolve(gitdir, commonText.trim());
+  const commonStat = await fs.lstat(common).catch(() => undefined);
+  if (commonStat === undefined || commonStat.isSymbolicLink() || !commonStat.isDirectory()) return undefined;
+  return path.dirname(common);
+}
+
+/** Where a cancel looks: the plugin's project root, the host directory, then the main checkout of a linked worktree. */
+export async function cancelRoots(projectRoot: string, directory?: string): Promise<string[]> {
+  const roots = [path.resolve(projectRoot)];
+  if (directory !== undefined && directory.trim() !== "" && path.resolve(directory) !== roots[0]) roots.push(path.resolve(directory));
+  const main = await mainCheckoutOf(roots[0]);
+  if (main !== undefined && !roots.includes(main)) roots.push(main);
+  return roots;
+}
+
+/** Ends the project's start-work run from the user's own typed `lit cancel`, in whichever window they typed it. */
+export async function cancelTypedWork(input: {
+  readonly projectRoot: string;
+  readonly sessionID: string;
+  readonly messageID: string;
+  readonly directory?: string;
+  readonly options?: BoundedAuthorityOptions;
+}): Promise<string> {
+  try {
+    const roots = await cancelRoots(input.projectRoot, input.directory);
+    let target: string | undefined;
+    for (const root of roots) {
+      const status = await lifecycleStatusAt(root);
+      if (status === "active" || status === "paused") {
+        target = root;
+        break;
+      }
+    }
+    if (target === undefined) return "LitOpenCode: no start-work run is active here, so lit cancel changed nothing.";
+    const lifecycle = createBoundedAuthorityLifecycle(target, input.options);
+    const result = await lifecycle.userCancel({ schemaVersion: 3, requestId: `typed-cancel-${input.messageID}`, sessionID: input.sessionID, trustedUser: true });
+    if (result.outcome === "nothing" || result.state === undefined) return "LitOpenCode: no start-work run is active here, so lit cancel changed nothing.";
+    const plan = path.relative(target, result.state.plan.path) || result.state.plan.path;
+    return `${receipt(result.state)}\nLitOpenCode: the user cancelled the start-work run on ${plan}. It is over: stop its work, emit no progress fence, and reply in one line that it was cancelled.`;
+  } catch (error) {
+    if (error instanceof LifecycleConflictError && /lock timed out/u.test(error.message)) {
+      return "LitOpenCode: the run is busy writing its state; send lit cancel again.";
+    }
+    const name = error instanceof Error ? error.name : "Error";
+    return `LitOpenCode: the cancel was not applied (${name}). Nothing changed.`;
+  }
+}
+
+/** The one-line notice for a session whose run another window cancelled; read once. */
+export async function takeCancelNotice(projectRoot: string, sessionID: string): Promise<string | undefined> {
+  try {
+    const notice = await createBoundedAuthorityLifecycle(projectRoot).consumeCancelNotice(sessionID);
+    if (notice === undefined) return undefined;
+    const plan = path.relative(projectRoot, notice.plan) || notice.plan;
+    return `LitOpenCode: the user cancelled the start-work run on ${plan} from another window. It is over. Stop its plan work and emit no litopencode-progress fence; tell the user in one line.`;
+  } catch {
+    return undefined;
   }
 }

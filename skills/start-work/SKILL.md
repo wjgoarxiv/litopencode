@@ -163,29 +163,61 @@ closed. State history, event history, receipt history, and context bytes are ind
 Compaction never removes the consumed-grant snapshot, so a previously consumed grant cannot reappear
 as fresh authority merely because old events were compacted.
 
-Pause is not a generic agent choice. It occurs only when exact fenced progress identifies a valid,
-genuinely new action/root boundary that is not already granted and is not forbidden. Publish,
-release, push, commit, version, host-config, destructive, and unknown action names cannot create a
-grant. Resume requires the same work id, root session, current CAS revision, and an action/root pair
-equal to the pending boundary. Only the trusted `/start-work` command or exact root-user
-`start-work resume {...}` chat form can consume it. The agent-callable tool intentionally rejects a
+A step outside the grants leaves the run going. When exact fenced progress names a valid, genuinely
+new action/root boundary that is ungranted and outside the forbidden set, the lifecycle parks it in
+the same revision as the progress and the run stays active. The queue holds up to 16 parked steps in
+the order they were first seen; a repeat raises that entry's hit count instead of adding one, and a
+17th distinct step gets an overflow note in the continuation. Each continuation lists the parked
+steps and any refused ones, and tells the agent to go on with the tasks the grants cover, to mark a
+task that cannot proceed with a `BLOCKED: <reason>` line under its plan row, to stop retrying a step
+it has seen three times, and, when every remaining task waits on a parked step, to end the turn with
+one line naming them and `lit approve` / `lit cancel`. Parked steps belong to the work, so a second
+window cannot take them over.
+
+Publish, release, push, commit, version, host-config, destructive, and unknown action names still
+throw before any path is looked at, so they are never parked and never granted. A boundary on a
+protected path (a secret or settings file), a missing path or a symbolic link gets a refused note
+instead of a park, and a read of OpenCode's own skills or `AGENTS.md` counts as covered. The exact
+resume route keeps working: a resume whose action/root pair equals one parked entry grants that one
+entry and leaves the rest parked. Only the trusted `/start-work` command or exact root-user
+`start-work resume {...}` chat form can send it. The agent-callable tool intentionally rejects a
 resume action, and `lit-plan` remains edit/bash/task denied.
 
-Progress is accepted only from an assistant message in the active session and only when the entire
-text is one `litopencode-progress` fenced schema-3 JSON object. Copied, quoted, blockquoted, slash,
-prefixed, malformed, oversized, user-authored, stale-work, and stale-revision text is inert. A new
+A fence may carry the revision its continuation named even after the acknowledgement, a park or a
+settle moved the counter on, because those writes change no work. A resume, a cancel, a newer
+progress or history compacted past that checkpoint still makes the old revision stale.
+
+While a run is live, the tool guard refuses direct reads and writes of protected files for the owner
+session and its direct children: `.env` files (but `.env.example`, `.sample` and `.template` stay
+readable), SSH and other private keys, `.pem` files, `~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.npmrc`,
+`~/.netrc`, OpenCode's `auth.json` and its settings files. Writes are also refused for OpenCode's
+plugin, agent and command folders, the project's `opencode.json` and `.opencode/`, this lifecycle's
+own state files, the git hooks and config, shell start-up files, and other hosts' settings. The guard
+never consults the grants, so no grant reopens one, and it writes no state. It checks the paths a call
+names: a folder-wide search, a script, `$(...)` or a variable other than `$HOME` can still reach a
+secret, and Bash is not otherwise restricted. The refusal tells the agent to mark the task `BLOCKED:`
+and ask the user.
+
+Progress is accepted only from an assistant message in the active session and only when its text part
+holds exactly one top-level `litopencode-progress` fenced schema-3 JSON object: a fence that opens and
+closes at the start of a line, outside any other fence. Prose and other blocks may sit around it, which
+is how the LIT ignition block and the fence share one part. A fence inside another fence, a blockquote,
+a list item or an indented block, an inline code span, a second progress fence, and slash, malformed,
+oversized, user-authored, stale-work and stale-revision text are inert. A new
 checkpoint creates one structured continuation. Same-turn delivery failure may retry the identical
 checkpoint; durable delivery acknowledgement prevents later unchanged or restart replay from
 creating another continuation. Structured context labels fields inert and base64-encodes the bounded
 summary so prompt-like source text does not become authority.
 
-Paused work cannot complete. It must receive a matching trusted resume or explicit cancellation.
-Cancelled and completed items are terminal and permit a new init at the next monotonic revision;
-active or paused work cannot be overwritten by a new init.
+Work with parked steps cannot complete; `lit approve`, `lit deny` or `lit cancel` empties the queue
+first. Cancelled and completed items are terminal and permit a new init at the next monotonic
+revision; active work cannot be overwritten by a new init. An older run record that was paused on one
+boundary opens as an active run with that step parked; the file is rewritten in the new shape only on
+the next change.
 
-## Typed Start, Approve and Deny
+## Typed Start, Approve, Deny and Cancel
 
-A user can also type `start-work`, `start-work plans/<name>.md` or `/start-work [plan]` without a pasted directive. The plugin then resolves the named plan, else the latest durable plan, else the only plan with an open row, and calls lifecycle init on the user's behalf with read, write and execute grants under the workspace root. Nothing wider is ever granted this way, and an unresolved plan only adds one sentence to the ordinary activation. When the run pauses at a boundary, the user's whole-prompt `lit approve` resumes with exactly that boundary and `lit deny` cancels the run, because the lifecycle has no refused-but-paused state; the reply says the run ended and how to start it again. Only the user's own prompt in a root session can answer a boundary. After a `lit-adhd` brief that recommends this run or an open plan, a bare `go` continues it. A side discipline such as `lit-plan` or `litresearch` pauses this one on the workflow stack; `lit continue` or `go` returns here.
+A user can also type `start-work`, `start-work plans/<name>.md` or `/start-work [plan]` without a pasted directive. The plugin then resolves the named plan, else the latest durable plan, else the only plan with an open row, and calls lifecycle init on the user's behalf with read, write and execute grants under the workspace root. Nothing wider is ever granted this way, and an unresolved plan only adds one sentence to the ordinary activation. While steps are parked, the user's whole-prompt `lit approve` grants every one of them in one revision (up to 64 grants in all; the rest stay parked and the reply names them), and `lit deny` refuses every one of them for the rest of the run while the run keeps going. Both are optional and only the owner session can send them. The user's whole-prompt `lit cancel` (or `lit 취소`) ends the run from any window of the project: the plugin root, the launch folder, or the main checkout when the window is a linked worktree. When another window cancels it, the owning session is told on its next message, and a run busy writing its state asks for the word again. Only the user's own prompt in a root session counts for any of these words. After a `lit-adhd` brief that recommends this run or an open plan, a bare `go` continues it. A side discipline such as `lit-plan` or `litresearch` pauses this one on the workflow stack; `lit continue` or `go` returns here.
 
 ## Safety
 

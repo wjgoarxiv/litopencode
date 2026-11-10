@@ -5,7 +5,7 @@ import { createActivationMemory, decideReentry, type ActivationMemory } from "./
 import type { ChatActivationMode } from "./activation-routing.ts";
 import { startWorkPromptInjection } from "./activation-workflow-prompts.ts";
 import { createBoundedAuthorityLifecycle, type BoundedAuthorityOptions } from "./bounded-authority.ts";
-import { answerBoundary, boundaryVerdict, startTypedWork } from "./start-work-typed.ts";
+import { answerBoundary, boundaryVerdict, cancelTypedWork, startTypedWork, typedCancel } from "./start-work-typed.ts";
 import { createRuntimePaths } from "./state.ts";
 
 // The brief from lit-adhd ends with one recommended next step and the word `go`. The collector writes that
@@ -106,7 +106,8 @@ export type GoRoute = {
 /**
  * Turns a live `go` into the existing re-entry or start path. A paused spine returns through the same
  * resume a `lit continue` takes, running work gets the continue note, and one open plan goes through the typed
- * start-work path. A pending boundary is never answered here: only `lit approve` or `lit deny` can.
+ * start-work path. Parked steps are never settled here: only `lit approve` or `lit deny` can, and only
+ * `lit cancel` ends the run.
  */
 export async function routeGo(input: {
   readonly projectRoot: string;
@@ -151,7 +152,7 @@ export async function routeGo(input: {
       };
     }
     return {
-      text: "LitOpenCode: the user answered go to the brief's next step, which is the running start-work run. Keep working from the checked plan; do not restart it, replan or widen what it may touch. A pending boundary still needs `lit approve` from the user.",
+      text: "LitOpenCode: the user answered go to the brief's next step, which is the running start-work run. Keep working from the checked plan; do not restart it, replan or widen what it may touch. Parked steps, if any, wait for an optional lit approve; lit cancel ends the run.",
       mode: "start-work",
       kind: "work"
     };
@@ -168,21 +169,33 @@ export async function routeGo(input: {
 export type TypedPromptReply = {
   readonly text: string;
   readonly mode: ChatActivationMode;
-  readonly kind: "approve" | "deny" | NextKind;
+  readonly kind: "approve" | "deny" | "cancel" | NextKind;
   readonly continued: boolean;
 };
 
 /**
- * The whole-prompt typed words of a ROOT user session: `lit approve`, `lit deny` and a live `go`.
- * Callers pass only prompts that came from the user in a root session; anything else never reaches here.
+ * The whole-prompt typed words of a ROOT user session: `lit cancel`, `lit approve`, `lit deny` and a live
+ * `go`. Callers pass only prompts that came from the user in a root session; anything else never reaches here.
  */
 export async function typedPromptReply(
   projectRoot: string,
   sessionID: string,
   text: string,
   memory: ActivationMemory | undefined,
-  boundedAuthority: BoundedAuthorityOptions | undefined
+  boundedAuthority: BoundedAuthorityOptions | undefined,
+  messageID?: string,
+  directory?: string
 ): Promise<TypedPromptReply | undefined> {
+  if (typedCancel(text)) {
+    const reply = await cancelTypedWork({
+      projectRoot,
+      sessionID,
+      messageID: messageID ?? `unkeyed-${Date.now()}`,
+      ...(directory === undefined ? {} : { directory }),
+      ...(boundedAuthority === undefined ? {} : { options: boundedAuthority })
+    });
+    return { text: reply, mode: "start-work", kind: "cancel", continued: false };
+  }
   const verdict = boundaryVerdict(text);
   if (verdict !== undefined) {
     const reply = await answerBoundary({ projectRoot, sessionID, verdict, ...(boundedAuthority === undefined ? {} : { options: boundedAuthority }) });

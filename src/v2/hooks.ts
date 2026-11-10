@@ -54,10 +54,16 @@ export type V2ToolHookOptions = {
   readonly knowledgeCaptureEnabled: boolean;
   readonly getSession: SessionLookup;
   readonly deliverableHedgeGuard: DeliverableHedgeGuardState;
+  readonly baseDirectory?: string;
 };
 
 export function createV2ToolHooks(options: V2ToolHookOptions) {
-  const before = createToolExecuteBeforeHook({ getSession: options.getSession, deliverableHedgeGuard: options.deliverableHedgeGuard });
+  const before = createToolExecuteBeforeHook({
+    getSession: options.getSession,
+    deliverableHedgeGuard: options.deliverableHedgeGuard,
+    projectRoot: options.projectRoot,
+    baseDirectory: options.baseDirectory ?? options.projectRoot
+  });
   const after = createToolExecuteAfterHook({
     projectRoot: options.projectRoot,
     knowledgeCaptureEnabled: options.knowledgeCaptureEnabled,

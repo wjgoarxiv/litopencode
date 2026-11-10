@@ -4,7 +4,7 @@ Every card carries one status word. The collector picks the first that applies, 
 
 | Word | Badge | Record that says so |
 | --- | --- | --- |
-| `waits-on-you` | `◆ WAITS ON YOU` | A `question` tool part still running or pending in the session, or the bounded run is `paused` with a pending boundary owned by the session. |
+| `waits-on-you` | `◆ WAITS ON YOU` | A `question` tool part still running or pending in the session, or an older bounded-run record that is `paused` with a pending boundary owned by the session. A run with parked steps keeps working and reads `working`, with the parked count on its card. |
 | `blocked` | `✕ BLOCKED` | The newest tool part ended in `error` and nothing has run for more than two minutes. |
 | `paused` | `Ⅱ PAUSED` | The session's workflow stack holds a long discipline in the `paused` state. |
 | `working` | `● WORKING` | The session is the one asking for the brief. |
@@ -15,6 +15,19 @@ Every card carries one status word. The collector picks the first that applies, 
 | `idle` | `○ IDLE` | None of the above. |
 
 A `done` card never names a next step: what it left open is history. An `alive` liveness record changes nothing; the two-minute window still decides.
+
+## Board buckets
+
+The board shows four buckets and never a status word. Each internal status maps to one of them.
+
+| Bucket | Board label (en / ko) | Internal statuses and records |
+| --- | --- | --- |
+| ✅ done | Done / 끝남 | `done`; a ticked checklist row; a passed goal criterion; a completed start-work run. |
+| 🔄 in progress | In progress / 진행 중 | `working`, `paused`, `blocked`; the current row of a plan with an active run or at least one ticked row. |
+| ⏳ waiting on you | Waiting on you / 나를 기다림 | `waits-on-you`; an older run record paused at a boundary; a blocked herdr agent. |
+| ⬜ left | Left, Not started / 남음, 시작 전 | `idle`; every other open row or criterion. |
+
+Sessions themselves are not counted in the tiles except a session waiting on the user. Their state reaches the board through the step, the waiting reminder and the lane reminder.
 
 ## Count sources, in order
 

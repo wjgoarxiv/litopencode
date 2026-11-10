@@ -642,7 +642,7 @@ export const litOpenCodeFeatures = Object.freeze([
     id: "lit-adhd",
     title: "Lit Adhd",
     summary:
-      "Briefs the earlier sessions of this worktree family from a read-only collector (status, goal, real progress or known facts, done, next, roadmap), recommends one next step, and follows it on go; typed start-work, lit approve and lit deny drive the bounded run without pasted JSON.",
+      "Shows a read-only KPI board of this worktree family from a deterministic collector (the one step to take now and what to type, done, in-progress, waiting and left counts with an overall bar, milestones, done lately, still to do, action-shaped reminders), keeps the per-session detail on request, and follows the step on go; typed start-work, lit approve, lit deny and lit cancel drive the bounded run without pasted JSON.",
     bindings: [
       {
         kind: "config",
@@ -660,10 +660,10 @@ export const litOpenCodeFeatures = Object.freeze([
         kind: "hook",
         id: "chat.message typed prompts",
         surface: "OpenCode chat.message and command.execute.before hooks, and the OpenCode 2 prompt hook",
-        description: "Routes go, lit approve, lit deny and start-work [plan] from the user's own root-session prompt into the existing re-entry and bounded-authority lifecycle."
+        description: "Routes go, lit approve, lit deny, lit cancel and start-work [plan] from the user's own root-session prompt into the existing re-entry and bounded-authority lifecycle."
       }
     ],
-    verification: ["node --test test/lit-adhd.test.mjs", "node --test test/adhd-go.test.mjs", "node --test test/start-work-typed.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
+    verification: ["node --test test/lit-adhd.test.mjs", "node --test test/lit-adhd-board.test.mjs", "node --test test/adhd-go.test.mjs", "node --test test/start-work-typed.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
   },
   {
     id: "workflow-stack",

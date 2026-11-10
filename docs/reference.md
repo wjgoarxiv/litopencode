@@ -195,7 +195,7 @@ for an approved plan; `/review-work` checks the `DoneClaim` through a five-lane 
 | `/litgoal` | Set and keep the finish line: one goal with checkable criteria on durable state. `lit-loop` and `/start-work` run toward it. |
 | `/lit-brainstorm` | Open a question into options, narrow them to a short list, and hand the pick to `deep-interview` or `lit-plan`. Chat: `lit brainstorm`, `lit brainstorming`, `lit ideation`, `lit ideate`, `lit idea`, `lit ideas`. It never builds. |
 | `/lit-hijack` | Port the mechanism in someone else's published work into your own skill or system: capture with provenance, licence gate, gap, source-free spec, separate build, parity proof and report. A bundled `hijack.mjs` decides when each phase is done. Chat: `lit hijack`, `lit hijacking`, `lit 하이재킹`, `lit 하이잭`. |
-| `/lit-adhd`, `/lit-rewind` | Pick up where you left off: a read-only brief that opens with three lines (done so far, doing now, next), then earlier sessions with status, real progress or known facts, a roadmap and one recommended step. Finished plans and completed start-work runs count as done, a liveness record marks idle sessions, plans older than seven days stay out, and this worktree's `HANDOFF.md` `Next` item is the fallback step. A bundled `rewind.mjs` collects it. Chat: `lit adhd`, `lit rewind`; then `go` follows the armed step for 30 minutes. `lit approve` and `lit deny` answer a pending boundary; `lit deny` ends the run. |
+| `/lit-adhd`, `/lit-rewind` | Pick up where you left off: a read-only KPI board in six sections (do this now with the exact text to type, at a glance with four bucket counts and an overall bar, milestones, done lately, still to do, don't forget), written in the request's language with `--lang ko` or `en`. Reminders are action-shaped: a session waiting on you, lanes still working, uncommitted changes and unpushed commits, plans untouched for seven days, the `HANDOFF.md` next item. On request (`lit adhd detail`, `lit adhd 자세히`) the earlier brief follows the board: three opening lines (done so far, doing now, next), then earlier sessions with status, real progress or known facts, a roadmap and one recommended step. Finished plans and completed start-work runs count as done, a liveness record marks idle sessions, plans older than seven days stay out, and this worktree's `HANDOFF.md` `Next` item is the fallback step. A bundled `rewind.mjs` collects it. Chat: `lit adhd`, `lit rewind`; then `go` follows the armed step for 30 minutes. `lit approve` and `lit deny` settle a run's parked steps and are optional; `lit cancel` (or `lit 취소`) ends the run from any window. |
 | `/litresearch` or `/lit-research` | Run evidence-backed research with a sequential fallback. |
 | `/lit-handoff` | Create a resumable handoff; exact bare `handoff` also routes here. |
 | `/lit-recap` | Read a concise recap from local ledger and session context. |
@@ -243,7 +243,28 @@ litopencode complete-goals
 
 `/start-work init|resume|cancel|complete|status <schema-3 JSON>` is the bounded-authority
 surface for approved execution. Resume requires the trusted user route and matching work,
-session, revision, and grant; copied or quoted text is inert.
+session, revision, and a grant equal to one parked step; copied or quoted text is inert.
+
+A step outside the run's grants does not stop the run. It is parked (up to 16, a repeat counts as a
+hit on the same entry), the run keeps working on the tasks its grants cover, and a run with nothing
+else left ends its turn with one line naming the parked steps. The user may type `lit approve` to
+grant every parked step at once (64 grants in all at most; any rest stays parked) or `lit deny` to
+refuse them for the rest of the run. Both are optional, and the run keeps going after either; `complete`
+waits until the queue is empty. Typing `lit cancel` (or `lit 취소`) as the whole message ends the run
+from any window of the project, including a nested launch folder or a linked worktree of the checkout
+that holds the run; the session that owned the run is told on its next message. An older run record
+that was paused on one boundary opens as an active run with that step parked.
+
+While a run is live, direct reads and writes of secret files (`.env` files, SSH and other private
+keys, `.pem` files, `~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.npmrc`, `~/.netrc`, OpenCode's `auth.json`) and
+of OpenCode's settings files are refused for the owner session and its direct children, whatever the
+grants say. `.env.example`, `.sample` and `.template` files stay readable. Writes are also refused for
+OpenCode's plugin, agent and command folders, the project's `opencode.json` and `.opencode/`, the run's
+own state files, git hooks and config, shell start-up files and other hosts' settings. Reads of
+OpenCode's own skills and `AGENTS.md` need no boundary. The check covers the paths a tool call names;
+a folder-wide search, a script or a variable other than `$HOME` can still reach a secret, and Bash is not
+otherwise restricted. When the host itself asks before a read outside the project, that prompt is
+OpenCode's own; in `safe` mode reads of its skill folders may still show it.
 
 When `/start-work save-plan <JSON>` saves an approved plan, the saved-plan notice arms a one-word start:
 typing `go` in that same session within 30 minutes starts the typed start-work run on that plan. A `go`
@@ -253,7 +274,7 @@ outside the project must carry a `Scope roots: <folder> (<actions>)` line (actio
 asks for a narrower existing folder when only the filesystem root, a top-level folder or the home
 folder would cover it. Paths in code fences and commands quoted in an inline code span do not count.
 When typed start-work begins, each valid `Scope roots:` line becomes a grant of the run, so it does
-not pause for a folder the approved plan named; the folder must exist then.
+not park a step for a folder the approved plan named; the folder must exist then.
 
 Native goal verdict: OpenCode 2.2 and later has a native `/goal`, and LitOpenCode sets, resumes and
 clears one only for lit-loop, start-work and litwork, only for goals it created; a goal you made is
@@ -612,8 +633,8 @@ What it draws:
   - one look at a time, picked from a small registry in `src/tui/mission-looks.ts`. Every route that runs
     lit-adhd wears the rewind look: `lit adhd`/`lit rewind` in chat, `/lit-adhd`/`/lit-rewind` (also from an
     installed v2 alias file) and a native `skill` load. While the session waits on you (a permission or a
-    question, or an idle turn that ended on a goal decision, a reply opening with `BLOCKED:`, or a typed
-    start-work run paused on a boundary) the border turns amber and the corner says `◆ YOUR TURN`; the
+    question, or an idle turn that ended on a goal decision, a reply opening with `BLOCKED:`, or an older
+    start-work record paused on a boundary) the border turns amber and the corner says `◆ YOUR TURN`; the
     amber eases over a 3 s breath with no flashing, holds still under `motion: false` and `NO_COLOR`, and
     stops once you type. While `review-work` runs, the top border splits into its five lanes (scope, tests,
     package, security, surface) and the corner counts them, `◇ REVIEW 2/5`. A lane lights only after the

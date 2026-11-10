@@ -513,7 +513,7 @@ function stepperRow(view: MissionView, index: number, frame: MotionFrame, palett
   const { state, doneMix } = shownState(step, index, frame);
   const counted = step.id === "work" && view.progress !== undefined ? ` ${countText(view)}` : "";
   const name = `${stepName(step.id, view)}${counted}`;
-  const note = step.id === "plan" && view.planTasks !== undefined ? `${view.planTasks} tasks` : step.id === "work" && view.iteration !== undefined ? `iter ${view.iteration}` : "";
+  const note = step.id === "plan" && view.planTasks !== undefined ? `${view.planTasks} tasks` : step.id === "work" && view.iteration !== undefined ? `iter ${view.iteration}${(view.parked ?? 0) > 0 ? ` · ${view.parked} parked` : ""}` : step.id === "work" && (view.parked ?? 0) > 0 ? `${view.parked} parked` : "";
   const live = mixHex(palette.info, palette.warning, state === "warn" ? Math.max(frame.warn, 0.5) : frame.warn);
   let head: Segment[];
   if (state === "done") {

@@ -16,7 +16,7 @@ Add `lit` to a prompt, or type a slash command. These are the ones you'll use mo
 | `/review-work` | Review a plan after `lit-plan`, or the finished work after `lit-loop` or `/start-work`. It picks from what exists; `/review-work plan` or `/review-work work` forces one. |
 | `lit brainstorm …`, `lit ideation …`, `lit idea …` or `/lit-brainstorm` | Open an unsettled question into options, narrow them to a short list, and hand the pick to `deep-interview` or `lit-plan`. It never builds. |
 | `lit hijack …`, `lit hijacking …` or `/lit-hijack` | Port the mechanism in someone else's published work (posts, articles, repos, PDFs, transcripts) into your own skill or system. It captures sources with provenance, gates the licence, writes a source-free spec, builds apart from the sources and proves the result on the real surface. |
-| `lit adhd …`, `lit rewind …` or `/lit-adhd` | Pick up where you left off. A read-only brief of earlier sessions in this worktree family: status, goal, real progress (a bar only when the total is known), what is done and next, a roadmap and one recommended step that `go` follows. |
+| `lit adhd …`, `lit rewind …` or `/lit-adhd` | Pick up where you left off. A read-only KPI board of this worktree family: the one step to take now and exactly what to type, done, in-progress, waiting and left counts with an overall bar, milestones, what was done lately, what is left and what not to forget. `go` follows the step; `lit adhd detail` adds the per-session cards. |
 | `/litgoal` | Set and keep the finish line. `lit-loop` and `/start-work` run toward it. |
 | `handoff` or `/lit-handoff` | Leave resumable context: the current result and the next step, for another session. |
 | `/lit-recap` | Read a short recap from local state. |

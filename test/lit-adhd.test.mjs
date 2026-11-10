@@ -12,7 +12,7 @@ import { createCommandActivationHook, findLitOpenCodeCommand } from "../src/comm
 import { secretShape } from "../src/secret-shapes.ts";
 import { cellWidth as tuiCellWidth } from "../src/tui/mission-text.ts";
 import { buildStore } from "../test-support/rewind-store.mjs";
-import { collect, cellWidth, factsLine, gauge, guardSql, isRealCount, pulse, redact, renderBrief, SECRET_SHAPE_SOURCE } from "../skills/lit-adhd/scripts/rewind.mjs";
+import { collect, cellWidth, factsLine, gauge, guardSql, isRealCount, pulse, redact, renderBrief, renderDetail, SECRET_SHAPE_SOURCE } from "../skills/lit-adhd/scripts/rewind.mjs";
 
 // A suite run inside a herdr pane must not count the real panes as lanes; the lane tests pass their own env.
 delete process.env.HERDR_ENV;
@@ -145,7 +145,7 @@ test("planted credentials in titles, prompts, replies and tool paths never reach
       ];
       buildStore(file, { sessions });
       const report = await collect({ root: dir, db: file, now: NOW });
-      const output = JSON.stringify(report) + renderBrief(report);
+      const output = JSON.stringify(report) + renderBrief(report, { detail: true }) + renderBrief(report, { lang: "ko" });
       for (const [name, value] of Object.entries(secrets)) {
         assert.equal(output.includes(value), false, `${name} leaked`);
         assert.equal(output.includes(sensitive[name]), false, `${name} secret part leaked`);
@@ -163,7 +163,7 @@ test("unknown totals render no placeholder in JSON or in the brief, and a real t
     try {
       buildStore(file, { sessions: fixtureSessions(dir).filter((session) => session.id !== "ses_wait") });
       const report = await collect({ root: dir, db: file, now: NOW });
-      const brief = renderBrief(report);
+      const brief = renderDetail(report);
       assert.doesNotMatch(brief, placeholder);
       assert.doesNotMatch(brief, /\?/u, "no question-mark glyph at all");
       assert.doesNotMatch(brief, /\[[▉░]+\]/u, "no bar exists without a total");
@@ -171,7 +171,7 @@ test("unknown totals render no placeholder in JSON or in the brief, and a real t
       assert.match(brief, /░▒▓▒░/u, "a working session without a total shows the pulse");
       await fs.mkdir(path.join(dir, "plans"));
       await fs.writeFile(path.join(dir, "plans", "p.md"), "# Demo — Work Plan\n\n- [x] 1. one\n- [x] 2. two\n- [ ] 3. three — detail\n- [ ] 4. four\n");
-      const planned = renderBrief(await collect({ root: dir, db: file, now: NOW }));
+      const planned = renderDetail(await collect({ root: dir, db: file, now: NOW }));
       assert.match(planned, /`\[▉▉▉▉▉░░░░░\] 2\/4` plan steps/u);
       assert.match(planned, /▶ \*\*now\*\* · 3\. three/u);
       assert.match(planned, /✓ \d\d-\d\d · feat: first milestone/u);
@@ -189,7 +189,7 @@ test("the brief keeps every line within 120 cells with Hangul goals, boxes one r
       buildStore(file, { sessions: [{ id: "ses_ko", directory: dir, title: "한국어 보고서 초안을 정리하고 표와 그림을 다듬어서 최종본으로 만들기", created: NOW - 50 * 60_000, updated: NOW - 40 * 60_000,
         messages: [{ role: "user", parts: [text("정리", "user")] }, { role: "assistant", parts: [text("한국어 문장을 다듬는 중입니다. 표와 그림의 위치를 다시 맞추고 있습니다.")] }],
         todos: [{ content: "표 정리", status: "completed" }, { content: "그림 위치 맞추기 그리고 최종 검토", status: "pending" }] }] });
-      const brief = renderBrief(await collect({ root: dir, db: file, now: NOW, session: "ses_ko" }));
+      const brief = renderDetail(await collect({ root: dir, db: file, now: NOW, session: "ses_ko" }));
       for (const line of brief.split("\n")) assert.ok(cellWidth(line) <= 120, `${cellWidth(line)} cells: ${line}`);
       assert.equal(brief.match(/Recommended next step/gu)?.length, 1);
       assert.match(brief, /```\n╭─ Recommended next step ─+╮\n/u);
@@ -197,7 +197,7 @@ test("the brief keeps every line within 120 cells with Hangul goals, boxes one r
       const box = brief.split("\n").filter((line) => /^[╭│╰]/u.test(line));
       assert.equal(new Set(box.map(cellWidth)).size, 1, "every box line closes at the same column");
       assert.match(brief, /\n.*(go|say what to do).*$/u);
-      const plain = renderBrief(await collect({ root: dir, db: file, now: NOW }), { ascii: true });
+      const plain = renderDetail(await collect({ root: dir, db: file, now: NOW }), { ascii: true });
       assert.match(plain, /\+- Recommended next step/u);
       assert.doesNotMatch(plain, /[🧭🌿⚪🟢🟠🔴✅⏳▶╭│╰]/u, "--ascii prints no emoji or box glyph");
     } finally {
@@ -269,7 +269,7 @@ test("the legacy JSON store is read when no database exists, and a missing store
       const none = await collect({ root: dir, db: path.join(dir, "absent.db"), storage: path.join(dir, "no-storage"), now: NOW });
       assert.equal(none.source.store, "none");
       assert.match(none.source.note, /no session database was found/u);
-      assert.match(renderBrief(none), /No earlier sessions found here/u);
+      assert.match(renderDetail(none), /No earlier sessions found here/u);
     } finally {
       await fs.rm(storage, { recursive: true, force: true });
     }
@@ -329,7 +329,7 @@ test("ended sessions fold into one table row each, at most eight, and every row 
       }));
       sessions.push({ id: "ses_live", directory: dir, title: "Live one", created: NOW - 10 * 60_000, updated: NOW - 20_000, messages: [{ role: "user", parts: [text("x", "user")] }, { role: "assistant", parts: [tool("bash", "running", { description: "Run the gates" })] }] });
       buildStore(file, { sessions });
-      const brief = renderBrief(await collect({ root: dir, db: file, now: NOW, maxSessions: 30 }));
+      const brief = renderDetail(await collect({ root: dir, db: file, now: NOW, maxSessions: 30 }));
       assert.match(brief, /### ⚪ Ended · 11\n\n\| id \| where \| goal \| ago \| done \|/u);
       const rows = brief.split("\n").filter((line) => /^\| `/u.test(line));
       assert.equal(rows.length, 8, "eight rows, then a count of the rest");
@@ -355,7 +355,7 @@ test("the box always names a real step from the records when nothing can run on 
       const report = await collect({ root: dir, db: file, now: NOW });
       assert.notEqual(report.recommended.kind, "none");
       assert.match(report.recommended.text, /Pick up "Tidy the parser" in /u);
-      const brief = renderBrief(report);
+      const brief = renderDetail(report);
       assert.doesNotMatch(brief, /No next step|Nothing is waiting/u);
       assert.match(brief, /Nothing runs on its own here/u);
       const card = (await collect({ root: dir, db: file, now: NOW })).groups[0].sessions[0];
@@ -378,7 +378,7 @@ test("unfilled plan scaffolds never reach the roadmap or the recommendation", as
       await fs.writeFile(path.join(dir, "plans", "same.md"), "# S\n\n- [ ] todo\n- [ ] todo\n");
       const report = await collect({ root: dir, db: file, now: NOW });
       assert.equal(report.groups.length, 0, "a worktree holding only scaffolds has nothing to show");
-      assert.doesNotMatch(renderBrief(report), /<title>|‹title›/u);
+      assert.doesNotMatch(renderDetail(report), /<title>|‹title›/u);
     } finally {
       await fs.rm(file, { force: true });
     }
@@ -393,7 +393,7 @@ test("when the next step belongs to another session, go still answers and points
       const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
       assert.notEqual(report.recommended.sessionID, "ses_me");
       assert.equal(report.nextRecord?.kind, "elsewhere");
-      assert.match(renderBrief(report), /go/u);
+      assert.match(renderDetail(report), /go/u);
       const { routeGo } = await import("../src/adhd-next.ts");
       const reply = await routeGo({ projectRoot: dir, sessionID: "ses_me", text: "go", now: NOW });
       assert.equal(reply?.kind, "elsewhere");
@@ -452,7 +452,7 @@ test("round three: a completed run and a fully ticked plan read done, liveness s
       assert.equal(byId.ses_me.status, "working", "the session running the brief is working whatever it last wrote");
       assert.deepEqual(group.plans.map((plan) => [plan.path, plan.complete]), [["plans/port.md", true]], "the finished plan is kept; the stale one is held to the window");
       assert.equal(report.recommended.kind === "plan", false, "a stale open plan is never recommended");
-      assert.doesNotMatch(renderBrief(report, { sessionID: "ses_me" }), /an old idea/u);
+      assert.doesNotMatch(renderDetail(report, { sessionID: "ses_me" }), /an old idea/u);
     } finally {
       await fs.rm(file, { force: true });
     }
@@ -464,18 +464,18 @@ test("round three: the brief opens with done so far, doing now and next", async 
     const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
     try {
       buildStore(file, { sessions: await roundThree(dir) });
-      const brief = renderBrief(await collect({ root: dir, db: file, now: NOW, session: "ses_me" }), { sessionID: "ses_me" });
+      const brief = renderDetail(await collect({ root: dir, db: file, now: NOW, session: "ses_me" }), { sessionID: "ses_me" });
       const [done, doing, next, blank] = brief.split("\n");
       assert.match(done, /^\*\*Done so far:\*\* feat: first milestone; `plans\/port\.md` \(start-work complete\) {2}$/u);
       assert.match(doing, /^\*\*Doing now:\*\* Ask for the brief {2}$/u);
       assert.match(next, /^\*\*Next:\*\* \S/u);
       assert.equal(blank, "");
       for (const line of [done, doing, next]) assert.ok(cellWidth(line) <= 120, line);
-      const ascii = renderBrief(await collect({ root: dir, db: file, now: NOW }), { ascii: true });
+      const ascii = renderDetail(await collect({ root: dir, db: file, now: NOW }), { ascii: true });
       assert.match(ascii.split("\n")[1], /^\*\*Doing now:\*\* nothing running {2}$/u);
       const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop", "work-schema-3.json");
       await fs.writeFile(loop, JSON.stringify({ schemaVersion: 3, sessionID: "ses_run", status: "active", plan: { path: path.join(dir, "plans", "port.md") }, updatedAt: new Date(NOW).toISOString() }));
-      assert.match(renderBrief(await collect({ root: dir, db: file, now: NOW })).split("\n")[1], /^\*\*Doing now:\*\* start-work · plans\/port\.md {2}$/u);
+      assert.match(renderDetail(await collect({ root: dir, db: file, now: NOW })).split("\n")[1], /^\*\*Doing now:\*\* start-work · plans\/port\.md {2}$/u);
     } finally {
       await fs.rm(file, { force: true });
     }
@@ -490,7 +490,7 @@ test("the opener names an open plan's step with go, and a finished plan with no 
       await fs.mkdir(path.join(dir, "plans"));
       await fs.writeFile(path.join(dir, "plans", "a-done.md"), "# A\n\n- [x] 1. one\n- [x] 2. two\n");
       await fs.writeFile(path.join(dir, "plans", "b-open.md"), "# B\n\n- [x] 1. one\n- [ ] 2. two\n");
-      const brief = renderBrief(await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true }), { sessionID: "ses_me" });
+      const brief = renderDetail(await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true }), { sessionID: "ses_me" });
       assert.match(brief.split("\n")[0], /`plans\/a-done\.md` `\[▉▉▉▉▉▉▉▉▉▉\] 2\/2`/u);
       assert.match(brief.split("\n")[2], /^\*\*Next:\*\* Start work on plans\/b-open\.md: 1 step left\. \(type `go`\)$/u);
     } finally {
@@ -509,7 +509,7 @@ test("with no step for go, this worktree's HANDOFF.md Next item is the recommend
       assert.equal(report.recommended.kind, "handoff");
       assert.match(report.recommended.text, /Wire the exporter to the CLI/u);
       assert.equal(report.nextRecord, null, "a handoff item does not run on go");
-      assert.match(renderBrief(report), /Nothing runs on its own here/u);
+      assert.match(renderDetail(report), /Nothing runs on its own here/u);
       await fs.writeFile(path.join(dir, "HANDOFF.md"), "# Handoff\n\n## Next\n\n## Notes\n\n- not a step\n");
       assert.match((await collect({ root: dir, db: file, now: NOW })).recommended.text, /say what to start/u, "an empty Next section gives no step");
     } finally {
@@ -528,9 +528,9 @@ test("plans are read before sessions, and plans the read budget skipped are coun
       for (const name of ["a", "b", "c"]) await fs.writeFile(path.join(dir, "plans", `${name}.md`), body(name));
       const report = await collect({ root: dir, db: file, now: NOW, budgetBytes: 1000 });
       assert.equal(report.plansSkipped, 1);
-      assert.match(renderBrief(report), /1 plan was not read \(read budget used up\)/u);
+      assert.match(renderDetail(report), /1 plan was not read \(read budget used up\)/u);
       assert.equal((await collect({ root: dir, db: file, now: NOW })).plansSkipped, 0);
-      assert.doesNotMatch(renderBrief(await collect({ root: dir, db: file, now: NOW })), /not read \(read budget/u);
+      assert.doesNotMatch(renderDetail(await collect({ root: dir, db: file, now: NOW })), /not read \(read budget/u);
     } finally {
       await fs.rm(file, { force: true });
     }
@@ -569,7 +569,7 @@ test("lanes: herdr agents at work in this workspace or repo hold back go on an o
       assert.equal(report.recommended.lanes, 2, "own pane, other workspace, idle and done agents are not lanes");
       assert.equal(report.nextRecord, null, "nothing is armed for go");
       assert.equal(await consumeNext(dir, "ses_me", NOW), undefined);
-      const brief = renderBrief(report, { sessionID: "ses_me" });
+      const brief = renderDetail(report, { sessionID: "ses_me" });
       assert.match(brief, /Wait for 2 lanes/u);
       assert.doesNotMatch(brief, /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
       assert.equal(brief.split("\n").at(-1), "Do not type `go` until they finish.");
@@ -621,7 +621,7 @@ test("lanes: a session seen also as a herdr agent counts once, and a working ses
       assert.equal(alone.recommended.kind, "lanes");
       assert.equal(alone.recommended.lanes, 1);
       assert.match(alone.recommended.text, /Port the exporter/u);
-      assert.doesNotMatch(renderBrief(alone, { sessionID: "ses_me" }), /type: go/u);
+      assert.doesNotMatch(renderDetail(alone, { sessionID: "ses_me" }), /type: go/u);
       const both = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
       assert.equal(both.recommended.lanes, 1, "matched by agent session and by liveness pane");
     } finally {
@@ -645,11 +645,11 @@ test("another session's active start-work run is never a go step here", async ()
       const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
       assert.notEqual(report.nextRecord?.kind, "plan");
       assert.notEqual(report.nextRecord?.kind, "work");
-      assert.doesNotMatch(renderBrief(report, { sessionID: "ses_me" }), /type: go/u);
+      assert.doesNotMatch(renderDetail(report, { sessionID: "ses_me" }), /type: go/u);
       await runOf("ses_me", "active");
       const own = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
       assert.equal(own.nextRecord?.kind, "work");
-      assert.match(renderBrief(own, { sessionID: "ses_me" }), /type: go/u);
+      assert.match(renderDetail(own, { sessionID: "ses_me" }), /type: go/u);
     } finally {
       await fs.rm(file, { force: true });
     }
@@ -666,8 +666,29 @@ test("an approval step never says type go, even in this session", async () => {
       await fs.writeFile(path.join(loop, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID: "ses_me", status: "paused", pendingBoundary: { action: "write", root: "/x/nested" }, plan: { path: "plans/p.md" }, updatedAt: new Date(NOW).toISOString() }));
       const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
       assert.equal(report.recommended.kind, "answer");
-      const brief = renderBrief(report, { sessionID: "ses_me" });
+      const brief = renderDetail(report, { sessionID: "ses_me" });
       assert.doesNotMatch(brief, /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+});
+
+test("a parked queue is a working run with a count, never a wait on the user", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: [{ id: "ses_me", directory: dir, title: "Run the plan", created: NOW - 30 * 60_000, updated: NOW - 10 * 60_000, messages: [{ role: "user", parts: [text("start-work", "user")] }] }] });
+      const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop");
+      await fs.mkdir(loop, { recursive: true });
+      const parked = [{ id: "a", action: "write", root: "/x/nested", sessionID: "ses_me", firstSeenRevision: 2, hits: 1, lastSeen: new Date(NOW).toISOString() }, { id: "b", action: "execute", root: "/x/tools", sessionID: "ses_me", firstSeenRevision: 3, hits: 2, lastSeen: new Date(NOW).toISOString() }];
+      await fs.writeFile(path.join(loop, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID: "ses_me", status: "active", pendingBoundary: null, parkedBoundaries: parked, deniedBoundaries: [], plan: { path: "plans/p.md" }, updatedAt: new Date(NOW).toISOString() }));
+      const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me" });
+      const card = report.groups.flatMap((group) => group.sessions).find((entry) => entry.id === "ses_me");
+      assert.notEqual(card.status, "waits-on-you");
+      assert.equal(card.parked, 2);
+      assert.notEqual(report.recommended.kind, "answer");
+      assert.match(renderDetail(report, { sessionID: "ses_me" }), /2 parked \(lit approve optional\)/u);
     } finally {
       await fs.rm(file, { force: true });
     }
@@ -706,7 +727,7 @@ test("a live lane outranks the HANDOFF Next item", async () => {
       await fs.writeFile(path.join(dir, "HANDOFF.md"), "# H\n\n## Next\n\n1. Wire the exporter\n");
       const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
       assert.equal(report.recommended.kind, "lanes");
-      assert.equal(renderBrief(report).split("\n").at(-1), "Do not type `go` until they finish.");
+      assert.equal(renderDetail(report).split("\n").at(-1), "Do not type `go` until they finish.");
     } finally {
       await fs.rm(file, { force: true });
       await fs.rm(herdr.bin, { recursive: true, force: true });
@@ -730,7 +751,7 @@ test("lanes hold this session's own paused spine: no continue, no go, no resume 
       assert.equal(held.recommended.lanes, 1);
       assert.equal(held.nextRecord, null, "nothing is armed for go");
       assert.equal(await consumeNext(dir, "ses_p", NOW), undefined);
-      const brief = renderBrief(held, { sessionID: "ses_p" });
+      const brief = renderDetail(held, { sessionID: "ses_p" });
       assert.doesNotMatch(brief, /lit continue|Return to the paused|type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
       assert.equal(brief.split("\n").at(-1), "Do not type `go` until they finish.");
       const free = await collect({ root: dir, db: file, now: NOW, session: "ses_p", writeNext: true });
@@ -757,7 +778,7 @@ test("lanes hold this session's own running start-work run: no go", async () => 
       const held = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
       assert.equal(held.recommended.kind, "lanes");
       assert.equal(held.nextRecord, null);
-      assert.doesNotMatch(renderBrief(held, { sessionID: "ses_me" }), /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
+      assert.doesNotMatch(renderDetail(held, { sessionID: "ses_me" }), /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
       const free = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
       assert.equal(free.nextRecord?.kind, "work");
     } finally {
@@ -778,7 +799,7 @@ test("lanes do not hide a pending approval: it is still the step", async () => {
       await fs.writeFile(path.join(loop, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID: "ses_me", status: "paused", pendingBoundary: { action: "write", root: "/x/nested" }, plan: { path: "plans/p.md" }, updatedAt: new Date(NOW).toISOString() }));
       const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
       assert.equal(report.recommended.kind, "answer");
-      assert.doesNotMatch(renderBrief(report, { sessionID: "ses_me" }), /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
+      assert.doesNotMatch(renderDetail(report, { sessionID: "ses_me" }), /type: go|\(type `go`\)|Type \*\*`go`\*\*/u);
     } finally {
       await fs.rm(file, { force: true });
       await fs.rm(herdr.bin, { recursive: true, force: true });

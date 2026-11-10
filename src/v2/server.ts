@@ -27,7 +27,8 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
     projectRoot: root,
     knowledgeCaptureEnabled: loaded.config.knowledge.capture,
     getSession,
-    deliverableHedgeGuard
+    deliverableHedgeGuard,
+    baseDirectory: context.location.directory.trim() || root
   });
 
   await context.model.transform(registerOpenAiProviderModels);
@@ -54,6 +55,7 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
   const nativeGoal = createNativeGoal({ projectRoot: root, host: { ...(context.rpc === undefined ? {} : { rpc: context.rpc }), session: context.session } });
   const sessionHooks = createV2SessionHooks({
     projectRoot: root,
+    ...(context.location.directory.trim() ? { directory: context.location.directory.trim() } : {}),
     config: loaded.config,
     getSession,
     routeModel: createSessionModelRoute(agentPlan, context.session, context.model),

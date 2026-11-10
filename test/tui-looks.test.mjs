@@ -150,6 +150,12 @@ test("the wait signals are read from the session: a pending permission, the last
   const raw = { schemaVersion: 3, sessionID: "s1", status: "paused", history: [], plan: { path: "/p.md" }, pendingBoundary: { id: "b1", action: "deploy" } };
   assert.equal(readWorkState(raw, "s1")?.boundary, true);
   assert.equal(readWorkState({ ...raw, pendingBoundary: null }, "s1")?.boundary, undefined);
+  // The parked queue belongs to a run that keeps working: a count, never YOUR TURN.
+  const parked = { ...raw, status: "active", pendingBoundary: null, parkedBoundaries: [{ id: "a" }, { id: "b" }], deniedBoundaries: [] };
+  assert.equal(readWorkState(parked, "s1")?.boundary, undefined);
+  assert.equal(readWorkState(parked, "s1")?.parked, 2);
+  assert.equal(readWorkState(raw, "s1")?.parked, 1, "the legacy shape counts its one boundary");
+  assert.equal(readWorkState({ ...raw, status: "active", pendingBoundary: null }, "s1")?.parked, undefined);
 });
 
 test("YOUR TURN breathes slowly in amber, holds still under reduced motion, and wins over the rewind look", () => {

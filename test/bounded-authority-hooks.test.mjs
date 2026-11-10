@@ -60,6 +60,31 @@ async function initializedLifecycle(dir) {
   return { lifecycle, state: initialized.state };
 }
 
+test("a fence naming an uncovered boundary is parked and its continuation lists the queue and lit cancel", async () => {
+  await withProject(async (dir) => {
+    const { lifecycle, state } = await initializedLifecycle(dir);
+    await fs.mkdir(path.join(dir, "docs"));
+    const prompts = [];
+    const client = {
+      session: {
+        message: async () => ({ data: { info: { role: "assistant" }, parts: [] } }),
+        promptAsync: async (request) => { prompts.push(request); return { data: undefined }; }
+      }
+    };
+    const hook = createBoundedAuthorityEventHook(dir, client);
+    const text = ["```litopencode-progress", JSON.stringify({ schemaVersion: 3, workId: state.workId, revision: state.revision, progressId: "park-1", summary: "needs docs", boundary: { action: "write", root: "docs" } }), "```"].join("\n");
+    await hook({ event: { type: "message.part.updated", properties: { part: { id: "pt-park", sessionID: state.sessionID, messageID: "m-park", type: "text", text } } } });
+    assert.equal(prompts.length, 1);
+    const continuation = prompts[0].body.parts[0].text;
+    assert.match(continuation, /"parked":\[\{"id":"[a-f0-9]+","action":"write"/u);
+    assert.match(continuation, /lit cancel/u);
+    const after = await lifecycle.read();
+    assert.equal(after.status, "active");
+    assert.equal(after.parkedBoundaries.length, 1);
+    assert.equal(after.history.at(-1).type, "work.continuation-acknowledged");
+  });
+});
+
 test("progress hook emits one safe continuation for new progress and deduplicates replay/stale events", async () => {
   await withProject(async (dir) => {
     const { lifecycle, state } = await initializedLifecycle(dir);

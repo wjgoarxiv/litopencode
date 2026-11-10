@@ -18,7 +18,7 @@ export type TodoInput = { readonly content: string; readonly status: string };
 export type PlanChecklist = { readonly done: number; readonly total: number; readonly next?: string };
 
 /** This session's bounded work from work-schema-3.json: its status, recorded progress turns and plan. */
-export type WorkInput = { readonly status: string; readonly iterations: number; readonly plan?: PlanChecklist; readonly boundary?: boolean };
+export type WorkInput = { readonly status: string; readonly iterations: number; readonly plan?: PlanChecklist; readonly boundary?: boolean; readonly parked?: number };
 
 export type ResearchStage = "decompose" | "wave" | "expand" | "verify" | "synthesis";
 
@@ -88,6 +88,8 @@ export type MissionView = {
   readonly detail?: string;
   /** Recorded turns of the current loop: bounded work progress, or lit-loop goal checkpoints. */
   readonly iteration?: number;
+  /** Steps the run parked outside its grants while it keeps working; never a "waits on the user" signal. */
+  readonly parked?: number;
   /** How many tasks the saved plan holds, shown beside the plan stage. */
   readonly planTasks?: number;
   readonly wave?: number;
@@ -206,15 +208,17 @@ export function planChecklist(text: string): PlanChecklist | undefined {
  * Lenient read of work-schema-3.json for one session: undefined when it is absent, another session's,
  * cancelled, or not the schema-3 shape. Iterations count the recorded `work.progressed` turns.
  */
-export function readWorkState(raw: unknown, sessionID: string): { readonly status: string; readonly iterations: number; readonly planPath: string; readonly boundary?: true } | undefined {
+export function readWorkState(raw: unknown, sessionID: string): { readonly status: string; readonly iterations: number; readonly planPath: string; readonly boundary?: true; readonly parked?: number } | undefined {
   if (!isRecord(raw) || raw.schemaVersion !== 3 || raw.sessionID !== sessionID) return undefined;
   const status = text(raw.status);
   if (status === "" || status === "cancelled") return undefined;
   const history = Array.isArray(raw.history) ? raw.history.filter(isRecord) : [];
   const plan = isRecord(raw.plan) ? text(raw.plan.path) : "";
-  // A paused run holding a boundary waits for the user's typed approval.
+  // Only the older paused shape (one boundary, the run stopped) waits for the user. A parked queue belongs
+  // to a run that keeps working, so it is a count, never the amber signal.
   const boundary = status === "paused" && isRecord(raw.pendingBoundary);
-  return { status, iterations: history.filter((entry) => entry.type === "work.progressed").length, planPath: plan, ...(boundary ? { boundary: true as const } : {}) };
+  const parked = Array.isArray(raw.parkedBoundaries) ? raw.parkedBoundaries.filter(isRecord).length : boundary ? 1 : 0;
+  return { status, iterations: history.filter((entry) => entry.type === "work.progressed").length, planPath: plan, ...(parked > 0 ? { parked } : {}), ...(boundary ? { boundary: true as const } : {}) };
 }
 
 type LedgerCriterion = { readonly id: string; readonly scenario: string; readonly status: string; readonly evidence: readonly { readonly kind: string; readonly ref: string; readonly at: string }[] };
@@ -415,6 +419,7 @@ export function buildMissionView(input: MissionInput): MissionView {
           : nextCriterion !== undefined ? { next: `${nextCriterion.id} ${nextCriterion.scenario}`.trim() } : {}),
     ...(detail === undefined ? {} : { detail }),
     ...(iteration === undefined ? {} : { iteration }),
+    ...(work !== undefined && (work.parked ?? 0) > 0 ? { parked: work.parked } : {}),
     ...(planList === undefined ? {} : { planTasks: planList.total }),
     ...(family === "research" && research !== undefined && research.waves > 0 ? { wave: research.waves } : {}),
     ...(live === undefined ? {} : { live }),

@@ -15,7 +15,9 @@ import { applyTrustedStartWorkDirective, parseStartWorkLifecycleDirective } from
 import type { BoundedAuthorityOptions } from "../bounded-authority.ts";
 import type { LitOpenCodeConfig } from "../config.ts";
 import { queryKnowledge } from "../knowledge.ts";
-import { startTypedWork, typedStartArgument } from "../start-work-typed.ts";
+import { startTypedWork, takeCancelNotice, typedStartArgument } from "../start-work-typed.ts";
+import { createRuntimePaths } from "../state.ts";
+import { appendNotice } from "./notices.ts";
 import { createLitGoalOperations } from "../ledger.ts";
 import { readerFacingCommunicationContract } from "../reader-facing-output.ts";
 import { applyCompactionRuleReset, applyStaticRuleInjection } from "../rules/hooks.ts";
@@ -48,6 +50,8 @@ export type SessionAgentLookup = (sessionID: string) => Promise<{ readonly paren
 
 export type V2SessionHookOptions = {
   readonly projectRoot: string;
+  /** The host launch directory; `lit cancel` also looks for a run there. */
+  readonly directory?: string;
   readonly config: Pick<LitOpenCodeConfig, "outputStyle" | "boundedAuthority">;
   readonly getSession: SessionAgentLookup;
   /** Puts a session that has no model of its own on its agent's route. */
@@ -172,6 +176,9 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     const state = stateFor(event.sessionID);
     state.turn = [];
     state.user = [];
+    // Another window cancelled this session's run: the notice rides this turn, after the reset above.
+    const notice = await takeCancelNotice(options.projectRoot, event.sessionID);
+    if (notice !== undefined) state.turn.push(notice);
     if (input.trim() === "") return;
 
     if (options.autoHandoffRoute !== undefined) {
@@ -194,10 +201,15 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
       event.sessionID,
       input,
       activationMemory,
-      options.config.boundedAuthority as BoundedAuthorityOptions
+      options.config.boundedAuthority as BoundedAuthorityOptions,
+      event.messageID,
+      options.directory
     );
     if (typed !== undefined) {
       state.turn.push(typed.text);
+      if (typed.kind === "cancel" && /cancelled the start-work run/u.test(typed.text)) {
+        appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode", message: "start-work run cancelled", variant: "warning", duration: 8000 });
+      }
       event.metadata = { ...(event.metadata ?? {}), litopencode: { mode: typed.mode, trigger: "lit", source: "prompt", typed: typed.kind } };
       if (typed.continued) options.onActivation?.(event.sessionID, typed.mode);
       return;

@@ -17,6 +17,7 @@ export type RuntimePaths = {
   lifecycleStateFile: string;
   lifecycleEventsFile: string;
   lifecycleLockDir: string;
+  cancelNoticesFile: string;
   knowledgeDir: string;
   knowledgeClaimsFile: string;
   autoHandoffFile: string;
@@ -62,6 +63,7 @@ export function createRuntimePaths(projectRoot: string): RuntimePaths {
     lifecycleStateFile: path.join(litLoopDir, "work-schema-3.json"),
     lifecycleEventsFile: path.join(litLoopDir, "work-schema-3.jsonl"),
     lifecycleLockDir: path.join(litLoopDir, ".work-schema-3.lock"),
+    cancelNoticesFile: path.join(litLoopDir, "cancel-notices.json"),
     knowledgeDir: path.join(runtimeDir, "knowledge"),
     knowledgeClaimsFile: path.join(runtimeDir, "knowledge", "claims.jsonl"),
     autoHandoffFile: path.join(runtimeDir, "auto-handoff.json"),

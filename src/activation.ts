@@ -23,7 +23,7 @@ import { activationDiscipline } from "./activation-probe.ts";
 import { adhdSessionNote } from "./activation-workflow-prompts.ts";
 import { typedPromptReply } from "./adhd-next.ts";
 import { decideReentry, recordActivation, type ActivationMemory } from "./activation-reentry.ts";
-import { startTypedWork, typedStartArgument } from "./start-work-typed.ts";
+import { startTypedWork, takeCancelNotice, typedStartArgument } from "./start-work-typed.ts";
 import { micro, supportsMarkGlyphs } from "./lit-mark.ts";
 import { recordNativeGoalUnavailable } from "./native-goal-ledger.ts";
 import { nativeGoalRoute } from "./v2/native-goal.ts";
@@ -110,6 +110,8 @@ export type ChatMessageActivationOptions = {
   readonly getSession?: SessionLookup;
   readonly hostArgv?: readonly string[];
   readonly boundedAuthority?: BoundedAuthorityOptions;
+  /** The host launch directory, when it differs from the project root; `lit cancel` looks there too. */
+  readonly directory?: string;
   readonly knowledgeCaptureEnabled?: boolean;
   readonly autoHandoffRoute?: (text: string, mode: AutoHandoffRouteMode) => Promise<string | undefined>;
   readonly onScientificVisualizationActivation?: (sessionID: string) => void;
@@ -161,6 +163,19 @@ export function createChatMessageActivationHook(
     const childSession = await isChildSessionMessage(input.sessionID, agent, options.getSession);
     if (!childSession) {
       await options.onRootUserTurn?.(input.sessionID);
+      // Another window cancelled this session's run: say so on its next prompt, whatever the prompt is.
+      const notice = await takeCancelNotice(projectRoot, input.sessionID);
+      if (notice !== undefined) {
+        output.parts.push({
+          id: `prt_litopencode_cancel_notice_${idSuffix(input.messageID ?? output.message.id)}`,
+          sessionID: input.sessionID,
+          messageID: input.messageID ?? output.message.id,
+          type: "text",
+          text: notice,
+          synthetic: true,
+          metadata: { litopencode: { mode: "start-work", source: "chat.message", typed: "cancel-notice" } }
+        });
+      }
       if (trustedInjectedSkill !== undefined) {
         await options.onTrustedSkillResume?.(input.sessionID, trustedInjectedSkill);
         return;
@@ -232,7 +247,9 @@ export function createChatMessageActivationHook(
         input.sessionID,
         nonEmptyTextParts[0].text,
         options.activationMemory,
-        options.boundedAuthority
+        options.boundedAuthority,
+        input.messageID ?? output.message.id,
+        options.directory
       );
       if (typed !== undefined) {
         output.parts.push({

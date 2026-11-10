@@ -307,7 +307,7 @@ export const litOpenCodeCommands = Object.freeze([
     id: "lit-adhd",
     slash: "/lit-adhd",
     title: "LitOpenCode Lit Adhd",
-    description: "Pick up where you left off: a read-only brief of earlier sessions in this worktree family with status, real progress, a roadmap and one recommended next step you follow with go.",
+    description: "Pick up where you left off: a read-only KPI board of this worktree family with the one step to take now, done and left counts, milestones and reminders; go follows the step.",
     banner: activationBanner("lit-adhd"),
     activationText: litAdhdPromptInjection
   },

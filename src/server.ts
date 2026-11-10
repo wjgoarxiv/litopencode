@@ -94,6 +94,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       "chat.message": createChatMessageActivationHook(root, {
         getSession,
         boundedAuthority: loaded.config.boundedAuthority,
+        ...(input?.directory?.trim() ? { directory: input.directory.trim() } : {}),
         knowledgeCaptureEnabled: loaded.config.knowledge.capture,
         autoHandoffRoute: autoHandoff.route,
         onRootUserTurn: (sessionID) => {
@@ -146,7 +147,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
 
     Object.defineProperties(hooks, {
       "tool.execute.before": {
-        value: createToolExecuteBeforeHook({ getSession, deliverableHedgeGuard }),
+        value: createToolExecuteBeforeHook({ getSession, deliverableHedgeGuard, projectRoot: root, baseDirectory: input?.directory?.trim() || root }),
         enumerable: false
       },
       "tool.execute.after": {

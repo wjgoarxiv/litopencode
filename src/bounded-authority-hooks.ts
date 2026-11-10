@@ -94,10 +94,8 @@ export async function applyTrustedStartWorkDirective(
     workId: state.workId,
     revision: state.revision,
     status: state.status,
-    pendingBoundary: state.pendingBoundary === null ? null : {
-      id: state.pendingBoundary.id,
-      action: state.pendingBoundary.action
-    }
+    pendingBoundary: null,
+    parked: state.parkedBoundaries.length
   };
   return {
     text: `<bounded-authority-lifecycle>\n${JSON.stringify(receipt)}\n</bounded-authority-lifecycle>`,

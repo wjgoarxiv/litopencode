@@ -5,6 +5,14 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- `lit adhd` now opens with a KPI board: the one thing to do now and exactly what to type, four counts (done, in progress, waiting on you, left) with an overall bar, milestones with their own bars, what was done lately, what is still to do, and up to five reminders shaped "thing → what to do" (a session waiting on you, lanes still working, uncommitted changes, unpushed commits, plans untouched for a week, the handoff's next item). The collector computes every figure and writes the board in Korean with `--lang ko`. The per-session cards are still there with `lit adhd detail` or `lit adhd 자세히`, under the board.
+- Typing `lit cancel` (or `lit 취소`) as the whole message ends the project's start-work run from any window, including one opened in a nested folder or a linked worktree, with no JSON to paste. The session that owned the run is told on its next message.
+- A step outside the run's grants no longer stops the run. It is parked (up to 16), the run keeps working on the rest, and a run with nothing else left ends its turn with one list. `lit approve` grants every parked step and `lit deny` refuses them; both are optional, and `lit deny` no longer ends the run. A run with parked steps cannot be marked complete until the queue is empty.
+- Secret files (`.env` files, SSH keys, `.pem` files, OpenCode's `auth.json`) and settings files are refused for the whole run without a pause. `.env.example`, `.sample` and `.template` files stay readable.
+- Reads of OpenCode's own skills and `AGENTS.md` no longer need a boundary.
+- Older run records that were paused on one boundary open as an active run with that step parked.
+- A progress block is now read when it shares its message part with the LIT ignition block or other text, as long as it is the only progress block and stands on its own lines. Before, the ignition block in front of it made OpenCode runs ignore every progress block. A progress block inside another code block, a quote or a list still counts for nothing.
+
 ## 1.0.42 - 2026-11-10
 
 - Development dependencies move to TypeScript 7 and @types/node 26, and CI uses actions/checkout 7 and actions/setup-node 7. The installed plugin behaves the same.

@@ -154,7 +154,7 @@ test("go on a plan with Scope roots lines starts with those grants, so the run d
   });
 });
 
-test("go never answers a pending boundary: lit approve does", async () => {
+test("go never settles a parked step: lit approve does", async () => {
   await workspace(async (dir) => {
     await fs.mkdir(path.join(dir, "plans"), { recursive: true });
     await fs.mkdir(path.join(dir, "nested"));
@@ -166,9 +166,11 @@ test("go never answers a pending boundary: lit approve does", async () => {
       await lifecycle.pause({ schemaVersion: 3, requestId: "p1", workId: state.workId, sessionID: "ses_a", expectedRevision: state.revision, boundary: { action: "write", root: "nested" } });
       await writeNext(dir, { kind: "work", target: "start-work", at: Date.now(), sessionID: "ses_a" });
       await send("go");
-      assert.equal((await lifecycle.read()).status, "paused", "go leaves the boundary pending");
+      assert.equal((await lifecycle.read()).parkedBoundaries.length, 1, "go leaves the parked step parked");
       assert.match(await send("lit approve"), /approved write on/u);
-      assert.equal((await lifecycle.read()).status, "active");
+      const after = await lifecycle.read();
+      assert.equal(after.status, "active");
+      assert.equal(after.parkedBoundaries.length, 0);
     });
   });
 });

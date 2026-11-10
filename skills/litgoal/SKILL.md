@@ -161,15 +161,17 @@ it is authorized. Authority grants pair one semantic action (`read`, `write`, or
 canonical root. Release, publish, push, version, host-config, destructive, unknown, and mismatched
 actions never become grants.
 
-Pause occurs only for a genuinely new non-forbidden boundary. An already granted action/root pair
-continues without a pause. Resume requires an exact root-user `/start-work` or exact root chat
-directive, the same work/session/revision, and a grant equal to the pending boundary. The generic
-agent-callable `start-work` tool deliberately has no resume action. Consumed grants live in the
-schema-3 snapshot and therefore survive bounded event-journal compaction. Paused work cannot be
-completed; it must be explicitly resumed or cancelled.
+A genuinely new non-forbidden boundary is parked while the run keeps going; an already granted
+action/root pair is plain progress. Resume requires an exact root-user `/start-work` or exact root
+chat directive, the same work/session/revision, and a grant equal to one parked entry, which it
+removes from the queue. The generic agent-callable `start-work` tool deliberately has no resume
+action. Consumed grants live in the schema-3 snapshot and therefore survive bounded event-journal
+compaction. Work with parked steps cannot be completed until the user's `lit approve`, `lit deny` or
+`lit cancel` empties the queue.
 
-Assistant progress is recognized only as one exact `litopencode-progress` fenced JSON object.
-Copied, prefixed, quoted, malformed, oversized, user-authored, wrong-session, stale-work, and
+Assistant progress is recognized only as exactly one top-level `litopencode-progress` fenced JSON
+object in a text part; prose and other blocks around it, such as the LIT ignition block, are allowed.
+Nested, quoted, inline, duplicate, malformed, oversized, user-authored, wrong-session, stale-work, and
 stale-revision text stays silent. New progress receives one structured continuation. Same-turn
 event replay returns the same checkpoint internally without a second prompt; later unchanged
 progress is silent. Context fields are encoded and labeled inert so transcript or source text

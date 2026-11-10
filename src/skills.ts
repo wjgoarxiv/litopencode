@@ -280,7 +280,7 @@ export const litOpenCodeRuntimeSkills = Object.freeze([
     safety: [
       "Read the session store read-only through four allowlisted tables and print nothing that is not redacted, bounded gist text.",
       "Show a gauge only for a real total; otherwise say the known facts in words.",
-      "Start nothing: go follows one armed step for 30 minutes, and a pending boundary is answered only by the user's typed lit approve or lit deny."
+      "Start nothing: go follows one armed step for 30 minutes, parked steps are settled only by the user's typed lit approve or lit deny, and only the user's lit cancel ends a run."
     ]
   },
   {

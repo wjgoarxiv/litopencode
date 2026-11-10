@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { createBoundedAuthorityLifecycle } from "../src/bounded-authority.ts";
-import { answerBoundary, boundaryVerdict, startTypedWork, typedStartArgument } from "../src/start-work-typed.ts";
+import { answerBoundary, boundaryVerdict, startTypedWork, typedCancel, typedStartArgument } from "../src/start-work-typed.ts";
 import { createLitOpenCodePlugin } from "../src/server.ts";
 
 async function workspace(run) {
@@ -21,7 +21,7 @@ async function workspace(run) {
 const pauseOn = (lifecycle, state, action) =>
   lifecycle.pause({ schemaVersion: 3, requestId: `pause-${action}`, workId: state.workId, sessionID: state.sessionID, expectedRevision: state.revision, boundary: { action, root: "." } });
 
-test("typed prompts: only whole-prompt start-work, lit approve and lit deny are recognized", () => {
+test("typed prompts: only whole-prompt start-work, lit approve, lit deny and lit cancel are recognized", () => {
   assert.equal(typedStartArgument("start-work"), "");
   assert.equal(typedStartArgument("/start-work plans/one.md"), "plans/one.md");
   assert.equal(typedStartArgument("lit start work"), "");
@@ -32,6 +32,8 @@ test("typed prompts: only whole-prompt start-work, lit approve and lit deny are 
   assert.equal(boundaryVerdict("Lit deny."), "deny");
   assert.equal(boundaryVerdict("lit approve the push to main"), undefined);
   assert.equal(boundaryVerdict("I will lit approve later"), undefined);
+  for (const text of ["lit cancel", "LIT CANCEL", "lit\tcancel", "  lit cancel!  ", "lit 취소", "lit 취소."]) assert.equal(typedCancel(text), true, text);
+  for (const text of ["lit cancel the push", "please lit cancel", "lit-cancel", "litcancel", "cancel", "lit cancel?!x", `lit cancel${" ".repeat(600)}`]) assert.equal(typedCancel(text), false, text);
 });
 
 test("typed start-work resolves the only open plan and inits a bounded run with read, write and execute", async () => {
@@ -82,7 +84,7 @@ test("lit approve resumes with exactly the pending boundary and widens nothing e
   });
 });
 
-test("lit deny cancels the run, says it ended and how to start again", async () => {
+test("lit deny refuses the parked step and the run keeps going; lit cancel is what ends it", async () => {
   await workspace(async (dir) => {
     await startTypedWork({ projectRoot: dir, sessionID: "ses_a" });
     const lifecycle = createBoundedAuthorityLifecycle(dir);
@@ -93,9 +95,13 @@ test("lit deny cancels the run, says it ended and how to start again", async () 
     });
     assert.equal(paused.outcome, "applied");
     const reply = await answerBoundary({ projectRoot: dir, sessionID: "ses_a", verdict: "deny" });
-    assert.match(reply, /run has ended/u);
-    assert.match(reply, /start-work/u);
-    assert.equal((await lifecycle.read()).status, "cancelled");
+    assert.match(reply, /refused 1 parked step/u);
+    assert.match(reply, /keeps going/u);
+    assert.match(reply, /lit cancel/u);
+    const after = await lifecycle.read();
+    assert.equal(after.status, "active");
+    assert.equal(after.parkedBoundaries.length, 0);
+    assert.equal(after.deniedBoundaries.length, 1);
   });
 });
 
