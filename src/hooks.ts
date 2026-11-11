@@ -11,7 +11,6 @@ import {
   mutatedFilePaths
 } from "./tool-guards.ts";
 import { captureKnowledgeEvent } from "./knowledge.ts";
-import { recordMotionImageRead } from "./motion-image-reads.ts";
 import { createRunPathGuard } from "./run-path-guard.ts";
 import { markLiveness } from "./session-liveness.ts";
 
@@ -56,7 +55,6 @@ export function createToolExecuteAfterHook(options: ToolExecuteAfterHookOptions 
     if (options.projectRoot !== undefined) await markLiveness(options.projectRoot, input.sessionID, "alive");
     applyLitOpenCodeToolAfterHook(input, output);
     applyLitOpenCodePostEditHook(input, output);
-    recordMotionImageRead(input, options.projectRoot);
 
     const activationAction = input.tool === "lit" ? "activate"
       : input.tool === "litwork" || input.tool === "start-work" ? "start"

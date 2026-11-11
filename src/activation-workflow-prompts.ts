@@ -334,7 +334,7 @@ export const deepInterviewPromptInjection = skillBackedPromptInjection(
 
 export const frontendUiUxPromptInjection = skillBackedPromptInjection(
   "frontend-ui-ux-mode",
-  "Honor build/review/plan intent; implement and inspect authorized, well-scoped work.",
+  "frontend-ui-ux moved to wjgoarxiv-skills. Load it with OpenCode's native skill tool: when the installed collection copy loads, follow it within the user's build, review or plan intent. When the pointer below loads, say where the skill went, give its install line, and build nothing.",
   "frontend-ui-ux"
 );
 
@@ -353,13 +353,7 @@ export const browserDrivePromptInjection = skillBackedPromptInjection(
 );
 
 const visualQaActivationGuidance = `
-Activate visual-qa. Decide rendered behavior from artifacts, not opinion.
-
-Probe current-session capability before promising capture. Selection grants no browser or capture authority and installs or adds nothing. If the required channel is unavailable, emit its exact BLOCKED code; never claim PASS without capture.
-
-When available, predeclare the surface, interaction, and binary observable. Capture it, record the path, and provide a cleanup receipt.
-
-Never replace browser proof with an HTTP response.
+visual-qa moved to wjgoarxiv-skills. Load it with OpenCode's native skill tool: when the installed collection copy loads, follow it and decide rendered behavior from captured artifacts. When the pointer below loads, say where the skill went, give its install line, and give no PASS or FAIL.
 `;
 
 export const visualQaPromptInjection = skillBackedPromptInjection(

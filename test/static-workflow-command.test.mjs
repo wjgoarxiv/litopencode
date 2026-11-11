@@ -499,11 +499,12 @@ test("generated-file marker detection preserves custom files that mention marker
   });
 });
 
- test("authorized frontend build context reaches production without a second approval gate", () => {
+ test("frontend build context reaches the moved-skill pointer without a second approval gate", () => {
   assert.equal(detectChatActivationMode("build a bilingual landing page UI"), "frontend-ui-ux");
   const context = promptForChatActivationMode("frontend-ui-ux");
-  assert.match(context, /working implementation/i);
-  assert.match(context, /review-only.*plan-only/is);
+  assert.match(context, /moved to wjgoarxiv-skills/u);
+  assert.ok(context.includes('variants/litopencode/frontend-ui-ux" ~/.config/opencode/skills/frontend-ui-ux'));
+  assert.match(context, /build nothing/u);
   assert.doesNotMatch(context, /implement only after approval|does not render|Freeze intent/);
   assert.equal(detectChatActivationMode("explain the UI event log"), undefined);
   assert.equal(detectChatActivationMode("review the design docs"), undefined);

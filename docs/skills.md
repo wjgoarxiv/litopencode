@@ -23,7 +23,7 @@ Add `lit` to a prompt, or type a slash command. These are the ones you'll use mo
 | `/litresearch` or `/lit-research` | Research with a source for each claim. Helpers work in parallel when OpenCode allows it, and one after another when it doesn't. |
 | `/lit-code`, `/debugging`, `/refactor` | Get coding, debugging, or refactoring guidance. |
 | `/lit-korean` | Improve Korean prose without changing its meaning. |
-| `/lit-scientific-visualization` | Use the packaged scientific-visualization workflow. |
+| `/lit-scientific-visualization` | Say where the figure skill went and give its OpenCode install line. |
 
 A bare `handoff`, typed on its own, works the same as `/lit-handoff`. To have the handoff written for you when the conversation fills up, see [Automatic handoff](./guide.md#automatic-handoff).
 
@@ -169,27 +169,27 @@ Each row shows what a skill produces, how to open it, and what you get.
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-scientific-visualization.webp" width="240" alt="A journal-sized figure with vector and 600 DPI exports. The chart type follows the data." /></td>
-<td><code>lit-scientific-visualization</code><br /><sub><code>/lit-scientific-visualization</code></sub></td>
+<td><code>lit-scientific-visualization</code><br /><sub>moved to wjgoarxiv-skills</sub></td>
 <td>A journal-sized figure with vector and 600 DPI exports. The chart type follows the data.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-diagram-drawer.webp" width="240" alt="A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports." /></td>
-<td><code>lit-diagram-drawer</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-diagram-drawer</code><br /><sub>moved to wjgoarxiv-skills</sub></td>
 <td>A checked, editable diagram for slides and documents, with PNG and Office-safe SVG exports.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-schematic.webp" width="240" alt="A P&ID, apparatus figure or isometric cutaway of real equipment, drawn as editable SVG with PDF and 600 DPI PNG exports." /></td>
-<td><code>lit-schematic</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-schematic</code><br /><sub>moved to wjgoarxiv-skills</sub></td>
 <td>A P&amp;ID, apparatus figure or isometric cutaway of real equipment, drawn as editable SVG with PDF and 600 DPI PNG exports, checked by a QA gate and by looking at the render.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-pptx.webp" width="240" alt="Ask for slides with lit and get an editable PowerPoint deck from a Markdown source, drawn in one of thirteen design directions that the skill picks and names before building. A deck-wide QA gate and a rendered check follow. It is also in the skill picker." /></td>
-<td><code>lit-pptx</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-pptx</code><br /><sub>moved to wjgoarxiv-skills</sub></td>
 <td>Ask for slides with <code>lit</code> and get an editable PowerPoint deck from a Markdown source, drawn in one of thirteen design directions that the skill picks and names before building. A deck-wide QA gate and a rendered check follow. It is also in the skill picker.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-docx.webp" width="240" alt="Ask for a report with lit and get a quiet, print-ready Word file with its Markdown source, set in one of six document styles that the skill names before writing. Journal profiles stay available. A gate checks the rendered pages. It is also in the skill picker." /></td>
-<td><code>lit-docx</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-docx</code><br /><sub>moved to wjgoarxiv-skills</sub></td>
 <td>Ask for a report with <code>lit</code> and get a quiet, print-ready Word file with its Markdown source, set in one of six document styles that the skill names before writing. Journal profiles stay available. A gate checks the rendered pages. It is also in the skill picker.</td>
 </tr>
 <tr>
@@ -209,22 +209,22 @@ Each row shows what a skill produces, how to open it, and what you get.
 </tr>
 <tr>
 <td><img src="./assets/skills/frontend-ui-ux.webp" width="240" alt="Builds a working interface and checks it with a measured probe in seven views: four widths, dark, reduced motion and 200% zoom. Open it from the skill picker." /></td>
-<td><code>frontend-ui-ux</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>frontend-ui-ux</code><br /><sub>moved to wjgoarxiv-skills</sub></td>
 <td>Builds a working interface and checks it with a measured probe in seven views: four widths, dark, reduced motion and 200% zoom. Open it from the skill picker.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/readme-studio.webp" width="240" alt="A factual README with an inspected cover and outlined type. Open it from the skill picker." /></td>
-<td><code>readme-studio</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>readme-studio</code><br /><sub>moved to wjgoarxiv-skills</sub></td>
 <td>A factual README with an inspected cover and outlined type. Open it from the skill picker.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="Ask for a video with lit. It asks one question for path, style, format and register, writes a treatment, then draws a stage page or sets the words in motion; films are rich by default, with their own layered score and an optional Blender 3D plate, and pass their checks and a look-over before you get them. It is also in the skill picker." /></td>
-<td><code>lit-typographic-motion</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-typographic-motion</code><br /><sub>moved to wjgoarxiv-skills</sub></td>
 <td>Ask for a video with <code>lit</code>. It writes a treatment, then draws a stage page or sets the words in motion; the film passes its checks and a look-over before you get it. Ask for a README cover and you get a silent loop with no visible seam, checked on the WebP file itself. It is also in the skill picker.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/visual-qa.webp" width="240" alt="Looks at the real screen and shows you what it saw; it gets no permission to change files. Open it from the skill picker." /></td>
-<td><code>visual-qa</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>visual-qa</code><br /><sub>moved to wjgoarxiv-skills</sub></td>
 <td>Looks at the real screen and shows you what it saw; it gets no permission to change files. Open it from the skill picker.</td>
 </tr>
 <tr>
@@ -256,29 +256,30 @@ flowchart TD
     class Skills,Records local
 ```
 
-## Design, READMEs, and diagrams
+## Moved to wjgoarxiv-skills
 
-`frontend-ui-ux` builds interfaces. Describe what you want in enough detail and it carries the work through to a screen that works, then renders it and looks. It only stops to ask about design choices that matter, and it remembers your answers. If you ask it to review or plan, it reads and leaves your files alone.
+The skills that made files and pictures moved to wjgoarxiv-skills, a separate collection grouped into families, so you install only the ones you use and LitOpenCode stays light. Each old name stays behind as a short pointer. OpenCode's skill picker, a `lit` request for a deck, report, diagram, P&ID or film, interface requests in chat and `/lit-scientific-visualization` all still land on it, and it tells you where the skill went and how to put it back.
 
-A new page or screen starts from a locked look: one of five house styles (a landing page gets `field-notes`, a dashboard or settings screen gets `graphite`, the brutalist styles and `meadow` only when you ask), one layout and one signature moment where the page is allowed to be bold. The look is rich by default; say minimal or calm and it renders quiet. The probe checks the rendered page against the lock and asks you to look at the screenshots. A request such as "lit build a landing page for a kayak rental" reaches it directly; building a Grafana dashboard or a backend API does not.
+| Skill | Family in wjgoarxiv-skills |
+| --- | --- |
+| `lit-pptx` | `decks` |
+| `lit-docx` | `documents` |
+| `lit-diagram-drawer` | `figures` |
+| `lit-schematic` | `figures` |
+| `lit-scientific-visualization` | `figures` |
+| `frontend-ui-ux` | `design` |
+| `visual-qa` | `design` |
+| `lit-typographic-motion` | `video-covers` |
+| `readme-studio` | `video-covers` |
 
-`readme-studio` writes READMEs from what is really in the repository and builds covers on your machine. You pick it from OpenCode's skill tool, since it has no slash command of its own. It comes with helpers that turn type into outlines and pinned Remotion and HyperFrames recipes. If no image generator is available, it says so with `IMAGE_GENERATION_UNAVAILABLE` and can carry on from a background you give it. How the page finally looks on GitHub or npm is something to check separately.
+OpenCode keeps one skill per name and loads two same-name folders in no fixed order, so the copy replaces the pointer folder instead of sitting beside it. The collection is not published yet; from your own clone of it, for one skill:
 
-`lit-diagram-drawer` is for concept diagrams: it draws them, checks them on your machine, and exports them. It installs nothing as long as the renderer and a browser are already there, and it imports existing diagrams safely. Pick it from OpenCode's skill picker, or end a clear diagram request with `lit`, and the workflow tells OpenCode to load it before drawing. It has no slash command or chat route of its own. Diagrams are dense and layered by default (about fourteen to twenty-four nodes, three to five colour families) and go minimal only when you ask. Product screens belong to `frontend-ui-ux`, and figures of measured scientific data to `lit-scientific-visualization`.
+```sh
+rm -r ~/.config/opencode/skills/lit-docx
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" ~/.config/opencode/skills/lit-docx
+```
 
-`lit-schematic` draws real hardware: a P&ID with ISA tags and control loops, a PFD, a journal figure of an experimental setup, or an isometric cutaway of a vessel. It writes editable SVG, a vector PDF and a 600 DPI PNG, can also make a cutaway as an interactive page or a short loop, and checks the drawing with a QA script and by looking at the render. Pick it from the skill picker, or end a clear request to draw a P&ID, PFD, apparatus or cutaway with `lit`; the workflow then tells OpenCode to load it first. It has no slash command or chat route of its own. Drawings are full colour and fully detailed by default and go quiet only when you ask. Boxes-and-arrows diagrams belong to `lit-diagram-drawer`, and plots of measured data to `lit-scientific-visualization`.
-
-## Word reports and slide decks
-
-`lit-docx` turns a Markdown source into an editable Word report. `lit-pptx` compiles slides into an editable PowerPoint deck. Ask for a report or slides with `lit`, and OpenCode is told to load the matching skill; ask for both and it loads both.
-
-Until this release every deck began from the same blue template and every Korean report from the same style sheet, so a funding pitch and a quarterly review came out looking alike. Both skills now start by deciding how the file should look, the way a designer would before touching the first page, and they tell you what they decided.
-
-For slides, `lit-pptx` reads what the deck is for and who will see it, then picks one of thirteen design directions. There is one for dense reviews that are read closely, one for pitches, one for decks led by pictures, one for teaching, one for research talks, one for Korean briefing pages, one for editorial portfolios and one for data talks on a dark screen, and five loud ones: computational brutalism for engineering reviews, neo-brutalism for launches, Bauhaus for design talks, riso for community programmes and a newsroom look for public-data briefings. Name a style in the request (a count and a style are enough, as in "10 slides in bauhaus style") and the skill builds in it. Each direction is a pack of colours, type sizes, title styles and page layouts that the compiler reads as data, and all of them set titles and body on one slide grid, so one source looks different under two of them but never moves. Slides are rich by default: up to four accent colours, a large title step and a grid or geometry decoration; `register: bold` is the only way to the presented type ramp, and `hero: false` or `decoration:` in the front matter calm or add to it. The reply names the direction and two alternatives, and a bare request gets no style questions. Slides are dense, with a source line on every data slide. Titles name the topic and leave the claim to the body, no number is blown up past the title size, and everything is set in the bundled Pretendard, with JetBrains Mono for the figures and titles of computational brutalism. The gate reads each slide and the whole deck, including how many title styles and layouts it mixes, how much of each page stays empty and whether any title reads as a sentence.
-
-For documents, `lit-docx` chooses among six styles: Report, Brief, Manual, Proposal, Memo and Journal. Each is built its own way, from what stands on the first page to how the summary is set, how sections are numbered and what the running head carries. All six share one restrained page: near-black headings, tables with three thin rules and no shading, at most one accent colour, A4 with 25 mm margins and leading measured on the rendered page. Korean documents follow Korean conventions such as `2026. 10. 1.` dates, `<표 1>` captions above tables and 단위 and 자료 lines around them. The gate renders the pages and looks for headings stranded at a page foot, tables split without need, colour creeping in and too many boxes. Journal manuscripts keep the Elsevier, ACS, IEEE, Nature and korean-generic profiles.
-
-The first time you use either skill, it installs the exact tool versions it needs into a cache of LitOpenCode's own. Both keep the Markdown source as well as the finished file, and both run their structure and quality checks. If LibreOffice is installed, they also ask for a look at the rendered pages. Publisher styles, editing an existing DOCX, PDF conversion, learning a template and embedding fonts are covered in the installed skills. To see whether everything is ready, run `litopencode doctor`; it only reports and installs nothing.
+Use the same two lines with another skill's name. `litopencode install` and its auto-update leave a folder they did not write alone, and `litopencode doctor` lists it as preserved. Delete the folder and run `litopencode install` to get the pointer back.
 
 ## Writing and the browser
 

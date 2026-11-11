@@ -4,8 +4,6 @@ import path from "node:path";
 import { test } from "node:test";
 import * as litOpenCode from "../src/index.ts";
 import { listTopLevelSkillIds } from "../test-support/skill-catalog.mjs";
-import { registerUiuxRuntimeContracts } from "../test-support/uiux-runtime-contracts.mjs";
-import { registerVisualQaRuntimeContracts } from "../test-support/visualqa-runtime-contracts.mjs";
 import {
   findLitOpenCodeRuntimeSkill,
   litOpenCodeFeatures,
@@ -144,33 +142,14 @@ function escapedPattern(snippet) {
   return new RegExp(snippet.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 }
 
-registerUiuxRuntimeContracts({ litOpenCodeFeatures, litOpenCodeRuntimeSkills });
-registerVisualQaRuntimeContracts();
-
-test("UI/UX chat activation stays bounded and routes dense detail lazily", async () => {
+test("UI/UX pointer activations stay bounded and carry the install line", () => {
   for (const [skillId, prompt] of [
     ["frontend-ui-ux", frontendUiUxPromptInjection],
     ["visual-qa", visualQaPromptInjection]
   ]) {
-    // Raised from 4096 when taste routing landed, and to 4608 when the ask-first look question landed.
-    // The bound is ours, not the host's: it keeps dense detail in lazy references, and it still does.
-    assert.ok(Buffer.byteLength(prompt, "utf8") <= 4608, `${skillId} activation exceeds 4608 UTF-8 bytes`);
-    assert.match(prompt, /references\/complete-contract\.md/u);
-    const detail = await fs.readFile(path.join("skills", skillId, "references", "complete-contract.md"), "utf8");
-    assert.ok(Buffer.byteLength(detail, "utf8") >= 15_000, `${skillId} detailed contract was not preserved`);
+    assert.ok(Buffer.byteLength(prompt, "utf8") <= 4352, `${skillId} activation exceeds 4352 UTF-8 bytes`);
+    assert.ok(prompt.includes(`variants/litopencode/${skillId}" ~/.config/opencode/skills/${skillId}`), `${skillId} carries its install line`);
   }
-});
-
-test("UI/UX runtime catalog describes beta evidence and tier-specific review without stale alpha defaults", () => {
-  const frontend = litOpenCodeRuntimeSkills.find((skill) => skill.id === "frontend-ui-ux");
-  const visual = litOpenCodeRuntimeSkills.find((skill) => skill.id === "visual-qa");
-  const features = litOpenCodeFeatures.filter((feature) => ["frontend-ui-ux", "visual-qa"].includes(feature.id));
-  const text = flattenText([frontend, visual, features]);
-  assert.match(text, /v1beta1/u);
-  assert.match(text, /smoke/i);
-  assert.match(text, /host.*provenance|host-proven/i);
-  assert.doesNotMatch(text, /Create a finite v1alpha1|v1alpha1 Design Contract schema/u);
-  assert.doesNotMatch(text, /two independent review receipts without/u);
 });
 
 test("runtime skills are discoverable by id and expose brand-clean static text", () => {
@@ -314,11 +293,11 @@ test("visible skills corpus covers runtime feature parity", async () => {
     ["structural-search", ["structural-search", "Probe by **identity**", "TEXTUAL"]],
     ["browser-drive", ["browser-drive", "BLOCKED_BROWSER_DRIVER_UNAVAILABLE", "re-snapshot"]],
     ["lit-handoff", ["lit-handoff", "/lit-handoff"]],
-    ["lit-scientific-visualization", ["lit-scientific-visualization", "rcparams"]],
-    ["frontend-ui-ux", ["frontend-ui-ux", "litfamily.design-contract/v1beta1"]],
+    ["lit-scientific-visualization", ["lit-scientific-visualization", "plugins/figures/vendor/scientific-visualization/"]],
+    ["frontend-ui-ux", ["frontend-ui-ux", "plugins/design/skills/frontend-ui-ux/"]],
     ["litwork", ["lit-litwork-activation", "command.execute.before"]],
     ["tool-guards", ["tool.execute.before", "tool.execute.after"]],
-    ["visual-qa", ["native-installed", "BLOCKED receipt"]],
+    ["visual-qa", ["visual-qa", "plugins/design/skills/visual-qa/"]],
     ["autoresearch", ["autoresearch", "bounded"]],
     ["autoconference", ["autoconference", "BLOCKED_MULTI_AGENT_UNAVAILABLE"]],
     ["wikify", ["wikify", "litresearch"]]
@@ -336,11 +315,11 @@ test("visible skills corpus covers runtime feature parity", async () => {
   }
 });
 
- test("readme-studio is a discoverable native managed skill with feature closure", async () => {
+ test("readme-studio stays a discoverable pointer with feature closure after its move", async () => {
   const skill = findLitOpenCodeRuntimeSkill("readme-studio");
   assert.ok(skill, "missing native readme-studio enrollment");
   assert.ok(skill.featureIds.includes("readme-studio"));
   const manifest = JSON.parse(await fs.readFile("skills/managed-skill-manifest.json", "utf8"));
-  assert.ok(manifest.skills[skill.id], "missing managed resource enrollment");
+  assert.equal(manifest.skills[skill.id], undefined, "a moved skill is no longer a managed resource tree");
   assert.ok(litOpenCodeFeatures.some((feature) => feature.id === skill.id));
 });

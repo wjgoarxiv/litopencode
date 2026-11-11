@@ -2,7 +2,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { readStableRegularFile } from "../skills/frontend-ui-ux/scripts/stable-file-read.mjs";
+import { readStableRegularFile } from "./stable-file-read.mjs";
 
 // Shown by the GitHub pages only; the npm cards never reference them, so they stay out of the package.
 const GITHUB_ONLY_README_MEDIA = /^docs\/assets\/readme\/(?:(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|status-card-(?:idle|working|recent)\.webp|showcase-(?:adhd-brief|deck|ui|pid)\.webp|auto-handoff-(?:settings|compact|doctor)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
@@ -34,13 +34,6 @@ const FORBIDDEN_PATH_RULES = [
   { label: "other harness runtime state", pattern: /(^|\/)\.[o]mo(\/|$)/u },
   { label: "evidence artifact", pattern: /(^|\/)evidence(\/|$)/u },
   { label: "test file", pattern: /(^|\/)tests?(\/|$)/u },
-  { label: "diagram AB or evidence artifact", pattern: /^skills\/lit-diagram-drawer\/(?:ab|evidence|\.work)(?:\/|$)/u },
-  { label: "diagram naive foil", pattern: /^skills\/lit-diagram-drawer\/examples\/[^/]+\/constructed-naive-foil\.html$/u },
-  { label: "diagram preview raster", pattern: /^skills\/lit-diagram-drawer\/.*\.(?:png|jpe?g|webp)$/iu },
-  { label: "diagram Office proof script", pattern: /^skills\/lit-diagram-drawer\/scripts\/office-proof\.py$/u },
-  { label: "diagram source archive path", pattern: /^skills\/lit-diagram-drawer\/(?:plans|_refs)(?:\/|$)/u },
-  { label: "schematic rendered output or working directory", pattern: /^skills\/lit-schematic\/(?:.*\.(?:png|jpe?g|webp|gif|mp4|pdf)$|\.work(?:\/|$)|evidence(?:\/|$))/iu },
-  { label: "interface kit rendered output or design-lock project files", pattern: /^skills\/frontend-ui-ux\/(?:kit\/.*\.(?:png|jpe?g|webp|gif|mp4|pdf)$|design\.lock\.json$|ui(?:\/|$)|evidence(?:\/|$))/iu },
   { label: "reference archive", pattern: /(^|\/)# REFERENCE(\/|$)/u },
   { label: "package archive", pattern: /\.tgz$/u },
   { label: "dependency directory", pattern: /(^|\/)node_modules(\/|$)/u },
@@ -180,21 +173,6 @@ function requiredManagedPaths({ skills, vendorFiles }) {
   return required;
 }
 
-function allowedCanonicalTestPaths(skills) {
-  const allowed = new Set();
-  for (const [id, rawDefinition] of Object.entries(skills)) {
-    const definition = requireObject(rawDefinition, `managed-skill manifest ${id}`);
-    for (const rawAsset of definition.canonicalFiles) {
-      const asset = requireObject(rawAsset, `managed-skill manifest ${id} canonical asset`);
-      if (typeof asset.path === "string") {
-        const mapped = canonicalPackagePath(id, definition, asset.path);
-        if (mapped.startsWith("vendor/scientific-visualization/tests/")) allowed.add(mapped);
-      }
-    }
-  }
-  return allowed;
-}
-
 class PackPayloadError extends Error {
   constructor(message, exitCode) {
     super(message);
@@ -281,7 +259,7 @@ function readManifestFiles(parsed) {
   });
 }
 
-function findForbiddenPaths(paths, allowedCanonicalTests, requiredManaged) {
+function findForbiddenPaths(paths, requiredManaged) {
   const matches = [];
   const requiredManagedSet = new Set(requiredManaged);
   const managedSkillPrefixes = new Set(
@@ -291,7 +269,6 @@ function findForbiddenPaths(paths, allowedCanonicalTests, requiredManaged) {
   );
   if (requiredManaged.some((manifestPath) => manifestPath.startsWith("vendor/"))) managedSkillPrefixes.add("vendor/");
   for (const manifestPath of paths) {
-    if (allowedCanonicalTests.has(manifestPath)) continue;
     if (
       [...managedSkillPrefixes].some((prefix) => manifestPath.startsWith(prefix)) &&
       !requiredManagedSet.has(manifestPath)
@@ -458,7 +435,7 @@ async function main() {
     const files = readManifestFiles(manifest);
     const managedManifest = await readManagedManifest();
     const requiredManaged = requiredManagedPaths(managedManifest);
-    const forbidden = findForbiddenPaths(files, allowedCanonicalTestPaths(managedManifest.skills), requiredManaged);
+    const forbidden = findForbiddenPaths(files, requiredManaged);
 
     if (forbidden.length > 0) {
       const suffix = forbidden.length === 1 ? "path" : "paths";

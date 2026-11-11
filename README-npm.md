@@ -11,7 +11,7 @@
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub stars" /></a>
 </p>
 
-LitOpenCode keeps the goal, the plan, what was checked and the next step in `.litopencode/litgoal/` inside your project, so a long task picks up the next day where it stopped. It is made for OpenCode work that spans more than one sitting: features over several sessions, planned refactors, research you return to, and reports or decks built from your notes.
+LitOpenCode keeps the goal, the plan, what was checked and the next step in `.litopencode/litgoal/` inside your project, so a long task picks up the next day where it stopped. It is made for OpenCode work that spans more than one sitting: features over several sessions, planned refactors and research you return to.
 
 **[Full guide, screens and skills gallery on GitHub →](https://github.com/wjgoarxiv/litopencode#readme)**
 
@@ -39,7 +39,7 @@ You get an `index.html` to try, and next time `/lit-recap` shows where you left 
 | `lit-plan` → `/start-work` → `/review-work` | Plan, approve, build and review. The planner cannot edit files. |
 | `handoff` · `/lit-recap` | Leave a continuation file for the next session, and read back what is done and what is next. |
 | `/litresearch` | Research in rounds with a source for each claim. |
-| `lit` + report or slides | An editable Word report or PowerPoint deck with its Markdown source. |
+| `lit` + report or slides | Points you to the deck and document skills, which moved to the separate wjgoarxiv-skills collection. |
 | `/lit-humanizer` | Rewrite stiff English or Korean prose and keep the facts. |
 
 Each skill is pictured in the [skills gallery on GitHub](https://github.com/wjgoarxiv/litopencode/blob/main/docs/skills.md).

@@ -11,7 +11,6 @@ import { LitOpenCodeConfigError } from "./config.ts";
 import { defaultOpenAiRoutes, legacyFastAliasHelp, modelEffortHelp, openaiModelHelpLine, shippedDefaultsSummary } from "./cli/model-catalog.ts";
 import { fetchPublicSource } from "./lit-fetch.ts";
 import { readPackageMetadata } from "./cli/json.ts";
-import { runMotionRuntime } from "./cli/motion-runtime.ts";
 import { removeTuiEntries } from "./cli/tui-config.ts";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -46,7 +45,6 @@ function helpText(): string {
     "  litopencode agent-file project [--dir <path>] [--dry-run]",
     "  litopencode doctor [--json] [--root <dir>]",
     "  litopencode tui remove [--dry-run] [--root <dir>]",
-    "  litopencode motion-runtime install|status [--audio] [--word-timing] [--dry-run] (install) [--json] (status)",
     "  litopencode fetch-public <url> [--json] [--timeout <ms>] [--max-bytes <n>]",
     "  litopencode fetch-public <local-url> --json --allow-private-network  # trusted fixtures only",
     "  OpenCode /start-work init|resume|cancel|complete|status <schema-3 JSON>",
@@ -91,22 +89,14 @@ function helpText(): string {
     "  Set knowledge.capture to false in .litopencode/config.json to disable capture. Query stays local and read-only.",
     "",
     "Native offline skills:",
-    "  frontend-ui-ux provides deterministic design-contract retrieval from a packaged MIT corpus,",
-    "                 plus a locked house-style kit and its shipped reference documents routed from its SKILL.md.",
-    "  visual-qa validates evidence, PNGs, terminal layouts, and independent review receipts,",
-    "            ships a per-channel capture playbook, and keeps blocked codes separate from fail codes.",
-    "  lit-diagram-drawer creates conceptual, editorial, and technical diagrams with packaged type guides,",
-    "                     local verifiers, bounded importers, and exports that never install tools.",
-    "  lit-schematic draws P&IDs, PFDs, journal apparatus figures and isometric cutaways of real equipment",
-    "                with a symbol library, a QA gate, exports and a mandatory look at the render.",
-    "  lit-hijack ports the mechanism of someone else's published work into your skill or system with a",
+      "  lit-hijack ports the mechanism of someone else's published work into your skill or system with a",
     "             phase-gate script (hijack.mjs), a licence table, a source-overlap check and a parity proof.",
     "  lit-adhd (alias lit-rewind) shows a KPI board of this worktree family: the one step to take now, done and",
     "           left counts, milestones and reminders, real progress only; go follows the step, lit approve and",
     "           lit deny settle parked steps, lit cancel ends a run, and lit adhd detail adds the per-session cards.",
-    "  lit-typographic-motion directs films from a treatment: a captured stage page or the type engine,",
-    "                         and seamless README cover loops gated on the decoded WebP.",
-    "  Typographic-motion engine adapted from mexicat/pdoom-video (MIT, Giacomo Magnanini), commit `ca251e3`.",
+    "  Moved to wjgoarxiv-skills (each id stays as a same-name pointer with its OpenCode install line):",
+    "    lit-pptx, lit-docx, lit-diagram-drawer, lit-schematic, lit-scientific-visualization,",
+    "    frontend-ui-ux, visual-qa, lit-typographic-motion and readme-studio.",
     "  Each skill resolves its own helpers inside its own installed tree; these skills add no command,",
     "  MCP, agent, authentication, or write authority.",
     "",
@@ -145,10 +135,6 @@ function helpText(): string {
 }
 
 export async function runCli(argv: readonly string[] = process.argv.slice(2), options: RunCliOptions = {}): Promise<CliResult> {
-  if (argv[0] === "motion-runtime") {
-    const metadata = await readPackageMetadata();
-    return await runMotionRuntime(metadata.packageRoot, argv.slice(1));
-  }
   let parsed: ParsedArgs;
   try {
     parsed = parseArgs(argv);

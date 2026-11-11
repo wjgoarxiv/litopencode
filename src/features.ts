@@ -1254,144 +1254,81 @@ export const litOpenCodeFeatures = Object.freeze([
   {
     id: "lit-scientific-visualization",
     title: "Scientific Visualization",
-    summary: "Provides exact slash and bare-chat OpenCode routes to the complete publication-figure corpus with vendor integrity, dependency reporting, and a harness-rendered session mark and model-emitted probe line.",
+    summary: "Pointer for the skill that moved to wjgoarxiv-skills (figures family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      {
-        kind: "command",
-        id: "lit-scientific-visualization",
-        surface: "OpenCode command /lit-scientific-visualization",
-        description: "Injects the exact model probe line and resolves scripts, assets, references, tests, and styles from the native skill root."
-      },
-      {
-        kind: "hook",
-        id: "chat.message",
-        surface: "OpenCode exact bare lit-scientific-visualization route",
-        description: "Activates only when an entire non-code chat message is the exact skill id."
-      },
-      {
-        kind: "hook",
-        id: "experimental.text.complete",
-        surface: "OpenCode user-facing completion hook",
-        description: "Renders the standard mark on the first session completion and micro marks later, keeping the model-emitted probe separate."
-      },
-      {
-        kind: "config",
-        id: "skills/lit-scientific-visualization/SKILL.md",
-        surface: "Flat OpenCode native skill wrapper",
-        description: "Ships the exact 16-file authored payload in vendor/ plus adapter license, provenance, and notice."
-      },
-      {
-        kind: "cli",
-        id: "litopencode doctor",
-        surface: "LitOpenCode dependency and payload doctor",
-        description: "Reports hash integrity independently from READY or DEGRADED Python capability without installing dependencies."
-      }
+      { kind: "config", id: "skills/lit-scientific-visualization/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/figures/skills/lit-scientific-visualization/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "command", id: "lit-scientific-visualization", surface: "OpenCode command /lit-scientific-visualization", description: "Injects the exact model probe line and the pointer with its install line." },
+      { kind: "hook", id: "chat.message", surface: "OpenCode exact bare lit-scientific-visualization route", description: "Activates only when an entire non-code chat message is the exact skill id." },
+      { kind: "hook", id: "experimental.text.complete", surface: "OpenCode user-facing completion hook", description: "Renders the standard mark on the first session completion and micro marks later, keeping the model-emitted probe separate." },
+      { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-scientific-visualization folder in place." }
     ],
-    verification: ["node --test test/lit-scientific-visualization.test.mjs", "npm run check:pack-payload"]
+    verification: ["node --test test/moved-skill-stubs.test.mjs"]
   },
   {
     id: "lit-diagram-drawer",
     title: "Diagram Drawer",
-    summary: "Installs an OpenCode native skill with pinned diagram guides, templates, local verifiers, safe importers, and an exporter that never installs dependencies.",
+    summary: "Pointer for the skill that moved to wjgoarxiv-skills (figures family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      {
-        kind: "config",
-        id: "skills/lit-diagram-drawer/SKILL.md",
-        surface: "OpenCode native skill picker",
-        description: "Selects the bounded diagram workflow and its complete managed skill tree. Bounded lit diagram requests direct the model to this native picker; no dedicated slash or standalone diagram chat route is registered."
-      },
-      {
-        kind: "cli",
-        id: "litopencode install",
-        surface: "LitOpenCode managed native skill installer",
-        description: "Installs every hash-pinned guide, template, example, tool, font, and license asset."
-      },
-      {
-        kind: "cli",
-        id: "litopencode doctor",
-        surface: "LitOpenCode managed native skill doctor",
-        description: "Verifies the exact installed file closure and reports export capabilities without installing tools."
-      }
+      { kind: "config", id: "skills/lit-diagram-drawer/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/figures/skills/lit-diagram-drawer/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "hook", id: "lit-task diagram intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit diagram requests to load the pointer before any drawing." },
+      { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-diagram-drawer folder in place." }
     ],
-    verification: ["node --test test/lit-diagram-drawer.test.mjs", "npm run check:managed-skill-manifest", "npm run check:pack-payload"]
+    verification: ["node --test test/moved-skill-stubs.test.mjs"]
   },
   {
     id: "lit-schematic",
     title: "Lit Schematic",
-    summary: "Installs an OpenCode native skill with a plain-Node drawing kit, symbol library, QA gate, renderer and worked examples for P&IDs, apparatus figures and isometric cutaways, and routes bounded lit drawing requests to it.",
+    summary: "Pointer for the skill that moved to wjgoarxiv-skills (figures family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      {
-        kind: "config",
-        id: "skills/lit-schematic/SKILL.md",
-        surface: "OpenCode native skill picker",
-        description: "Selects the physical-schematic workflow and its complete managed skill tree; no dedicated slash command or bare-id chat route is registered."
-      },
-      {
-        kind: "hook",
-        id: "lit-task schematic drawing intent",
-        surface: "OpenCode chat.message activation",
-        description: "Directs bounded lit P&ID, PFD, apparatus and cutaway drawing requests to load the native skill before drawing, ahead of the diagram, film and Office hand-offs; questions, reviews, charts and reports stay inert."
-      },
-      {
-        kind: "cli",
-        id: "litopencode install",
-        surface: "LitOpenCode managed native skill installer",
-        description: "Installs every hash-pinned reference, script, kit module and example."
-      },
-      {
-        kind: "cli",
-        id: "litopencode doctor",
-        surface: "LitOpenCode managed native skill doctor",
-        description: "Verifies the exact installed file closure; the skill's own doctor script reports Chrome, fonts and encoders without installing tools."
-      }
+      { kind: "config", id: "skills/lit-schematic/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/figures/skills/lit-schematic/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "hook", id: "lit-task schematic drawing intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit P&ID, PFD, apparatus and cutaway drawing requests to load the pointer, ahead of the diagram, film and Office hand-offs; questions, reviews, charts and reports stay inert." },
+      { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-schematic folder in place." }
     ],
-    verification: ["node --test test/lit-schematic.test.mjs test/lit-schematic-symbols.test.mjs test/lit-schematic-outputs.test.mjs", "npm run check:managed-skill-manifest", "npm run check:pack-payload"]
+    verification: ["node --test test/moved-skill-stubs.test.mjs"]
   },
   {
     id: "lit-typographic-motion",
     title: "Film director",
-    summary: "Native OpenCode film director: treatment first, a captured stage page or the type engine, generated sound, a numeric gate and recorded look rounds; cover mode renders a silent, seamless README loop and gates the decoded WebP.",
+    summary: "Pointer for the skill that moved to wjgoarxiv-skills (video-covers family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/lit-typographic-motion/SKILL.md", surface: "OpenCode native skill picker", description: "Loads the managed motion skill and its engine and reference closure." },
-      { kind: "hook", id: "lit-task motion-video intent", surface: "OpenCode chat.message activation", description: "Routes bounded film requests before slide and interface guidance with a neutral film context." },
-      { kind: "hook", id: "tool.execute.after", surface: "OpenCode tool.execute.after hook", description: "Records each read of a film's or a cover's stills so the done check can confirm the frames were viewed." },
-      { kind: "cli", id: "litopencode motion-runtime install|status", surface: "LitOpenCode runtime", description: "Pre-warms pinned dependencies and fonts outside the render session." },
-      { kind: "cli", id: "litopencode doctor", surface: "LitOpenCode doctor", description: "Reports Chrome, ffmpeg, WebGL2 tier, software warning, pre-warm status, the cover encoder and, as information only, whether Blender is installed." }
+      { kind: "config", id: "skills/lit-typographic-motion/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/video-covers/skills/lit-typographic-motion/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "hook", id: "lit-task motion-video intent", surface: "OpenCode chat.message activation", description: "Routes bounded film requests to the pointer before slide and interface guidance." },
+      { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-typographic-motion folder in place." }
     ],
-    verification: ["node --test test/lit-typographic-motion.test.mjs", "node --test test/motion-cover.test.mjs", "npm run check:managed-skill-manifest", "npm run check:pack-payload"]
+    verification: ["node --test test/moved-skill-stubs.test.mjs"]
   },
   {
     id: "lit-pptx",
     title: "Lit PowerPoint",
-    summary: "Native OpenCode deck skill: eight tonality packs chosen before building, source, compile, deck-wide QA, Pretendard fonts, and first-use dependency cache.",
+    summary: "Pointer for the skill that moved to wjgoarxiv-skills (decks family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/lit-pptx/SKILL.md", surface: "OpenCode native skill picker", description: "Loads the slide workflow from the installed managed tree." },
-      { kind: "hook", id: "lit-task slide intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit slide requests to the native skill." },
-      { kind: "cli", id: "litopencode doctor", surface: "LitOpenCode doctor", description: "Reports installed skill integrity and office runtime readiness." }
+      { kind: "config", id: "skills/lit-pptx/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/decks/skills/lit-pptx/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "hook", id: "lit-task slide intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit slide requests to the pointer." },
+      { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-pptx folder in place." }
     ],
-    verification: ["node --test test/lit-office-docs.test.mjs", "npm run check:pack-payload"]
+    verification: ["node --test test/moved-skill-stubs.test.mjs"]
   },
   {
     id: "lit-docx",
     title: "Lit Word Documents",
-    summary: "Native OpenCode document skill: six restrained tonalities chosen before writing, publisher profiles, conversion, editing, a page-checking gate, and first-use dependency cache.",
+    summary: "Pointer for the skill that moved to wjgoarxiv-skills (documents family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/lit-docx/SKILL.md", surface: "OpenCode native skill picker", description: "Loads the document workflow from the installed managed tree." },
-      { kind: "hook", id: "lit-task report intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit report requests to the native skill." },
-      { kind: "cli", id: "litopencode doctor", surface: "LitOpenCode doctor", description: "Reports installed skill integrity and office runtime readiness." }
+      { kind: "config", id: "skills/lit-docx/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/documents/skills/lit-docx/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "hook", id: "lit-task report intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit report requests to the pointer." },
+      { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-docx folder in place." }
     ],
-    verification: ["node --test test/lit-office-docs.test.mjs", "npm run check:pack-payload"]
+    verification: ["node --test test/moved-skill-stubs.test.mjs"]
   },
   frontendUiUxFeature,
   {
-    id: "readme-studio", title: "README Studio",
-    summary: "Native-installed README production, safe local typography and portable motion assets.",
+    id: "readme-studio",
+    title: "README Studio",
+    summary: "Pointer for the skill that moved to wjgoarxiv-skills (video-covers family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/readme-studio/SKILL.md", surface: "OpenCode native skill readme-studio", description: "Loads fact discovery, capability branches and task-local composition recipes." },
-      { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Copies all hash-pinned nested resources." },
-      { kind: "cli", id: "litopencode doctor", surface: "LitOpenCode native skill doctor", description: "Rejects missing or altered resources." }
+      { kind: "config", id: "skills/readme-studio/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/video-covers/skills/readme-studio/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied readme-studio folder in place." }
     ],
-    verification: ["node --test test/runtime-skills.test.mjs test/cli-install-surface.test.mjs test/packed-artifact.test.mjs", "npm run check:managed-skill-manifest"]
+    verification: ["node --test test/moved-skill-stubs.test.mjs"]
   },
   visualQaFeature
 ] satisfies readonly LitOpenCodeFeature[]);

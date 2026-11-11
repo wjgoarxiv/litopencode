@@ -23,7 +23,7 @@ LitOpenCode가 설치하는 것 전부를, 스킬마다 만들어 내는 결과�
 | `/litresearch` 또는 `/lit-research` | 주장마다 출처를 남기며 조사합니다. OpenCode가 허용하면 보조 에이전트가 나눠서 동시에 조사하고, 아니면 차례로 진행합니다. |
 | `/lit-code`, `/debugging`, `/refactor` | 코딩, 디버깅, 리팩터링 지침을 씁니다. |
 | `/lit-korean` | 의미는 그대로 두고 한국어 문장을 다듬습니다. |
-| `/lit-scientific-visualization` | 패키지에 들어 있는 과학 시각화 워크플로를 씁니다. |
+| `/lit-scientific-visualization` | 그림 스킬이 옮겨 간 곳과 OpenCode 설치 줄을 알려 줍니다. |
 
 `handoff`만 단독으로 입력해도 `/lit-handoff`와 똑같이 동작합니다. 대화가 차오를 때 인수인계를 대신 써 주길 원하면 [자동 인수인계](./guide-Ko-KR.md#자동-인수인계)를 보세요.
 
@@ -169,27 +169,27 @@ Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](./referenc
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-scientific-visualization.webp" width="240" alt="학술지 규격 그림을 벡터와 600 DPI로 내보냅니다. 그래프 종류는 데이터 성격에 맞춰 고릅니다." /></td>
-<td><code>lit-scientific-visualization</code><br /><sub><code>/lit-scientific-visualization</code></sub></td>
+<td><code>lit-scientific-visualization</code><br /><sub>wjgoarxiv-skills로 옮김</sub></td>
 <td>학술지 규격 그림을 벡터와 600 DPI로 내보냅니다. 그래프 종류는 데이터 성격에 맞춰 고릅니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-diagram-drawer.webp" width="240" alt="슬라이드와 문서에 넣을 다이어그램을 편집 가능한 형태로 그리고, 검사한 뒤 PNG와 SVG로 내보냅니다." /></td>
-<td><code>lit-diagram-drawer</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-diagram-drawer</code><br /><sub>wjgoarxiv-skills로 옮김</sub></td>
 <td>슬라이드와 문서에 넣을 다이어그램을 편집 가능한 형태로 그리고, 검사한 뒤 PNG와 SVG로 내보냅니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-schematic.webp" width="240" alt="실제 장비의 P&ID, 실험 장치 그림, 아이소메트릭 단면도를 편집 가능한 SVG와 PDF, 600 DPI PNG로 그립니다." /></td>
-<td><code>lit-schematic</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-schematic</code><br /><sub>wjgoarxiv-skills로 옮김</sub></td>
 <td>실제 장비의 P&amp;ID, 실험 장치 그림, 아이소메트릭 단면도를 편집 가능한 SVG와 PDF, 600 DPI PNG로 그리고 QA 스크립트와 렌더 확인으로 검사합니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-pptx.webp" width="240" alt="lit으로 발표자료를 요청하면 Markdown 원고에서 편집 가능한 PowerPoint 파일을 만듭니다. 만들기 전에 열세 가지 디자인 방향 중 하나를 골라 알려 주고, 덱 전체를 보는 품질 검사와 렌더링 확인을 거칩니다. 스킬 선택기에서도 열 수 있습니다." /></td>
-<td><code>lit-pptx</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-pptx</code><br /><sub>wjgoarxiv-skills로 옮김</sub></td>
 <td><code>lit</code>으로 발표자료를 요청하면 Markdown 원고에서 편집 가능한 PowerPoint 파일을 만듭니다. 만들기 전에 열세 가지 디자인 방향 중 하나를 골라 알려 주고, 덱 전체를 보는 품질 검사와 렌더링 확인을 거칩니다. 스킬 선택기에서도 열 수 있습니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-docx.webp" width="240" alt="lit으로 보고서를 요청하면 인쇄해도 차분한 Word 파일과 원고 Markdown이 나옵니다. 쓰기 전에 여섯 가지 문서 형식 중 하나를 골라 알려 주며, 학술지 서식도 그대로 씁니다. 렌더링한 페이지까지 검사합니다. 스킬 선택기에서도 열 수 있습니다." /></td>
-<td><code>lit-docx</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-docx</code><br /><sub>wjgoarxiv-skills로 옮김</sub></td>
 <td><code>lit</code>으로 보고서를 요청하면 인쇄해도 차분한 Word 파일과 원고 Markdown이 나옵니다. 쓰기 전에 여섯 가지 문서 형식 중 하나를 골라 알려 주며, 학술지 서식도 그대로 씁니다. 렌더링한 페이지까지 검사합니다. 스킬 선택기에서도 열 수 있습니다.</td>
 </tr>
 <tr>
@@ -209,22 +209,22 @@ Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](./referenc
 </tr>
 <tr>
 <td><img src="./assets/skills/frontend-ui-ux.webp" width="240" alt="실제로 동작하는 화면을 만들고, 측정 프로브로 일곱 가지 보기에서 확인합니다. 네 가지 폭, 다크 모드, 모션 줄이기, 200% 확대입니다. 스킬 선택기에서 엽니다." /></td>
-<td><code>frontend-ui-ux</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>frontend-ui-ux</code><br /><sub>wjgoarxiv-skills로 옮김</sub></td>
 <td>실제로 동작하는 화면을 만들고, 측정 프로브로 일곱 가지 보기에서 확인합니다. 네 가지 폭, 다크 모드, 모션 줄이기, 200% 확대입니다. 스킬 선택기에서 엽니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/readme-studio.webp" width="240" alt="사실에 맞는 README와 확인을 거친 커버, 윤곽선 글자를 만듭니다. 스킬 선택기에서 엽니다." /></td>
-<td><code>readme-studio</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>readme-studio</code><br /><sub>wjgoarxiv-skills로 옮김</sub></td>
 <td>사실에 맞는 README와 확인을 거친 커버, 윤곽선 글자를 만듭니다. 스킬 선택기에서 엽니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-typographic-motion.webp" width="240" alt="lit으로 영상을 요청하면 트리트먼트를 먼저 쓰고, 무대 페이지를 그리거나 글자를 움직입니다. 영상은 검사와 눈으로 보는 확인을 거쳐 넘깁니다. 스킬 선택기에서도 열 수 있습니다." /></td>
-<td><code>lit-typographic-motion</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>lit-typographic-motion</code><br /><sub>wjgoarxiv-skills로 옮김</sub></td>
 <td><code>lit</code>으로 영상을 요청하면 경로·스타일·형식·방식을 한 번에 묻고 트리트먼트를 쓴 뒤, 무대 페이지를 그리거나 글자를 움직입니다. 영상은 기본적으로 풍부하고, 영화마다 겹겹의 점수와 선택형 Blender 3D 플레이트를 갖추며, 검사와 눈으로 보는 확인을 거칩니다. README 커버를 요청하면 이음매가 보이지 않는 무음 루프를 만들고, 완성된 WebP 파일을 그대로 풀어 검사합니다. 스킬 선택기에서도 열 수 있습니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/visual-qa.webp" width="240" alt="실제 화면을 보고 본 것을 그대로 보여 줍니다. 파일을 고칠 권한은 받지 않습니다. 스킬 선택기에서 엽니다." /></td>
-<td><code>visual-qa</code><br /><sub><code>skill picker</code></sub></td>
+<td><code>visual-qa</code><br /><sub>wjgoarxiv-skills로 옮김</sub></td>
 <td>실제 화면을 보고 본 것을 그대로 보여 줍니다. 파일을 고칠 권한은 받지 않습니다. 스킬 선택기에서 엽니다.</td>
 </tr>
 <tr>
@@ -256,29 +256,30 @@ flowchart TD
     class Skills,Records local
 ```
 
-## 디자인, README, 다이어그램
+## wjgoarxiv-skills로 옮긴 스킬
 
-`frontend-ui-ux`는 화면을 만드는 스킬입니다. 원하는 것을 충분히 구체적으로 말하면 실제로 동작하는 화면까지 만들고, 렌더링해서 직접 살펴봅니다. 중요한 디자인 선택이 걸릴 때만 묻고, 받은 답은 기억해 둡니다. 검토나 계획을 부탁하면 읽기만 하고 파일은 건드리지 않습니다.
+파일과 그림을 만들던 스킬은 wjgoarxiv-skills라는 별도 모음으로 옮겼습니다. 모음은 계열별로 나뉘어 있어 쓰는 스킬만 설치하면 되고, 그만큼 LitOpenCode는 가볍게 유지됩니다. 예전 이름은 짧은 안내 스킬로 남아 있습니다. OpenCode 스킬 선택기, 발표자료·보고서·다이어그램·P&ID·영상을 부탁하는 `lit` 요청, 채팅의 화면 요청, `/lit-scientific-visualization`은 모두 여전히 이 안내로 이어지고, 안내는 스킬이 옮겨 간 곳과 다시 설치하는 방법을 알려 줍니다.
 
-새 페이지나 화면은 먼저 룩을 고정하고 시작합니다. 다섯 가지 하우스 스타일 중 하나, 레이아웃 하나, 그리고 페이지가 과감해도 되는 시그니처 순간 하나입니다. 랜딩 페이지는 `field-notes`, 대시보드와 설정 화면은 `graphite`를 쓰고, 브루탈리즘 계열과 `meadow`는 요청할 때만 씁니다. 기본값은 풍부한 밀도이고, 미니멀이나 차분함을 말하면 조용하게 그립니다. 프로브가 렌더링된 화면을 고정한 룩과 대조하고, 스크린샷을 눈으로 확인하라고 요구합니다. "lit build a landing page for a kayak rental" 같은 요청은 곧바로 이 스킬로 가고, Grafana 대시보드나 백엔드 API 요청은 가지 않습니다.
+| 스킬 | wjgoarxiv-skills의 계열 |
+| --- | --- |
+| `lit-pptx` | `decks` |
+| `lit-docx` | `documents` |
+| `lit-diagram-drawer` | `figures` |
+| `lit-schematic` | `figures` |
+| `lit-scientific-visualization` | `figures` |
+| `frontend-ui-ux` | `design` |
+| `visual-qa` | `design` |
+| `lit-typographic-motion` | `video-covers` |
+| `readme-studio` | `video-covers` |
 
-`readme-studio`는 저장소에 실제로 있는 내용으로 README를 쓰고, 표지도 내 컴퓨터에서 만듭니다. 전용 슬래시 명령이 없어서 OpenCode의 스킬 도구에서 고릅니다. 글자를 윤곽선으로 바꾸는 도구, 버전을 고정한 Remotion·HyperFrames 예제, 정적·동적 출력 절차가 함께 설치됩니다. 이미지 생성 도구가 없으면 `IMAGE_GENERATION_UNAVAILABLE`로 알리고, 사용자가 준 배경으로 이어 갑니다. GitHub나 npm에서 최종적으로 어떻게 보이는지는 따로 확인해야 합니다.
+OpenCode는 이름 하나에 스킬 하나만 두고, 이름이 같은 폴더가 둘이면 어느 쪽을 읽을지 정해져 있지 않습니다. 그래서 복사본은 안내 폴더 옆에 두지 않고 그 자리를 대신합니다. 모음은 아직 공개되지 않았으니, 직접 받아 둔 사본에서 스킬 하나를 이렇게 넣습니다.
 
-`lit-diagram-drawer`는 개념도를 그리고, 내 컴퓨터에서 검사한 뒤 내보냅니다. 렌더러와 브라우저가 이미 있으면 아무것도 새로 설치하지 않고, 기존 다이어그램도 안전하게 가져옵니다. OpenCode 스킬 선택기에서 고르거나, 범위가 분명한 다이어그램 요청 끝에 `lit`을 붙이면 됩니다. 그러면 워크플로가 그리기 전에 이 스킬을 불러오라고 OpenCode에 안내합니다. 전용 슬래시 명령이나 채팅 경로는 따로 없습니다. 제품 화면은 `frontend-ui-ux`, 측정한 과학 데이터 그림은 `lit-scientific-visualization`이 맡습니다.
+```sh
+rm -r ~/.config/opencode/skills/lit-docx
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" ~/.config/opencode/skills/lit-docx
+```
 
-`lit-schematic`은 실제 장비를 그립니다. ISA 태그와 제어 루프가 있는 P&ID, PFD, 논문용 실험 장치 그림, 용기의 아이소메트릭 단면도를 편집 가능한 SVG, 벡터 PDF, 600 DPI PNG로 만들고, 단면도는 인터랙티브 페이지나 짧은 반복 영상으로도 만들 수 있습니다. QA 스크립트와 렌더 확인으로 검사합니다. OpenCode 스킬 선택기에서 고르거나, P&ID·PFD·장치도·단면도를 그려 달라는 분명한 요청 끝에 `lit`을 붙이면 워크플로가 그리기 전에 이 스킬을 불러오라고 안내합니다. 전용 슬래시 명령이나 채팅 경로는 없습니다. 도면은 기본이 풀 컬러의 촘촘한 표현이고, 조용한 표현은 요청할 때만 씁니다. 상자와 화살표 다이어그램은 `lit-diagram-drawer`, 측정 데이터 그래프는 `lit-scientific-visualization`이 맡습니다.
-
-## 워드 보고서와 발표자료
-
-`lit-docx`는 마크다운 원고로 편집 가능한 워드 보고서를 만들고, `lit-pptx`는 발표자료를 편집 가능한 파워포인트로 컴파일합니다. 보고서나 발표자료 요청에 `lit`을 붙이면 OpenCode가 알맞은 스킬을 불러오도록 안내하고, 둘 다 요청하면 두 스킬을 모두 씁니다.
-
-이전에는 발표자료가 모두 같은 파란 템플릿에서, 한국어 보고서는 모두 같은 서식에서 출발했습니다. 그래서 투자 제안 덱과 분기 실적 보고가 비슷해 보였습니다. 이제 두 스킬은 첫 장을 만들기 전에 파일이 어떻게 보여야 할지부터 정하고, 무엇을 골랐는지 알려 줍니다.
-
-발표자료를 요청하면 `lit-pptx`가 덱의 용도와 보는 사람을 읽고 열세 가지 디자인 방향 중 하나를 고릅니다. 꼼꼼히 읽는 실적 보고, 투자 제안, 사진이 이끄는 덱, 강의, 연구 발표, 한국어 보고형 덱, 편집형 포트폴리오, 어두운 화면의 데이터 발표에 각각 맞는 방향이 하나씩 있고, 강한 방향이 다섯 가지 더 있습니다. 엔지니어링 리뷰용 컴퓨테이셔널 브루탈리즘, 출시·투자 피칭용 네오 브루탈리즘, 디자인 강연용 바우하우스, 지역 프로그램용 리소, 공공 데이터 브리핑용 뉴스룸입니다. 요청에 장수와 스타일만 적어도("덱 10장, 네오 브루탈리즘 스타일로") 그 방향으로 만듭니다. 방향마다 색, 글자 크기, 제목 스타일, 페이지 구성이 데이터로 정해져 있고 모든 방향이 한 슬라이드 격자 위에 제목과 본문을 놓으므로, 같은 원고도 방향이 바뀌면 다른 덱이 되지만 제목과 본문의 자리는 그대로입니다. 슬라이드는 기본으로 풍부합니다. 강조색은 네 가지까지, 큰 제목 단계와 격자·도형 장식을 쓰고, 발표용 큰 글자는 `register: bold`일 때만 쓰며, 앞머리의 `hero: false`와 `decoration:`으로 줄이거나 더합니다. 답변에는 고른 방향과 다른 후보 두 개가 함께 나오고, 그냥 만들어 달라는 요청에는 스타일을 묻지 않습니다. 슬라이드는 정보를 촘촘하게 담고, 데이터 슬라이드마다 출처 줄을 둡니다. 제목에는 주제를 이름처럼 붙이고 주장은 본문에 둡니다. 숫자를 제목보다 크게 부풀리지 않고, 글꼴은 함께 들어 있는 Pretendard를 쓰고, 컴퓨테이셔널 브루탈리즘의 제목과 숫자에는 JetBrains Mono를 씁니다. 검사는 슬라이드 하나하나와 덱 전체를 함께 봅니다. 제목 배치와 레이아웃을 몇 가지나 섞었는지, 페이지가 얼마나 비었는지, 문장처럼 끝나는 제목은 없는지도 확인합니다.
-
-보고서를 요청하면 `lit-docx`가 Report, Brief, Manual, Proposal, Memo, Journal 여섯 형식 중 하나를 고릅니다. 형식마다 첫 페이지에 무엇을 두는지, 요약을 어떻게 쓰는지, 절 번호를 어떻게 매기는지, 머리말에 무엇을 넣는지가 다릅니다. 페이지는 여섯 형식 모두 차분합니다. 제목과 본문은 거의 검은 잉크색이고, 표는 가는 선 세 줄만 쓰고 음영을 넣지 않으며, 강조색은 많아야 하나입니다. A4에 좌우 여백 25mm를 두고, 줄 간격은 렌더링한 페이지에서 잰 값으로 맞춥니다. 한국어 문서는 `2026. 10. 1.` 같은 날짜 표기, 표 위의 `<표 1>` 제목, 단위·자료 줄 같은 관례를 따릅니다. 검사는 페이지를 렌더링해서 쪽 끝에 홀로 남은 제목, 굳이 나뉜 표, 스며든 색, 지나치게 많은 상자를 찾아냅니다. 학술지 원고는 Elsevier, ACS, IEEE, Nature, korean-generic 서식을 그대로 씁니다.
-
-두 스킬 모두 처음 쓸 때 필요한 도구를 정해진 버전으로 LitOpenCode 전용 캐시에 설치합니다. 완성 파일과 함께 마크다운 원고도 남기고, 구조·품질 검사를 거칩니다. LibreOffice가 있으면 렌더링된 페이지도 눈으로 확인하게 합니다. 출판사 서식, 기존 DOCX 편집, PDF 변환, 템플릿 학습, 글꼴 포함 방법은 설치된 스킬에 설명되어 있습니다. 준비가 됐는지 보려면 `litopencode doctor`를 실행하세요. 상태만 알려 주고 아무것도 설치하지 않습니다.
+다른 스킬도 이름만 바꿔 같은 두 줄을 쓰면 됩니다. `litopencode install`과 자동 업데이트는 자신이 쓰지 않은 폴더를 건드리지 않고, `litopencode doctor`는 그 폴더를 preserved로 보여 줍니다. 안내 스킬로 돌아가려면 폴더를 지우고 `litopencode install`을 실행하세요.
 
 ## 글 다듬기와 브라우저
 

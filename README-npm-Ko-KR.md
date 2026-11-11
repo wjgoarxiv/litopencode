@@ -11,7 +11,7 @@
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub 스타" /></a>
 </p>
 
-LitOpenCode는 목표와 계획, 확인한 내용, 다음 할 일을 프로젝트 안의 `.litopencode/litgoal/`에 남겨 두기 때문에, 긴 작업도 다음 날 멈춘 자리에서 이어 갈 수 있습니다. 몇 세션에 걸쳐 만드는 기능, 계획을 세워 진행하는 리팩터링, 며칠씩 이어 가는 조사, 메모로 만드는 보고서나 발표자료처럼 한 번에 끝나지 않는 OpenCode 작업에 잘 맞습니다.
+LitOpenCode는 목표와 계획, 확인한 내용, 다음 할 일을 프로젝트 안의 `.litopencode/litgoal/`에 남겨 두기 때문에, 긴 작업도 다음 날 멈춘 자리에서 이어 갈 수 있습니다. 몇 세션에 걸쳐 만드는 기능, 계획을 세워 진행하는 리팩터링, 며칠씩 이어 가는 조사처럼 한 번에 끝나지 않는 OpenCode 작업에 잘 맞습니다.
 
 **[전체 안내, 화면, 스킬 갤러리는 GitHub에서 →](https://github.com/wjgoarxiv/litopencode/blob/main/README-Ko-KR.md)**
 
@@ -39,7 +39,7 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 | `lit-plan` → `/start-work` → `/review-work` | 계획하고, 승인하고, 실행하고, 검토합니다. 계획 에이전트는 파일을 고치거나 셸 명령을 실행할 수 없습니다. |
 | `handoff` · `/lit-recap` | 다음 세션이 이어 갈 인수인계 파일을 남기고, 끝낸 일과 다음 할 일을 다시 읽어 줍니다. |
 | `/litresearch` | 여러 차례 조사하며 주장마다 출처를 남깁니다. |
-| `lit` + 보고서·발표자료 | 마크다운 원고와 함께 편집할 수 있는 워드 보고서나 파워포인트 덱을 만듭니다. |
+| `lit` + 보고서·발표자료 | 별도 모음인 wjgoarxiv-skills로 옮긴 문서·발표자료 스킬을 안내합니다. |
 | `/lit-humanizer` | 딱딱한 영어나 한국어 문장을 사실은 그대로 두고 다시 씁니다. |
 
 스킬마다 만들어 내는 결과의 그림은 [GitHub의 스킬 갤러리](https://github.com/wjgoarxiv/litopencode/blob/main/docs/skills-Ko-KR.md)에서 볼 수 있습니다.

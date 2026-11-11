@@ -24,7 +24,7 @@ async function activate(text, agent = "lit-loop") {
   }
 }
 
-test("bounded diagram creation hands off to the native diagram skill before authoring", async () => {
+test("bounded diagram creation still hands off to the diagram skill, now a pointer with its install line", async () => {
   for (const text of [
     "Create an architecture diagram of a message queue and its consumers. lit",
     "Please draw a data-flow diagram for warehouse operators.\n\nlit",
@@ -36,8 +36,8 @@ test("bounded diagram creation hands off to the native diagram skill before auth
   ]) {
     assert.equal(detectChatActivationMode(text), "lit-task");
     const injection = await activate(text, "build");
-    assert.match(injection?.text ?? "", /native skill tool to load lit-diagram-drawer before authoring/u, text);
-    assert.match(injection.text, /skill location returned by OpenCode/u);
+    assert.match(injection?.text ?? "", /native skill tool to load lit-diagram-drawer before making/u, text);
+    assert.ok(injection.text.includes('cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-diagram-drawer" ~/.config/opencode/skills/lit-diagram-drawer'));
     assert.equal(injection.metadata.litopencode.mode, "lit-task");
     assert.ok(Buffer.byteLength(injection.text) <= 4352);
   }
@@ -62,7 +62,7 @@ test("diagram handoff does not capture quoted, read-only, UI, planning, or unrel
     ["/lit-diagram-drawer"]
   ]) {
     const injection = await activate(text, agent);
-    assert.doesNotMatch(injection?.text ?? "", /native skill tool to load lit-diagram-drawer before authoring/u, text);
+    assert.doesNotMatch(injection?.text ?? "", /native skill tool to load lit-diagram-drawer before making/u, text);
   }
 });
 
@@ -89,7 +89,7 @@ test("OpenCode run's own JSON quotes retain an explicit trailing lit request", a
         await hook({ sessionID: "session-run", messageID: "message-run", agent: "lit-loop" }, output);
         const injection = output.parts.find((part) => part.metadata?.litopencode);
         assert.equal(injection?.metadata.litopencode.mode, expected);
-        assert.equal(/native skill tool to load lit-diagram-drawer before authoring/u.test(injection?.text ?? ""), expected === "lit-task");
+        assert.equal(/native skill tool to load lit-diagram-drawer before making/u.test(injection?.text ?? ""), expected === "lit-task");
       }
     }
   } finally {

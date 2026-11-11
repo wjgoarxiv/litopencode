@@ -1,3 +1,0 @@
-LitOpenCode PowerPoint engine
-
-The deck compiler, template system, authoring scripts, and thesis/antithesis/synthesis guidance are credited to Woojin Go (wjgoarxiv). LitOpenCode adaptation and the layout/OOXML checks are maintained in this product. The Pretendard Regular and Bold faces in pretendard-font/public/static/ are the unmodified files of the official Pretendard 1.3.9 release (Copyright (c) 2021 Kil Hyung-jin, Reserved Font Name Pretendard); they ship unchanged under the SIL Open Font License 1.1 in pretendard-font/LICENSE.txt. A2Z font licensing and source are in fonts/a2z-font/OFL.txt and SOURCE.md.

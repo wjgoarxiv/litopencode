@@ -27,20 +27,17 @@ ${readManagedSkillAsset("lit-handoff", "../../vendor/handoff/SKILL.md")}
 ${readManagedSkillAsset("lit-handoff", "../../vendor/handoff/templates/HANDOFF.md")}
 </lit-handoff-mode>`;
 
+// lit-scientific-visualization moved to wjgoarxiv-skills with its vendored source; the exact routes stay and
+// hand the model the same-name pointer, whose body carries the install line.
 export const scientificVisualizationPromptInjection = `${scientificVisualizationBanner}
 <lit-scientific-visualization-mode>
 ${activationProbeInstruction("lit-scientific-visualization")}
 
-Load the native lit-scientific-visualization skill from OpenCode first. Resolve
-SKILL_ROOT to its canonical/ directory, next to that installed SKILL.md, never relative
-to the project or command file. Read related assets, scripts, and references from that root. Do not install
-Python packages silently; report executable capability as READY or DEGRADED.
+lit-scientific-visualization is no longer part of LitOpenCode. Load it with OpenCode's native skill tool: when the
+user has installed the wjgoarxiv-skills copy, that is the skill that loads, so follow it. When the pointer below is
+what loads, answer from it: say where the skill went, give its install line, and plot nothing.
 
-# OpenCode adapter
+# Installed pointer
 
-${nativeManagedSkillReferences("lit-scientific-visualization", readStaticSkillBody("lit-scientific-visualization"))}
-
-# Exact original contract
-
-${readManagedSkillAsset("lit-scientific-visualization", "../../vendor/scientific-visualization/SKILL.md")}
+${readStaticSkillBody("lit-scientific-visualization")}
 </lit-scientific-visualization-mode>`;

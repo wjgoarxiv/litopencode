@@ -574,16 +574,12 @@ export function externalCompanionPaths(productRoot, skill, packPaths, roots) {
   for (const root of roots) {
     const relativeRoot = relative(productRoot, root).split(sep).join("/");
     const basenameId = basename(root);
-    const sourceId = {
-      handoff: "022_handoff",
-      "scientific-visualization": "045_scientific-visualization"
-    }[basenameId] ?? basenameId;
+    const sourceId = { handoff: "022_handoff" }[basenameId] ?? basenameId;
     if (relativeRoot.split("/").includes("vendor")) {
       for (const entry of packPaths) {
         if (
           entry.endsWith(`/licenses/${sourceId}-MIT.txt`) ||
-          entry.endsWith(`/provenance/${sourceId}.md`) ||
-          (sourceId === "045_scientific-visualization" && entry === "vendor/NOTICE.md")
+          entry.endsWith(`/provenance/${sourceId}.md`)
         ) companions.add(entry);
       }
     }

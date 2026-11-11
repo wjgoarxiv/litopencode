@@ -36,7 +36,7 @@ async function main() {
     await ledger.removeAll();
   }
 
-  const namesTamperedAsset = probe.tampered.invalidAssets.includes("visual-qa/schemas/evidence-manifest-v1alpha1.json");
+  const namesTamperedAsset = probe.tampered.invalidAssets.includes("lit-humanizer/assets/report-skeleton.md");
   const results = [
     stage("clean-install-integrity", "PASS", probe.clean.ok ? "PASS" : "FAIL", `invalid=${probe.clean.invalid.length}`),
     stage("tampered-integrity", "FAIL", probe.tampered.ok ? "PASS" : "FAIL", `invalidAssets=${probe.tampered.invalidAssets.join(",") || "none"}`),

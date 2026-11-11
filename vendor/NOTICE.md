@@ -1,21 +1,10 @@
-# Scientific visualization notice
+# Vendored sources notice
 
-The LitOpenCode adapter, the complete authored source payload under
-`vendor/scientific-visualization/`, and the
-distribution metadata in this directory are included under the adjacent MIT license with
-the author's explicit authorization.
+`vendor/` now holds one exact upstream payload: `vendor/handoff/`, the Handoff contract and template that
+`skills/lit-handoff` adapts. Its provenance is `vendor/provenance/022_handoff.md` and its licence is
+`vendor/licenses/022_handoff-MIT.txt`.
 
-The `vendor/scientific-visualization/references/mdanalysis_martini_visualization.md` reference contains CP/SDS
-selection examples derived from the author's own coarse-grained emulsion workflow. They
-are illustrative labels and selections, not third-party trajectory data, parameter files,
-or a claim that the same residue naming applies to another simulation.
-
-The palette guidance identifies established public color schemes by their customary
-names: Okabe-Ito, Bang Wong, and Paul Tol. The exact authored payload retains its existing
-attribution and resource links. Those names identify the palette sources and do not imply
-endorsement of LitOpenCode. Publisher and journal names in the reference corpus likewise
-identify target formatting surfaces; always verify their current official instructions.
-
-Matplotlib, NumPy, seaborn, pandas, Plotly, SciPy, colorspacious, MDAnalysis, kaleido, and
-other named tools are separate projects with their own licenses. They are not bundled as
-npm dependencies by this skill payload.
+The scientific-visualization payload that used to sit here left LitOpenCode together with the
+`lit-scientific-visualization` skill. It now lives in the separate wjgoarxiv-skills collection, in the `figures`
+family at `plugins/figures/vendor/scientific-visualization/`, under the same MIT licence. LitOpenCode keeps a
+same-name `lit-scientific-visualization` pointer that says how to install it.

@@ -736,8 +736,8 @@ test("routes bare static workflow skill names through chat activation", async ()
       assert.ok(output.parts[1].text.includes(expected), `${text} should include its full skill body`);
       if (mode === "start-work") assert.match(output.parts[1].text, /run \/start-work/i);
       if (mode === "visual-qa") {
-        assert.match(output.parts[1].text, /litfamily\.evidence-manifest\/v1beta1/u);
-        assert.match(output.parts[1].text, /alpha.*cannot PASS/is);
+        assert.match(output.parts[1].text, /moved to wjgoarxiv-skills/u);
+        assert.ok(output.parts[1].text.includes('variants/litopencode/visual-qa" ~/.config/opencode/skills/visual-qa'));
       }
     }
   });

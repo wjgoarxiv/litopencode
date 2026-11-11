@@ -50,7 +50,7 @@ export function readStaticSkillBody(skillId: StaticSkillPromptId): string {
 }
 
 export function readManagedSkillAsset(
-  skillId: "lit-handoff" | "lit-scientific-visualization",
+  skillId: "lit-handoff",
   relativePath: string
 ): string {
   return readFileSync(new URL(`../skills/${skillId}/${relativePath}`, import.meta.url), "utf8");

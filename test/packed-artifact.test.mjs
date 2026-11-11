@@ -8,9 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { pathToFileURL } from "node:url";
-import { createBetaMaterialEvidence, validBetaDesignContract } from "../test-support/uiux-visual-fixtures.mjs";
 import { canonicalHandoffAssets } from "../test-support/lit-handoff-fixture.mjs";
-import { importInstalledPalette, assertRetainedCaches } from "../test-support/native-canonical-fixture.mjs";
 import { seedPackedRuntimeDependencies } from "../test-support/packed-runtime-dependencies.mjs";
 
 const packageManifest = JSON.parse(fsSync.readFileSync(path.resolve("package.json"), "utf8"));
@@ -59,7 +57,7 @@ async function packAndExtract(dir) {
   return packageDir;
 }
 
-test("packed canonical skill corpora resolve from native install and survive normal use", async (t) => {
+test("packed canonical skill corpora resolve from native install and survive normal use", async () => {
   await withTempDir(async (dir) => {
     const packageDir = await packAndExtract(dir);
     const packageSkill = path.join(packageDir, "skills", "lit-handoff");
@@ -92,7 +90,7 @@ test("packed canonical skill corpora resolve from native install and survive nor
       XDG_CONFIG_HOME: path.join(home, "config"),
       XDG_DATA_HOME: path.join(home, "data"), XDG_CACHE_HOME: path.join(home, "cache"),
       XDG_STATE_HOME: path.join(home, "state"),
-      LITOPENCODE_NO_AUTO_UPDATE: "1", NO_UPDATE_NOTIFIER: "1", LITOPENCODE_MOTION_PREWARM: "off",
+      LITOPENCODE_NO_AUTO_UPDATE: "1", NO_UPDATE_NOTIFIER: "1",
       NODE_OPTIONS: "--max-old-space-size=512"
     };
     const cli = path.join(packageDir, "bin", "litopencode.cjs");
@@ -107,8 +105,13 @@ test("packed canonical skill corpora resolve from native install and survive nor
     assert.equal(report.install.nativeSkills.invalidAssets.some((asset) => asset.startsWith("lit-handoff/")), false);
 
     await assert.rejects(fs.stat(path.join(root, "skills", "lit-handoff", "original")), { code: "ENOENT" });
+    for (const id of ["lit-pptx", "lit-docx", "lit-diagram-drawer", "lit-schematic", "lit-scientific-visualization", "frontend-ui-ux", "visual-qa", "lit-typographic-motion", "readme-studio"]) {
+      assert.deepEqual(await fs.readdir(path.join(root, "skills", id)), ["SKILL.md"], `${id} installs as its pointer alone`);
+      const pointer = await fs.readFile(path.join(root, "skills", id, "SKILL.md"), "utf8");
+      assert.ok(pointer.includes(`variants/litopencode/${id}" ~/.config/opencode/skills/${id}`), `${id} installed pointer carries its install line`);
+    }
     const managed = JSON.parse(await fs.readFile(path.join(packageDir, "skills", "managed-skill-manifest.json"), "utf8"));
-    for (const id of ["lit-handoff", "lit-scientific-visualization"]) {
+    for (const id of ["lit-handoff"]) {
       const wrapperRoot = path.join(root, "skills", id);
       const wrapper = await fs.readFile(path.join(wrapperRoot, "SKILL.md"), "utf8");
       const declaration = /^exact_source_root: (.+)$/m.exec(wrapper)?.[1];
@@ -119,16 +122,6 @@ test("packed canonical skill corpora resolve from native install and survive nor
         assert.equal(createHash("sha256").update(await fs.readFile(path.join(canonical, asset.path))).digest("hex"), asset.sha256, `${id}/${asset.path}`);
       }
     }
-    await t.test("actual packed CLI normal import, doctor, repeat and retained bytecode hashes", async (t) => {
-      const imported = await importInstalledPalette({ root, env, project }, t);
-      if (imported === null) return;
-      const doctor = run(process.execPath, [cli, "doctor", "--root", root, "--json", "--no-auto-update"], { env, cwd: project, timeout: 30000 });
-      assert.equal(doctor.status, 0, doctor.stderr);
-      assert.equal(JSON.parse(doctor.stdout).install.nativeSkills.ok, true);
-      const repeat = run(process.execPath, [cli, "install", "--root", root, "--yes", "--no-auto-update"], { env, cwd: project, timeout: 30000 });
-      assert.equal(repeat.status, 0, repeat.stderr);
-      await assertRetainedCaches(root, imported.canonical, [{ path: imported.cache, bytes: imported.bytes }]);
-    });
   });
 });
 
@@ -209,7 +202,7 @@ test("packed artifact probes do not rebuild shared dist during concurrent tests"
     const sharedDistFiles = [
       path.resolve("dist", "agents", "specialists.js"),
       path.resolve("dist", "cli", "install-report.js"),
-      path.resolve("dist", "cli", "scientific-visualization-dependencies.js")
+      path.resolve("dist", "cli", "native-skills.js")
     ];
     const before = await Promise.all(sharedDistFiles.map(async (filePath) => (await fs.stat(filePath, { bigint: true })).mtimeNs));
 
@@ -217,35 +210,6 @@ test("packed artifact probes do not rebuild shared dist during concurrent tests"
 
     const after = await Promise.all(sharedDistFiles.map(async (filePath) => (await fs.stat(filePath, { bigint: true })).mtimeNs));
     assert.deepEqual(after, before);
-  });
-});
-
-test("packed canonical verifier runs through documented Node command from a path with spaces", async () => {
-  await withTempDir(async (dir) => {
-    const spacedRoot = path.join(dir, "packed install with spaces");
-    await fs.mkdir(spacedRoot);
-    const packageDir = await packAndExtract(spacedRoot);
-    const skillRoot = path.join(packageDir, "skills", "frontend-ui-ux");
-    const skill = await fs.readFile(path.join(skillRoot, "SKILL.md"), "utf8");
-    assert.match(skill, /`node scripts\/verify-canonical-corpus\.mjs --json`/u);
-    const result = run(process.execPath, ["scripts/verify-canonical-corpus.mjs", "--json"], { cwd: skillRoot });
-    assert.equal(result.status, 0, result.stderr || result.stdout);
-    const report = JSON.parse(result.stdout);
-    assert.equal(report.ok, true);
-    assert.equal(report.count, 167);
-  });
-});
-
-test("packed canonical verifier rejects an explicit symlinked references root", async () => {
-  await withTempDir(async (dir) => {
-    const packageDir = await packAndExtract(dir);
-    const skillRoot = path.join(packageDir, "skills", "frontend-ui-ux");
-    const references = path.join(skillRoot, "references");
-    const linkedRoot = path.join(dir, "linked packed references");
-    await fs.symlink(references, linkedRoot);
-    const result = run(process.execPath, [path.join(skillRoot, "scripts", "verify-canonical-corpus.mjs"), "--root", linkedRoot, "--json"]);
-    assert.equal(result.status, 1, result.stderr || result.stdout);
-    assert.match(JSON.parse(result.stdout).error, /references root.*symbolic link/iu);
   });
 });
 
@@ -268,53 +232,6 @@ test("packed text contains no maintainer user-profile absolute paths", async () 
     }
     await walk(packageDir);
     assert.deepEqual(offenders, [], `packed user-profile absolute paths: ${offenders.join(", ")}`);
-  });
-});
-
-test("packed-installed canonical verifier enforces the strict CLI grammar", async () => {
-  await withTempDir(async (dir) => {
-    const archivePath = path.join(dir, archiveName);
-    const consumer = path.join(dir, "consumer with spaces");
-    const installedRoot = path.join(dir, "installed OpenCode root with spaces");
-    const isolatedHome = path.join(dir, "isolated home");
-    const pack = run("npm", ["pack", "--ignore-scripts", "--pack-destination", dir]);
-    assert.equal(pack.status, 0, pack.stderr);
-    await fs.mkdir(consumer);
-    await fs.mkdir(isolatedHome);
-    assert.equal(run("npm", ["init", "-y"], { cwd: consumer }).status, 0);
-    await seedConsumerRuntimeDependencies(consumer);
-    const installPackage = run("npm", ["install", "--omit=dev", "--ignore-scripts", archivePath], {
-      cwd: consumer,
-      env: { ...process.env, HOME: isolatedHome }
-    });
-    assert.equal(installPackage.status, 0, installPackage.stderr);
-    const cli = path.join(consumer, "node_modules", ".bin", "litopencode");
-    const installPlugin = run(cli, ["install", "--root", installedRoot, "--no-model-prompt"], {
-      cwd: consumer,
-      env: { ...process.env, HOME: isolatedHome, XDG_CONFIG_HOME: path.join(isolatedHome, "xdg") }
-    });
-    assert.equal(installPlugin.status, 0, installPlugin.stderr);
-
-    const skillRoot = path.join(installedRoot, "skills", "frontend-ui-ux");
-    const verifier = path.join(skillRoot, "scripts", "verify-canonical-corpus.mjs");
-    for (const args of [["--json"], ["--root", path.join(skillRoot, "references"), "--json"]]) {
-      const result = run(process.execPath, [verifier, ...args], { cwd: consumer });
-      assert.equal(result.status, 0, result.stderr || result.stdout);
-      assert.equal(JSON.parse(result.stdout).count, 167);
-    }
-
-    const invalid = [
-      [["--root"], /--root requires one path value/iu],
-      [["--unknown"], /unknown option.*--unknown/iu],
-      [["--json", "--json"], /duplicate option.*--json/iu],
-      [["--root", path.join(skillRoot, "references"), "--root", path.join(skillRoot, "references")], /duplicate option.*--root/iu],
-      [["unexpected"], /unexpected positional argument.*unexpected/iu]
-    ];
-    for (const [args, pattern] of invalid) {
-      const result = run(process.execPath, [verifier, ...args], { cwd: consumer });
-      assert.equal(result.status, 1, result.stderr || result.stdout);
-      assert.match(`${result.stdout}\n${result.stderr}`, pattern);
-    }
   });
 });
 
@@ -391,167 +308,6 @@ test("packed normative docs current workflow names resolve to packed command, fe
         assert.match(declaration.line, /not installed/i, `${document.label} historic workflows must be labeled not installed`);
       }
     }
-  });
-});
-
-test("visualqa.current-native-package-boundary.characterization packed artifact ships native Visual QA without new authority", async () => {
-  await withTempDir(async (dir) => {
-    const packageDir = await packAndExtract(dir);
-    const packed = await import(pathToFileURL(path.join(packageDir, "dist", "index.js")).href);
-    const visualQa = await fs.readFile(path.join(packageDir, "skills", "visual-qa", "SKILL.md"), "utf8");
-
-    assert.equal(packed.litOpenCodeStaticOnlySkills.some((skill) => skill.id === "visual-qa"), false);
-    assert.ok(packed.litOpenCodeRuntimeSkills.some((skill) => skill.id === "visual-qa"));
-    assert.ok(packed.litOpenCodeFeatures.some((feature) => feature.id === "visual-qa"));
-    assert.equal(packed.litOpenCodeCommands.some((command) => command.id === "visual-qa"), false);
-    assert.match(visualQa, /native-installed/i);
-    assert.match(visualQa, /not a browser executor/i);
-
-    const probe = run(process.execPath, [
-      "--input-type=module",
-      "-e",
-      [
-        "const m = await import('./package/dist/index.js');",
-        "const hooks = await m.default({ directory: process.cwd(), worktree: process.cwd() });",
-        "const config = {};",
-        "await hooks.config(config);",
-        "if ('mcp' in config) throw new Error('visual-qa must not enroll MCP config');",
-        "if (config.agent['visual-qa']) throw new Error('visual-qa must not enroll an agent');",
-        "await hooks.dispose?.();",
-        "console.log('visual-qa:packed:native:no-authority');"
-      ].join(" ")
-    ], { cwd: dir, env: { ...process.env, HOME: dir, XDG_CONFIG_HOME: path.join(dir, "config") } });
-
-    assert.equal(probe.status, 0, probe.stderr);
-    assert.match(probe.stdout, /^visual-qa:packed:native:no-authority\s*$/);
-  });
-});
-
-test("uiux.package-assets", async () => {
-  await withTempDir(async (dir) => {
-    const packageDir = await packAndExtract(dir);
-    const packed = await import(pathToFileURL(path.join(packageDir, "dist", "index.js")).href);
-    const manifestPath = path.join(packageDir, "skills", "managed-skill-manifest.json");
-    const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
-    const requiredPaths = [
-      "skills/readme-studio/SKILL.md",
-      "skills/readme-studio/references/production.md",
-      "skills/readme-studio/scripts/check-facts.mjs",
-      "skills/readme-studio/templates/typography/outline.mjs",
-      "skills/readme-studio/templates/remotion/package-lock.json",
-      "skills/readme-studio/templates/hyperframes/index.motion.json",
-      "skills/frontend-ui-ux/SKILL.md",
-      "skills/frontend-ui-ux/references/production.md",
-      "skills/frontend-ui-ux/schemas/design-contract-v1alpha1.json",
-      "skills/frontend-ui-ux/schemas/design-contract-v1beta1.json",
-      "skills/frontend-ui-ux/data/design-intelligence.json",
-      "skills/frontend-ui-ux/data/PROVENANCE.json",
-      "skills/frontend-ui-ux/data/LICENSE",
-      "skills/frontend-ui-ux/data/THIRD-PARTY-NOTICE.txt",
-      "skills/frontend-ui-ux/scripts/uiux.mjs",
-      "skills/frontend-ui-ux/scripts/import-design-intelligence.mjs",
-      "skills/visual-qa/schemas/evidence-manifest-v1alpha1.json",
-      "skills/visual-qa/schemas/evidence-manifest-v1beta1.json",
-      "skills/visual-qa/schemas/review-receipt-v1alpha1.json",
-      "skills/visual-qa/scripts/visual-qa.mjs",
-      "tools/run-uiux-visual-qa-scenarios.mjs"
-    ];
-
-    for (const relativePath of requiredPaths) {
-      try {
-        const stat = await fs.stat(path.join(packageDir, relativePath));
-        assert.equal(stat.isFile(), true, `uiux.package-assets: expected packed file ${relativePath}`);
-      } catch (error) {
-        if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-          assert.fail(`uiux.package-assets: missing packed capability file ${relativePath}`);
-        }
-        throw error;
-      }
-    }
-
-    assert.ok(packed.litOpenCodeRuntimeSkills.some((skill) => skill.id === "frontend-ui-ux"));
-    assert.ok(packed.litOpenCodeRuntimeSkills.some((skill) => skill.id === "visual-qa"));
-    assert.ok(manifest.skills["frontend-ui-ux"], "managed manifest must enroll frontend-ui-ux nested assets");
-    assert.ok(manifest.skills["visual-qa"], "managed manifest must enroll visual-qa nested assets");
-
-    const dataPath = path.join(packageDir, "skills", "frontend-ui-ux", "data", "design-intelligence.json");
-    const dataStat = await fs.stat(dataPath);
-    const data = JSON.parse(await fs.readFile(dataPath, "utf8"));
-    const records = Array.isArray(data) ? data : data.records;
-    assert.equal(records.length, 2_277);
-    assert.ok(dataStat.size <= 4 * 1024 * 1024, "normalized design intelligence must be at most 4 MiB");
-
-    const provenance = JSON.parse(
-      await fs.readFile(path.join(packageDir, "skills", "frontend-ui-ux", "data", "PROVENANCE.json"), "utf8")
-    );
-    assert.equal(provenance.sources.length, 34);
-    assert.equal(new Set(provenance.sources.map((source) => source.path)).size, 34);
-    for (const source of provenance.sources) {
-      assert.match(source.raw_sha256, /^[0-9a-f]{64}$/);
-      assert.ok(Array.isArray(source.header) && source.header.length > 0);
-      assert.ok(Array.isArray(source.selected_columns) && source.selected_columns.length > 0);
-      assert.equal(Number.isFinite(source.data_row_count), true);
-      assert.equal(Number.isFinite(source.normalized_record_count), true);
-    }
-    const notice = await fs.readFile(
-      path.join(packageDir, "skills", "frontend-ui-ux", "data", "THIRD-PARTY-NOTICE.txt"),
-      "utf8"
-    );
-    assert.match(notice, /34 allowlisted CSV source files/i);
-    assert.match(notice, /PROVENANCE\.json/);
-
-    const packageJson = JSON.parse(await fs.readFile(path.join(packageDir, "package.json"), "utf8"));
-    assert.equal(packageJson.dependencies?.zod, "4.6.7");
-    assert.equal(packageJson.dependencies?.["@opencode-ai/plugin"], undefined);
-    assert.equal(packageJson.devDependencies?.["@opencode-ai/plugin"], "^1.19.5");
-    assert.doesNotMatch(JSON.stringify(packageJson.dependencies ?? {}), /playwright|puppeteer|browser/i);
-  });
-});
-
-test("packed visual-qa is self-contained, accepts material smoke PNGs, and blocks unproven full review", async () => {
-  await withTempDir(async (dir) => {
-    const packageDir = await packAndExtract(dir);
-    const packedUiux = await import(
-      pathToFileURL(path.join(packageDir, "skills", "frontend-ui-ux", "scripts", "uiux.mjs")).href
-    );
-    const uiuxBoundary = validBetaDesignContract();
-    uiuxBoundary.tokens[0].value = "x".repeat(512);
-    assert.equal(packedUiux.validateDesignContract(uiuxBoundary).valid, true);
-    uiuxBoundary.tokens[0].value += "x";
-    assert.equal(packedUiux.validateDesignContract(uiuxBoundary).valid, false);
-    await fs.rm(path.join(packageDir, "skills", "frontend-ui-ux"), { recursive: true, force: true });
-    const visualQa = await import(
-      pathToFileURL(path.join(packageDir, "skills", "visual-qa", "scripts", "visual-qa.mjs")).href
-    );
-    const visualDesign = await import(
-      pathToFileURL(path.join(packageDir, "skills", "visual-qa", "scripts", "design-contract.mjs")).href
-    );
-    const visualBoundary = validBetaDesignContract();
-    visualBoundary.motion.reduced_motion_behavior = "x".repeat(512);
-    assert.equal(visualDesign.validateDesignContract(visualBoundary).valid, true);
-    visualBoundary.motion.reduced_motion_behavior += "x";
-    assert.equal(visualDesign.validateDesignContract(visualBoundary).valid, false);
-    const smoke = createBetaMaterialEvidence(visualQa, path.join(dir, "smoke-evidence"));
-    assert.equal(visualQa.evaluateEvidenceManifest(smoke.manifest, smoke.bundle).verdict, "PASS");
-    for (const capturePath of [
-      path.join(smoke.bundle.evidenceRoot, "captures", "primary.png"),
-      `../${path.basename(smoke.bundle.evidenceRoot)}/captures/primary.png`
-    ]) {
-      const invalid = structuredClone(smoke.manifest);
-      invalid.captures[0].path = capturePath;
-      assert.equal(visualQa.validateEvidenceManifest(invalid).valid, false);
-      assert.equal(
-        visualQa.evaluateEvidenceManifest(invalid, smoke.bundle).code,
-        "BLOCKED_SCHEMA_OR_PAYLOAD_MISMATCH"
-      );
-    }
-
-    const full = createBetaMaterialEvidence(visualQa, path.join(dir, "full-evidence"), { tier: "full" });
-    full.manifest.capabilities.independent_review = true;
-    full.manifest.review_receipt_hashes = [`sha256:${"e".repeat(64)}`, `sha256:${"f".repeat(64)}`];
-    const result = visualQa.evaluateEvidenceManifest(full.manifest, full.bundle);
-    assert.equal(result.verdict, "BLOCKED");
-    assert.equal(result.code, "BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE");
   });
 });
 

@@ -4,12 +4,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
-import { pathToFileURL } from "node:url";
 import litOpenCodePlugin from "../src/index.ts";
 import { install } from "../src/cli/install.ts";
 import * as installTui from "../src/cli/install-tui.ts";
 import { packageId, runCli, withTempDir } from "../test-support/cli-fixture.ts";
-import { createBetaMaterialEvidence, validBetaDesignContract } from "../test-support/uiux-visual-fixtures.mjs";
 
 const htmlCommentPattern = /<!--[\s\S]*?-->/;
 const ansiEscapePattern = /\u001b\[[0-?]*[ -/]*[@-~]/g;
@@ -53,36 +51,13 @@ test("integration.installed-nested-assets", async () => {
     assert.equal(installResult.status, 0, installResult.stderr);
 
     const requiredInstalledPaths = [
-      "skills/readme-studio/SKILL.md",
-      "skills/readme-studio/references/production.md",
-      "skills/readme-studio/references/decoration-patterns.md",
-      "skills/readme-studio/scripts/check-facts.mjs",
-      "skills/readme-studio/templates/typography/outline.mjs",
-      "skills/readme-studio/templates/remotion/package-lock.json",
-      "skills/readme-studio/templates/hyperframes/index.motion.json",
-      "skills/frontend-ui-ux/SKILL.md",
-      "skills/frontend-ui-ux/references/production.md",
-      "skills/frontend-ui-ux/references/default-editorial-pixel.json",
-      "skills/frontend-ui-ux/schemas/design-contract-v1alpha1.json",
-      "skills/frontend-ui-ux/schemas/design-contract-v1beta1.json",
-      "skills/frontend-ui-ux/schemas/design-contract-v1beta2.json",
-      "skills/frontend-ui-ux/data/design-intelligence.json",
-      "skills/frontend-ui-ux/data/PROVENANCE.json",
-      "skills/frontend-ui-ux/data/LICENSE",
-      "skills/frontend-ui-ux/data/THIRD-PARTY-NOTICE.txt",
-      "skills/frontend-ui-ux/scripts/uiux.mjs",
       "skills/browser-drive/SKILL.md",
       "skills/browser-drive/scripts/capability-probe.mjs",
       "skills/browser-drive/references/snapshot-act-loop.md",
       "skills/lit-comprehend/assets/explainer-scaffold.html",
       "skills/lit-comprehend/references/artifact-template.md",
       "skills/lit-comprehend/references/micro-worlds.md",
-      "skills/lit-comprehend/scripts/verify-explainer.ts",
-      "skills/visual-qa/SKILL.md",
-      "skills/visual-qa/schemas/evidence-manifest-v1alpha1.json",
-      "skills/visual-qa/schemas/evidence-manifest-v1beta1.json",
-      "skills/visual-qa/schemas/review-receipt-v1alpha1.json",
-      "skills/visual-qa/scripts/visual-qa.mjs"
+      "skills/lit-comprehend/scripts/verify-explainer.ts"
     ];
 
     for (const relativePath of requiredInstalledPaths) {
@@ -102,58 +77,33 @@ test("integration.installed-nested-assets", async () => {
     const report = JSON.parse(doctor.stdout);
     assert.deepEqual(report.install.nativeSkills.missing, []);
     assert.deepEqual(report.install.nativeSkills.invalid, []);
-    assert.ok(report.install.nativeSkills.present.includes("frontend-ui-ux"));
-    assert.ok(report.install.nativeSkills.present.includes("visual-qa"));
+    for (const id of ["frontend-ui-ux", "visual-qa", "readme-studio"]) {
+      assert.ok(report.install.nativeSkills.present.includes(id), `${id} pointer is installed`);
+      assert.deepEqual(await fs.readdir(path.join(dir, "skills", id)), ["SKILL.md"], `${id} pointer is SKILL.md alone`);
+    }
   });
 });
 
-test("integration.installed visual-qa validates beta PNG evidence with its sibling absent and restored", async () => {
+test("a user-copied collection folder replaces the pointer and survives install and doctor", async () => {
   await withTempDir(async (dir) => {
-    const installResult = runCli(["install", "--root", dir]);
-    assert.equal(installResult.status, 0, installResult.stderr);
-    const sibling = path.join(dir, "skills", "frontend-ui-ux");
-    const preserved = path.join(dir, "frontend-ui-ux.preserved");
-    const siblingSkill = await fs.readFile(path.join(sibling, "SKILL.md"));
-    const installedUiux = await import(pathToFileURL(path.join(sibling, "scripts", "uiux.mjs")).href);
-    const uiuxBoundary = validBetaDesignContract();
-    uiuxBoundary.tokens[0].usage = "x".repeat(512);
-    assert.equal(installedUiux.validateDesignContract(uiuxBoundary).valid, true);
-    uiuxBoundary.tokens[0].usage += "x";
-    assert.equal(installedUiux.validateDesignContract(uiuxBoundary).valid, false);
-    await fs.rename(sibling, preserved);
-    try {
-      const visualQa = await import(pathToFileURL(path.join(dir, "skills", "visual-qa", "scripts", "visual-qa.mjs")).href);
-      const visualDesign = await import(pathToFileURL(path.join(dir, "skills", "visual-qa", "scripts", "design-contract.mjs")).href);
-      const visualBoundary = validBetaDesignContract();
-      visualBoundary.acceptance_criteria[0].observable = "x".repeat(512);
-      assert.equal(visualDesign.validateDesignContract(visualBoundary).valid, true);
-      visualBoundary.acceptance_criteria[0].observable += "x";
-      assert.equal(visualDesign.validateDesignContract(visualBoundary).valid, false);
-      const material = createBetaMaterialEvidence(visualQa, path.join(dir, "evidence"));
-      assert.equal(visualQa.evaluateEvidenceManifest(material.manifest, material.bundle).verdict, "PASS");
-      for (const capturePath of [
-        path.join(material.bundle.evidenceRoot, "captures", "primary.png"),
-        `../${path.basename(material.bundle.evidenceRoot)}/captures/primary.png`
-      ]) {
-        const invalid = structuredClone(material.manifest);
-        invalid.captures[0].path = capturePath;
-        assert.equal(visualQa.validateEvidenceManifest(invalid).valid, false);
-        assert.equal(
-          visualQa.evaluateEvidenceManifest(invalid, material.bundle).code,
-          "BLOCKED_SCHEMA_OR_PAYLOAD_MISMATCH"
-        );
-      }
-      const full = createBetaMaterialEvidence(visualQa, path.join(dir, "full-evidence"), { tier: "full" });
-      full.manifest.capabilities.independent_review = true;
-      full.manifest.review_receipt_hashes = [`sha256:${"e".repeat(64)}`, `sha256:${"f".repeat(64)}`];
-      assert.equal(
-        visualQa.evaluateEvidenceManifest(full.manifest, full.bundle).code,
-        "BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE"
-      );
-    } finally {
-      await fs.rename(preserved, sibling);
-    }
-    assert.deepEqual(await fs.readFile(path.join(sibling, "SKILL.md")), siblingSkill);
+    assert.equal(runCli(["install", "--root", dir]).status, 0);
+    const folder = path.join(dir, "skills", "lit-docx");
+    await fs.rm(folder, { recursive: true });
+    await fs.mkdir(path.join(folder, "scripts"), { recursive: true });
+    const copied = "---\nname: lit-docx\ndescription: Collection copy of the Word document skill.\n---\n\n# lit-docx\n";
+    await fs.writeFile(path.join(folder, "SKILL.md"), copied);
+    await fs.writeFile(path.join(folder, "scripts", "build.py"), "print('build')\n");
+    const repeat = runCli(["install", "--root", dir]);
+    assert.equal(repeat.status, 0, repeat.stderr);
+    assert.equal(await fs.readFile(path.join(folder, "SKILL.md"), "utf8"), copied, "the installer leaves a folder it did not write");
+    assert.equal(await fs.readFile(path.join(folder, "scripts", "build.py"), "utf8"), "print('build')\n");
+    const report = JSON.parse(runCli(["doctor", "--root", dir]).stdout);
+    assert.ok(report.install.nativeSkills.preserved.includes("lit-docx"), "doctor counts the copy as preserved");
+    assert.ok(report.install.nativeSkills.present.includes("lit-docx"));
+    assert.deepEqual(report.install.nativeSkills.invalid, []);
+    await fs.rm(folder, { recursive: true });
+    assert.equal(runCli(["install", "--root", dir]).status, 0);
+    assert.match(await fs.readFile(path.join(folder, "SKILL.md"), "utf8"), /moved to wjgoarxiv-skills/u, "install brings the pointer back");
   });
 });
 
@@ -406,19 +356,19 @@ test("TTY JSON installs suppress the progress mark and machine-output escapes", 
   });
 });
 
-test("readme-studio doctor rejects tampered and missing installed resources", async () => {
+test("lit-comprehend doctor rejects tampered and missing installed resources", async () => {
   await withTempDir(async (dir) => {
     assert.equal(runCli(["install", "--root", dir]).status, 0);
-    const resource = path.join(dir, "skills/readme-studio/templates/typography/outline.mjs");
+    const resource = path.join(dir, "skills/lit-comprehend/references/micro-worlds.md");
     const original = await fs.readFile(resource);
     await fs.appendFile(resource, "\n// altered\n");
     const altered = runCli(["doctor", "--root", dir]);
-    assert.match(JSON.stringify(JSON.parse(altered.stdout).install.nativeSkills.invalid), /readme-studio/);
-    assert.match(altered.stdout, /readme-studio/);
+    assert.match(JSON.stringify(JSON.parse(altered.stdout).install.nativeSkills.invalid), /lit-comprehend/);
+    assert.match(altered.stdout, /lit-comprehend/);
     await fs.writeFile(resource, original);
     await fs.rename(resource, `${resource}.preserved`);
     const missing = runCli(["doctor", "--root", dir]);
-    assert.match(JSON.stringify(JSON.parse(missing.stdout).install.nativeSkills.invalid), /readme-studio/);
-    assert.match(missing.stdout, /readme-studio/);
+    assert.match(JSON.stringify(JSON.parse(missing.stdout).install.nativeSkills.invalid), /lit-comprehend/);
+    assert.match(missing.stdout, /lit-comprehend/);
   });
 });

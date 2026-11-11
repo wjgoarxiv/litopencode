@@ -121,4 +121,4 @@ Keep `litopencode.json` if you still want its routes, and keep a project's `.lit
 
 MIT. See [LICENSE](../LICENSE).
 
-The reference material bundled for `lit-handoff` and `lit-scientific-visualization` lives in `vendor/handoff/` and `vendor/scientific-visualization/`. Their numbered license and provenance files are kept as source attribution.
+The reference material bundled for `lit-handoff` lives in `vendor/handoff/`. Its numbered license and provenance files are kept as source attribution. The scientific-visualization source moved with its figure skill to wjgoarxiv-skills.

@@ -12,8 +12,6 @@ import {
   type NativeSkillsRootLink,
   type ShadowedSkill
 } from "./native-skill-integrity.ts";
-import { inspectScientificVisualizationDependencies } from "./scientific-visualization-dependencies.ts";
-import { inspectOfficeDependencies } from "./office-dependencies.ts";
 import type { InstallReport, PackageMetadata } from "./types.ts";
 
 export { validateManagedSkillSource } from "./native-skill-integrity.ts";
@@ -69,10 +67,6 @@ export type NativeSkillInspection = {
   readonly invalidAssets: readonly string[];
   readonly sourceInvalid: readonly string[];
   readonly canonicalCacheFiles: readonly string[];
-  readonly dependencies: {
-    readonly "lit-scientific-visualization": ReturnType<typeof inspectScientificVisualizationDependencies>;
-    readonly office: ReturnType<typeof inspectOfficeDependencies>;
-  };
   readonly link?: NativeSkillsRootLink;
   // Other OpenCode-visible skill roots that shadow a managed skill id; warnings only, never `ok`.
   readonly shadowedSkills: readonly ShadowedSkill[];
@@ -165,7 +159,6 @@ export async function inspectNativeSkills(
     invalidAssets: [...new Set(invalidAssets)],
     sourceInvalid,
     canonicalCacheFiles,
-    dependencies: { "lit-scientific-visualization": inspectScientificVisualizationDependencies(), office: inspectOfficeDependencies() },
     ...(link === undefined ? {} : { link }),
     shadowedSkills,
     ok: missing.length === 0 && uniqueInvalid.length === 0

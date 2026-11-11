@@ -26,10 +26,10 @@ test("loop activation adds a concrete hand-off for interface work only", () => {
   }
 });
 
-test("the installed interface skill requires a real page probe before completion", () => {
+test("the installed interface pointer gives its install line, and the hand-off says to report the slice unverified", () => {
   const skill = readFileSync(new URL("../skills/frontend-ui-ux/SKILL.md", import.meta.url), "utf8");
-  assert.match(skill, /probe\.mjs --path/);
-  assert.match(skill, /--help is not a page probe/);
-  assert.match(skill, /RS matrix/);
-  assert.match(skill, /HIGH/);
+  assert.match(skill, /wjgoarxiv-skills/);
+  assert.ok(skill.includes('cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/frontend-ui-ux" ~/.config/opencode/skills/frontend-ui-ux'));
+  const ui = promptForChatActivationMode("lit-loop", "Create a web app with a user-facing dashboard lit");
+  assert.match(ui, /report the interface slice as unverified/);
 });

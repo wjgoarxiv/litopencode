@@ -5,6 +5,10 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- Nine content skills moved to wjgoarxiv-skills, a separate collection where you install only the skills you want: `lit-pptx` (decks), `lit-docx` (documents), `lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux` and `visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video-covers). Each name stays as a short pointer, so the skill picker, the `lit` deck, report, diagram, P&ID and film requests, interface requests and `/lit-scientific-visualization` still land on it. The pointer says where the skill went and gives the two lines that copy its OpenCode version into `~/.config/opencode/skills/<id>`; `litopencode install` leaves that copy alone and `litopencode doctor` lists it as preserved.
+- `litopencode motion-runtime` is gone, and install no longer pre-warms the motion runtime. Doctor no longer reports motion, Office or plotting dependencies. The vendored scientific-visualization source moved with its skill.
+- The package drops from 1,615 files to 659.
+
 ## 1.0.43 - 2026-11-11
 
 - `lit adhd` now opens with a KPI board: the one thing to do now and exactly what to type, four counts (done, in progress, waiting on you, left) with an overall bar, milestones with their own bars, what was done lately, what is still to do, and up to five reminders shaped "thing → what to do" (a session waiting on you, lanes still working, uncommitted changes, unpushed commits, plans untouched for a week, the handoff's next item). The collector computes every figure and writes the board in Korean with `--lang ko`. The per-session cards are still there with `lit adhd detail` or `lit adhd 자세히`, under the board.

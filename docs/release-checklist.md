@@ -421,7 +421,8 @@ This versioned section records the 0.1.62 scope only; it does not describe curre
 - Confirm balanced/YOLO permission modes remain explicit opt-in only, default installs do not relax permissions, `lit-plan` edit/bash deny guards remain enforced, and docs tell users to restart OpenCode after config changes.
 - Confirm README, runtime skills, and feature catalog state the verified native goal verdict (OpenCode 2.2 and later has `/goal`, OpenCode 1 does not, a user-made goal is never touched) and keep durable goal state under `.litopencode/litgoal`.
 - Confirm the Runtime Skills section in `docs/reference.md` exactly matches the actual top-level skill directories and the forced listener-denial regression runs all no-network security cases with zero skips.
-- Confirm the packed `vendor/` corpora for `lit-handoff` and `lit-scientific-visualization` preserve their managed inventories and hashes, while installed native skills remain flat wrappers that preserve user-owned collisions; exclude `.pyc` and report scientific Python dependency readiness without installing dependencies.
+- Confirm the packed `vendor/handoff/` corpus for `lit-handoff` preserves its managed inventory and hashes, while installed native skills remain flat wrappers that preserve user-owned collisions; exclude `.pyc`.
+- Confirm each moved content skill (`lit-pptx`, `lit-docx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`, `frontend-ui-ux`, `visual-qa`, `lit-typographic-motion`, `readme-studio`) packs and installs as its one-file pointer, its routes still reach it, and a user-copied folder in its place survives `litopencode install`.
 - Confirm `.litopencode/`, `.litcodex/`, generated evidence, reference archives, fixture-only paths, and package archives are excluded from the packed payload.
 - Verify the README motion cover at `docs/assets/cover-motion.webp` and its reduced-motion still
   `docs/assets/cover-motion-still.webp`: confirm the Markdown rendering and alt text in both READMEs,
@@ -479,7 +480,7 @@ better coverage of the behaviour being retired.
 
 | Script | Surface it drives | What it proves |
 | --- | --- | --- |
-| `qa:negative-gate-matrix` | installed `skills/frontend-ui-ux/scripts/uiux.mjs`, installed `skills/visual-qa/scripts/visual-qa.mjs`, `litopencode doctor`, `tools/check-pack-payload.mjs` | seventeen negative-gate rows, each with its expected and observed outcome, plus a negative control that proves the comparator can fail |
+| `qa:negative-gate-matrix` | `litopencode doctor`, `tools/check-pack-payload.mjs` | three negative-gate rows (tampered and restored installed resource, forbidden package paths), each with its expected and observed outcome, plus a negative control that proves the comparator can fail |
 | `qa:installed-resource-tamper` | `litopencode install` and `litopencode doctor` against an isolated temporary root | a corrupted pinned managed asset fails integrity by name and passes again once restored |
 | `qa:behavior-replacement` | shipped `dist/cli/update-check.js`, shipped `dist/index.js` plugin exports and `config` hook | update-notifier concurrency including future-dated cache and lock timestamps, schema-3 bounded-authority CAS fail-closed idempotency, and subagent depth-one containment |
 | `node tools/run-wikify-surface-probe.mjs` | Wikify tool, `tool.execute.after`, chat, and command hooks against isolated temporary state | Wikify capture/save flow, review-needed automatic receipts, route reachability, and no live-profile mutation |
@@ -523,7 +524,7 @@ Expected results:
 
 - plugin import prints `litopencode`
 - package payload includes compiled `dist/*.js` and `dist/*.d.ts` files, not `src/*.ts`
-- package payload includes the package-level `vendor/handoff/` and `vendor/scientific-visualization/` trees plus their approved legal/provenance files, without `.pyc`
+- package payload includes the package-level `vendor/handoff/` tree plus its approved legal/provenance files, without `.pyc`
 - `scan:legacy-tokens` reports zero guarded-token matches; non-empty allowlist entries are not release exemptions
 - `check:version` skips lockstep when the source-only lockfile is absent from the packed artifact
 - `typecheck` skips when TypeScript dev dependencies are not installed in the packed artifact

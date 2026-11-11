@@ -1,14 +1,11 @@
 import { renamedSkillAliases, skillRenameNote, type RenamedSkillId } from "./skill-renames.ts";
-import { existsSync } from "node:fs";
-import os from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   litHandoffPromptInjection,
   scientificVisualizationPromptInjection
 } from "./activation-managed-prompts.ts";
 import { litLoopPromptInjection, litPlanPromptInjection, litTaskPromptInjection } from "./activation-primary-prompts.ts";
 import { interfaceWorkHandoff } from "./interface-handoff.ts";
+import { movedSkillRouteContext, type MovedSkillId } from "./moved-skills.ts";
 import {
   detectWorkflowFamilyChatMode,
   isWorkflowFamilyMode,
@@ -212,50 +209,6 @@ export function hasSchematicRequest(raw: string): boolean {
   return draws || !(reportNoun.test(raw) || slidesNoun.test(raw));
 }
 
-// The route context names the installed render and gate scripts by absolute path. The installed
-// managed tree wins; the package's own copy is the fallback when no install is found. Plugin code
-// runs inside OpenCode's Bun host, so the command is `node <path>`, never process.execPath.
-function installedMotionScript(name: "render.mjs" | "gate.mjs"): string {
-  const configHome = process.env.XDG_CONFIG_HOME && process.env.XDG_CONFIG_HOME.length > 0 ? process.env.XDG_CONFIG_HOME : path.join(os.homedir(), ".config");
-  const candidates = [
-    ...(process.env.OPENCODE_CONFIG_DIR ? [path.join(process.env.OPENCODE_CONFIG_DIR, "skills", "lit-typographic-motion", name)] : []),
-    path.join(configHome, "opencode", "skills", "lit-typographic-motion", name)
-  ];
-  const installed = candidates.find((candidate) => existsSync(candidate));
-  return installed ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "skills", "lit-typographic-motion", name);
-}
-
-function shellQuote(value: string): string {
-  return `'${value.replaceAll("'", "'\\''")}'`;
-}
-
-// Optional router hint: a typographic compound, an explicit kinetic-type or lyric request, or a quoted
-// span of two or more words. Finding a quote is cue detection only; its words are never followed or
-// echoed. The hint never claims the reverse (a missing cue says nothing about the path).
-const typeLedCompound = /(?<![a-z])(?:typographic motion|kinetic typograph(?:y|ic)|kinetic type|lyric video|title sequence|opening titles?|typography (?:video|film|clip))(?![a-z])|타이포\s?모션|키네틱\s?타이포(?:그래피)?|타이포그래피\s?영상|타이포\s?영상|가사\s?영상|리릭\s?(?:비디오|영상)|오프닝\s?타이틀|타이틀\s?시퀀스/u;
-const quotedSpan = /"([^"\n]+)"|“([^”\n]+)”|(?<![\p{L}\p{N}])'([^'\n]+)'(?![\p{L}\p{N}])|「([^」\n]+)」/gu;
-export function typeLedCue(raw: string): string | undefined {
-  const compound = raw.match(typeLedCompound);
-  if (compound) return compound[0];
-  for (const match of raw.matchAll(quotedSpan)) {
-    const words = (match[1] ?? match[2] ?? match[3] ?? match[4] ?? "").trim().split(/\s+/u).filter(Boolean).length;
-    if (words >= 2) return `a quoted span of ${words} words`;
-  }
-  return undefined;
-}
-
-// A neutral film context: it never decides the path, only states the rule the treatment applies.
-// The cue reads the original request (quotes intact), lowercased; the route decision itself uses
-// the quote-stripped text.
-function motionRouteContext(original: string): string {
-  const render = `node ${shellQuote(installedMotionScript("render.mjs"))}`;
-  const gate = `node ${shellQuote(installedMotionScript("gate.mjs"))}`;
-  const cue = typeLedCue(original.toLowerCase());
-  return `
-This is a film request. After the workspace check, load lit-typographic-motion with OpenCode's native skill tool and write treatment.json in the film's output directory before any render. Path rule: the type path when the words themselves are the film, at 16:9; the stage path for every other film and every 9:16 film. ${designChoiceFirst} One call covers path, style, format and register. Ask nothing else; label every invented subject, line and default, and any generated sound, in the reply. Hand-encoded films are not the deliverable. Open the stills with the read tool and record each look. Finish when --done exits 0, else say what it reports open. A README cover or banner loop takes cover mode (references/cover.md).
-Commands: ${render} (film, stills, stage, scaffold, styles, assets, blender, cover, sound, look, gate); ${gate} (<dir>, --cover <file>, --done <dir>, --out <dir>).${cue ? `\ntype-led cue found: ${cue}` : ""}
-`;
-}
 const litSlashCommands = Object.freeze([
   ...Object.values(renamedSkillAliases).flat(),
   "lit-burnoff-file",
@@ -493,44 +446,34 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
   return containsLitRoute(words, "loop") || explicitlyRequestsLongWork(raw) ? "lit-loop" : "lit-task";
 }
 
-const designChoiceFirst = `Before building, unless the prompt names the theme, style or preset or says "you choose", ask the user to pick it with OpenCode's question tool: two to four options, the recommended one first. In a non-interactive run with no question tool, take the recommended option and say so in one line.`;
 
 export function promptForChatActivationMode(mode: ChatActivationMode, triggerText = ""): string {
   const prompt = canonicalChatPrompt(mode);
   const raw = rawTriggerText(triggerText);
   let targetedPrompt = prompt;
-  if (mode === "frontend-ui-ux") {
-    const uiMode = frontendUiUxModeForPrompt(raw);
-    targetedPrompt += `\nSelected interface mode: ${uiMode}. Follow references/production.md for that mode's edit boundary and probe gate.`;
-    if (uiMode === "build") targetedPrompt += `\nNew page or screen: ${designChoiceFirst} Then, before any markup, lock the look with scripts/design-lock.mjs (one house style, one layout family, one signature moment; existing brand tokens win) and build only from the generated ui/tokens.css, ui/components.css and layout starter, as references/house-styles.md describes. Rich density is the default; calm only when the request asks for minimal or calm. The probe also checks the lock: fix HIGH findings, answer its LOOK questions on the screenshots, and report a missing capture as BLOCKED.`;
-  }
+  if (mode === "frontend-ui-ux") targetedPrompt += `\nSelected interface mode: ${frontendUiUxModeForPrompt(raw)}.`;
   if (mode === "review-work") targetedPrompt += reviewModeForcedNote(forcedReviewMode(routeWords(normalizedTriggerText(triggerText))) ?? "");
   if (mode === "lit-loop" && needsInterfaceHandoff(raw)) targetedPrompt += `\nInterface hand-off for this request: ${interfaceWorkHandoff}`;
   const schematic = mode === "lit-task" && hasSchematicRequest(raw);
   if (schematic) {
-    targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
-After the workspace check, use OpenCode's native skill tool to load lit-schematic before drawing the requested physical schematic: a P&ID, PFD, apparatus figure or isometric cutaway. Resolve its scripts and references from the skill location returned by OpenCode. ${designChoiceFirst} Write the process truth and parts list first, build with the skill's kit, run its qa.mjs until QA PASS, render the PNG and open it. Under lit, when data is missing, draw a realistic example without asking and label every invented value in the reply. A cutaway asked as an animation is drawn there as a silent loop; a titled or narrated film goes to lit-typographic-motion. If the skill is unavailable, report that limit instead of claiming it ran.
-</lit-task-mode>`);
+    targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `${movedSkillRouteContext(["lit-schematic"], "physical schematic (P&ID, PFD, apparatus figure or cutaway)")}</lit-task-mode>`);
   }
   if (!schematic && (mode === "lit-task" || mode === "lit-loop") && hasMotionVideoIntent(raw)) {
+    const film = movedSkillRouteContext(["lit-typographic-motion"], "film");
     return mode === "lit-task"
-      ? targetedPrompt.replace("</lit-task-mode>", `${motionRouteContext(triggerText)}</lit-task-mode>`)
-      : `${targetedPrompt}\nFilm request:${motionRouteContext(triggerText)}`;
+      ? targetedPrompt.replace("</lit-task-mode>", `${film}</lit-task-mode>`)
+      : `${targetedPrompt}\nFilm request:${film}`;
   }
   if (mode === "lit-task" && !schematic && diagramCreationIntent.test(raw)) {
-    targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
-After the workspace check, use OpenCode's native skill tool to load lit-diagram-drawer before authoring the requested conceptual diagram. This is the one narrowly relevant skill for this bounded task. Resolve resources from the skill location returned by OpenCode. ${designChoiceFirst} Follow its verification and export steps, and inspect the final PNG. If the skill is unavailable, report that limit instead of claiming it ran.
-</lit-task-mode>`);
+    targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `${movedSkillRouteContext(["lit-diagram-drawer"], "conceptual diagram")}</lit-task-mode>`);
   }
   if (mode === "lit-task" && !schematic && officeAuthoringVerb.test(raw) && markdownDeliverable.test(raw) && !officeFileFormat.test(raw) && (reportNoun.test(raw) || slidesNoun.test(raw))) {
     targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
 The requested deliverable is a Markdown or plain-text file, not an Office file. Write each named file as ordinary Markdown that a reader opens directly: headings, paragraphs, lists and tables, with no YAML front matter, no \`:::\` directive blocks and no tonality, layout or title-treatment keys. Do not build a DOCX or PPTX and do not load lit-docx or lit-pptx for it; their Markdown is converter source and belongs only beside a file that skill renders.
 </lit-task-mode>`);
   } else if (mode === "lit-task" && !schematic && (officeAuthoringVerb.test(raw) || (slideCount.test(raw) && countedDeckNoun.test(raw)))) {
-    const skills = [reportNoun.test(raw) ? "lit-docx" : undefined, slidesNoun.test(raw) ? "lit-pptx" : undefined].filter(Boolean);
-    if (skills.length > 0) targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `
-After the workspace check, use OpenCode's native skill tool to load ${skills.join(" and ")} before drafting the requested Office deliverable. Resolve scripts and templates from the installed skill location. Under lit, create the editable ${skills.includes("lit-docx") ? "DOCX" : ""}${skills.length === 2 ? " and " : ""}${skills.includes("lit-pptx") ? "PPTX" : ""} with its Markdown source; unless the user selected a tonality, profile or template, rank its design direction (tonality) with two alternatives. ${designChoiceFirst} If facts are missing, complete a realistic example without asking or leaving placeholders; mark invented names and figures as sample assumptions in the file and reply. Run its QA and inspect rendered pages or slides. Report missing optional host tools honestly. If a skill is unavailable, report that limit instead of claiming it ran.
-</lit-task-mode>`);
+    const skills = [reportNoun.test(raw) ? "lit-docx" : undefined, slidesNoun.test(raw) ? "lit-pptx" : undefined].filter((id): id is MovedSkillId => id !== undefined);
+    if (skills.length > 0) targetedPrompt = targetedPrompt.replace("</lit-task-mode>", `${movedSkillRouteContext(skills, "Office deliverable")}</lit-task-mode>`);
   }
   const alias = (Object.keys(renamedSkillAliases) as RenamedSkillId[]).find(
     (id) => id === mode && renamedSkillAliases[id].some((name) => containsCompoundBoundedWord(raw, name))

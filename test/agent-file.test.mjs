@@ -42,7 +42,6 @@ async function withSandbox(fn) {
         XDG_DATA_HOME: path.join(dir, "xdg-data"),
         XDG_CACHE_HOME: path.join(dir, "xdg-cache"),
         XDG_STATE_HOME: path.join(dir, "xdg-state"),
-        LITOPENCODE_MOTION_PREWARM: "off",
         LITOPENCODE_NO_AUTO_UPDATE: "1",
         LITOPENCODE_NO_UPDATE_CHECK: "1",
         NO_UPDATE_NOTIFIER: "1"

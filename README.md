@@ -101,11 +101,7 @@ lit research Which SQLite settings matter most for a write-heavy local app?
 
 ### Reports, decks and figures
 
-Ask for a report or slides with `lit` and you get an editable Word file or PowerPoint deck, built from a Markdown source you keep, in a design direction the skill picks and names first. Journal-sized figures from measured data come from `/lit-scientific-visualization`, and concept diagrams have a skill of their own.
-
-```text
-lit Turn notes.md into a ten-slide deck for Friday's team review
-```
+The skills that made Word reports, PowerPoint decks, diagrams, equipment drawings, journal figures, interfaces, films and README covers now live in wjgoarxiv-skills, a separate collection where you install only the skills you want. LitOpenCode stays smaller for it. Each old name still answers: ask for a deck with `lit` and a short pointer tells you where the skill went and gives the command that copies it into OpenCode. The [skills gallery](./docs/skills.md#moved-to-wjgoarxiv-skills) lists them.
 
 ### Writing that sounds like a person
 
@@ -117,7 +113,7 @@ There is more: debugging, refactoring, code cleanup, commits, language servers, 
 
 ## What you can make
 
-Each picture below came out of LitOpenCode on one Mac, from the skill named under it. None is a mock-up. The figures in the deck, the page and the drawing are example data for a made-up hydrate lab, and each says so on the page.
+Each picture below came out of LitOpenCode on one Mac, from the skill named under it. None is a mock-up. The figures in the deck, the page and the drawing are example data for a made-up hydrate lab, and each says so on the page. The deck, page and drawing skills have since moved to wjgoarxiv-skills; install them from there to make the same.
 
 <table>
 <tr><td width="50%" valign="top"><img src="./docs/assets/readme/showcase-adhd-brief.webp" width="400" alt="The lit-adhd brief in the OpenCode chat. The headline reads 1 session · 0 waiting on you · 0 active · next: F1. Plan compliance audit, above an Ended table with one row, a Roadmap of finished commits with check marks followed by now and later plan steps, and a boxed Recommended next step. Below it the LIT card draws the workflow map, a lit-adhd chip and a REWIND mark on its top border." /><br /><b>lit-adhd</b> · the welcome-back brief<br /><sub>The skill's own script read the sessions, commits and plans of a real worktree family; a local test model passed that answer to OpenCode, which draws it in colour while the LIT card switches to its rewind look.</sub></td><td width="50%" valign="top"><img src="./docs/assets/readme/showcase-deck.webp" width="400" alt="Contact sheet of a nine-slide computational-brutalism deck on a hydrate rig: a dark cover, a KPI row, a native line chart of pressure drop for three runs, a results table, a two-column comparison, four numbered steps, a dark statement slide, an approval box and an appendix." /><br /><b>lit-pptx</b> · nine slides, computational brutalism<br /><sub>Compiled by the skill's engine from a slide source written for this page; charts stay editable in PowerPoint and the deck gate found nothing high.</sub></td></tr>
@@ -245,7 +241,7 @@ If LitOpenCode saves you a morning of "where was I?", a star on GitHub helps oth
 
 Bug reports and pull requests are welcome. Start with [Contributing](./CONTRIBUTING.md), and see [Support](./SUPPORT.md), [Security](./SECURITY.md) and the [Code of conduct](./CODE_OF_CONDUCT.md).
 
-MIT. See [LICENSE](./LICENSE). Reference material bundled for `lit-handoff` and `lit-scientific-visualization` keeps its own license and provenance files under `vendor/`.
+MIT. See [LICENSE](./LICENSE). Reference material bundled for `lit-handoff` keeps its own license and provenance files under `vendor/`.
 
 The LitOpenCode name, logos and mascot art follow the [trademark policy](./TRADEMARK.md).
 

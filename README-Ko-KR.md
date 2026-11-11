@@ -101,11 +101,7 @@ lit research 쓰기가 많은 로컬 앱에서 가장 중요한 SQLite 설정은
 
 ### 보고서, 발표자료, 그림
 
-보고서나 발표자료 요청에 `lit`을 붙이면 편집할 수 있는 워드 파일이나 파워포인트 덱이 나옵니다. 마크다운 원고도 함께 남고, 스킬이 먼저 디자인 방향을 골라 이름을 알려 줍니다. 측정 데이터로 학술지 크기의 그림을 만드는 일은 `/lit-scientific-visualization`이, 개념도는 전용 스킬이 맡습니다.
-
-```text
-lit notes.md를 금요일 팀 회의용 발표자료 10장으로 만들어줘
-```
+워드 보고서, 파워포인트 덱, 개념도, 장치 도면, 학술지 그림, 화면, 영상, README 커버를 만들던 스킬은 이제 wjgoarxiv-skills라는 별도 모음에 있습니다. 필요한 스킬만 골라 설치하면 되고, 그만큼 LitOpenCode는 가벼워졌습니다. 예전 이름은 그대로 남아 있어서 `lit`으로 발표자료를 부탁하면 짧은 안내가 스킬이 옮겨 간 곳과 OpenCode에 복사해 넣는 명령을 알려 줍니다. 목록은 [스킬 갤러리](./docs/skills-Ko-KR.md#wjgoarxiv-skills로-옮긴-스킬)에 있습니다.
 
 ### 사람이 쓴 것 같은 글
 
@@ -117,7 +113,7 @@ lit notes.md를 금요일 팀 회의용 발표자료 10장으로 만들어줘
 
 ## 만들 수 있는 것
 
-아래 그림은 모두 맥 한 대에서 LitOpenCode가 만든 결과이고, 그림 아래에 만든 스킬을 적었습니다. 꾸며 낸 화면은 없습니다. 발표자료와 화면, 도면의 숫자는 가상의 하이드레이트 실험실을 위한 예시 값이며, 각 결과물 안에도 그렇게 적혀 있습니다.
+아래 그림은 모두 맥 한 대에서 LitOpenCode가 만든 결과이고, 그림 아래에 만든 스킬을 적었습니다. 꾸며 낸 화면은 없습니다. 발표자료와 화면, 도면의 숫자는 가상의 하이드레이트 실험실을 위한 예시 값이며, 각 결과물 안에도 그렇게 적혀 있습니다. 발표자료와 화면, 도면을 만든 스킬은 그 뒤 wjgoarxiv-skills로 옮겼으니, 같은 결과를 원하면 거기서 설치하세요.
 
 <table>
 <tr><td width="50%" valign="top"><img src="./docs/assets/readme/showcase-adhd-brief.webp" width="400" alt="OpenCode 대화창에 뜬 lit-adhd 브리핑. 첫 줄은 1 session · 0 waiting on you · 0 active · next: F1. Plan compliance audit이고, 그 아래에 한 줄짜리 Ended 표, 체크 표시가 붙은 끝난 커밋과 now, later 계획 단계가 이어지는 Roadmap, 상자에 담긴 Recommended next step이 있습니다. 아래쪽 LIT 카드에는 작업 지도와 lit-adhd 칩이 있고, 위 테두리에 REWIND 표시가 있습니다." /><br /><b>lit-adhd</b> · 돌아왔을 때 읽는 브리핑<br /><sub>스킬에 들어 있는 스크립트가 실제 워크트리 묶음의 세션, 커밋, 계획을 읽었습니다. 그 답을 로컬 시험용 모델이 OpenCode에 넘겼고, OpenCode는 이를 색으로 그리며 LIT 카드는 되감기 모양으로 바뀝니다.</sub></td><td width="50%" valign="top"><img src="./docs/assets/readme/showcase-deck.webp" width="400" alt="하이드레이트 장치를 다룬 computational-brutalism 스타일 9장 발표자료의 모음 그림. 어두운 표지, KPI 행, 세 번의 실험의 압력 강하를 그린 네이티브 선 그래프, 결과 표, 두 단 비교, 번호 붙은 네 단계, 어두운 질문 슬라이드, 승인 상자, 부록이 보입니다." /><br /><b>lit-pptx</b> · 9장, computational brutalism<br /><sub>이 페이지를 위해 쓴 슬라이드 원고를 스킬의 엔진이 컴파일했습니다. 그래프는 PowerPoint에서 고칠 수 있고, 발표자료 검사에서 심각한 문제는 나오지 않았습니다.</sub></td></tr>
@@ -245,7 +241,7 @@ npm uninstall -g @litfamily/litopencode
 
 버그 제보와 풀 리퀘스트를 환영합니다. [기여 안내](./CONTRIBUTING.md)부터 읽어 주시고, [지원](./SUPPORT.md), [보안 제보](./SECURITY.md), [행동 규범](./CODE_OF_CONDUCT.md)도 함께 확인해 주세요.
 
-MIT입니다. [LICENSE](./LICENSE)를 보세요. `lit-handoff`와 `lit-scientific-visualization`에 함께 들어 있는 참조 원본은 `vendor/` 아래에 자체 라이선스·출처 파일과 함께 있습니다.
+MIT입니다. [LICENSE](./LICENSE)를 보세요. `lit-handoff`에 함께 들어 있는 참조 원본은 `vendor/` 아래에 자체 라이선스·출처 파일과 함께 있습니다.
 
 LitOpenCode 이름, 로고, 마스코트 그림은 [상표 정책](./TRADEMARK.md)을 따릅니다.
 

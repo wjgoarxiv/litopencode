@@ -121,4 +121,4 @@ route가 계속 필요하면 `litopencode.json`을, 나중에 작업을 이어 �
 
 MIT입니다. [LICENSE](../LICENSE)를 보세요.
 
-`lit-handoff`와 `lit-scientific-visualization`에 함께 들어 있는 참조 원본은 `vendor/handoff/`와 `vendor/scientific-visualization/`에 있습니다. 번호가 붙은 라이선스·출처 파일은 출처 기록으로 그대로 둡니다.
+`lit-handoff`에 함께 들어 있는 참조 원본은 `vendor/handoff/`에 있습니다. 번호가 붙은 라이선스·출처 파일은 출처 기록으로 그대로 둡니다. scientific-visualization 원본은 그림 스킬과 함께 wjgoarxiv-skills로 옮겼습니다.

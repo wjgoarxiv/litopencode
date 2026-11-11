@@ -1360,11 +1360,11 @@ test("README is current-behavior documentation, not cumulative prepared-release 
   assert.match(readme, /lit-plan.*start-work.*review-work/is);
 
   const reference = await fs.readFile("docs/reference.md", "utf8");
-  const uiHelpers = reference.match(/### UI and Visual QA managed helpers([\s\S]*?)### Managed workflow families/u)?.[1] ?? "";
+  const uiHelpers = reference.match(/### UI and Visual QA pointers([\s\S]*?)### Managed workflow families/u)?.[1] ?? "";
   const workflowFamilies = reference.match(/### Managed workflow families([\s\S]*?)## Release Readiness/u)?.[1] ?? "";
   assert.match(uiHelpers, /frontend-ui-ux/iu);
   assert.match(uiHelpers, /visual-qa/iu);
-  assert.match(uiHelpers, /Node ESM helpers/iu);
+  assert.match(uiHelpers, /wjgoarxiv-skills/iu);
   assert.doesNotMatch(uiHelpers, /autoresearch|autoconference|wikify/iu);
   for (const family of ["autoresearch", "autoconference", "wikify"]) assert.match(workflowFamilies, new RegExp(family, "iu"));
   assert.doesNotMatch(workflowFamilies, /Node ESM helpers|PNG|terminal validation|every helper import/iu);
@@ -1372,5 +1372,5 @@ test("README is current-behavior documentation, not cumulative prepared-release 
   const npmignore = await fs.readFile(".npmignore", "utf8");
   assert.match(npmignore, /^test\/$/mu);
   assert.match(npmignore, /^tests\/$/mu);
-  assert.match(npmignore, /^!vendor\/scientific-visualization\/tests\/$/mu);
+  assert.doesNotMatch(npmignore, /scientific-visualization/u, "the moved plot source needs no package exception");
 });

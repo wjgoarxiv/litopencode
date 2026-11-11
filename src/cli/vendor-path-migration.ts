@@ -5,7 +5,6 @@ import { assertContained, assertPathComponentsSafe } from "./native-skill-tree.t
 
 export const legacyVendorPaths = [
   { legacy: "022_handoff", canonical: "handoff" },
-  { legacy: "045_scientific-visualization", canonical: "scientific-visualization" },
 ] as const;
 
 /** Move only pristine, manifest-owned numbered vendor roots to their canonical names. */

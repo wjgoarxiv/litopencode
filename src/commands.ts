@@ -437,7 +437,7 @@ export const litOpenCodeCommands = Object.freeze([
     id: "lit-scientific-visualization",
     slash: "/lit-scientific-visualization",
     title: "LitOpenCode Scientific Visualization",
-    description: "Create publication-ready figures from the complete embedded scientific-visualization corpus.",
+    description: "Pointer: the publication-figure skill moved to wjgoarxiv-skills (figures); shows the OpenCode install line.",
     banner: activationBanner("lit-scientific-visualization"),
     activationText: scientificVisualizationPromptInjection
   },

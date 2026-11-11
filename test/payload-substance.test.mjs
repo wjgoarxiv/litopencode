@@ -38,24 +38,6 @@ const PRODUCT_PARITY_ARGS = [
   PARITY_MANIFEST,
 ];
 
-test("scientific visualization closure counts its vendor notice, not another skill notice", () => {
-  const packed = new Set([
-    "vendor/licenses/045_scientific-visualization-MIT.txt",
-    "vendor/provenance/045_scientific-visualization.md",
-    "vendor/NOTICE.md",
-    "skills/lit-humanizer/NOTICE"
-  ]);
-  const roots = [join(REPO_ROOT, "vendor", "scientific-visualization")];
-  assert.deepEqual(
-    [...externalCompanionPaths(REPO_ROOT, { name: "lit-scientific-visualization" }, packed, roots)].sort(),
-    [
-      "vendor/NOTICE.md",
-      "vendor/licenses/045_scientific-visualization-MIT.txt",
-      "vendor/provenance/045_scientific-visualization.md"
-    ]
-  );
-});
-
 test("payload substance gate accepts the current packed skill tree", () => {
   const result = runChecker(PRODUCT_PARITY_ARGS);
   assert.equal(result.status, 0, result.stderr || result.stdout);

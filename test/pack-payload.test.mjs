@@ -20,34 +20,10 @@ const requiredHandoffPaths = [
   "vendor/handoff/examples/HANDOFF-example-generic-auth-refactor.md",
   "vendor/handoff/templates/HANDOFF.md"
 ];
-const requiredScientificVisualizationPaths = [
-  "skills/lit-scientific-visualization/SKILL.md",
-  "vendor/NOTICE.md",
-  "vendor/licenses/045_scientific-visualization-MIT.txt",
-  "vendor/provenance/045_scientific-visualization.md",
-  "vendor/scientific-visualization/SKILL.md",
-  "vendor/scientific-visualization/assets/color_palettes.py",
-  "vendor/scientific-visualization/assets/nature.mplstyle",
-  "vendor/scientific-visualization/assets/presentation.mplstyle",
-  "vendor/scientific-visualization/assets/publication.mplstyle",
-  "vendor/scientific-visualization/evals/evals.json",
-  "vendor/scientific-visualization/references/color_palettes.md",
-  "vendor/scientific-visualization/references/journal_requirements.md",
-  "vendor/scientific-visualization/references/matplotlib_examples.md",
-  "vendor/scientific-visualization/references/mdanalysis_martini_visualization.md",
-  "vendor/scientific-visualization/references/publication_guidelines.md",
-  "vendor/scientific-visualization/references/seaborn_for_publications.md",
-  "vendor/scientific-visualization/scripts/figure_export.py",
-  "vendor/scientific-visualization/scripts/style_presets.py",
-  "vendor/scientific-visualization/tests/test_figure_export.py",
-  "vendor/scientific-visualization/tests/test_style_presets.py"
-];
 const requiredVendorPaths = [
   "vendor/NOTICE.md",
   "vendor/licenses/022_handoff-MIT.txt",
-  "vendor/licenses/045_scientific-visualization-MIT.txt",
-  "vendor/provenance/022_handoff.md",
-  "vendor/provenance/045_scientific-visualization.md"
+  "vendor/provenance/022_handoff.md"
 ];
 function canonicalPackagePath(id, definition, relativePath) {
   return definition.canonicalRoot === undefined
@@ -242,29 +218,6 @@ test("CI keeps the dry-pack report outside the package root and guards that exac
   assert.match(workflow, /No release-command placeholder guard[\s\S]*?\.github package\.json src test/u);
 });
 
-test("manifest missing one canonical scientific asset fails closed", () => {
-  const missingPath = "vendor/scientific-visualization/scripts/style_presets.py";
-  const incomplete = requiredPackagePaths.filter((filePath) => filePath !== missingPath);
-  const result = runChecker(["--stdin"], JSON.stringify(packageReport(["package.json", "dist/index.js", ...incomplete])));
-
-  assert.equal(result.status, 1);
-  assert.match(result.stdout, /pack payload guard failed: 1 required path missing/);
-  assert.match(result.stdout, /vendor\/scientific-visualization\/scripts\/style_presets\.py/);
-});
-
-test("only the two canonical scientific Python tests bypass the global test-path guard", () => {
-  const seeded = [
-    ...requiredPackagePaths,
-    "vendor/scientific-visualization/tests/unapproved_test.py",
-    "skills/another-skill/tests/test_fixture.py"
-  ];
-  const result = runChecker(["--stdin"], JSON.stringify(packageReport(seeded)));
-
-  assert.equal(result.status, 1);
-  assert.match(result.stdout, /pack payload guard failed: 2 forbidden paths/);
-  assert.doesNotMatch(result.stdout, /vendor\/scientific-visualization\/tests\/test_(?:figure_export|style_presets)\.py/);
-});
-
 test("manifest missing one canonical handoff asset fails closed", () => {
   const incomplete = requiredPackagePaths.filter((filePath) => !filePath.endsWith("templates/HANDOFF.md"));
   const result = runChecker(["--stdin"], JSON.stringify(packageReport(["package.json", "dist/index.js", ...incomplete])));
@@ -278,7 +231,7 @@ test("unexpected managed-skill payload files fail closed", () => {
   const seeded = [
     ...requiredPackagePaths,
     "vendor/handoff/unexpected.pyc",
-    "vendor/scientific-visualization/local-notes.jsonl"
+    "vendor/handoff/local-notes.jsonl"
   ];
   const result = runChecker(["--stdin"], JSON.stringify(packageReport(seeded)));
 
@@ -286,49 +239,6 @@ test("unexpected managed-skill payload files fail closed", () => {
   assert.match(result.stdout, /pack payload guard failed: 2 forbidden paths/);
   assert.match(result.stdout, /unexpected\.pyc/);
   assert.match(result.stdout, /local-notes\.jsonl/);
-});
-
-test("diagram previews, foils, evidence, and source archives stay out of the package", () => {
-  for (const unwanted of [
-    "skills/lit-diagram-drawer/ab/score.json",
-    "skills/lit-diagram-drawer/evidence/run.json",
-    "skills/lit-diagram-drawer/examples/01-service-architecture/constructed-naive-foil.html",
-    "skills/lit-diagram-drawer/assets/previews/architecture.png",
-    "skills/lit-diagram-drawer/plans/brief.md",
-    "skills/lit-diagram-drawer/_refs/archive.md",
-    "skills/lit-diagram-drawer/scripts/office-proof.py"
-  ]) {
-    const result = runChecker(["--stdin"], JSON.stringify(packageReport([...requiredPackagePaths, unwanted])));
-    assert.equal(result.status, 1, `${unwanted} must stay out of npm: ${result.stdout}`);
-    assert.ok(result.stdout.includes(unwanted));
-  }
-});
-
-test("schematic renders, loops, and working directories stay out of the package", () => {
-  for (const unwanted of [
-    "skills/lit-schematic/examples/pid-dosing-skid/pid-dosing-skid.png",
-    "skills/lit-schematic/examples/iso-heat-exchanger/loop.mp4",
-    "skills/lit-schematic/examples/journal-adsorption-rig/figure.pdf",
-    "skills/lit-schematic/.work/frames/0001.png",
-    "skills/lit-schematic/evidence/run.json"
-  ]) {
-    const result = runChecker(["--stdin"], JSON.stringify(packageReport([...requiredPackagePaths, unwanted])));
-    assert.equal(result.status, 1, `${unwanted} must stay out of npm: ${result.stdout}`);
-    assert.ok(result.stdout.includes(unwanted));
-  }
-});
-
-test("interface kit renders and generated lock projects stay out of the package", () => {
-  for (const unwanted of [
-    "skills/frontend-ui-ux/kit/preview.png",
-    "skills/frontend-ui-ux/design.lock.json",
-    "skills/frontend-ui-ux/ui/tokens.css",
-    "skills/frontend-ui-ux/evidence/probe.json"
-  ]) {
-    const result = runChecker(["--stdin"], JSON.stringify(packageReport([...requiredPackagePaths, unwanted])));
-    assert.equal(result.status, 1, `${unwanted} must stay out of npm: ${result.stdout}`);
-    assert.ok(result.stdout.includes(unwanted));
-  }
 });
 
 test("project-local Wikify knowledge cannot enter the package payload", () => {

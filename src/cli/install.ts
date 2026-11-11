@@ -39,7 +39,6 @@ import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } from "./native-skills.ts";
 import { installAgentFile, planAgentFile } from "./agent-file-command.ts";
 import { applyPluginMutation, describePluginMutation, isLitOpenCodeEntry } from "./plugin-mutation.ts";
-import { prewarmMotionRuntime } from "./motion-runtime.ts";
 import { applyCliJsonCleanup, applyTuiWrites, backupTuiFiles, inspectTuiPlugin, planCliJsonCleanup, planTuiInstall, skippedTuiPlan } from "./tui-config.ts";
 import { confirmUnplacedOpenCode, detectOpenCodeHosts, targetsV1, targetsV2, type HostChoice, type HostDetection } from "./host-detect.ts";
 
@@ -539,13 +538,11 @@ export async function install(
   await activeProgress?.complete();
   // The block is the last step: it asks a question, and a refusal here never undoes a finished install.
   const agentFileLine = wrapReceiptLine(await installAgentFile(agentFileInput));
-  // MO-A-42: the installer attempts the motion pre-warm; a failure never fails the install.
-  const motionReceipt = wrapReceiptLine(prewarmMotionRuntime(metadata.packageRoot));
 
   return {
     exitCode: 0,
     stdout: activeProgress === undefined
-      ? renderLitOpenCodeWordmark(pluginSpec(metadata), false) + "\n" + renderInstallReport(report) + "\n" + agentFileLine + "\n" + motionReceipt
-      : agentFileLine + "\n" + motionReceipt
+      ? renderLitOpenCodeWordmark(pluginSpec(metadata), false) + "\n" + renderInstallReport(report) + "\n" + agentFileLine
+      : agentFileLine
   };
 }

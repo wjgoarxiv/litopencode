@@ -199,7 +199,7 @@ for an approved plan; `/review-work` checks the `DoneClaim` through a five-lane 
 | `/litresearch` or `/lit-research` | Run evidence-backed research with a sequential fallback. |
 | `/lit-handoff` | Create a resumable handoff; exact bare `handoff` also routes here. |
 | `/lit-recap` | Read a concise recap from local ledger and session context. |
-| `/lit-scientific-visualization` | Use the packaged scientific-visualization workflow. |
+| `/lit-scientific-visualization` | Say where the figure skill went and give its OpenCode install line. |
 | `/lit-korean` | Review prose for natural phrasing without changing meaning. |
 | `/text-neutralization` | Review prose with the neutralization contract. |
 
@@ -363,10 +363,10 @@ flowchart LR
 
 </details>
 
-### UI and Visual QA managed helpers
+### UI and Visual QA pointers
 
-The `frontend-ui-ux` and `visual-qa` routes use Node ESM helpers and bounded,
-read-only evidence. They do not add workflow-family scaffold or status helpers.
+`frontend-ui-ux` and `visual-qa` are pointers to skills that moved to wjgoarxiv-skills.
+They ship no helper scripts and add no workflow-family scaffold or status helpers.
 
 ### Managed workflow families
 
@@ -835,7 +835,7 @@ The route writes `.litopencode/auto-handoff.json` (the switch and the percent). 
 
 ## Installed canonical skill assets
 
-`lit-handoff` and `lit-scientific-visualization` install their exact authored source
+`lit-handoff` installs its exact authored source
 inside `skills/<id>/canonical/` below the selected OpenCode config root. Read the
 native skill's `SKILL.md` first and resolve its `exact_source_root` from that file's
 directory. Slash and bare-route prompts use the same native skill location; the
@@ -843,8 +843,7 @@ project directory and command directory are not reference roots. A packed instal
 carries the full source closure and does not require the developer's checkout.
 
 Doctor checks the installed file inventory and hashes as well as package source.
-Missing Python or matplotlib is a separate `DEGRADED` capability result; missing
-installed skill files are an integrity error. Neither check installs dependencies.
+Missing installed skill files are an integrity error. The check installs nothing.
 
 Repeat installation preserves an unmarked user-owned skill. For a managed wrapper,
 the new canonical subtree must match its exact packaged files and hashes before
@@ -891,10 +890,6 @@ shadow, and is excluded. Shadowing is informational: it never flips `nativeSkill
 doctor's overall `install.ok`. To resolve a reported shadow, remove or rename the
 unmanaged copy, or accept that OpenCode may prefer it over the LitOpenCode-managed one.
 
-## Design production and README Studio
+## Moved content skills
 
-The native `frontend-ui-ux` skill takes an adequate authorized build request through working implementation and rendered inspection. It asks only material design choices and retains answers; review and plan requests remain read-only. A new page or screen locks its look first with `scripts/design-lock.mjs` (house style, layout family, signature moment, rich or calm density); the generated `design.lock.json`, `ui/tokens.css`, `ui/components.css` and fonts live in the project, fonts are copied from the `lit-diagram-drawer` and `lit-typographic-motion` skills after a sha256 check, and `scripts/probe.mjs` adds DS-001 to DS-008 and the LOOK-1 to LOOK-6 questions when the lock sits beside the page. `--viewports` runs a subset of the matrix and never approves.
-
-Select `readme-studio` through OpenCode's native skill tool for factual README writing and local cover composition. The installed resources include outlined typography helpers and pinned Remotion/HyperFrames recipes. Without a native image generator it reports `IMAGE_GENERATION_UNAVAILABLE` and can continue from a supplied background. Public GitHub/npm rendering is a separate gate. No dedicated slash command is claimed.
-
-The native `lit-typographic-motion` skill gives a stage film a story (`story`: what the viewer expects, the turn, the shot where it lands, the payoff) and a protagonist that acts across at least half of the film. A link in the request makes the product required: `render.mjs assets --out <dir> --url <https link> [--cover]` reads the page and its README as untrusted data and keeps only sniffed, size-capped images (SVG cleaned, badges skipped) under `stage/assets/` or `cover/assets/`, and the `ASSET-USED` gate row fails a film that never shows them; an unreachable product exits 22 and asks the user instead of drawing an invented screen. `depth: "3d"` draws with the pinned three.js r170 (served under `/lit/three/`, hashes in `THIRD_PARTY_NOTICES`) on the GPU rung, and a failed GPU start falls back, labelled, to SwiftShader. A README cover without user art takes the `hero-3d` recipe; `painted-light` needs user art. Films are rich by default (`register: rich`): a stage film must fill its frame (`RICH-FILL` fails when more than two of twelve regions stay empty in more than one shot), carry dense real labels and a moving camera, and takes a per-film layered score (`sound.mode: score`; kick, clap, hats, perc, bass, chords, lead, fx and accents stems, sidechained, -16 LUFS, the drop on the story beat, stems kept under `sound/stems/`); only a request for a calm or minimal film makes it `minimal`. `render3d: "blender"` adds an optional Cycles plate rung (`render.mjs blender --out <dir> [--final] [--detach]`; `scaffold` prints a `BLENDER:` line, and an absent Blender falls back to three.js with a labelled note). The look round asks 11 questions on the stage path (9 on the type path and for covers), including whether the film is rich enough for its register and whether the turn lands, and `gate.mjs --done` finds the run up the tree, so it works with `--out .` from inside the film folder. Before the treatment the skill makes one `question` call for path, style, format and register, with the rules' pick first.
+`lit-pptx`, `lit-docx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`, `frontend-ui-ux`, `visual-qa`, `lit-typographic-motion` and `readme-studio` moved to the separate wjgoarxiv-skills collection (families `decks`, `documents`, `figures`, `design` and `video-covers`). Each id stays registered as a same-name native skill whose installed folder is one `SKILL.md`. Its routes still fire: the native skill picker, the bounded `lit` deck, report, diagram, P&ID and film routes, the `frontend-ui-ux` and `visual-qa` chat routes, the interface post-edit hint and `/lit-scientific-visualization`. The pointer names the collection path and gives two install lines that replace the pointer folder with `variants/litopencode/<id>/` from the user's clone. The installer treats that copy as user-owned and preserves it; doctor lists it under `preserved`. LitOpenCode ships none of the moved runtimes: no `motion-runtime` command, no Office or plotting dependency probe, and no install-time pre-warm.

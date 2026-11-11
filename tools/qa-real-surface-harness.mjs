@@ -135,7 +135,7 @@ export function sha256File(bytes) {
 // The pinned resource tampered here is a managed canonical asset: the installer
 // records its SHA-256 in skills/managed-skill-manifest.json, so a single changed
 // byte has to surface as an integrity failure naming that exact path.
-export const tamperTargetRelativePath = "skills/visual-qa/schemas/evidence-manifest-v1alpha1.json";
+export const tamperTargetRelativePath = "skills/lit-humanizer/assets/report-skeleton.md";
 
 export async function tamperRestoreProbe(openCodeRoot, homeDir) {
   const target = path.join(openCodeRoot, tamperTargetRelativePath);

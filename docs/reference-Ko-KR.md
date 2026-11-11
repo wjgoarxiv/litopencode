@@ -171,7 +171,7 @@ litopencode install
 | `/litresearch` 또는 `/lit-research` | 순차 대체 경로를 포함한 근거 기반 연구 |
 | `/lit-handoff` | 이어서 작업할 수 있는 핸드오프 작성 |
 | `/lit-recap` | 로컬 ledger와 세션 맥락으로 짧은 리캡 작성 |
-| `/lit-scientific-visualization` | 패키지에 포함된 scientific-visualization 워크플로 사용 |
+| `/lit-scientific-visualization` | 그림 스킬이 옮겨 간 곳과 OpenCode 설치 줄 안내 |
 | `/lit-korean` | 의미를 바꾸지 않고 문장 흐름 검토 |
 | `/text-neutralization` | neutralization 계약에 따른 문장 검토 |
 
@@ -235,11 +235,10 @@ git 훅과 설정, 셸 시작 파일, 다른 호스트의 설정은 쓰기도 �
 인라인 코드로 인용한 명령은 세지 않습니다. 타이핑 start-work가 시작되면 올바른 `Scope roots:` 줄 하나하나가
 실행의 권한이 되므로, 승인된 계획이 이미 적은 폴더의 단계를 미뤄 두지 않습니다. 이때 그 폴더는 있어야 합니다.
 
-### UI 및 Visual QA 관리 헬퍼
+### UI 및 Visual QA 안내
 
-`frontend-ui-ux`와 `visual-qa` 경로는 Node ESM 헬퍼와 제한된 읽기 전용
-evidence를 사용합니다. 이 경로들은 workflow family의 scaffold나 status
-헬퍼를 추가하지 않습니다.
+`frontend-ui-ux`와 `visual-qa`는 wjgoarxiv-skills로 옮긴 스킬을 가리키는 안내입니다.
+헬퍼 스크립트를 싣지 않으며 workflow family의 scaffold나 status 헬퍼도 추가하지 않습니다.
 
 ### 관리되는 workflow family
 
@@ -685,16 +684,15 @@ OpenCode는 세션이 바쁜 동안 들어온 `summarize` 호출을 줄 세웠�
 
 ## 설치된 원본 스킬 파일
 
-`lit-handoff`와 `lit-scientific-visualization`의 원본은 선택한 OpenCode 설정 루트의
+`lit-handoff`의 원본은 선택한 OpenCode 설정 루트의
 `skills/<id>/canonical/`에 그대로 설치합니다. 먼저 native 스킬의 `SKILL.md`를 읽고,
 그 파일의 디렉토리를 기준으로 `exact_source_root`를 해석하세요. 슬래시 명령과
 bare 경로도 같은 native 스킬 위치를 사용합니다. 프로젝트나 command 디렉토리를
 기준으로 원본을 찾으면 안 됩니다. 패키지 설치에는 참조 파일 전체가 포함되며
 개발자의 checkout이 필요하지 않습니다.
 
-Doctor는 패키지 원본뿐 아니라 설치된 파일 목록과 해시도 확인합니다. Python이나
-matplotlib이 없는 `DEGRADED` 상태와 설치 파일 누락은 별개입니다. 파일 누락은
-무결성 오류이며, 어느 검사도 의존성을 자동으로 설치하지 않습니다.
+Doctor는 패키지 원본뿐 아니라 설치된 파일 목록과 해시도 확인합니다. 설치 파일
+누락은 무결성 오류이며, 이 검사는 아무것도 설치하지 않습니다.
 
 재설치할 때 생성 표시가 없는 사용자 스킬은 보존합니다. 생성된 wrapper의 새
 canonical 하위 트리는 패키지의 파일 목록과 해시가 일치할 때만 교체합니다.
@@ -743,16 +741,6 @@ Install은 `<root>/skills`가 심볼릭 링크여도(예: `~/.config/opencode/sk
 보고된 shadow를 해결하려면 관리되지 않는 사본을 지우거나 이름을 바꾸세요. 그대로
 두면 OpenCode가 LitOpenCode가 관리하는 사본 대신 그 사본을 불러올 수 있습니다.
 
-## 디자인 제작과 README
+## 옮긴 콘텐츠 스킬
 
-OpenCode 네이티브 스킬 `frontend-ui-ux`는 충분한 구현 요청을 받으면 작업 화면을 만들고 렌더링을 확인합니다. 중요한 방향이 모호할 때만 질문하며 답변을 보존합니다. 검토·계획 요청은 읽기 전용입니다. 새 페이지나 화면은 `scripts/design-lock.mjs`로 룩(하우스 스타일, 레이아웃 계열, 시그니처 순간, 풍부 또는 차분한 밀도)을 먼저 고정합니다. 생성된 `design.lock.json`, `ui/tokens.css`, `ui/components.css`와 글꼴은 프로젝트에 놓이며, 글꼴은 sha256 확인 후 `lit-diagram-drawer`와 `lit-typographic-motion` 스킬에서 복사합니다. 락이 페이지 옆에 있으면 `scripts/probe.mjs`가 DS-001~DS-008과 LOOK-1~LOOK-6 질문을 더합니다. `--viewports`는 일부 뷰만 돌리며 승인하지 않습니다.
-
-네이티브 스킬 도구에서 `readme-studio`를 선택하면 실제 저장소 정보로 README와 표지를 제작합니다. 로컬 글꼴의 윤곽선, Remotion/HyperFrames 예제, 정적·동적 출력 절차가 함께 설치됩니다. 이미지 생성 도구가 없으면 `IMAGE_GENERATION_UNAVAILABLE`을 알리고 제공된 배경으로 이어갑니다. 공개 GitHub/npm 렌더링 검증은 별도 단계입니다. 전용 슬래시 명령은 없습니다.
-
-네이티브 스킬 `lit-typographic-motion`은 무대 영화에 이야기(`story`: 보는 사람의 기대, 반전, 반전이 떨어지는 샷, 결말)와 영화의 절반 이상에서 움직이는 주인공을 요구합니다. 요청에 링크가 있으면 제품이 필수입니다. `render.mjs assets --out <dir> --url <https 링크> [--cover]`가 페이지와 README를 신뢰할 수 없는 데이터로 읽어, 형식을 확인하고 크기를 제한한 이미지만(SVG는 정리, 배지는 제외) `stage/assets/` 또는 `cover/assets/`에 두며, 그 이미지를 한 번도 보여 주지 않는 영화는 `ASSET-USED` 게이트 행에서 실패합니다. 제품에 닿을 수 없으면 화면을 지어내지 않고 종료 코드 22로 사용자에게 묻습니다. `depth: "3d"`는 고정된 three.js r170(`/lit/three/`로 제공, 해시는 `THIRD_PARTY_NOTICES`)을 GPU 단계에서 쓰고, GPU가 시작되지 않으면 표시를 달아 SwiftShader로 내려갑니다. 사용자 그림이 없는 README 표지는 `hero-3d` 레시피를, `painted-light`는 사용자 그림이 있을 때만 씁니다. 영화는 기본적으로 풍부합니다(`register: rich`). 무대 영화는 화면을 채워야 하고(열두 구역 중 둘 넘게 비는 샷이 둘 이상이면 `RICH-FILL` 실패), 실제 이름의 촘촘한 라벨과 움직이는 카메라를 갖추며, 영화마다 겹겹의 점수(`sound.mode: score`; 킥·클랩·하이햇·퍼커션·베이스·코드·리드·fx·액센트 스템, 사이드체인, -16 LUFS, 이야기 박자에 떨어지는 드롭, 스템은 `sound/stems/`에 보관)를 받습니다. 차분하거나 미니멀한 영화를 요청할 때만 `minimal`이 됩니다. `render3d: "blender"`는 선택형 Cycles 플레이트 단계를 더하며(`render.mjs blender --out <dir> [--final] [--detach]`; `scaffold`가 `BLENDER:` 줄을 알리고, Blender가 없으면 표시를 달아 three.js로 내려갑니다), 보는 확인은 무대 경로에서 질문 11개(타입 경로와 표지는 9개)이며 영화가 자기 방식에 충분히 풍부한지, 반전이 닿는지를 묻습니다. `gate.mjs --done`은 폴더 위쪽에서 실행을 찾으므로 영화 폴더 안에서 `--out .`으로도 동작합니다. 트리트먼트 전에는 경로·스타일·형식·방식을 `question` 호출 한 번으로 묻고 규칙의 추천을 먼저 둡니다.
-
-개념·편집·기술 다이어그램은 `lit-diagram-drawer` 네이티브 스킬 선택기에서 제작하고 검증합니다. 제품 인터페이스는 `frontend-ui-ux`, 측정된 과학 데이터 그림은 `lit-scientific-visualization`을 사용합니다.
-
-실제 장비의 P&ID, PFD, 실험 장치 그림, 아이소메트릭 단면도는 `lit-schematic` 네이티브 스킬 선택기에서 제작하고 QA 스크립트와 렌더 확인으로 검증합니다. 범위가 분명한 도면 요청에 `lit`을 붙이면 그리기 전에 이 스킬을 불러오도록 안내합니다. 전용 슬래시 명령은 없습니다.
-
-`lit-docx`는 워드 보고서, `lit-pptx`는 파워포인트 발표자료를 만듭니다. `lit`과 함께 쓰면 요청한 형식의 네이티브 스킬을 선택하고, 마크다운 원본·품질 검사·렌더 확인을 유지합니다. 두 스킬은 만들기 전에 디자인 방향을 정하고 다른 후보 두 개와 함께 알려 줍니다. 발표자료는 Ledger, Signal, Atlas, Chalk, Paper, Gazette, Studio, Night, Computational Brutalism, Neo-Brutalism, Bauhaus, Riso, Newsroom 열세 가지, 보고서는 Report, Brief, Manual, Proposal, Memo, Journal 여섯 가지 방향 중에서 고릅니다.
+`lit-pptx`, `lit-docx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`, `frontend-ui-ux`, `visual-qa`, `lit-typographic-motion`, `readme-studio`는 별도 모음인 wjgoarxiv-skills로 옮겼습니다(계열은 `decks`, `documents`, `figures`, `design`, `video-covers`). 각 id는 같은 이름의 네이티브 스킬로 남고, 설치되는 폴더에는 `SKILL.md` 하나만 있습니다. 경로는 그대로 동작합니다. 네이티브 스킬 선택기, 범위가 분명한 `lit` 발표자료·보고서·다이어그램·P&ID·영상 요청, `frontend-ui-ux`와 `visual-qa` 채팅 경로, 화면 파일 수정 뒤의 안내, `/lit-scientific-visualization`이 모두 이 안내로 이어집니다. 안내는 모음 안의 경로를 알려 주고, 사용자가 받아 둔 사본의 `variants/litopencode/<id>/`로 안내 폴더를 바꾸는 설치 줄 두 개를 줍니다. 설치기는 이 복사본을 사용자 소유로 보고 보존하며, doctor는 `preserved`로 표시합니다. 옮긴 스킬의 런타임은 LitOpenCode에 없습니다. `motion-runtime` 명령, Office·그림 의존성 점검, 설치 때의 미리 받기가 모두 빠졌습니다.

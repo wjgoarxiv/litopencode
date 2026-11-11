@@ -31,9 +31,7 @@ function run(sandbox, args) {
       XDG_CACHE_HOME: sandbox.cache,
       LITOPENCODE_NO_AUTO_UPDATE: "1",
       NO_UPDATE_NOTIFIER: "1",
-      NO_COLOR: "1",
-      // A motion install that slipped past validation fails fast here instead of downloading.
-      LITOPENCODE_MOTION_MIRROR: "http://127.0.0.1:9"
+      NO_COLOR: "1"
     }
   });
 }
@@ -113,43 +111,5 @@ test("every loop writer honours --dry-run against an existing goal, and status -
     const wouldChange = run(sandbox, ["checkpoint", "--summary", "halfway", "--dry-run", "--json"]);
     const payload = JSON.parse(wouldChange.stdout);
     assert.ok(payload.wouldWrite.some((entry) => entry.path.endsWith("ledger.jsonl") && entry.change === "update"), wouldChange.stdout);
-  });
-});
-
-test("motion-runtime refuses unknown flags and a dry run of status before doing anything", () => {
-  withSandbox((sandbox) => {
-    const before = snapshot(sandbox.root);
-    for (const args of [
-      ["motion-runtime", "install", "--bogus"],
-      ["motion-runtime", "install", "-n"],
-      ["motion-runtime", "install", "--dry-run=yes"],
-      ["motion-runtime", "install", "--json"],
-      ["motion-runtime", "status", "--dry-run"],
-      ["motion-runtime", "status", "--audio"],
-      ["motion-runtime", "--dry-run", "install"],
-      ["motion-runtime", "reinstall"]
-    ]) {
-      const result = run(sandbox, args);
-      assert.equal(result.status, 2, `${args.join(" ")}: ${result.stdout}${result.stderr}`);
-      assert.match(result.stderr, /motion-runtime/u, args.join(" "));
-      assert.equal(snapshot(sandbox.root), before, `${args.join(" ")} touched nothing`);
-      assert.equal(fs.existsSync(sandbox.cache), false, `${args.join(" ")} created no cache`);
-    }
-  });
-});
-
-test("motion-runtime install --dry-run and --dry-run=true describe the install and download nothing", () => {
-  withSandbox((sandbox) => {
-    const before = snapshot(sandbox.root);
-    for (const flags of [["--dry-run"], ["--dry-run=true"], ["--audio", "--dry-run"], ["--word-timing", "--dry-run=true"]]) {
-      const result = run(sandbox, ["motion-runtime", "install", ...flags]);
-      assert.equal(result.status, 0, `${flags.join(" ")}: ${result.stdout}${result.stderr}`);
-      assert.match(result.stdout, /DRY RUN: nothing was downloaded or written/u, flags.join(" "));
-      assert.ok(result.stdout.includes(path.join(sandbox.cache, "litopencode", "motion-runtime")), result.stdout);
-      if (flags.includes("--audio")) assert.match(result.stdout, /audio/u);
-      if (flags.includes("--word-timing")) assert.match(result.stdout, /Tier 3 word timing/u);
-      assert.equal(snapshot(sandbox.root), before, `${flags.join(" ")} wrote nothing`);
-      assert.equal(fs.existsSync(sandbox.cache), false, `${flags.join(" ")} created no cache`);
-    }
   });
 });

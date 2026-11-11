@@ -3,8 +3,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { verifyCanonicalFrontendCorpus } from "../skills/frontend-ui-ux/scripts/verify-canonical-corpus.mjs";
-import { revalidateStableRegularFile } from "../skills/frontend-ui-ux/scripts/stable-file-read.mjs";
 
 const LEGACY_TOKEN_PARTS = [
   ["om", "o"],
@@ -26,7 +24,6 @@ const TOKEN_PATTERN = new RegExp(
 const SKIPPED_DIRS = new Set([".git", ".litcodex", ".litopencode", "node_modules", "# REFERENCE"]);
 const SKIPPED_FILES = new Set(["tools/scan-legacy-tokens.mjs", "tools/legacy-token-allowlist.json"]);
 const SKIPPED_EXTENSIONS = [".tgz", ".zip", ".tar", ".gz", ".bz2", ".xz", ".7z"];
-const CANONICAL_REFERENCES_PATH = "skills/frontend-ui-ux/references";
 
 class AllowlistError extends Error {
   constructor(message) {
@@ -39,13 +36,6 @@ class ExternalTermError extends Error {
   constructor(message) {
     super(message);
     this.name = "ExternalTermError";
-  }
-}
-
-class CanonicalCorpusError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "CanonicalCorpusError";
   }
 }
 
@@ -212,27 +202,6 @@ async function collectFiles(root, extraSkippedFiles, skippedDirectories = new Se
   return files;
 }
 
-async function canonicalCapture(root) {
-  const referencesRoot = path.join(root, ...CANONICAL_REFERENCES_PATH.split("/"));
-  const manifestPath = path.join(referencesRoot, "_canonical-corpus", "manifest.json");
-  try {
-    await fs.lstat(manifestPath);
-  } catch (error) {
-    if (error instanceof Error && error.code === "ENOENT") return new Map();
-    throw new CanonicalCorpusError(`cannot inspect canonical corpus manifest: ${error instanceof Error ? error.message : String(error)}`);
-  }
-  try {
-    const report = await verifyCanonicalFrontendCorpus(referencesRoot);
-    return new Map(report.protectedPaths.map((relativePath) => {
-      const record = report.capturedFiles.get(relativePath);
-      if (!Buffer.isBuffer(record?.bytes) || !record.snapshot) throw new Error(`verified capture missing for ${relativePath}`);
-      return [`${CANONICAL_REFERENCES_PATH}/${relativePath}`, record];
-    }));
-  } catch (error) {
-    throw new CanonicalCorpusError(error instanceof Error ? error.message : String(error));
-  }
-}
-
 function scanText(relativePath, text) {
   if (text.includes("\u0000")) {
     return [];
@@ -285,35 +254,8 @@ function scanExternalText(relativePath, text, terms) {
   return matches;
 }
 
-function scanCaptured(capturedFiles, scanner) {
-  let canonicalBytesScanned = 0;
-  let canonicalProtectedMatches = 0;
-  for (const [relativePath, record] of capturedFiles) {
-    canonicalBytesScanned += record.bytes.byteLength;
-    canonicalProtectedMatches += scanner(relativePath, record.bytes.toString("utf8")).length;
-  }
-  return {
-    canonicalFilesScanned: capturedFiles.size,
-    canonicalBytesScanned,
-    canonicalProtectedMatches
-  };
-}
-
-async function revalidateCapturedFiles(capturedFiles) {
-  for (const [relativePath, record] of capturedFiles) {
-    try {
-      await revalidateStableRegularFile(record.snapshot);
-    } catch (error) {
-      throw new CanonicalCorpusError(
-        `canonical snapshot revalidation failed for ${relativePath}: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-}
-
-async function scan(root, allowlist, extraSkippedFiles, capturedFiles) {
-  const skippedDirectories = capturedFiles.size > 0 ? new Set([CANONICAL_REFERENCES_PATH]) : new Set();
-  const files = await collectFiles(root, extraSkippedFiles, skippedDirectories);
+async function scan(root, allowlist, extraSkippedFiles) {
+  const files = await collectFiles(root, extraSkippedFiles);
   const matches = [];
   for (const file of files) {
     const text = await fs.readFile(file.fullPath, "utf8");
@@ -323,14 +265,12 @@ async function scan(root, allowlist, extraSkippedFiles, capturedFiles) {
   const unallowlisted = matches.filter((match) => !isAllowed(match, allowlist));
   return {
     allowedCount: matches.length - unallowlisted.length,
-    unallowlisted,
-    ...scanCaptured(capturedFiles, scanText)
+    unallowlisted
   };
 }
 
-async function scanExternal(root, terms, extraSkippedFiles, capturedFiles) {
-  const skippedDirectories = capturedFiles.size > 0 ? new Set([CANONICAL_REFERENCES_PATH]) : new Set();
-  const files = await collectFiles(root, extraSkippedFiles, skippedDirectories);
+async function scanExternal(root, terms, extraSkippedFiles) {
+  const files = await collectFiles(root, extraSkippedFiles);
   const unallowlisted = [];
   for (const file of files) {
     const text = await fs.readFile(file.fullPath, "utf8");
@@ -338,29 +278,25 @@ async function scanExternal(root, terms, extraSkippedFiles, capturedFiles) {
   }
   return {
     ok: unallowlisted.length === 0,
-    unallowlisted,
-    ...scanCaptured(capturedFiles, (relativePath, text) => scanExternalText(relativePath, text, terms))
+    unallowlisted
   };
 }
 
-export async function scanLegacyTokens(options, hooks = {}) {
+export async function scanLegacyTokens(options) {
   const root = path.resolve(options.root);
-  const capturedFiles = await canonicalCapture(root);
   let mode;
   let result;
   if (options.externalTermsPath !== undefined) {
     const terms = await readExternalTerms(options.externalTermsPath);
     const termsRelativePath = normalizeRelativePath(path.relative(root, options.externalTermsPath));
-    result = await scanExternal(root, terms, new Set([termsRelativePath]), capturedFiles);
+    result = await scanExternal(root, terms, new Set([termsRelativePath]));
     mode = "external";
   } else {
     const allowlist = await readAllowlist(options.allowlistPath);
     const allowlistRelativePath = normalizeRelativePath(path.relative(root, options.allowlistPath));
-    result = await scan(root, allowlist, new Set([allowlistRelativePath]), capturedFiles);
+    result = await scan(root, allowlist, new Set([allowlistRelativePath]));
     mode = "legacy";
   }
-  if (typeof hooks.afterCanonicalScan === "function") await hooks.afterCanonicalScan();
-  await revalidateCapturedFiles(capturedFiles);
   return { mode, result };
 }
 
@@ -415,9 +351,7 @@ async function main() {
     console.log(`legacy-token scan passed: allowed ${result.allowedCount} ${suffix}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const prefix = error instanceof CanonicalCorpusError
-      ? "canonical corpus scanner error"
-      : error instanceof ExternalTermError
+    const prefix = error instanceof ExternalTermError
         ? "external-term scanner error"
         : "legacy-token allowlist error";
     console.error(`${prefix}: ${message}`);

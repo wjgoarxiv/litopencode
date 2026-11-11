@@ -5,9 +5,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
 import { laneBudgets } from "../src/rules/engine.ts";
-import { validateDesignContract } from "../skills/frontend-ui-ux/scripts/design-contract.mjs";
-import { validBetaDesignContract } from "../test-support/uiux-visual-fixtures.mjs";
-import { registerVisualQaEvidenceContract } from "../test-support/visualqa-evidence-contract.mjs";
 
 const requiredDocs = [
   "README.md",
@@ -828,131 +825,6 @@ test("static skill corpus captures deepened guardrail contracts", async () => {
   ]);
 });
 
-test("visualqa.current-native-boundary.characterization visual QA is native-installed, browserless, and cleanup-safe", async () => {
-  const visualQa = [
-    await readText("skills/visual-qa/SKILL.md"),
-    await readText("skills/visual-qa/references/complete-contract.md")
-  ].join("\n");
-
-  assertContainsAll(visualQa, [
-    "native-installed",
-    "not a browser executor",
-    "capability-first",
-    "existing project Playwright",
-    "user-configured backend",
-    "does not make a browser callable",
-    "Do not add MCP routes",
-    "Do not install Playwright",
-    "BLOCKED receipt",
-    "session-scoped reuse",
-    "verified PID, port, and command ownership",
-    "cross-repo daemon",
-    "cookie, profile, or session",
-    "authenticated profile persistence",
-    "timeout",
-    "cancel",
-    "hung command",
-    "inert data",
-    "dirty worktree",
-    "advisory unless mechanically hardened",
-    "runtime skill catalog"
-  ]);
-  assertContainsAll(visualQa, [
-    "offline read-only validators",
-    "no command, tool, hook, agent, MCP route",
-    "authentication flow",
-    "write authority"
-  ]);
-});
-
-test("UI/UX lazy contracts use beta evidence rules without stale fixed resource counts", async () => {
-  const frontend = await readText("skills/frontend-ui-ux/references/complete-contract.md");
-  const direction = await readText("skills/frontend-ui-ux/references/product-direction.md");
-  const visual = await readText("skills/visual-qa/references/complete-contract.md");
-  const lazyDocs = `${frontend}\n${direction}\n${visual}`;
-  assert.match(frontend, /canonical `litfamily\.design-contract\/v1beta2`/u);
-  assert.match(visual, /smoke.*does not require|smoke.*without.*review/is);
-  assert.match(visual, /host-proven|host.*provenance/i);
-  assert.match(visual, /every helper import resolves inside.*visual-qa/is);
-  assert.doesNotMatch(lazyDocs, /managed-skill-manifest OK: \d+ canonical asset/u);
-  assert.doesNotMatch(lazyDocs, /validates (?:exactly )?as `?(?:litfamily\.design-contract\/)?v1alpha1/u);
-  assert.doesNotMatch(lazyDocs, /output is one canonical `litfamily\.design-contract\/v1alpha1`/u);
-  assert.doesNotMatch(visual, /Exactly two independent receipts/u);
-});
-
-test("frontend motion guidance is routed and enrolled as a managed reference", async () => {
-  const skill = await readText("skills/frontend-ui-ux/SKILL.md");
-  const referenceIndex = await readText("skills/frontend-ui-ux/references/complete-contract.md");
-  const motion = await readText("skills/frontend-ui-ux/references/motion-guide.md");
-  const manifest = JSON.parse(await readText("skills/managed-skill-manifest.json"));
-
-  assert.match(skill, /references\/motion-guide\.md/u);
-  assert.match(skill, /Phase 3 capture examples.*references\/complete-contract\.md/u);
-  assert.match(referenceIndex, /\[motion-guide\.md\]/u);
-  assert.match(referenceIndex, /skills\/frontend-ui-ux\/examples\/motion\/<case>\//u);
-  assert.match(referenceIndex, /before\.png.*after\.png.*case\.json/u);
-  assert.match(referenceIndex, /prompt, model and host, viewport, and screenshot provenance/u);
-  assert.match(motion, /prefers-reduced-motion/u);
-  assert.match(motion, /root margin/u);
-  assert.match(motion, /60 ms/u);
-  assert.ok(
-    manifest.skills["frontend-ui-ux"].canonicalFiles.some((asset) => asset.path === "references/motion-guide.md"),
-    "managed manifest must hash and install the motion guide"
-  );
-});
-
-test("frontend UI/UX keeps v1beta1 as an explicit compatibility format", async () => {
-  const frontend = await readText("skills/frontend-ui-ux/references/complete-contract.md");
-  assert.match(
-    frontend,
-    /Compatibility:\s+valid `litfamily\.design-contract\/v1beta1` documents remain accepted and evidence-eligible\./u
-  );
-});
-
-test("a valid v1beta1 Design Contract remains evidence-eligible", () => {
-  const result = validateDesignContract(validBetaDesignContract());
-  assert.equal(result.valid, true, result.issues.join("; "));
-  assert.equal(result.schema, "litfamily.design-contract/v1beta1");
-  assert.equal(result.evidence_eligible, true);
-});
-
-test("frontend UI/UX evidence review keeps optional narrative advice separate from rendered verdicts", async () => {
-  const evidenceReview = await readText("skills/frontend-ui-ux/references/evidence-review.md");
-
-  assert.match(
-    evidenceReview,
-    /Optional narrative check/u,
-    "G13_GUIDANCE_PRESENT: evidence-review.md should define the optional narrative check"
-  );
-  assert.match(
-    evidenceReview,
-    /implied narrative or progression/u,
-    "G13_OPTIONAL_ADVISORY_QUESTIONS: evidence-review.md should name implied narrative or progression"
-  );
-  assert.match(
-    evidenceReview,
-    /semantic feel/u,
-    "G13_OPTIONAL_ADVISORY_QUESTIONS: evidence-review.md should name semantic feel"
-  );
-  assert.match(
-    evidenceReview,
-    /not schema fields/u,
-    "G13_OPTIONAL_ADVISORY_QUESTIONS: evidence-review.md should keep advisory questions out of schema fields"
-  );
-  assert.match(
-    evidenceReview,
-    /does not assign a rendered verdict/u,
-    "G13_PRESERVES_EXISTING_CONTRACT: evidence review must not assign a rendered verdict"
-  );
-  assert.match(
-    evidenceReview,
-    /visual-qa[\s\S]*owns rendered evidence and verdicts/u,
-    "G13_PRESERVES_EXISTING_CONTRACT: visual-qa must own rendered evidence and verdicts"
-  );
-});
-
-registerVisualQaEvidenceContract({ readOptionalText });
-
 test("docs describe lit-plan to start-work to review-work without borrowed execution-mode names", async () => {
   const readme = await readText("README.md");
   const startWork = await readText("skills/start-work/SKILL.md");
@@ -1036,28 +908,15 @@ const outputChannelByGenre = new Map([
   ["working_note", ["inline", "reply"]],
   ["no_artifact", ["reply"]]
 ]);
-const lazyOutputChannelSkills = new Set(["frontend-ui-ux", "visual-qa"]);
 
 test("every top-level skill declares where its limitations are written", async () => {
   const skillDocs = await listTopLevelSkillDocs();
   assert.ok(skillDocs.length > 0, "expected a skill corpus to enumerate");
 
-  for (const { skillId, skillPath, text } of skillDocs) {
-    // A skill whose dense contract detail is lazily routed declares there instead,
-    // because the activation prompt embeds the whole SKILL.md under a byte budget.
-    const lazyContractPath = path.join("skills", skillId, "references", "complete-contract.md");
-    let declaring = skillPath;
-    let body = text;
-    if (!text.includes("#contract.output_channels")) {
-      assert.ok(
-        lazyOutputChannelSkills.has(skillId),
-        `${skillPath} must declare #contract.output_channels directly`
-      );
-      declaring = lazyContractPath;
-      body = await readText(lazyContractPath).catch(() => {
-        assert.fail(`${skillPath} declares no #contract.output_channels and has no ${lazyContractPath}`);
-      });
-    }
+  for (const { skillPath, text } of skillDocs) {
+    assert.ok(text.includes("#contract.output_channels"), `${skillPath} must declare #contract.output_channels directly`);
+    const declaring = skillPath;
+    const body = text;
 
     const genre = body.match(/^artifact_genre:\s*(\S+)\s*$/mu)?.[1];
     assert.ok(

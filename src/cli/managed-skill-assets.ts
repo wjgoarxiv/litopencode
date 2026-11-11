@@ -13,15 +13,6 @@ export type ManagedSkillId =
   | "lit-adhd"
   | "lit-comprehend"
   | "lit-handoff"
-  | "lit-scientific-visualization"
-  | "lit-diagram-drawer"
-  | "lit-schematic"
-  | "lit-pptx"
-  | "lit-typographic-motion"
-  | "lit-docx"
-  | "readme-studio"
-  | "frontend-ui-ux"
-  | "visual-qa"
   | "lit-plan"
   | "browser-drive"
   | "lit-humanizer"
@@ -64,17 +55,8 @@ export function managedSkillDefinition(id: LitOpenCodeRuntimeSkillId): ManagedSk
     id !== "lit-adhd" &&
     id !== "lit-comprehend" &&
     id !== "lit-handoff" &&
-    id !== "lit-scientific-visualization" &&
-    id !== "lit-diagram-drawer" &&
-    id !== "lit-schematic" &&
-    id !== "lit-pptx" &&
-    id !== "lit-typographic-motion" &&
-    id !== "lit-docx" &&
     id !== "browser-drive" &&
     id !== "lit-humanizer" &&
-    id !== "readme-studio" &&
-    id !== "frontend-ui-ux" &&
-    id !== "visual-qa" &&
     id !== "lit-plan" &&
     id !== "autoresearch" &&
     id !== "autoconference" &&
@@ -214,23 +196,23 @@ const skillDiscoveryDescriptions = Object.freeze({
   "lit-handoff":
     "Trigger only for explicit `/lit-handoff`, an exact bare `handoff` message, or native selection by the exact `lit-handoff` id.",
   "lit-scientific-visualization":
-    "Trigger only for explicit `/lit-scientific-visualization`, an exact bare `lit-scientific-visualization` message, or native selection by the exact `lit-scientific-visualization` id.",
+    "Moved to wjgoarxiv-skills (figures). Trigger only for explicit `/lit-scientific-visualization`, an exact bare `lit-scientific-visualization` message, or native selection by the exact id; this pointer gives the OpenCode install line and plots nothing.",
   "lit-diagram-drawer":
-    "Select this skill from OpenCode's native skill picker when the user needs an architecture map, workflow, schema, decision path, schedule, or conceptual chart. Route product pages and interface layouts to frontend-ui-ux; route measured scientific data and statistical figures to lit-scientific-visualization. Do not claim a slash command or bare-chat route.",
+    "Moved to wjgoarxiv-skills (figures). Select when the user asks for an architecture map, workflow, schema, timeline or conceptual chart; this pointer says where the diagram skill went, gives its OpenCode install line, and draws nothing.",
   "lit-schematic":
-    "Select from OpenCode's native skill picker when the reader must see real hardware: a P&ID, PFD or equipment layout, a journal apparatus figure, or an isometric cutaway of a vessel or exchanger; a bounded lit drawing request directs the model to load it. Route abstract boxes-and-arrows to lit-diagram-drawer and measured-data plots to lit-scientific-visualization. Do not claim a slash command or bare-id chat route.",
+    "Moved to wjgoarxiv-skills (figures). Select when the user asks to draw a P&ID, PFD, apparatus figure or isometric cutaway of real equipment; this pointer gives the OpenCode install line and draws nothing.",
   "lit-pptx":
-    "Select for a PowerPoint deck or presentation, including a bounded lit request for slides. Keep editable Markdown and PPTX together, run the QA gate, and inspect the render.",
+    "Moved to wjgoarxiv-skills (decks). Select for a PowerPoint deck or slides, including a bounded lit slide request; this pointer gives the OpenCode install line and builds no deck.",
   "lit-typographic-motion":
-    "Select for a new film or video. Write the treatment first, then render on the stage path (a captured page) or the type path (words alone), gate it and look at the frames; a README cover loop takes cover mode. Editing existing footage or embedding a video in a page is outside this route.",
+    "Moved to wjgoarxiv-skills (video-covers). Select for a new film, kinetic type piece or README cover loop; this pointer gives the OpenCode install line and renders nothing.",
   "lit-docx":
-    "Select for a Word report, proposal, or document, including a bounded lit report request. Keep editable Markdown and DOCX together; select publisher profiles when specified and inspect rendered pages.",
+    "Moved to wjgoarxiv-skills (documents). Select for a Word report, proposal or document, including a bounded lit report request; this pointer gives the OpenCode install line and writes no document.",
   "readme-studio":
-    "Select by native skill name for factual README writing and local cover composition. Inspect actual session image capability; never infer generation support or authorize publication from selection.",
+    "Moved to wjgoarxiv-skills (video-covers). Select by native skill name for README Studio covers and outlined title type; this pointer gives the OpenCode install line.",
   "frontend-ui-ux":
-    "Trigger the moment interface work is described, not after it starts — \"design a settings page\", \"redesign the dashboard\", \"build a login screen\", or any making verb aimed at a UI, screen, layout, component, or stylesheet — so compact direction and existing tokens shape the authorized build. Evolve the contract with implementation and inspect renders; review and plan intent remains read-only. Also on the exact `frontend-ui-ux` id. The SKILL.md reference router names which shipped reference document answers which question. A new page or screen locks one house style, layout family and signature moment first (references/house-styles.md); the look is rich unless the request asks for minimal or calm.",
+    "Moved to wjgoarxiv-skills (design). Trigger when interface work is described (design, build or restyle a page, screen, layout or component) or on the exact `frontend-ui-ux` id; this pointer gives the OpenCode install line and builds nothing.",
   "visual-qa":
-    "Trigger when a rendered surface needs to be checked rather than described — an explicit `visual-qa` request, or verifying that an interface change actually looks and behaves right. Selection does not make a browser callable: the shipped capture playbook names the exact blocked code per unavailable channel, and a blocked check reported honestly outranks an unproven pass.",
+    "Moved to wjgoarxiv-skills (design). Trigger on an explicit `visual-qa` request or a check of how a rendered surface looks; this pointer gives the OpenCode install line and gives no visual verdict.",
   autoresearch:
     "Trigger when a measurable objective needs repeated hypothesis, experiment, evaluation, and keep/revert decisions, or when its debug, fix, learn, plan, predict, reason, scenario, security, or readiness modes fit the request.",
   autoconference:

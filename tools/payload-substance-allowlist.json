@@ -12,6 +12,18 @@
     "lit-korean": {
       "date": "2026-09-25",
       "reason": "Other host ports retain this legacy prose-skill id. LitOpenCode replaced its former single-file skill with the independently packaged lit-humanizer contract, detector, managed assets, and native write guard; the older cross-product row remains for products that still ship the prior id."
+    },
+    "lit-scientific-visualization": {
+      "date": "2026-11-11",
+      "reason": "LitOpenCode's copy is a same-name pointer: the publication-figure skill's references, scripts and assets moved to the figures family of wjgoarxiv-skills, so its packed closure is the one SKILL.md while siblings may still ship the full payload until their own stubs land."
+    },
+    "frontend-ui-ux": {
+      "date": "2026-11-11",
+      "reason": "LitOpenCode's copy is a same-name pointer: the interface skill's references, scripts and assets moved to the design family of wjgoarxiv-skills, so its packed closure is the one SKILL.md while siblings may still ship the full payload until their own stubs land."
+    },
+    "visual-qa": {
+      "date": "2026-11-11",
+      "reason": "LitOpenCode's copy is a same-name pointer: the rendered-surface check skill's references, scripts and assets moved to the design family of wjgoarxiv-skills, so its packed closure is the one SKILL.md while siblings may still ship the full payload until their own stubs land."
     }
   },
   "skills": {
@@ -40,6 +52,15 @@
     "start-work": "Approved-plan loading, authority and lifecycle gates, native command routes, evidence, and cleanup are fully specified.",
     "structural-search": "Capability detection, lexical fallback, host-tool limits, structural questions, and evidence are complete and honest.",
     "tool-guards": "The document names the packaged guard module and hook contract, which supply the implementation for its bounded behavior.",
-    "workflow-loop": "The runtime-class contract and cycle, authority, evidence, and stop rules map to the packaged workflow runtime."
+    "workflow-loop": "The runtime-class contract and cycle, authority, evidence, and stop rules map to the packaged workflow runtime.",
+    "lit-pptx": "A same-name pointer: the deck skill moved to the decks family of wjgoarxiv-skills, so this SKILL.md only says where it went and gives the OpenCode install line, and claims no packed corpus.",
+    "lit-docx": "A same-name pointer: the Word document skill moved to the documents family of wjgoarxiv-skills, so this SKILL.md only says where it went and gives the OpenCode install line, and claims no packed corpus.",
+    "lit-diagram-drawer": "A same-name pointer: the diagram skill moved to the figures family of wjgoarxiv-skills, so this SKILL.md only says where it went and gives the OpenCode install line, and claims no packed corpus.",
+    "lit-schematic": "A same-name pointer: the equipment schematic skill moved to the figures family of wjgoarxiv-skills, so this SKILL.md only says where it went and gives the OpenCode install line, and claims no packed corpus.",
+    "lit-scientific-visualization": "A same-name pointer: the publication-figure skill moved to the figures family of wjgoarxiv-skills, so this SKILL.md only says where it went and gives the OpenCode install line, and claims no packed corpus.",
+    "frontend-ui-ux": "A same-name pointer: the interface skill moved to the design family of wjgoarxiv-skills, so this SKILL.md only says where it went and gives the OpenCode install line, and claims no packed corpus.",
+    "visual-qa": "A same-name pointer: the rendered-surface check skill moved to the design family of wjgoarxiv-skills, so this SKILL.md only says where it went and gives the OpenCode install line, and claims no packed corpus.",
+    "lit-typographic-motion": "A same-name pointer: the film skill moved to the video-covers family of wjgoarxiv-skills, so this SKILL.md only says where it went and gives the OpenCode install line, and claims no packed corpus.",
+    "readme-studio": "A same-name pointer: the README skill moved to the video-covers family of wjgoarxiv-skills, so this SKILL.md only says where it went and gives the OpenCode install line, and claims no packed corpus."
   }
 }

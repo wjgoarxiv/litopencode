@@ -1,30 +1,25 @@
 #!/usr/bin/env node
 // Replacement real-surface QA: the negative gate matrix.
 //
-// Every row is exercised against the runtime this package actually ships. The
-// Design Contract and Visual QA rows run the installed `uiux.mjs` and
-// `visual-qa.mjs` out of an isolated temporary OpenCode root, the integrity rows
-// run the shipped `litopencode doctor`, and the payload row runs the shipped
-// pack guard. Nothing is reimplemented here.
+// Every row is exercised against the runtime this package actually ships: the
+// integrity rows run the shipped `litopencode doctor` against an isolated
+// temporary OpenCode root, and the payload row runs the shipped pack guard.
+// Nothing is reimplemented here. The Design Contract and Visual QA rows left with
+// frontend-ui-ux and visual-qa, which moved to wjgoarxiv-skills; their validators
+// no longer ship here, so there is nothing of LitOpenCode's own for them to test.
 //
-// Two rows diverge from the shorthand in the standing matrix. That shorthand
-// says FAIL where this runtime, by its own documented vocabulary, answers with a
-// BLOCKED_* code because a blocked capability outranks a failed check. Those
-// rows carry both tokens: `expected=` is the outcome the shipped contract
-// requires and `standing-matrix=` is the shorthand it diverges from. They are
-// never silently rewritten.
+// A row whose observed answer is a blocked capability rather than a failed check
+// may carry a divergence note: `expected=` is the outcome the shipped contract
+// requires and `standing-matrix=` is the shorthand it diverges from.
 import { spawnSync } from "node:child_process";
-import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { boundedCjkBox, buildEvidenceBundle, buildValidSmokeEvidenceBundle, rgbaPng, validDesignContract, validReviewReceipt } from "./qa-real-surface-fixtures.mjs";
+import { fileURLToPath } from "node:url";
 import {
   CleanupLedger,
   assertBuiltRuntime,
   formatRow,
   installIntoIsolatedRoot,
-  isolatedEnv,
   repoRoot,
   runNode,
   tamperRestoreProbe
@@ -39,20 +34,6 @@ const divergenceReasons = Object.freeze({
 // The standing matrix in row order. Emitting in this order and refusing to run
 // with a row missing is what keeps a row from being silently dropped.
 const standingMatrixOrder = Object.freeze([
-  "valid-design-contract",
-  "malformed-duplicate-key-contract",
-  "valid-evidence-bundle",
-  "missing-capture",
-  "stale-evidence",
-  "future-dated-evidence",
-  "auth-unavailable",
-  "renderer-ownership-unverified",
-  "capture-bytes-changed-after-manifest",
-  "incomplete-cleanup",
-  "same-context-self-review",
-  "reviewer-unavailable",
-  "unsafe-test-account",
-  "bounded-png-tui-cjk",
   "tampered-installed-resource",
   "restored-installed-resource",
   "forbidden-package-paths"
@@ -72,294 +53,6 @@ function parseArgs(argv) {
     throw new Error(`unknown option: ${flag}`);
   }
   return options;
-}
-
-function jsonCli(scriptPath, operation, payload, env) {
-  const result = runNode(scriptPath, [operation], { input: JSON.stringify(payload), env });
-  if (result.status !== 0) {
-    return { exitCode: result.status, error: result.stderr.trim() };
-  }
-  return { exitCode: 0, value: JSON.parse(result.stdout) };
-}
-
-// Reduces a validator answer to a single outcome token: its first code when it
-// reports one, otherwise its verdict.
-function outcome(value) {
-  const codes = value.codes ?? (value.code === undefined ? [] : [value.code]);
-  return codes.length === 0 ? value.verdict ?? "UNKNOWN" : codes[0];
-}
-
-function cliOutcome(result) {
-  if (result.error !== undefined) return `CLI_ERROR(${result.error})`;
-  return outcome(result.value);
-}
-
-async function designContractRows(record, uiuxScript, env) {
-  const contract = validDesignContract();
-  const valid = runNode(uiuxScript, ["validate"], { input: JSON.stringify(contract), env });
-  record({
-    id: "valid-design-contract",
-    matrix: "PASS",
-    expected: "PASS",
-    observed: valid.status === 0 && JSON.parse(valid.stdout).valid === true ? "PASS" : "FAIL",
-    detail: `exit=${valid.status}`
-  });
-
-  const duplicateKeyText = JSON.stringify(contract).replace(
-    '"contract_id":',
-    '"contract_id":"contract:shadow","contract_id":'
-  );
-  const duplicate = runNode(uiuxScript, ["validate"], { input: duplicateKeyText, env });
-  const ruleBreaking = { ...contract, schema_id: "litfamily.design-contract/v0" };
-  const malformed = runNode(uiuxScript, ["validate"], { input: JSON.stringify(ruleBreaking), env });
-  const duplicateRejected = duplicate.status === 2 && /duplicate key/iu.test(duplicate.stderr);
-  const malformedRejected = malformed.status === 1 && JSON.parse(malformed.stdout).valid === false;
-  record({
-    id: "malformed-duplicate-key-contract",
-    matrix: "FAIL",
-    expected: "FAIL",
-    observed: duplicateRejected && malformedRejected ? "FAIL" : "PASS",
-    detail: `duplicate-key exit=${duplicate.status} rule-violation exit=${malformed.status}`
-  });
-}
-
-async function evidenceBundleRows(record, visualQa, evidenceRoot) {
-  const valid = buildValidSmokeEvidenceBundle(visualQa, evidenceRoot);
-  const validResult = visualQa.evaluateEvidenceManifest(valid.manifest, valid.bundle);
-
-  const sourceMismatch = buildEvidenceBundle(visualQa, evidenceRoot);
-  sourceMismatch.designContract.source_hash = "f".repeat(64);
-  sourceMismatch.manifest.design_contract_hash = visualQa.hashCanonicalValue(sourceMismatch.designContract);
-  sourceMismatch.bundle.evidenceManifestBytes = visualQa.canonicalEvidenceManifestBytes(sourceMismatch.manifest);
-  const sourceMismatchBlocked = visualQa.evaluateEvidenceManifest(
-    sourceMismatch.manifest,
-    sourceMismatch.bundle
-  ).verdict === "BLOCKED";
-
-  const reviewRequired = buildEvidenceBundle(visualQa, evidenceRoot);
-  reviewRequired.designContract.evidence_policy.independent_review_required = true;
-  reviewRequired.manifest.design_contract_hash = visualQa.hashCanonicalValue(reviewRequired.designContract);
-  reviewRequired.bundle.evidenceManifestBytes = visualQa.canonicalEvidenceManifestBytes(reviewRequired.manifest);
-  const reviewPolicyBlocked = outcome(visualQa.evaluateEvidenceManifest(
-    reviewRequired.manifest,
-    reviewRequired.bundle
-  )) === "BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE";
-
-  const missingChannel = buildEvidenceBundle(visualQa, evidenceRoot);
-  missingChannel.designContract.evidence_policy.required_channels.push("performance");
-  missingChannel.manifest.design_contract_hash = visualQa.hashCanonicalValue(missingChannel.designContract);
-  missingChannel.bundle.evidenceManifestBytes = visualQa.canonicalEvidenceManifestBytes(missingChannel.manifest);
-  const channelBlocked = visualQa.evaluateEvidenceManifest(
-    missingChannel.manifest,
-    missingChannel.bundle
-  ).verdict === "BLOCKED";
-
-  const missingPointer = buildEvidenceBundle(visualQa, evidenceRoot);
-  await fs.rm(path.join(evidenceRoot, missingPointer.manifest.mechanical_checks[0].evidence_path));
-  const pointerBlocked = visualQa.evaluateEvidenceManifest(
-    missingPointer.manifest,
-    missingPointer.bundle
-  ).verdict === "BLOCKED";
-
-  const textBoundary = buildEvidenceBundle(visualQa, evidenceRoot);
-  textBoundary.manifest.source_revision = "x".repeat(4096);
-  const accepts4096 = visualQa.validateEvidenceManifest(textBoundary.manifest).valid;
-  textBoundary.manifest.source_revision += "x";
-  const rejects4097 = !visualQa.validateEvidenceManifest(textBoundary.manifest).valid;
-
-  const nestedPath = buildEvidenceBundle(visualQa, evidenceRoot);
-  nestedPath.manifest.captures[0].path = "nested/primary.png";
-  const nestedBlocked = !visualQa.validateEvidenceManifest(nestedPath.manifest).valid;
-
-  const unrelatedManifestBytes = buildEvidenceBundle(visualQa, evidenceRoot);
-  unrelatedManifestBytes.bundle.evidenceManifestBytes = Buffer.from('{"unrelated":true}');
-  const unrelatedBytesBlocked = outcome(visualQa.evaluateEvidenceManifest(
-    unrelatedManifestBytes.manifest,
-    unrelatedManifestBytes.bundle
-  )) === "BLOCKED_IMMUTABLE_INPUT_MISMATCH";
-
-  const notApplicableChannel = buildEvidenceBundle(visualQa, evidenceRoot);
-  notApplicableChannel.manifest.accessibility_checks.find(
-    (item) => item.channel === "keyboard"
-  ).status = "not_applicable";
-  notApplicableChannel.bundle.evidenceManifestBytes = visualQa.canonicalEvidenceManifestBytes(
-    notApplicableChannel.manifest
-  );
-  const notApplicableBlocked = visualQa.evaluateEvidenceManifest(
-    notApplicableChannel.manifest,
-    notApplicableChannel.bundle
-  ).missingChannels?.includes("keyboard") === true;
-
-  const rootOnly = buildEvidenceBundle(visualQa, evidenceRoot);
-  const rootOnlyBlocked = visualQa.evaluateEvidenceManifest(rootOnly.manifest, {
-    now: rootOnly.bundle.now,
-    designContract: rootOnly.bundle.designContract,
-    evidenceManifestBytes: rootOnly.bundle.evidenceManifestBytes,
-    reviewReceipts: rootOnly.bundle.reviewReceipts,
-    sourceBytes: rootOnly.bundle.sourceBytes,
-    evidenceRoot
-  }).verdict === "BLOCKED";
-
-  const boundaryCoverage = sourceMismatchBlocked && reviewPolicyBlocked && channelBlocked &&
-    pointerBlocked && accepts4096 && rejects4097 && nestedBlocked && unrelatedBytesBlocked &&
-    notApplicableBlocked && rootOnlyBlocked;
-  record({
-    id: "valid-evidence-bundle",
-    matrix: "PASS",
-    expected: "PASS",
-    observed: validResult.verdict === "PASS" && boundaryCoverage ? "PASS" : "FAIL",
-    detail: `beta-material=true source=${sourceMismatchBlocked} review=${reviewPolicyBlocked} ` +
-      `channels=${channelBlocked} pointers=${pointerBlocked} text4096/4097=${accepts4096}/${rejects4097} ` +
-      `nested=${nestedBlocked} canonical-bytes=${unrelatedBytesBlocked} not-applicable=${notApplicableBlocked} ` +
-      `descriptor-only=${rootOnlyBlocked}`
-  });
-
-  const missingCapture = buildEvidenceBundle(visualQa, evidenceRoot);
-  missingCapture.manifest.capabilities.capture = false;
-  record({
-    id: "missing-capture",
-    matrix: "FAIL or explicit BLOCKED",
-    expected: "BLOCKED_RENDERER_UNAVAILABLE",
-    observed: outcome(visualQa.evaluateEvidenceManifest(missingCapture.manifest, missingCapture.bundle)),
-    detail: "capabilities.capture=false"
-  });
-
-  // The manifest is hashed while the capture bytes say one thing and evaluated
-  // after those bytes changed, which is exactly the post-manifest tamper case.
-  const tamperedCapture = buildEvidenceBundle(visualQa, evidenceRoot);
-  await fs.writeFile(
-    path.join(evidenceRoot, tamperedCapture.manifest.captures[0].path),
-    Buffer.from("qa-real-surface capture bytes -- mutated after the manifest was written")
-  );
-  record({
-    id: "capture-bytes-changed-after-manifest",
-    matrix: "FAIL",
-    expected: "BLOCKED_SCHEMA_OR_PAYLOAD_MISMATCH",
-    divergence: blockedOutranksFail,
-    observed: outcome(visualQa.evaluateEvidenceManifest(tamperedCapture.manifest, tamperedCapture.bundle)),
-    detail: "capture bytes mutated after hashing"
-  });
-
-  const incompleteCleanup = buildEvidenceBundle(visualQa, evidenceRoot);
-  incompleteCleanup.manifest.cleanup = {
-    owned_processes_stopped: false,
-    temporary_artifacts_removed: false,
-    remaining: ["renderer pid 4242", "/tmp/qa-capture-scratch"]
-  };
-  incompleteCleanup.bundle.evidenceManifestBytes = visualQa.canonicalEvidenceManifestBytes(
-    incompleteCleanup.manifest
-  );
-  record({
-    id: "incomplete-cleanup",
-    matrix: "BLOCKED_CLEANUP_INCOMPLETE",
-    expected: "BLOCKED_CLEANUP_INCOMPLETE",
-    observed: outcome(visualQa.evaluateEvidenceManifest(incompleteCleanup.manifest, incompleteCleanup.bundle)),
-    detail: "cleanup.remaining is non-empty"
-  });
-}
-
-function capabilityRows(record, visualQaScript, env) {
-  const freshInput = {
-    createdAt: "2026-07-24T00:00:00.000Z",
-    maximumAgeSeconds: 600,
-    expectedSourceHash: `sha256:${"1".repeat(64)}`,
-    actualSourceHash: `sha256:${"1".repeat(64)}`,
-    expectedCaptureHash: `sha256:${"2".repeat(64)}`,
-    actualCaptureHash: `sha256:${"2".repeat(64)}`
-  };
-  record({
-    id: "stale-evidence",
-    matrix: "BLOCKED_EVIDENCE_STALE",
-    expected: "BLOCKED_EVIDENCE_STALE",
-    observed: cliOutcome(jsonCli(visualQaScript, "freshness", { ...freshInput, now: "2026-07-24T00:10:01.000Z" }, env)),
-    detail: "601s past a 600s maximum age"
-  });
-  record({
-    id: "future-dated-evidence",
-    matrix: "BLOCKED_EVIDENCE_FUTURE",
-    expected: "BLOCKED_EVIDENCE_FUTURE",
-    observed: cliOutcome(jsonCli(visualQaScript, "freshness", { ...freshInput, now: "2026-07-23T23:59:00.000Z" }, env)),
-    detail: "capture dated after the assessment moment"
-  });
-
-  const ready = { captureAvailable: true, authAvailable: true, testAccountSafe: true, independentReviewAvailable: true };
-  record({
-    id: "auth-unavailable",
-    matrix: "BLOCKED_AUTH_UNAVAILABLE",
-    expected: "BLOCKED_AUTH_UNAVAILABLE",
-    observed: cliOutcome(jsonCli(visualQaScript, "capabilities", { ...ready, authAvailable: false }, env)),
-    detail: "capabilities operation"
-  });
-  record({
-    id: "unsafe-test-account",
-    matrix: "BLOCKED_TEST_ACCOUNT_UNSAFE",
-    expected: "BLOCKED_TEST_ACCOUNT_UNSAFE",
-    observed: cliOutcome(jsonCli(visualQaScript, "capabilities", { ...ready, testAccountSafe: false }, env)),
-    detail: "capabilities operation"
-  });
-  record({
-    id: "renderer-ownership-unverified",
-    matrix: "BLOCKED_RENDERER_OWNERSHIP_UNVERIFIED",
-    expected: "BLOCKED_RENDERER_OWNERSHIP_UNVERIFIED",
-    observed: cliOutcome(jsonCli(visualQaScript, "ownership", {
-      projectRoot: repoRoot,
-      pid: 4242,
-      command: "qa-renderer",
-      port: 4173,
-      sessionScoped: true
-    }, env)),
-    detail: "sessionId is unproven"
-  });
-}
-
-function reviewRows(record, visualQaScript, env) {
-  const first = validReviewReceipt({ id: "review/a", reviewer: "reviewer-a", context: "shared-context", capability: "product-inspection" });
-  const second = validReviewReceipt({ id: "review/b", reviewer: "reviewer-b", context: "shared-context", capability: "accessibility-inspection" });
-  const selfReview = jsonCli(visualQaScript, "review", [first, second], env);
-  record({
-    id: "same-context-self-review",
-    matrix: "FAIL",
-    expected: "BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE",
-    divergence: blockedOutranksFail,
-    observed: cliOutcome(selfReview),
-    detail: `reason=${selfReview.value?.reason ?? "none"}`
-  });
-
-  const lone = jsonCli(visualQaScript, "review", [validReviewReceipt({ id: "review/only", reviewer: "reviewer-a" })], env);
-  record({
-    id: "reviewer-unavailable",
-    matrix: "BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE",
-    expected: "BLOCKED_INDEPENDENT_REVIEW_UNAVAILABLE",
-    observed: cliOutcome(lone),
-    detail: `reason=${lone.value?.reason ?? "none"}`
-  });
-}
-
-function boundedRenderingRow(record, visualQaScript, env) {
-  const png = jsonCli(visualQaScript, "png", {
-    base64: rgbaPng(2, 2, [
-      255, 255, 255, 255, 0, 0, 0, 255,
-      0, 0, 0, 255, 255, 255, 255, 255
-    ]).toString("base64")
-  }, env);
-  const asciiTui = jsonCli(visualQaScript, "tui", { text: "status: ready\nqueue: 0" }, env);
-  const cjkTui = jsonCli(visualQaScript, "tui", { text: boundedCjkBox }, env);
-
-  const pngOk = png.value?.ok === true && png.value.width === 2 && png.value.height === 2;
-  const asciiOk = asciiTui.value?.findings.length === 0;
-  const cjkRows = cjkTui.value?.rows ?? [];
-  const cjkOk =
-    cjkTui.value?.findings.length === 0 &&
-    cjkRows.length === 3 &&
-    cjkRows.every((row) => row.width === 6);
-
-  record({
-    id: "bounded-png-tui-cjk",
-    matrix: "PASS",
-    expected: "PASS",
-    observed: pngOk && asciiOk && cjkOk ? "PASS" : "FAIL",
-    detail: `png=${pngOk} tui=${asciiOk} cjk=${cjkOk} cjk_row_widths=${cjkRows.map((row) => row.width).join(",")}`
-  });
 }
 
 async function integrityRows(record, openCodeRoot, homeDir) {
@@ -442,22 +135,7 @@ async function main() {
   };
 
   try {
-    const { sandbox, openCodeRoot, homeDir } = await installIntoIsolatedRoot(ledger);
-    const env = isolatedEnv(homeDir);
-    const uiuxScript = path.join(openCodeRoot, "skills", "frontend-ui-ux", "scripts", "uiux.mjs");
-    const visualQaScript = path.join(openCodeRoot, "skills", "visual-qa", "scripts", "visual-qa.mjs");
-    const visualQa = await import(pathToFileURL(visualQaScript).href);
-
-    for (const script of [uiuxScript, visualQaScript]) {
-      const stat = await fs.lstat(script);
-      if (stat.isSymbolicLink() || !stat.isFile()) throw new Error(`installed CLI is not a regular file: ${script}`);
-    }
-
-    await designContractRows(record, uiuxScript, env);
-    await evidenceBundleRows(record, visualQa, path.join(sandbox, "evidence"));
-    capabilityRows(record, visualQaScript, env);
-    reviewRows(record, visualQaScript, env);
-    boundedRenderingRow(record, visualQaScript, env);
+    const { openCodeRoot, homeDir } = await installIntoIsolatedRoot(ledger);
     await integrityRows(record, openCodeRoot, homeDir);
     forbiddenPackagePathsRow(record);
   } finally {

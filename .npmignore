@@ -73,9 +73,6 @@ src/
 test/
 tests/
 test-support/
-!vendor/scientific-visualization/tests/
-!vendor/scientific-visualization/tests/test_figure_export.py
-!vendor/scientific-visualization/tests/test_style_presets.py
 **/__pycache__/
 *.pyc
 
@@ -88,27 +85,4 @@ tools/legacy-token-allowlist.json
 # Local agent navigation guidance; tracked in git, never published
 AGENTS.md
 
-# Diagram review fixtures and locally rendered outputs stay in source control only
-skills/lit-diagram-drawer/ab/
-skills/lit-diagram-drawer/evidence/
-skills/lit-diagram-drawer/.work/
-skills/lit-diagram-drawer/**/constructed-naive-foil.html
-skills/lit-diagram-drawer/**/*.png
-skills/lit-diagram-drawer/**/*.jpg
-skills/lit-diagram-drawer/**/*.jpeg
-skills/lit-diagram-drawer/**/*.webp
-skills/lit-diagram-drawer/scripts/office-proof.py
-skills/lit-schematic/**/*.png
-skills/lit-schematic/**/*.jpg
-skills/lit-schematic/**/*.jpeg
-skills/lit-schematic/**/*.webp
-skills/lit-schematic/**/*.gif
-skills/lit-schematic/**/*.mp4
-skills/lit-schematic/**/*.pdf
-skills/lit-schematic/.work/
-skills/lit-schematic/evidence/
-
-# Portable motion template source is an intentional managed asset.
-!skills/readme-studio/templates/remotion/src/
-!skills/readme-studio/templates/remotion/src/index.tsx
 .plugin-scanner.toml

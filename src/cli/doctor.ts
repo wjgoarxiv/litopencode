@@ -25,7 +25,6 @@ import {
   createAutoHandoffSettings
 } from "../auto-handoff.ts";
 import { inspectLspCapability } from "./lsp-capability.ts";
-import { probeMotionRuntime } from "./motion-runtime.ts";
 import { agentFileState, globalAgentFilePath, readAgentFileMode } from "./agent-file.ts";
 import { isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { inspectTuiPlugin, planCliJsonCleanup } from "./tui-config.ts";
@@ -265,7 +264,6 @@ export async function doctor(root: string, hostChoice: HostChoice = "auto"): Pro
   // The TUI panel is optional, so a missing entry is reported here without failing install.ok.
   const tui = await inspectTuiPlugin(root, installPlugin.present && installPlugin.configured !== null ? installPlugin.configured : installPlugin.expected);
   const hostConfig = await readOpenCodeConfig(root);
-  const motion = probeMotionRuntime(metadata.packageRoot);
   // The plugin keeps the auto-handoff setting per project, so doctor reads it from the project too.
   const project = doctorProjectRoot();
   const projectPaths = createRuntimePaths(project);
@@ -346,7 +344,6 @@ export async function doctor(root: string, hostChoice: HostChoice = "auto"): Pro
           compaction: "The plugin starts compaction itself after the handoff is saved; the user does not need to run /compact.",
           warnings: autoHandoffWarnings
         },
-        motion,
         config: {
           source: loaded.source,
           sources: loaded.sources,
