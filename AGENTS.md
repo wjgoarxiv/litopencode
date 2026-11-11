@@ -31,6 +31,7 @@ npm run scan:legacy-tokens
 npm run check:version
 npm run check:pack-payload
 npm run check:managed-skill-manifest
+npm run check:skills-lock
 ```
 
 Do not pipe a suite through `| tail` — `$?` then reports tail's exit code, not the suite's,
@@ -39,6 +40,13 @@ suites concurrently has produced phantom failures here that do not reproduce ser
 
 ## Local conventions
 
+- **`skills.lock.json` is the one skill-volume pin.** `npm run gen:skills-lock` rewrites its measured half (a
+  size, file count and SHA-256 row per top-level skill over git-tracked files, and the sorted
+  `npm pack --dry-run --json --ignore-scripts` file list); `policy` (the corpus word floor and minimum skill count
+  that `test/docs.test.mjs` reads) and the per-skill `budgets` are hand-owned and kept as written. A new skill needs
+  `npm run gen:skills-lock -- --accept-new <id>`, a removed one `-- --drop <id>`; without them the run refuses to
+  write, so a floor cannot be lowered by removing and re-adding a skill. `git add` a new skill before running it.
+  Run it after any skill or pack change, then the full suite. The lock and its tool stay out of the package.
 - **Relative imports carry explicit `.ts` extensions** (`rewriteRelativeImportExtensions`).
   Preserve that — dropping the extension breaks the build, not just style.
 - The `lit-plan` agent is **planning-only by design**: edit and bash are denied even in yolo

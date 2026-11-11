@@ -53,6 +53,8 @@
     "check:npm-readme": "node tools/readme-for-npm.mjs check",
     "check:managed-skill-manifest": "node tools/gen-managed-skill-manifest.mjs --check",
     "gen:managed-skill-manifest": "node tools/gen-managed-skill-manifest.mjs",
+    "check:skills-lock": "npm run build && node tools/gen-skills-lock.mjs --check",
+    "gen:skills-lock": "npm run build && node tools/gen-skills-lock.mjs",
     "prepublishOnly": "node tools/prepublish-test-gate.mjs",
     "prepack": "npm run build && node tools/readme-for-npm.mjs apply",
     "postpack": "node tools/readme-for-npm.mjs restore",

@@ -65,6 +65,9 @@ jobs:
       - name: Check managed skill manifest
         run: npm run check:managed-skill-manifest
 
+      - name: Check skills lock
+        run: npm run check:skills-lock
+
       - name: Dry pack
         run: |
           set -euo pipefail

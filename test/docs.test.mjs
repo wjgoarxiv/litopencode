@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
@@ -19,7 +20,10 @@ const requiredDocs = [
   "docs/migration.md",
   "docs/release-checklist.md"
 ];
-const topLevelSkillCorpusWordTarget = 42_789;
+// The corpus floor is hand-owned policy in skills.lock.json (npm run gen:skills-lock keeps it as written).
+const skillsLockPolicy = JSON.parse(readFileSync(new URL("../skills.lock.json", import.meta.url), "utf8")).policy;
+const topLevelSkillCorpusWordTarget = skillsLockPolicy.corpusWordFloor;
+const minimumTopLevelSkillDocs = skillsLockPolicy.minSkillDocs;
 const requiredSkillContractHeadings = [
   "## #contract.activation",
   "## #contract.inputs",
@@ -679,7 +683,10 @@ test("top-level SKILL.md corpus preserves size, static-doc hygiene, and LLM cont
   const skillDocs = await listTopLevelSkillDocs();
   const totalWords = skillDocs.reduce((sum, skillDoc) => sum + countWhitespaceWords(skillDoc.text), 0);
 
-  assert.ok(skillDocs.length >= 23, `expected at least 23 top-level skill docs, got ${skillDocs.length}`);
+  assert.ok(
+    skillDocs.length >= minimumTopLevelSkillDocs,
+    `expected at least ${minimumTopLevelSkillDocs} top-level skill docs, got ${skillDocs.length}`
+  );
   assert.ok(
     totalWords >= topLevelSkillCorpusWordTarget,
     `expected top-level skill corpus to contain at least ${topLevelSkillCorpusWordTarget} words, got ${totalWords}`
