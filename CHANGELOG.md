@@ -5,9 +5,13 @@ are tracked separately from this product history.
 
 ## Unreleased
 
-- Nine content skills moved to wjgoarxiv-skills, a separate collection where you install only the skills you want: `lit-pptx` (decks), `lit-docx` (documents), `lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux` and `visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video-covers). Each name stays as a short pointer, so the skill picker, the `lit` deck, report, diagram, P&ID and film requests, interface requests and `/lit-scientific-visualization` still land on it. The pointer says where the skill went and gives the two lines that copy its OpenCode version into `~/.config/opencode/skills/<id>`; `litopencode install` leaves that copy alone and `litopencode doctor` lists it as preserved.
+## 1.0.44 - 2026-11-11
+
+- Nine content skills moved to wjgoarxiv-skills (https://github.com/wjgoarxiv/wjgoarxiv-skills), a separate public collection where you install only the skills you want: `lit-pptx` (decks), `lit-docx` (documents), `lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux` and `visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video-covers). Each name stays as a short pointer, so the skill picker, the `lit` deck, report, diagram, P&ID and film requests, interface requests and `/lit-scientific-visualization` still land on it. The pointer says where the skill went and gives the two lines that copy its OpenCode version into `~/.config/opencode/skills/<id>`; `litopencode install` leaves that copy alone and `litopencode doctor` lists it as preserved.
+- To get one back, clone the collection once and copy that skill's OpenCode version over its pointer, for example `rm -r ~/.config/opencode/skills/lit-docx` and then `cp -R <your wjgoarxiv-skills clone>/variants/litopencode/lit-docx ~/.config/opencode/skills/lit-docx` (under `$XDG_CONFIG_HOME/opencode/skills/` when that is set). The film skill then needs `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install` once. Start a new session afterwards.
 - `litopencode motion-runtime` is gone, and install no longer pre-warms the motion runtime. Doctor no longer reports motion, Office or plotting dependencies. The vendored scientific-visualization source moved with its skill.
 - The package drops from 1,615 files to 659.
+- After updating, you can delete `~/.cache/litopencode/office` and `~/.cache/litopencode/motion-runtime` (under `$XDG_CACHE_HOME` when that is set). Nothing in LitOpenCode reads them any more, and the copies from wjgoarxiv-skills keep their own caches. No other step is needed: `litopencode install`, or the automatic update, replaces the old skill folders it wrote with the pointers.
 
 ## 1.0.43 - 2026-11-11
 

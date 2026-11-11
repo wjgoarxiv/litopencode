@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.44 Release Scope
+
+- Nine content skills (`lit-pptx`, `lit-docx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`, `frontend-ui-ux`, `visual-qa`, `lit-typographic-motion`, `readme-studio`) leave the package for https://github.com/wjgoarxiv/wjgoarxiv-skills and stay as one-file same-name pointers. `litopencode motion-runtime`, the install pre-warm and doctor's motion, Office and plotting probes are removed. `skills.lock.json` is the one skill-volume and pack-list pin (`npm run gen:skills-lock`, `npm run check:skills-lock`).
+
 ## 1.0.43 Release Scope
 
 - start-work: typed `lit cancel` / `lit 취소` from any session or linked worktree (`src/run-paths.ts`), out-of-grant steps parked (up to 16) with `lit approve` / `lit deny`, secret and settings files refused for the run (`src/run-path-guard.ts`), legacy paused records opened as an active run with that step parked, and a progress fence read when it shares its text part with the ignition block. lit-adhd: the KPI board computed by `skills/lit-adhd/scripts/rewind.mjs` (`--lang ko`), with the per-session cards under `lit adhd detail`.

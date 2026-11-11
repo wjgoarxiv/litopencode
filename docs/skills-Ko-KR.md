@@ -272,7 +272,7 @@ flowchart TD
 | `lit-typographic-motion` | `video-covers` |
 | `readme-studio` | `video-covers` |
 
-OpenCode는 이름 하나에 스킬 하나만 두고, 이름이 같은 폴더가 둘이면 어느 쪽을 읽을지 정해져 있지 않습니다. 그래서 복사본은 안내 폴더 옆에 두지 않고 그 자리를 대신합니다. 모음은 아직 공개되지 않았으니, 직접 받아 둔 사본에서 스킬 하나를 이렇게 넣습니다.
+OpenCode는 이름 하나에 스킬 하나만 두고, 이름이 같은 폴더가 둘이면 어느 쪽을 읽을지 정해져 있지 않습니다. 그래서 복사본은 안내 폴더 옆에 두지 않고 그 자리를 대신합니다. 모음을 https://github.com/wjgoarxiv/wjgoarxiv-skills 에서 한 번 클론한 뒤, 스킬 하나를 이렇게 넣습니다.
 
 ```sh
 rm -r ~/.config/opencode/skills/lit-docx

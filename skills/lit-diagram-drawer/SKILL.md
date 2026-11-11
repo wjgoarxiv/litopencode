@@ -41,7 +41,7 @@ The request that loaded this pointer. Nothing else is read.
 
 ## #contract.procedure
 
-OpenCode keeps one skill per name and loads same-name folders in no fixed order, so the copy replaces this folder. The collection is not published yet; a local clone is the only source:
+OpenCode keeps one skill per name and loads same-name folders in no fixed order, so the copy replaces this folder. Clone the collection once from https://github.com/wjgoarxiv/wjgoarxiv-skills, then:
 
 ```sh
 rm -r ~/.config/opencode/skills/lit-diagram-drawer

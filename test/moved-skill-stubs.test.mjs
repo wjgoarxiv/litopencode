@@ -41,7 +41,7 @@ for (const { id, family, made } of moved) {
     assert.ok(stub.includes(`plugins/${family}/skills/${id}/`), "names the family folder in the collection");
     assert.ok(stub.includes(`rm -r ~/.config/opencode/skills/${id}`), "removes the pointer folder first");
     assert.ok(stub.includes(installLine(id)), "carries the one-skill OpenCode install line");
-    assert.match(stub, /not published yet/u);
+    assert.ok(stub.includes("https://github.com/wjgoarxiv/wjgoarxiv-skills"), "names the public collection");
     assert.match(stub, /litopencode install/u, "says the installer leaves the copied folder alone");
     assert.match(stub, /## #contract\.activation/u);
     for (const pattern of privatePath) assert.doesNotMatch(stub, pattern);

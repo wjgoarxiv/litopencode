@@ -272,7 +272,7 @@ The skills that made files and pictures moved to wjgoarxiv-skills, a separate co
 | `lit-typographic-motion` | `video-covers` |
 | `readme-studio` | `video-covers` |
 
-OpenCode keeps one skill per name and loads two same-name folders in no fixed order, so the copy replaces the pointer folder instead of sitting beside it. The collection is not published yet; from your own clone of it, for one skill:
+OpenCode keeps one skill per name and loads two same-name folders in no fixed order, so the copy replaces the pointer folder instead of sitting beside it. Clone the collection once from https://github.com/wjgoarxiv/wjgoarxiv-skills, then, for one skill:
 
 ```sh
 rm -r ~/.config/opencode/skills/lit-docx
