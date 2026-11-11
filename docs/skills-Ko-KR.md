@@ -279,7 +279,7 @@ rm -r ~/.config/opencode/skills/lit-docx
 cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" ~/.config/opencode/skills/lit-docx
 ```
 
-다른 스킬도 이름만 바꿔 같은 두 줄을 쓰면 됩니다. `litopencode install`과 자동 업데이트는 자신이 쓰지 않은 폴더를 건드리지 않고, `litopencode doctor`는 그 폴더를 preserved로 보여 줍니다. 안내 스킬로 돌아가려면 폴더를 지우고 `litopencode install`을 실행하세요.
+다른 스킬도 이름만 바꿔 같은 두 줄을 쓰면 됩니다. 영상 스킬 `lit-typographic-motion`은 복사한 뒤 글꼴과 고정된 엔진 패키지를 한 번 받아야 합니다. 일반 터미널에서 `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`을 실행하세요. `litopencode install`과 자동 업데이트는 자신이 쓰지 않은 폴더를 건드리지 않고, `litopencode doctor`는 그 폴더를 preserved로 보여 줍니다. 안내 스킬로 돌아가려면 폴더를 지우고 `litopencode install`을 실행하세요.
 
 ## 글 다듬기와 브라우저
 

@@ -64,6 +64,12 @@ for (const { id, family, made } of moved) {
   });
 }
 
+test("lit-typographic-motion pointer names the copy's one-time runtime step, run from the copied folder", () => {
+  const stub = stubOf("lit-typographic-motion");
+  assert.ok(stub.includes("node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install"), "the copy's own installer, not a LitOpenCode command");
+  assert.doesNotMatch(stub, /litopencode motion-runtime/u);
+});
+
 const routes = [
   ["lit 발표자료 만들어줘", "lit-task", "lit-pptx"],
   ["Make a 10-slide launch deck about our Q3 results. lit", "lit-task", "lit-pptx"],

@@ -48,7 +48,7 @@ rm -r ~/.config/opencode/skills/lit-typographic-motion
 cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-typographic-motion" ~/.config/opencode/skills/lit-typographic-motion
 ```
 
-With `XDG_CONFIG_HOME` set, use `$XDG_CONFIG_HOME/opencode/skills/`. Start a new session afterwards. `litopencode install` never overwrites a folder it did not write, and `litopencode doctor` counts the copy as preserved. To return to this pointer, delete the folder and run `litopencode install`.
+With `XDG_CONFIG_HOME` set, use `$XDG_CONFIG_HOME/opencode/skills/`. The copy then needs its fonts and pinned engine packages once (network, about 20 MB into the user cache), from a normal terminal: `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`. Start a new session afterwards. `litopencode install` never overwrites a folder it did not write, and `litopencode doctor` counts the copy as preserved. To return to this pointer, delete the folder and run `litopencode install`.
 
 ## #contract.outputs
 

@@ -279,7 +279,7 @@ rm -r ~/.config/opencode/skills/lit-docx
 cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" ~/.config/opencode/skills/lit-docx
 ```
 
-Use the same two lines with another skill's name. `litopencode install` and its auto-update leave a folder they did not write alone, and `litopencode doctor` lists it as preserved. Delete the folder and run `litopencode install` to get the pointer back.
+Use the same two lines with another skill's name. The film skill, `lit-typographic-motion`, then needs its fonts and pinned engine packages once, from a normal terminal: `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`. `litopencode install` and its auto-update leave a folder they did not write alone, and `litopencode doctor` lists it as preserved. Delete the folder and run `litopencode install` to get the pointer back.
 
 ## Writing and the browser
 

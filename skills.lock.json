@@ -614,12 +614,12 @@
     },
     "lit-typographic-motion": {
       "skillMd": {
-        "bytes": 3180,
-        "sha256": "0e4a0f351938e8d53bfbad2964ebf4cd44666631f77f6c74249a0202e860ab80"
+        "bytes": 3387,
+        "sha256": "8c49f3780d8f11ce9761d58ef8f4f8dce688a9b6ece014f4c5c2d912afdd0e3c"
       },
       "files": 1,
-      "bytes": 3180,
-      "sha256": "d4861747554b9aeabaee2d1be346d418705134833ed4c35ad61d2b83705b06d6"
+      "bytes": 3387,
+      "sha256": "d2d771277c277a982ea2836d22d3ffc05b8e92bb7061d781536451225ede9160"
     },
     "litgoal": {
       "skillMd": {
