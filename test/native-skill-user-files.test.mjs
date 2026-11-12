@@ -112,3 +112,45 @@ test("a failed plugin registration leaves the installed skills as they were", as
     assert.equal((await fs.readdir(opencodeRoot)).includes(".litopencode-skill-backups"), false);
   });
 });
+
+test("the host loads the configured old plugin during registration with its self-update turned off", async () => {
+  // `opencode plugin` loads the plugins already in the config. An older LitOpenCode there would update itself first
+  // and replace the skill folders with an installer that keeps no user files, before this one could copy them out.
+  await withTempDir(async (dir) => {
+    const configHome = path.join(dir, "xdg");
+    const opencodeRoot = path.join(configHome, "opencode");
+    const binDir = path.join(dir, "bin");
+    await fs.mkdir(opencodeRoot, { recursive: true });
+    await fs.mkdir(binDir, { recursive: true });
+    await fs.writeFile(path.join(opencodeRoot, "opencode.json"), JSON.stringify({ plugin: ["@litfamily/litopencode@1.0.38"] }, null, 2));
+    const seen = path.join(dir, "plugin-env.txt");
+    const fakeOpenCode = path.join(binDir, "opencode");
+    await fs.writeFile(
+      fakeOpenCode,
+      `#!/bin/sh\nif [ "$1" = plugin ]; then printf '%s|%s' "$LITOPENCODE_NO_AUTO_UPDATE" "$LITOPENCODE_AUTO_UPDATE_IN_PROGRESS" > '${seen}'; fi\nexit 23\n`
+    );
+    await fs.chmod(fakeOpenCode, 0o755);
+    const env = { ...process.env, PATH: binDir + path.delimiter + process.env.PATH, XDG_CONFIG_HOME: configHome };
+    delete env.LITOPENCODE_NO_AUTO_UPDATE;
+    delete env.LITOPENCODE_AUTO_UPDATE_IN_PROGRESS;
+
+    const result = runCli(["install", "--yes"], { env });
+    assert.equal(result.status, 1, result.stdout);
+    assert.equal(await fs.readFile(seen, "utf8"), "1|1");
+  });
+});
+
+test("an untouched skill folder from any earlier release is recognised as shipped", async () => {
+  // Generated SKILL.md files changed from release to release; one missing from the list would be reported as a file
+  // the user added or changed. These are untouched installs of 1.0.0, 1.0.9, 1.0.30 and 1.0.42.
+  const known = new Set(JSON.parse(await fs.readFile(path.resolve("skills", "shipped-skill-files.json"), "utf8")).sha256);
+  const samples = {
+    "1.0.0 autoconference/SKILL.md": "54fec02dfda952f68776b4d4146012907bb00d66b9c2fe4dea464a07089a3f09",
+    "1.0.9 deep-interview/SKILL.md": "c08e8ca0697c2becbf250016249c4d98ae16847f9713c4dce587db2be85c5e58",
+    "1.0.30 frontend-ui-ux/SKILL.md": "ece5fa0cf060dfbc6a139cdbf3d8f61122bf6f7c72976d65c5676e1192e3386d",
+    "1.0.42 lit-adhd/SKILL.md": "aaf3bc04085c4f179a8fafbaef04259c45829d1efcf67368f66d063960a2030c",
+    "1.0.42 start-work/SKILL.md": "a0ff462612219a68930f11c876700629e697c1bfd653db232ab05429b302aa87",
+    "1.0.42 litgoal/SKILL.md": "b3594f2daf7f82324953e24c2f073e4432d9763723fa2f37b3482f279427ff12"
+  };
+  assert.deepEqual(Object.keys(samples).filter((name) => !known.has(samples[name])), []);
+});

@@ -16,6 +16,7 @@ import type {
 } from "./types.ts";
 import { describeCommandAliasMutation, ensureCommandAliases, inspectCommandAliases } from "./command-aliases.ts";
 import { execCommand } from "./command-plan.ts";
+import { autoUpdateRecursionEnv } from "./auto-update.ts";
 import { openCodeHostCapabilities } from "./host-capabilities.ts";
 import { applyHostLimits, describeHostLimitMutation, ensureHostLimits } from "./host-limits.ts";
 import {
@@ -160,6 +161,9 @@ async function openCodeVersion(command: string): Promise<string | undefined> {
 async function installWithOpenCode(target: OpenCodeInstallTarget, command = "opencode"): Promise<void> {
   try {
     await execCommand(command, ["plugin", target.value, "--global", "--force"], {
+      // `opencode plugin` loads the plugins already configured. An older LitOpenCode among them would update itself
+      // here and replace the skill folders, and the user files in them, before this install could copy them out.
+      env: { ...process.env, LITOPENCODE_NO_AUTO_UPDATE: "1", [autoUpdateRecursionEnv]: "1" },
       timeout: 120_000,
       maxBuffer: 1024 * 1024 * 4
     });
