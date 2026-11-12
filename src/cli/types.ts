@@ -217,6 +217,9 @@ export type InstallReport = {
     readonly write: readonly string[];
     readonly preserve: readonly string[];
     readonly collisions: readonly string[];
+    /** `<skill>/<path>` of user files in folders that will be replaced; install copies them under `backupRoot` first. */
+    readonly preserveFiles: readonly string[];
+    readonly backupRoot?: string;
     // Present only when <root>/skills is a symlink; mirrors native-skill-integrity's resolveSafeDirectory follow.
     readonly link?: {
       readonly path: string;

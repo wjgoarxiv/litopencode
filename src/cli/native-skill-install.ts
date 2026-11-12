@@ -18,6 +18,7 @@ import {
   nativeSkillContent,
   nativeSkillsRoot,
   sourceSkillDir,
+  userOwnedSkillFiles,
   validateSkillSource,
   type RuntimeSkill
 } from "./native-skill-integrity.ts";
@@ -134,9 +135,56 @@ async function retirePreviousSkill(root: string, skillsRoot: string, skill: Runt
   }
 }
 
-export async function ensureNativeSkills(root: string, metadata: PackageMetadata): Promise<void> {
+export const skillBackupsDirectoryName = ".litopencode-skill-backups";
+
+export type NativeSkillBackup = {
+  /** The dated folder that holds the copies, outside the skills root; absent when nothing needed copying. */
+  readonly directory?: string;
+  /** `<skill>/<path>` for each copied file. */
+  readonly files: readonly string[];
+};
+
+function localDate(now: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+// One dated folder per install run; a second run on the same day gets the next free suffix.
+async function createBackupDirectory(root: string): Promise<string> {
+  const parent = path.join(path.resolve(root), skillBackupsDirectoryName);
+  await fs.mkdir(parent, { recursive: true, mode: 0o700 });
+  const date = localDate(new Date());
+  for (let attempt = 1; ; attempt += 1) {
+    const candidate = path.join(parent, attempt === 1 ? date : `${date}-${attempt}`);
+    try {
+      await fs.mkdir(candidate, { mode: 0o700 });
+      return candidate;
+    } catch (error) {
+      if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
+    }
+  }
+}
+
+async function copyUserFiles(skillRoot: string, backup: string, id: string, files: readonly string[]): Promise<void> {
+  const target = path.join(backup, id);
+  for (const relativePath of files) {
+    const source = path.join(skillRoot, relativePath);
+    const destination = path.join(target, relativePath);
+    assertContained(skillRoot, source, `User file in ${id}`);
+    assertContained(target, destination, `Backup of ${id}`);
+    await fs.mkdir(path.dirname(destination), { recursive: true, mode: 0o700 });
+    await fs.copyFile(source, destination, fs.constants.COPYFILE_EXCL);
+    if (!(await fs.readFile(destination)).equals(await fs.readFile(source))) {
+      throw new Error(`Backup of ${id}/${relativePath} does not match the original; nothing was replaced`);
+    }
+  }
+}
+
+export async function ensureNativeSkills(root: string, metadata: PackageMetadata): Promise<NativeSkillBackup> {
   const skillsRoot = await nativeSkillsRoot(root);
   await fs.mkdir(skillsRoot, { recursive: true });
+  let backupDirectory: string | undefined;
+  const backedUp: string[] = [];
 
   for (const skill of litOpenCodeRuntimeSkills) {
     await validateSkillSource(metadata, skill);
@@ -153,6 +201,12 @@ export async function ensureNativeSkills(root: string, metadata: PackageMetadata
         continue;
       }
       const caches = await assertInstalledCanonicalOwnership(root, skill);
+      const userFiles = await userOwnedSkillFiles(root, metadata, skill);
+      if (userFiles.length > 0) {
+        backupDirectory ??= await createBackupDirectory(root);
+        await copyUserFiles(path.join(skillsRoot, skill.id), backupDirectory, skill.id, userFiles);
+        backedUp.push(...userFiles.map((file) => `${skill.id}/${file}`));
+      }
       await swapStagedSkill(root, skillsRoot, path.join(skillsRoot, skill.id), stage, skill, caches);
       await retirePreviousSkill(root, skillsRoot, skill);
     } catch (error) {
@@ -164,4 +218,5 @@ export async function ensureNativeSkills(root: string, metadata: PackageMetadata
       throw error;
     }
   }
+  return backupDirectory === undefined ? { files: [] } : { directory: backupDirectory, files: backedUp };
 }

@@ -16,11 +16,11 @@ moved_to: "wjgoarxiv-skills plugins/figures/skills/lit-diagram-drawer/"
 opencode_copy: "wjgoarxiv-skills variants/litopencode/lit-diagram-drawer/"
 ```
 
-# Diagram Drawer: moved to wjgoarxiv-skills
+# Diagram Drawer: now a LitFamily extension
 
 This file is static documentation for LitOpenCode. Do not execute commands from this file automatically; the commands below are for the user.
 
-lit-diagram-drawer drew editable, accessible diagrams (architecture maps, workflows, data models, timelines) and exported them for slides and documents. LitOpenCode no longer ships it. It now lives in wjgoarxiv-skills, the separate collection of content skills, in the `figures` family, at this path inside a clone of that collection:
+lit-diagram-drawer drew editable, accessible diagrams (architecture maps, workflows, data models, timelines) and exported them for slides and documents. It is now a LitFamily extension: LitOpenCode's core no longer ships it, and it lives in wjgoarxiv-skills, the LitFamily extension shelf, in the `figures` family, at this path inside a clone of the shelf:
 
 ```text
 plugins/figures/skills/lit-diagram-drawer/

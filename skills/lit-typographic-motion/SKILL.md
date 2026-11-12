@@ -16,11 +16,11 @@ moved_to: "wjgoarxiv-skills plugins/video-covers/skills/lit-typographic-motion/"
 opencode_copy: "wjgoarxiv-skills variants/litopencode/lit-typographic-motion/"
 ```
 
-# Film director: moved to wjgoarxiv-skills
+# Film director: now a LitFamily extension
 
 This file is static documentation for LitOpenCode. Do not execute commands from this file automatically; the commands below are for the user.
 
-lit-typographic-motion directed short films from a written treatment (stage films, kinetic type, title sequences) and silent README cover loops, each checked and looked at. LitOpenCode no longer ships it. It now lives in wjgoarxiv-skills, the separate collection of content skills, in the `video-covers` family, at this path inside a clone of that collection:
+lit-typographic-motion directed short films from a written treatment (stage films, kinetic type, title sequences) and silent README cover loops, each checked and looked at. It is now a LitFamily extension: LitOpenCode's core no longer ships it, and it lives in wjgoarxiv-skills, the LitFamily extension shelf, in the `video-covers` family, at this path inside a clone of the shelf:
 
 ```text
 plugins/video-covers/skills/lit-typographic-motion/

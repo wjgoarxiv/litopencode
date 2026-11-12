@@ -16,6 +16,7 @@ import type { BoundedAuthorityOptions } from "../bounded-authority.ts";
 import type { LitOpenCodeConfig } from "../config.ts";
 import { queryKnowledge } from "../knowledge.ts";
 import { startTypedWork, takeCancelNotice, typedStartArgument } from "../start-work-typed.ts";
+import { takePendingExtensionsNotice } from "../extensions-notice.ts";
 import { createRuntimePaths } from "../state.ts";
 import { appendNotice } from "./notices.ts";
 import { createLitGoalOperations } from "../ledger.ts";
@@ -65,6 +66,8 @@ export type V2SessionHookOptions = {
   readonly acceptCommandMark?: (sessionID: string, marker: unknown) => { readonly command: string; readonly banner: string; readonly work?: string } | undefined;
   /** Sets and manages OpenCode 2's native goal for lit-loop, start-work and litwork. */
   readonly nativeGoal?: NativeGoal;
+  /** The OpenCode config root where an install leaves its one-time extensions notice for the next session. */
+  readonly extensionsNoticeRoot?: string;
 };
 
 type SessionContext = {
@@ -179,6 +182,10 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     // Another window cancelled this session's run: the notice rides this turn, after the reset above.
     const notice = await takeCancelNotice(options.projectRoot, event.sessionID);
     if (notice !== undefined) state.turn.push(notice);
+    const extensionsNotice = options.extensionsNoticeRoot === undefined
+      ? undefined
+      : await takePendingExtensionsNotice(options.extensionsNoticeRoot);
+    if (extensionsNotice !== undefined) state.turn.push(extensionsNotice);
     if (input.trim() === "") return;
 
     if (options.autoHandoffRoute !== undefined) {

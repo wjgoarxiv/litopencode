@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -260,6 +261,40 @@ export async function destinationState(root: string, skill: { readonly id: strin
     throw new Error(`Native skill ${skill.id} destination contains a symbolic link or special file: ${inventory.unsafe.join(", ")}`);
   }
   return { kind: "managed", entrypoint };
+}
+
+// Every file any LitOpenCode release installed into a skill folder, by SHA-256 (npm run gen:shipped-skill-files
+// adds the current build). A file in a managed folder whose bytes are in neither this list nor the current build is
+// the user's, and it is copied out before the folder is replaced.
+const shippedSkillFiles = new Set(
+  (JSON.parse(readFileSync(new URL("../../skills/shipped-skill-files.json", import.meta.url), "utf8")) as { readonly sha256: readonly string[] }).sha256
+);
+
+// Python writes bytecode next to a shipped script when it runs; it is regenerated, never the user's work.
+function isBytecodeCache(relativePath: string): boolean {
+  return relativePath.split("/").includes("__pycache__") && relativePath.endsWith(".pyc");
+}
+
+/** Files under a managed skill folder that LitOpenCode did not ship: added or edited by the user. */
+export async function userOwnedSkillFiles(root: string, metadata: PackageMetadata, skill: RuntimeSkill): Promise<string[]> {
+  const destination = await destinationState(root, skill);
+  if (destination.kind !== "managed") return [];
+  const skillRoot = path.dirname(destination.entrypoint);
+  const known = new Set(shippedSkillFiles);
+  known.add(createHash("sha256").update(await nativeSkillContent(metadata, skill)).digest("hex"));
+  const definition = managedSkillDefinition(skill.id);
+  for (const asset of definition?.canonicalFiles ?? []) known.add(asset.sha256);
+  for (const relativePath of definition?.distributionFiles ?? []) {
+    if (relativePath === "SKILL.md") continue;
+    known.add(createHash("sha256").update(await fs.readFile(path.join(sourceSkillDir(metadata, skill.id), relativePath))).digest("hex"));
+  }
+  const owned: string[] = [];
+  for (const relativePath of (await inventoryTree(skillRoot)).files) {
+    if (isBytecodeCache(relativePath)) continue;
+    const digest = createHash("sha256").update(await fs.readFile(path.join(skillRoot, relativePath))).digest("hex");
+    if (!known.has(digest)) owned.push(relativePath);
+  }
+  return owned;
 }
 
 export async function invalidInstalledAssets(

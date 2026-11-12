@@ -16,11 +16,11 @@ moved_to: "wjgoarxiv-skills plugins/video-covers/skills/readme-studio/"
 opencode_copy: "wjgoarxiv-skills variants/litopencode/readme-studio/"
 ```
 
-# README Studio: moved to wjgoarxiv-skills
+# README Studio: now a LitFamily extension
 
 This file is static documentation for LitOpenCode. Do not execute commands from this file automatically; the commands below are for the user.
 
-readme-studio wrote factual READMEs with an original cover, outlined local type and an optional motion cover. LitOpenCode no longer ships it. It now lives in wjgoarxiv-skills, the separate collection of content skills, in the `video-covers` family, at this path inside a clone of that collection:
+readme-studio wrote factual READMEs with an original cover, outlined local type and an optional motion cover. It is now a LitFamily extension: LitOpenCode's core no longer ships it, and it lives in wjgoarxiv-skills, the LitFamily extension shelf, in the `video-covers` family, at this path inside a clone of the shelf:
 
 ```text
 plugins/video-covers/skills/readme-studio/

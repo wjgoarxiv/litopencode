@@ -44,6 +44,15 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 스킬마다 만들어 내는 결과의 그림은 [GitHub의 스킬 갤러리](https://github.com/wjgoarxiv/litopencode/blob/main/docs/skills-Ko-KR.md)에서 볼 수 있습니다.
 
+## 확장 스킬
+
+LitOpenCode의 핵심 기능은 그 자체로 완성되어 있어 따로 설치할 것 없이 동작합니다. 파일을 만드는 스킬 아홉 개(발표자료, 문서, 그림, 디자인, 영상·커버)는 LitFamily 확장 스킬로, 확장 스킬 모음 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 스킬을 LitOpenCode와 함께 설치하면 LitFamily의 기능을 빠짐없이 쓸 수 있습니다. 모음을 한 번 내려받고, 스킬마다 다음을 실행하세요.
+
+```sh
+rm -r ~/.config/opencode/skills/<skill>
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" ~/.config/opencode/skills/<skill>
+```
+
 ## 업데이트와 제거
 
 LitOpenCode는 대화형으로 시작할 때와 install·doctor가 성공한 뒤 새 버전을 확인합니다. 업데이트 시점을 직접 정하고 싶다면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요. `npm exec --package @litfamily/litopencode@latest -- litopencode doctor`는 설치 상태를 확인할 뿐 아무것도 바꾸지 않습니다.

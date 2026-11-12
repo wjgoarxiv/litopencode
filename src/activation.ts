@@ -24,6 +24,7 @@ import { adhdSessionNote } from "./activation-workflow-prompts.ts";
 import { typedPromptReply } from "./adhd-next.ts";
 import { decideReentry, recordActivation, type ActivationMemory } from "./activation-reentry.ts";
 import { startTypedWork, takeCancelNotice, typedStartArgument } from "./start-work-typed.ts";
+import { takePendingExtensionsNotice } from "./extensions-notice.ts";
 import { micro, supportsMarkGlyphs } from "./lit-mark.ts";
 import { recordNativeGoalUnavailable } from "./native-goal-ledger.ts";
 import { nativeGoalRoute } from "./v2/native-goal.ts";
@@ -125,6 +126,8 @@ export type ChatMessageActivationOptions = {
   readonly trustedInjectedSkill?: (sessionID: string) => string | undefined;
   /** Restores that skill after the root-turn reset; the command already showed its activation toast. */
   readonly onTrustedSkillResume?: (sessionID: string, skillId: string) => void | Promise<void>;
+  /** The OpenCode config root where an install leaves its one-time extensions notice for the next session. */
+  readonly extensionsNoticeRoot?: string;
 };
 
 // Activation belongs to root user sessions only: a delegated child prompt that
@@ -153,7 +156,11 @@ export function createChatMessageActivationHook(
   const operations = createLitGoalOperations(projectRoot);
   const processedOutputs = new WeakSet<object>();
 
-  return async (input, output) => {
+  const handle = async (
+    input: Parameters<ChatMessageHook>[0],
+    output: Parameters<ChatMessageHook>[1],
+    deferred: { extensionsNotice?: string }
+  ): Promise<void> => {
     // Object identity is internal to this hook instance; unlike part metadata,
     // it cannot be forged by a user-authored message to preserve stale state.
     if (processedOutputs.has(output)) return;
@@ -175,6 +182,10 @@ export function createChatMessageActivationHook(
           synthetic: true,
           metadata: { litopencode: { mode: "start-work", source: "chat.message", typed: "cancel-notice" } }
         });
+      }
+      // Taken here, once per root turn; added after routing so its skill names never read as the user's request.
+      if (options.extensionsNoticeRoot !== undefined) {
+        deferred.extensionsNotice = await takePendingExtensionsNotice(options.extensionsNoticeRoot);
       }
       if (trustedInjectedSkill !== undefined) {
         await options.onTrustedSkillResume?.(input.sessionID, trustedInjectedSkill);
@@ -369,6 +380,25 @@ export function createChatMessageActivationHook(
       });
     } catch { // no-excuse-ok: catch -- activation must survive best-effort ledger failure.
       // Prompt injection is the primary activation surface; ledger writes are best-effort.
+    }
+  };
+
+  return async (input, output) => {
+    const deferred: { extensionsNotice?: string } = {};
+    try {
+      await handle(input, output, deferred);
+    } finally {
+      if (deferred.extensionsNotice !== undefined) {
+        output.parts.push({
+          id: `prt_litopencode_extensions_notice_${idSuffix(input.messageID ?? output.message.id)}`,
+          sessionID: input.sessionID,
+          messageID: input.messageID ?? output.message.id,
+          type: "text",
+          text: deferred.extensionsNotice,
+          synthetic: true,
+          metadata: { litopencode: { source: "chat.message", typed: "extensions-notice" } }
+        });
+      }
     }
   };
 }

@@ -44,6 +44,15 @@ You get an `index.html` to try, and next time `/lit-recap` shows where you left 
 
 Each skill is pictured in the [skills gallery on GitHub](https://github.com/wjgoarxiv/litopencode/blob/main/docs/skills.md).
 
+## Extensions
+
+LitOpenCode's core is complete and works on its own. Nine skills that make files (decks, documents, figures, design and video covers) are LitFamily extensions, kept on the extension shelf [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use alongside LitOpenCode to get the full LitFamily experience: clone the shelf once, then for each skill run
+
+```sh
+rm -r ~/.config/opencode/skills/<skill>
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" ~/.config/opencode/skills/<skill>
+```
+
 ## Updates and removal
 
 LitOpenCode checks for updates on interactive start and after a successful install or doctor run. If you'd rather choose when to update, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`. `npm exec --package @litfamily/litopencode@latest -- litopencode doctor` checks the setup and changes nothing.

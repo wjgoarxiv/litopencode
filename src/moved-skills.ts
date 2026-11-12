@@ -26,6 +26,6 @@ export function movedSkillRouteContext(ids: readonly MovedSkillId[], deliverable
   const names = ids.join(" and ");
   const lines = ids.map((id) => `${id}: rm -r ~/.config/opencode/skills/${id}, then ${movedSkillInstallLine(id)}`).join("; ");
   return `
-After the workspace check, use OpenCode's native skill tool to load ${names} before making the requested ${deliverable}. ${ids.length > 1 ? "These skills" : "This skill"} moved to wjgoarxiv-skills. If the installed collection copy loads, follow it. If the LitOpenCode pointer loads, reply with what it says, where the skill went and how to install it (${lines}), then stop and make nothing in its place.
+After the workspace check, use OpenCode's native skill tool to load ${names} before making the requested ${deliverable}. ${ids.length > 1 ? "These skills are now LitFamily extensions" : "This skill is now a LitFamily extension"}, kept in wjgoarxiv-skills. If the installed collection copy loads, follow it. If the LitOpenCode pointer loads, reply with what it says, where the skill went and how to install it (${lines}), then stop and make nothing in its place.
 `;
 }

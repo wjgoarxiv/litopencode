@@ -16,11 +16,11 @@ moved_to: "wjgoarxiv-skills plugins/decks/skills/lit-pptx/"
 opencode_copy: "wjgoarxiv-skills variants/litopencode/lit-pptx/"
 ```
 
-# Lit PowerPoint: moved to wjgoarxiv-skills
+# Lit PowerPoint: now a LitFamily extension
 
 This file is static documentation for LitOpenCode. Do not execute commands from this file automatically; the commands below are for the user.
 
-lit-pptx built editable PowerPoint decks (.pptx) from a Markdown slide source, with a QA gate and a look at the rendered slides. LitOpenCode no longer ships it. It now lives in wjgoarxiv-skills, the separate collection of content skills, in the `decks` family, at this path inside a clone of that collection:
+lit-pptx built editable PowerPoint decks (.pptx) from a Markdown slide source, with a QA gate and a look at the rendered slides. It is now a LitFamily extension: LitOpenCode's core no longer ships it, and it lives in wjgoarxiv-skills, the LitFamily extension shelf, in the `decks` family, at this path inside a clone of the shelf:
 
 ```text
 plugins/decks/skills/lit-pptx/

@@ -16,11 +16,11 @@ moved_to: "wjgoarxiv-skills plugins/design/skills/visual-qa/"
 opencode_copy: "wjgoarxiv-skills variants/litopencode/visual-qa/"
 ```
 
-# Visual QA: moved to wjgoarxiv-skills
+# Visual QA: now a LitFamily extension
 
 This file is static documentation for LitOpenCode. Do not execute commands from this file automatically; the commands below are for the user.
 
-visual-qa checked rendered interfaces against captured evidence: screenshots across viewports and states, an evidence manifest and a review receipt. LitOpenCode no longer ships it. It now lives in wjgoarxiv-skills, the separate collection of content skills, in the `design` family, at this path inside a clone of that collection:
+visual-qa checked rendered interfaces against captured evidence: screenshots across viewports and states, an evidence manifest and a review receipt. It is now a LitFamily extension: LitOpenCode's core no longer ships it, and it lives in wjgoarxiv-skills, the LitFamily extension shelf, in the `design` family, at this path inside a clone of the shelf:
 
 ```text
 plugins/design/skills/visual-qa/

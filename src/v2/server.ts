@@ -63,7 +63,8 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
     autoHandoffRoute: events.route,
     extraSystem: events.systemText,
     acceptCommandMark: commands.acceptMark,
-    nativeGoal
+    nativeGoal,
+    extensionsNoticeRoot: defaultOpenCodeConfigRoot()
   });
   await context.session.hook("prompt", sessionHooks.prompt);
   await context.session.hook("context", sessionHooks.context);

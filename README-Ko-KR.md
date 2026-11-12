@@ -101,7 +101,7 @@ lit research 쓰기가 많은 로컬 앱에서 가장 중요한 SQLite 설정은
 
 ### 보고서, 발표자료, 그림
 
-워드 보고서, 파워포인트 덱, 개념도, 장치 도면, 학술지 그림, 화면, 영상, README 커버를 만들던 스킬은 이제 wjgoarxiv-skills라는 별도 모음에 있습니다. 필요한 스킬만 골라 설치하면 되고, 그만큼 LitOpenCode는 가벼워졌습니다. 예전 이름은 그대로 남아 있어서 `lit`으로 발표자료를 부탁하면 짧은 안내가 스킬이 옮겨 간 곳과 OpenCode에 복사해 넣는 명령을 알려 줍니다. 목록은 [스킬 갤러리](./docs/skills-Ko-KR.md#wjgoarxiv-skills로-옮긴-스킬)에 있습니다.
+워드 보고서, 파워포인트 덱, 개념도, 장치 도면, 학술지 그림, 화면, 영상, README 커버를 만들던 스킬은 이제 LitFamily 확장 스킬로 wjgoarxiv-skills에 있습니다([확장 스킬](#확장-스킬)). 필요한 스킬만 골라 LitOpenCode와 함께 설치하면 되고, 그만큼 LitOpenCode는 가벼워졌습니다. 예전 이름은 그대로 남아 있어서 `lit`으로 발표자료를 부탁하면 짧은 안내가 스킬이 옮겨 간 곳과 OpenCode에 복사해 넣는 명령을 알려 줍니다. 목록은 [스킬 갤러리](./docs/skills-Ko-KR.md#wjgoarxiv-skills로-옮긴-스킬)에 있습니다.
 
 ### 사람이 쓴 것 같은 글
 
@@ -121,6 +121,23 @@ lit research 쓰기가 많은 로컬 앱에서 가장 중요한 SQLite 설정은
 </table>
 
 다른 스킬의 결과 그림은 [스킬 갤러리](./docs/skills-Ko-KR.md)에서 볼 수 있습니다.
+
+## 확장 스킬
+
+LitOpenCode의 핵심 기능은 그 자체로 완성되어 있어서 다른 것을 더 설치하지 않아도 동작합니다. 계획, 구현, 검토, 조사, 인수인계를 비롯해 이 문서에 나온 기능은 모두 핵심에 들어 있습니다. 파일을 만드는 스킬은 그 바깥에 한 층으로 따로 있습니다. 발표자료, 워드 문서, 개념도, 장치 도면, 학술지 그림, 화면과 화면 점검, 영상과 README 커버를 만드는 스킬은 이제 LitFamily 확장 스킬이고, 확장 스킬을 모아 둔 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 스킬을 LitOpenCode와 함께 설치하면 LitFamily의 기능을 빠짐없이 쓸 수 있습니다.
+
+모음을 한 번 내려받은 뒤, 원하는 스킬마다 안내 폴더를 모음에 있는 OpenCode용 복사본으로 바꿉니다.
+
+```sh
+rm -r ~/.config/opencode/skills/<skill>
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" ~/.config/opencode/skills/<skill>
+```
+
+아홉 개는 `lit-pptx`(발표자료), `lit-docx`(문서), `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`(그림), `frontend-ui-ux`, `visual-qa`(디자인), `lit-typographic-motion`, `readme-studio`(영상·커버)입니다. `XDG_CONFIG_HOME`을 설정했다면 `$XDG_CONFIG_HOME/opencode/skills/`를 쓰고, 설치한 뒤에는 새 세션을 여세요. 영상 스킬은 처음 한 번 `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`을 실행해야 합니다. `litopencode install`은 직접 넣은 복사본을 덮어쓰지 않고, `litopencode doctor`는 그 복사본을 보존된 스킬로 표시합니다.
+
+설치하기 전까지는 같은 이름의 짧은 안내 스킬이 같은 내용을 알려 줍니다. 설치 프로그램도 실행할 때 확장 스킬을 안내하고, 설치나 업데이트 뒤 첫 세션에서 한 번 더 알려 줍니다.
+
+1.0.43 이하에서 업데이트하면 예전 스킬 폴더가 안내 폴더로 바뀝니다. 그 폴더 안에 직접 추가하거나 고친 파일은 먼저 `~/.config/opencode/.litopencode-skill-backups/` 아래 날짜 폴더로 복사되고, 설치 프로그램이 그 위치를 출력합니다. 예전 버전이 남긴 것도 알려 줍니다. `~/.cache/litopencode/motion-runtime`과 `~/.cache/litopencode/office`(`XDG_CACHE_HOME`을 설정했다면 그 아래), 그리고 `~/.cache/opencode/packages/@litfamily/` 아래에 OpenCode가 받아 둔 예전 플러그인입니다. 이제 아무것도 읽지 않고 확장 스킬은 자기 캐시를 따로 쓰므로 지워도 됩니다.
 
 ## 이런 분께 맞습니다
 

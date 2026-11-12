@@ -7,15 +7,17 @@ import {
   invalidInstalledAssets,
   nativeSkillsRoot,
   nativeSkillsRootLink,
+  userOwnedSkillFiles,
   validateSkillSource,
   type DestinationState,
   type NativeSkillsRootLink,
   type ShadowedSkill
 } from "./native-skill-integrity.ts";
+import { skillBackupsDirectoryName } from "./native-skill-install.ts";
 import type { InstallReport, PackageMetadata } from "./types.ts";
 
 export { validateManagedSkillSource } from "./native-skill-integrity.ts";
-export { ensureNativeSkills } from "./native-skill-install.ts";
+export { ensureNativeSkills, skillBackupsDirectoryName, type NativeSkillBackup } from "./native-skill-install.ts";
 export type { NativeSkillsRootLink, ShadowedSkill, ShadowSkillLocation, ShadowSkillLocationId } from "./native-skill-integrity.ts";
 
 // nativeSkillsRoot() follows the same intentional-symlink resolution install uses; if it fails,
@@ -35,10 +37,14 @@ export async function describeNativeSkillMutation(
   const write: string[] = [];
   const preserve: string[] = [];
   const collisions: string[] = [];
+  const preserveFiles: string[] = [];
   for (const skill of litOpenCodeRuntimeSkills) {
     await validateSkillSource(metadata, skill);
     const destination = await destinationState(root, skill);
-    if (destination.kind === "managed") await assertInstalledCanonicalOwnership(root, skill);
+    if (destination.kind === "managed") {
+      await assertInstalledCanonicalOwnership(root, skill);
+      preserveFiles.push(...(await userOwnedSkillFiles(root, metadata, skill)).map((file) => `${skill.id}/${file}`));
+    }
     if (destination.kind === "absent" || destination.kind === "managed") write.push(skill.id);
     else {
       preserve.push(skill.id);
@@ -52,6 +58,9 @@ export async function describeNativeSkillMutation(
     write,
     preserve,
     collisions,
+    // Files the user added or edited inside a folder that will be replaced; install copies them out first.
+    preserveFiles,
+    ...(preserveFiles.length === 0 ? {} : { backupRoot: path.join(root, skillBackupsDirectoryName) }),
     ...(link === undefined ? {} : { link })
   };
 }

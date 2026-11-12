@@ -37,6 +37,7 @@ import { renderLitOpenCodeWordmark } from "./install-tui.ts";
 import { promptModelSelection, promptOutputStyle, promptPermissionMode } from "./model-routing.ts";
 import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } from "./native-skills.ts";
+import { extensionsNoticeLines, previousVersionLeftovers, writePendingExtensionsNotice } from "../extensions-notice.ts";
 import { installAgentFile, planAgentFile } from "./agent-file-command.ts";
 import { applyPluginMutation, describePluginMutation, isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { applyCliJsonCleanup, applyTuiWrites, backupTuiFiles, inspectTuiPlugin, planCliJsonCleanup, planTuiInstall, skippedTuiPlan } from "./tui-config.ts";
@@ -479,11 +480,10 @@ export async function install(
 
   await withProgress(activeProgress, "Write litopencode.json", async () => {
     await ensureLitConfig(root, selectedModel, selectedPermissionMode, selectedPermissionExplicit, selectedOutputStyle);
-    await ensureNativeSkills(root, metadata);
     await ensureCommandAliases(root);
   });
 
-  await withProgress(activeProgress, "Register plugin", async () => {
+  const registerPlugin = async (): Promise<void> => {
     if (resolved.runInstaller) {
       // The package's `./tui` export makes `opencode plugin` add the TUI entry itself, so back up
       // first, then normalize whatever it wrote without a second backup.
@@ -520,6 +520,12 @@ export async function install(
     assertNoHostOnlyKeysAdded(before, next);
     if (next === null || JSON.stringify(next) === JSON.stringify(before)) return;
     await writeOpenCodeConfig(configFile, next);
+  };
+  // The skill folders are replaced only after the plugin is registered, so a failed registration leaves the
+  // installed skills, and any file the user keeps in them, exactly as they were.
+  const skillBackup = await withProgress(activeProgress, "Register plugin", async () => {
+    await registerPlugin();
+    return ensureNativeSkills(root, metadata);
   });
   if (resolved.forV2) await applyCliJsonCleanup(cliJson);
   await withProgress(activeProgress, "Verify install", async () =>
@@ -536,13 +542,22 @@ export async function install(
     )
   );
   await activeProgress?.complete();
+  const notice = extensionsNoticeLines(await previousVersionLeftovers(metadata.version)).join("\n");
+  await writePendingExtensionsNotice(root, notice);
+  const backupLines = skillBackup.directory === undefined
+    ? ""
+    : wrapReceiptLine(
+        `Kept ${skillBackup.files.length} ${skillBackup.files.length === 1 ? "file" : "files"} you added or changed in skill folders LitOpenCode replaced. ` +
+        "They are in:"
+      ) + `\n  ${skillBackup.directory}\n`;
   // The block is the last step: it asks a question, and a refusal here never undoes a finished install.
   const agentFileLine = wrapReceiptLine(await installAgentFile(agentFileInput));
+  const tail = backupLines + "\n" + notice + "\n\n" + agentFileLine;
 
   return {
     exitCode: 0,
     stdout: activeProgress === undefined
-      ? renderLitOpenCodeWordmark(pluginSpec(metadata), false) + "\n" + renderInstallReport(report) + "\n" + agentFileLine
-      : agentFileLine
+      ? renderLitOpenCodeWordmark(pluginSpec(metadata), false) + "\n" + renderInstallReport(report) + "\n" + tail
+      : tail
   };
 }

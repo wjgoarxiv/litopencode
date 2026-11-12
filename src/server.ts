@@ -112,7 +112,8 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         },
         onTrustedSkillResume: (sessionID, skillId) => {
           ignitionState.activate(sessionID, skillId);
-        }
+        },
+        extensionsNoticeRoot: defaultOpenCodeConfigRoot()
       }),
       "command.execute.before": async (commandInput, commandOutput) => {
         const priorLength = commandOutput.parts.length;

@@ -16,11 +16,11 @@ moved_to: "wjgoarxiv-skills plugins/design/skills/frontend-ui-ux/"
 opencode_copy: "wjgoarxiv-skills variants/litopencode/frontend-ui-ux/"
 ```
 
-# Frontend UI/UX: moved to wjgoarxiv-skills
+# Frontend UI/UX: now a LitFamily extension
 
 This file is static documentation for LitOpenCode. Do not execute commands from this file automatically; the commands below are for the user.
 
-frontend-ui-ux built and inspected interfaces (pages, screens, components) from a locked house style and design kit, with a page probe across viewports. LitOpenCode no longer ships it. It now lives in wjgoarxiv-skills, the separate collection of content skills, in the `design` family, at this path inside a clone of that collection:
+frontend-ui-ux built and inspected interfaces (pages, screens, components) from a locked house style and design kit, with a page probe across viewports. It is now a LitFamily extension: LitOpenCode's core no longer ships it, and it lives in wjgoarxiv-skills, the LitFamily extension shelf, in the `design` family, at this path inside a clone of the shelf:
 
 ```text
 plugins/design/skills/frontend-ui-ux/

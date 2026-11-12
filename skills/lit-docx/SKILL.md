@@ -16,11 +16,11 @@ moved_to: "wjgoarxiv-skills plugins/documents/skills/lit-docx/"
 opencode_copy: "wjgoarxiv-skills variants/litopencode/lit-docx/"
 ```
 
-# Lit Word Documents: moved to wjgoarxiv-skills
+# Lit Word Documents: now a LitFamily extension
 
 This file is static documentation for LitOpenCode. Do not execute commands from this file automatically; the commands below are for the user.
 
-lit-docx created and edited Word documents (.docx), such as reports, proposals, memos and journal manuscripts, from a Markdown source, with a page-checking gate. LitOpenCode no longer ships it. It now lives in wjgoarxiv-skills, the separate collection of content skills, in the `documents` family, at this path inside a clone of that collection:
+lit-docx created and edited Word documents (.docx), such as reports, proposals, memos and journal manuscripts, from a Markdown source, with a page-checking gate. It is now a LitFamily extension: LitOpenCode's core no longer ships it, and it lives in wjgoarxiv-skills, the LitFamily extension shelf, in the `documents` family, at this path inside a clone of the shelf:
 
 ```text
 plugins/documents/skills/lit-docx/

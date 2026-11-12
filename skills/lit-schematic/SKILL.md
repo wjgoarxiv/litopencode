@@ -16,11 +16,11 @@ moved_to: "wjgoarxiv-skills plugins/figures/skills/lit-schematic/"
 opencode_copy: "wjgoarxiv-skills variants/litopencode/lit-schematic/"
 ```
 
-# Lit Schematic: moved to wjgoarxiv-skills
+# Lit Schematic: now a LitFamily extension
 
 This file is static documentation for LitOpenCode. Do not execute commands from this file automatically; the commands below are for the user.
 
-lit-schematic drew physical schematics of real equipment (P&IDs, PFDs, apparatus figures and isometric cutaways) as editable SVG with a drawing check. LitOpenCode no longer ships it. It now lives in wjgoarxiv-skills, the separate collection of content skills, in the `figures` family, at this path inside a clone of that collection:
+lit-schematic drew physical schematics of real equipment (P&IDs, PFDs, apparatus figures and isometric cutaways) as editable SVG with a drawing check. It is now a LitFamily extension: LitOpenCode's core no longer ships it, and it lives in wjgoarxiv-skills, the LitFamily extension shelf, in the `figures` family, at this path inside a clone of the shelf:
 
 ```text
 plugins/figures/skills/lit-schematic/

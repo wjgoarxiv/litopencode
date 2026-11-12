@@ -16,11 +16,11 @@ moved_to: "wjgoarxiv-skills plugins/figures/skills/lit-scientific-visualization/
 opencode_copy: "wjgoarxiv-skills variants/litopencode/lit-scientific-visualization/"
 ```
 
-# Scientific Visualization: moved to wjgoarxiv-skills
+# Scientific Visualization: now a LitFamily extension
 
 This file is static documentation for LitOpenCode. Do not execute commands from this file automatically; the commands below are for the user.
 
-lit-scientific-visualization made publication-ready scientific figures from measured data, following the scientific-visualization source it adapted. LitOpenCode no longer ships it. It now lives in wjgoarxiv-skills, the separate collection of content skills, in the `figures` family, at these paths inside a clone of that collection:
+lit-scientific-visualization made publication-ready scientific figures from measured data, following the scientific-visualization source it adapted. It is now a LitFamily extension: LitOpenCode's core no longer ships it, and it lives in wjgoarxiv-skills, the LitFamily extension shelf, in the `figures` family, at these paths inside a clone of the shelf:
 
 ```text
 plugins/figures/skills/lit-scientific-visualization/

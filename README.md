@@ -101,7 +101,7 @@ lit research Which SQLite settings matter most for a write-heavy local app?
 
 ### Reports, decks and figures
 
-The skills that made Word reports, PowerPoint decks, diagrams, equipment drawings, journal figures, interfaces, films and README covers now live in wjgoarxiv-skills, a separate collection where you install only the skills you want. LitOpenCode stays smaller for it. Each old name still answers: ask for a deck with `lit` and a short pointer tells you where the skill went and gives the command that copies it into OpenCode. The [skills gallery](./docs/skills.md#moved-to-wjgoarxiv-skills) lists them.
+The skills that made Word reports, PowerPoint decks, diagrams, equipment drawings, journal figures, interfaces, films and README covers are now LitFamily extensions, kept in wjgoarxiv-skills, and you install only the ones you use ([Extensions](#extensions)). LitOpenCode stays smaller for it. Each old name still answers: ask for a deck with `lit` and a short pointer tells you where the skill went and gives the command that copies it into OpenCode. The [skills gallery](./docs/skills.md#moved-to-wjgoarxiv-skills) lists them.
 
 ### Writing that sounds like a person
 
@@ -121,6 +121,23 @@ Each picture below came out of LitOpenCode on one Mac, from the skill named unde
 </table>
 
 The [skills gallery](./docs/skills.md) has a picture for every other skill.
+
+## Extensions
+
+LitOpenCode's core is complete and works on its own. Planning, building, review, research, handoffs and everything else on this page need nothing more. The skills that make files sit one layer out: decks, Word documents, diagrams, equipment drawings, journal figures, interfaces and their checks, films and README covers are LitFamily extensions, kept on the extension shelf, [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use alongside LitOpenCode and you get the full LitFamily experience.
+
+Clone the shelf once. Then, for each skill you want, swap its pointer folder for the shelf's OpenCode copy:
+
+```sh
+rm -r ~/.config/opencode/skills/<skill>
+cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" ~/.config/opencode/skills/<skill>
+```
+
+The nine are `lit-pptx` (decks), `lit-docx` (documents), `lit-diagram-drawer`, `lit-schematic` and `lit-scientific-visualization` (figures), `frontend-ui-ux` and `visual-qa` (design), and `lit-typographic-motion` and `readme-studio` (video covers). Use `$XDG_CONFIG_HOME/opencode/skills/` when that is set, and start a new session afterwards. The film skill needs `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install` once. `litopencode install` never overwrites a copy you put there, and `litopencode doctor` lists it as preserved.
+
+Until you install one, its name still answers with a short pointer that says the same. The installer tells you about the extensions when it runs, and the first session after an install or update tells you once more.
+
+If you are updating from 1.0.43 or earlier, the update replaces the old skill folders with pointers. A file you added or changed inside one of them is copied first to a dated folder under `~/.config/opencode/.litopencode-skill-backups/`, and the installer prints where. It also names what the old version left behind: `~/.cache/litopencode/motion-runtime` and `~/.cache/litopencode/office` (under `$XDG_CACHE_HOME` when that is set), and OpenCode's copy of the old plugin under `~/.cache/opencode/packages/@litfamily/`. Nothing reads them now and the extensions keep their own, so you can delete them.
 
 ## Who it's for
 
