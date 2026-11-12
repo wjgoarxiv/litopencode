@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -137,6 +137,30 @@ test("update reports current, then reinstalls a changed source with a second bac
     assert.match(readFileSync(path.join(target("lit-docx"), "SKILL.md"), "utf8"), /v2/u);
     const [stamp] = readdirSync(backups);
     assert.equal(receiptOf(path.join(backups, stamp, "lit-docx")).sha256, first, "the old copy moved aside with its receipt");
+  });
+});
+
+test("update compares by content hash only: a new source with the same content stays current and only the receipt's source changes", () => {
+  sandbox(({ cli, dir, clone, target, backups }) => {
+    assert.equal(cli(["extensions", "install", "lit-docx", "--from", clone, "--yes"]).status, 0);
+    const before = receiptOf(target("lit-docx"));
+    const other = path.join(dir, "other-clone");
+    cpSync(clone, other, { recursive: true });
+    const moved = path.join(other, "variants", "litopencode", "lit-docx");
+
+    const dry = cli(["extensions", "update", "lit-docx", "--from", other]);
+    assert.equal(dry.status, 0, dry.stderr);
+    assert.match(dry.stdout, /lit-docx: current/u);
+    assert.doesNotMatch(dry.stdout, /would update/u);
+    assert.deepEqual(receiptOf(target("lit-docx")), before, "a dry run writes nothing");
+
+    const done = cli(["extensions", "update", "--from", other, "--yes"]);
+    assert.equal(done.status, 0, done.stderr);
+    assert.match(done.stdout, /lit-docx: current/u);
+    assert.doesNotMatch(done.stdout, /updated/u);
+    assert.equal(existsSync(backups), false, "same content makes no backup");
+    assert.deepEqual(receiptOf(target("lit-docx")), { ...before, source: moved }, "only the source field is rewritten");
+    assert.deepEqual(readdirSync(target("lit-docx")).sort(), [".litfamily-extension.json", "SKILL.md", "scripts"], "no stage or temp file is left");
   });
 });
 

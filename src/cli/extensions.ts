@@ -390,6 +390,18 @@ async function copyTree(source: string, destination: string): Promise<void> {
   }
 }
 
+/** Same content from a different clone: rewrite only the receipt's source, through a temp file renamed over it. */
+async function rewriteReceiptSource(folder: string, receipt: ExtensionReceipt, source: string): Promise<void> {
+  const file = path.join(folder, extensionReceiptName);
+  const temp = path.join(folder, `.${extensionReceiptName}.${randomUUID()}.tmp`);
+  try {
+    await fs.writeFile(temp, `${JSON.stringify({ ...receipt, source })}\n`, { flag: "wx" });
+    await fs.rename(temp, file);
+  } finally {
+    await fs.rm(temp, { force: true });
+  }
+}
+
 /** Copies into a stage beside the target, moves any existing folder whole into the backup, then swaps the stage in. */
 async function placeExtension(skillsRoot: string, entry: ExtensionEntry, source: string, sourceHash: string, backup: ReturnType<typeof backupFolderFor>): Promise<string | undefined> {
   await fs.mkdir(skillsRoot, { recursive: true });
@@ -489,7 +501,8 @@ async function runInstallOrUpdate(args: ExtensionsArgs, env: NodeJS.ProcessEnv, 
       }
       const hash = await treeHash(from);
       const installedHash = entry.state === "installed" ? entry.receipt?.sha256 ?? await treeHash(entry.path) : undefined;
-      const same = installedHash === hash && entry.receipt?.source === from;
+      // Content decides: the same tree hash is current even when it now comes from another clone.
+      const same = installedHash === hash;
       plans.push({ entry, from, hash, action: same ? "current" : entry.state === "installed" ? "update" : "install" });
     }
   } else {
@@ -504,7 +517,14 @@ async function runInstallOrUpdate(args: ExtensionsArgs, env: NodeJS.ProcessEnv, 
   for (const plan of plans) {
     const { entry } = plan;
     if (plan.action === "current") {
-      lines.push(`${entry.id}: current`);
+      if (entry.receipt === undefined || entry.receipt.source === plan.from) {
+        lines.push(`${entry.id}: current`);
+      } else if (!args.yes) {
+        lines.push(`${entry.id}: current (would record ${plan.from} as the source in ${extensionReceiptName})`);
+      } else {
+        await rewriteReceiptSource(entry.path, entry.receipt, plan.from);
+        lines.push(`${entry.id}: current (the receipt now names ${plan.from} as the source)`);
+      }
       continue;
     }
     const verbWord = plan.action === "update" ? "update" : "install";
@@ -520,7 +540,7 @@ async function runInstallOrUpdate(args: ExtensionsArgs, env: NodeJS.ProcessEnv, 
     lines.push(`${entry.id}: ${plan.action === "update" ? "updated" : "installed"} from ${plan.from}${movedTo === undefined ? "" : `; the folder that was there is in ${movedTo}`}`);
   }
   if (changed > 0) lines.push("", "Start a new OpenCode session to load the change. litopencode install leaves these folders alone.");
-  if (!args.yes && plans.some((plan) => plan.action !== "current")) lines.push("", `Run again with --yes to do it.`);
+  if (!args.yes && plans.some((plan) => plan.action !== "current" || (plan.entry.receipt !== undefined && plan.entry.receipt.source !== plan.from))) lines.push("", `Run again with --yes to do it.`);
   return { exitCode: 0, stdout: lines.join("\n") };
 }
 
