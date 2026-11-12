@@ -39,6 +39,7 @@ import { promptModelSelection, promptOutputStyle, promptPermissionMode } from ".
 import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } from "./native-skills.ts";
 import { extensionsNoticeLines, previousVersionLeftovers, writePendingExtensionsNotice } from "../extensions-notice.ts";
+import { inspectExtensions } from "./extensions.ts";
 import { installAgentFile, planAgentFile } from "./agent-file-command.ts";
 import { applyPluginMutation, describePluginMutation, isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { applyCliJsonCleanup, applyTuiWrites, backupTuiFiles, inspectTuiPlugin, planCliJsonCleanup, planTuiInstall, skippedTuiPlan } from "./tui-config.ts";
@@ -546,7 +547,9 @@ export async function install(
     )
   );
   await activeProgress?.complete();
-  const notice = extensionsNoticeLines(await previousVersionLeftovers(metadata.version)).join("\n");
+  // An existing user is pointed at `extensions check` once when it finds something; nothing changes on its own.
+  const needsCheck = await inspectExtensions(root).then((report) => report.needsAction.length > 0, () => false);
+  const notice = extensionsNoticeLines(await previousVersionLeftovers(metadata.version), needsCheck).join("\n");
   await writePendingExtensionsNotice(root, notice);
   const backupLines = skillBackup.directory === undefined
     ? ""

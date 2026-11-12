@@ -28,14 +28,20 @@ function wrap(text: string, width = 78): string[] {
   return lines;
 }
 
-export function extensionsNoticeLines(leftovers: readonly string[] = []): string[] {
+export function extensionsNoticeLines(leftovers: readonly string[] = [], needsCheck = false): string[] {
   return [
     "LitFamily extensions",
     ...wrap(
       "LitOpenCode's core is complete and works on its own. Nine skills that make files (decks, documents, " +
         `figures, design and video covers) are now LitFamily extensions, kept on the extension shelf at ${extensionsShelfUrl}. ` +
         "Install the ones you use alongside LitOpenCode to get the full LitFamily experience. " +
-        "Clone the shelf once, then for each skill you want run these four lines. The first lists same-name " +
+        "LitOpenCode installs them for you: the first command below shows what is there, the second prints what it " +
+        "would do, and adding --yes does it. Update and remove work the same way."
+    ),
+    "  litopencode extensions list",
+    "  litopencode extensions install <skill>",
+    ...wrap(
+      "To do it by hand, clone the shelf once, then for each skill you want run these four lines. The first lists same-name " +
         "copies OpenCode would also read; the second moves the pointer folder whole into a dated backup that " +
         "OpenCode never reads (nothing is deleted); the third copies the extension in; the fourth writes its receipt. " +
         "To update, run them again."
@@ -55,6 +61,9 @@ export function extensionsNoticeLines(leftovers: readonly string[] = []): string
     '    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \\',
     "    > ~/.config/opencode/skills/<skill>/.litfamily-extension.json",
     ...wrap(`The nine: ${Object.keys(movedSkillFamilies).join(", ")}.`),
+    ...(needsCheck
+      ? wrap("Some extension folders need a look (a same-name copy, or a folder with no receipt). Nothing was changed. See: litopencode extensions check")
+      : []),
     ...(leftovers.length === 0
       ? []
       : [

@@ -26,6 +26,7 @@ import {
 } from "../auto-handoff.ts";
 import { inspectLspCapability } from "./lsp-capability.ts";
 import { agentFileState, globalAgentFilePath, readAgentFileMode } from "./agent-file.ts";
+import { extensionsSummaryLine, inspectExtensions } from "./extensions.ts";
 import { isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { inspectTuiPlugin, planCliJsonCleanup } from "./tui-config.ts";
 import { detectOpenCodeHosts, targetsV1, targetsV2, type HostChoice } from "./host-detect.ts";
@@ -307,6 +308,17 @@ export async function doctor(root: string, hostChoice: HostChoice = "auto"): Pro
   const agentFileMode = await readAgentFileMode(root);
   const agentFileBlock = agentFileMode === "off" ? "off" : agentFileState({ path: agentFilePath, version: metadata.version });
 
+  // The same read-only check as `litopencode extensions check`, summarized; it never changes install.ok.
+  const extensions = await inspectExtensions(root).then(
+    (report) => ({
+      line: extensionsSummaryLine(report),
+      installed: report.extensions.filter((entry) => entry.state === "installed").map((entry) => entry.id),
+      needsAction: report.needsAction.length,
+      fix: report.needsAction.length === 0 ? null : "litopencode extensions check"
+    }),
+    (error: unknown) => ({ line: `EXTENSIONS: could not be read (${error instanceof Error ? error.message : String(error)})`, installed: [], needsAction: 0, fix: "litopencode extensions check" })
+  );
+
   return {
     exitCode: 0,
     stdout: JSON.stringify(
@@ -318,6 +330,7 @@ export async function doctor(root: string, hostChoice: HostChoice = "auto"): Pro
           mode: agentFileMode,
           line: `AGENT_FILE: ${agentFileBlock} (${agentFilePath}; change: litopencode agent-file on|off)`
         },
+        extensions,
         capabilities: openCodeHostCapabilities(),
         hostLimits: { path: hostConfig.path, ...inspectHostLimits(hostConfig.config) },
         host: {

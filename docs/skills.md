@@ -272,6 +272,8 @@ The skills that made files and pictures moved to wjgoarxiv-skills, a separate co
 | `lit-typographic-motion` | `video-covers` |
 | `readme-studio` | `video-covers` |
 
+LitOpenCode can install a copy for you. `litopencode extensions install lit-docx` checks for a same-name skill in the other folders OpenCode reads and stops if it finds one, then prints what it would do; `--yes` moves the pointer aside, copies the shelf's OpenCode edition in and writes the receipt. It fetches the shelf with git into its own cache, or uses `--from <clone>`. `list`, `check`, `update`, `remove` and `prune-backups` work the same way, and none of them writes before `--yes`. The steps below are the same work done by hand.
+
 OpenCode keeps one skill per name and loads two same-name folders in no fixed order, so the copy replaces the pointer folder instead of sitting beside it. Clone the collection once from https://github.com/wjgoarxiv/wjgoarxiv-skills, then, for one skill, run four lines. The first only lists the same-name folders OpenCode reads (`~/.agents/skills` and `~/.claude/skills` too, and a project's `.opencode/`, `.agents/` and `.claude/` skills); move any copy outside `~/.config/opencode/skills` out of the way. The second moves the pointer folder whole into a dated folder under `~/.config/opencode/extension-backups/`, which neither OpenCode 1 nor OpenCode 2 reads skills from, so nothing is deleted. The third copies the extension in. The fourth writes `.litfamily-extension.json` inside it, a receipt naming the id, source, variant and install time that OpenCode ignores.
 
 ```sh

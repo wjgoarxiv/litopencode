@@ -46,7 +46,7 @@ Each skill is pictured in the [skills gallery on GitHub](https://github.com/wjgo
 
 ## Extensions
 
-LitOpenCode's core is complete and works on its own. Nine skills that make files (decks, documents, figures, design and video covers) are LitFamily extensions, kept on the extension shelf [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use alongside LitOpenCode to get the full LitFamily experience: clone the shelf once, then for each skill run these four lines. They list same-name copies, move the pointer folder whole into a dated backup that OpenCode never reads (nothing is deleted), copy the extension in and write its receipt. Run them again to update.
+LitOpenCode's core is complete and works on its own. Nine skills that make files (decks, documents, figures, design and video covers) are LitFamily extensions, kept on the extension shelf [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills). Install the ones you use alongside LitOpenCode to get the full LitFamily experience. `litopencode extensions install <skill>` does it for you: it stops if OpenCode also reads a same-name skill elsewhere, prints its plan, and acts only with `--yes`; `list`, `check`, `update`, `remove` and `prune-backups` work the same way. By hand, clone the shelf once, then for each skill run these four lines. They list same-name copies, move the pointer folder whole into a dated backup that OpenCode never reads (nothing is deleted), copy the extension in and write its receipt. Run them again to update.
 
 ```sh
 ls -d ~/.config/opencode/skills/<skill> ~/.agents/skills/<skill> ~/.claude/skills/<skill> 2>/dev/null

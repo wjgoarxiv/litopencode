@@ -272,6 +272,8 @@ flowchart TD
 | `lit-typographic-motion` | `video-covers` |
 | `readme-studio` | `video-covers` |
 
+복사본 설치는 LitOpenCode에 맡길 수 있습니다. `litopencode extensions install lit-docx`는 OpenCode가 읽는 다른 폴더에 같은 이름의 스킬이 있는지 먼저 보고, 있으면 멈춘 다음 할 일을 출력합니다. `--yes`를 붙이면 안내 폴더를 옮겨 두고, 모음의 OpenCode용 복사본을 넣고, 설치 기록을 남깁니다. 모음은 git으로 자기 캐시에 받아 오거나 `--from <clone>`으로 받은 폴더를 씁니다. `list`, `check`, `update`, `remove`, `prune-backups`도 같은 방식이고, 모두 `--yes` 전에는 아무것도 쓰지 않습니다. 아래 단계는 같은 일을 손으로 하는 방법입니다.
+
 OpenCode는 이름 하나에 스킬 하나만 두고, 이름이 같은 폴더가 둘이면 어느 쪽을 읽을지 정해져 있지 않습니다. 그래서 복사본은 안내 폴더 옆에 두지 않고 그 자리를 대신합니다. 모음을 https://github.com/wjgoarxiv/wjgoarxiv-skills 에서 한 번 클론한 뒤, 스킬 하나마다 네 줄을 실행합니다. 첫 줄은 OpenCode가 읽는 같은 이름의 폴더(`~/.agents/skills`, `~/.claude/skills`, 프로젝트의 `.opencode/`, `.agents/`, `.claude/` 스킬 폴더 포함)를 보여 주기만 합니다. `~/.config/opencode/skills` 밖의 사본이 나오면 다른 곳으로 옮겨 두세요. 둘째 줄은 안내 폴더를 통째로 `~/.config/opencode/extension-backups/` 아래 날짜 폴더로 옮깁니다. OpenCode 1과 2 모두 그곳에서 스킬을 읽지 않고, 지워지는 것은 없습니다. 셋째 줄은 확장 스킬을 복사합니다. 넷째 줄은 그 안에 `.litfamily-extension.json`을 남깁니다. id, 출처, 변형, 설치 시각을 적은 설치 기록이며 OpenCode는 이 파일을 읽지 않습니다.
 
 ```sh

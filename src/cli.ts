@@ -2,6 +2,7 @@ import { isLoopCommand, parseArgs } from "./cli/args.ts";
 import { runLoopCommand } from "./cli/loop.ts";
 import { doctor } from "./cli/doctor.ts";
 import { runAgentFileCommand } from "./cli/agent-file-command.ts";
+import { runExtensionsCommand } from "./cli/extensions.ts";
 import { install } from "./cli/install.ts";
 import { createInstallTui, renderLitOpenCodeWordmark, shouldRenderInstallTui } from "./cli/install-tui.ts";
 import type { CliResult, InstallProgress, ParsedArgs } from "./cli/types.ts";
@@ -45,6 +46,11 @@ function helpText(): string {
     "  litopencode agent-file project [--dir <path>] [--dry-run]",
     "  litopencode doctor [--json] [--root <dir>]",
     "  litopencode tui remove [--dry-run] [--root <dir>]",
+    "  litopencode extensions list [--json] | litopencode extensions check [--json]",
+    "  litopencode extensions install <skill...> | --family <name> | --all [--from <clone>] [--allow-shadow] [--yes]",
+    "  litopencode extensions update [<skill...> | --all] [--from <clone>] [--yes]",
+    "  litopencode extensions remove <skill...> [--yes]",
+    "  litopencode extensions prune-backups [--older-than <days>] [--yes]",
     "  litopencode fetch-public <url> [--json] [--timeout <ms>] [--max-bytes <n>]",
     "  litopencode fetch-public <local-url> --json --allow-private-network  # trusted fixtures only",
     "  OpenCode /start-work init|resume|cancel|complete|status <schema-3 JSON>",
@@ -64,6 +70,8 @@ function helpText(): string {
     "  doctor        Report package, config, and runtime path status without writing files.",
     "  agent-file    Add, remove or switch off the short LitFamily block in OpenCode's global AGENTS.md; project writes it into a repo's AGENTS.md.",
     "  tui remove    Remove only LitOpenCode's TUI panel entry from tui.json/tui.jsonc (backed up first).",
+    "  extensions    Install, update, check and remove the nine LitFamily extensions from wjgoarxiv-skills. Writing verbs",
+    "                are dry runs until --yes; a replaced folder moves whole into extension-backups, never deleted.",
     "  fetch-public  Fetch a public URL with SSRF guards, verdicts, and trace output.",
     "                --allow-private-network is opt-in for reviewed local fixtures or trusted internal tests.",
     "",
@@ -94,7 +102,7 @@ function helpText(): string {
     "  lit-adhd (alias lit-rewind) shows a KPI board of this worktree family: the one step to take now, done and",
     "           left counts, milestones and reminders, real progress only; go follows the step, lit approve and",
     "           lit deny settle parked steps, lit cancel ends a run, and lit adhd detail adds the per-session cards.",
-    "  Moved to wjgoarxiv-skills (each id stays as a same-name pointer with its OpenCode install line):",
+    "  Moved to wjgoarxiv-skills (each id stays as a same-name pointer until litopencode extensions install replaces it):",
     "    lit-pptx, lit-docx, lit-diagram-drawer, lit-schematic, lit-scientific-visualization,",
     "    frontend-ui-ux, visual-qa, lit-typographic-motion and readme-studio.",
     "  Each skill resolves its own helpers inside its own installed tree; these skills add no command,",
@@ -135,6 +143,8 @@ function helpText(): string {
 }
 
 export async function runCli(argv: readonly string[] = process.argv.slice(2), options: RunCliOptions = {}): Promise<CliResult> {
+  // The extensions verbs keep their own flags, so they are parsed apart from the installer's.
+  if (argv[0] === "extensions") return await runExtensionsCommand(argv.slice(1));
   let parsed: ParsedArgs;
   try {
     parsed = parseArgs(argv);

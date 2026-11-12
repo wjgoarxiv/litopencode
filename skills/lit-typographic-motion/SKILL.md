@@ -41,7 +41,7 @@ The request that loaded this pointer. Nothing else is read.
 
 ## #contract.procedure
 
-OpenCode keeps one skill per name, so the copy takes this folder's place. Clone https://github.com/wjgoarxiv/wjgoarxiv-skills once, then run the four lines. The first only lists same-name folders OpenCode reads; move any outside `~/.config/opencode/skills` out of the way (a project's `.opencode/`, `.agents/` and `.claude/` skills too). The second moves this folder whole into a dated backup, the third copies the extension in, the fourth writes its receipt.
+OpenCode keeps one skill per name, so the copy takes this folder's place. `litopencode extensions install lit-typographic-motion --yes` does it for you; `update` and `remove` work alike. By hand, clone https://github.com/wjgoarxiv/wjgoarxiv-skills once, then run the four lines. The first only lists same-name folders OpenCode reads; move any outside `~/.config/opencode/skills` out of the way (a project's `.opencode/`, `.agents/` and `.claude/` skills too). The second moves this folder whole into a dated backup, the third copies the extension in, the fourth writes its receipt.
 
 ```sh
 ls -d ~/.config/opencode/skills/lit-typographic-motion ~/.agents/skills/lit-typographic-motion ~/.claude/skills/lit-typographic-motion 2>/dev/null
@@ -69,7 +69,7 @@ The reply is the evidence. If the user says the copy is installed and this point
 
 ## #contract.hard_stops
 
-Never run the install lines or write into the OpenCode skills root yourself.
+Never run these lines or commands, or write into the OpenCode skills root yourself.
 
 ## #contract.anti_patterns
 
