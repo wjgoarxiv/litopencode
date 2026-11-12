@@ -130,16 +130,16 @@ LitOpenCode의 핵심 기능은 그 자체로 완성되어 있어서 다른 것�
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/core-extensions.ko.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/core-extensions.ko.light.png" /><img src="./docs/assets/readme/core-extensions.ko.light.png" width="900" alt="왼쪽은 litopencode install이 설치하는 LitOpenCode 핵심으로, 계획하고 만들기, 검토하고 고치기, 기억하고 이어 가기, 조사하고 쓰기, 코드 도구로 묶여 있고 전체 목록은 docs/skills.md에 있습니다. 가운데는 발표자료, 문서, 그림, 디자인, 영상·커버를 맡던 스킬의 같은 이름 안내 폴더 아홉 개입니다. 오른쪽은 wjgoarxiv-skills 확장 모음으로, 묶음마다 variants/litopencode 복사본이 안내 폴더 자리를 대신합니다. 아래에는 모음 내려받기, 안내 폴더 지우기, OpenCode용 복사본 넣기, 새 세션 열기의 네 단계가 있습니다." /></picture></p>
 
-모음을 한 번 내려받은 뒤, 원하는 스킬마다 안내 폴더를 모음에 있는 OpenCode용 복사본으로 바꿉니다.
+모음을 한 번 내려받은 뒤, 원하는 스킬마다 아래 네 줄을 실행합니다. 첫 줄은 OpenCode가 함께 읽는 같은 이름의 폴더를 보여 주기만 합니다. `~/.config/opencode/skills` 밖에 있는 것이 나오면 다른 곳으로 옮겨 두세요. 둘째 줄은 안내 폴더를 통째로 `~/.config/opencode/extension-backups/` 아래 날짜 폴더로 옮깁니다. OpenCode는 그 폴더를 읽지 않고, 지워지는 것도 없습니다. 셋째 줄은 모음의 OpenCode용 복사본을 넣고, 넷째 줄은 그 안에 작은 설치 기록을 남깁니다. 확장 스킬을 업데이트할 때는 같은 네 줄을 다시 실행하고, 빼고 싶을 때는 둘째 줄만 실행하세요.
 
 ```sh
-rm -r ~/.config/opencode/skills/<skill>
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" ~/.config/opencode/skills/<skill>
+ls -d ~/.config/opencode/skills/<skill> ~/.agents/skills/<skill> ~/.claude/skills/<skill> 2>/dev/null
+d=~/.config/opencode/extension-backups/$(date +%Y%m%d-%H%M%S); [ ! -e ~/.config/opencode/skills/<skill> ] || { mkdir -p "$d" && mv ~/.config/opencode/skills/<skill> "$d/"; }
+mkdir -p ~/.config/opencode/skills && cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" ~/.config/opencode/skills/<skill>
+printf '{"id":"%s","source":"%s","variant":"litopencode","installed_at":"%s"}\n' <skill> "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > ~/.config/opencode/skills/<skill>/.litfamily-extension.json
 ```
 
-아홉 개는 `lit-pptx`(발표자료), `lit-docx`(문서), `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`(그림), `frontend-ui-ux`, `visual-qa`(디자인), `lit-typographic-motion`, `readme-studio`(영상·커버)입니다. `XDG_CONFIG_HOME`을 설정했다면 `$XDG_CONFIG_HOME/opencode/skills/`를 쓰고, 설치한 뒤에는 새 세션을 여세요. 영상 스킬은 처음 한 번 `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`을 실행해야 합니다. `litopencode install`은 직접 넣은 복사본을 덮어쓰지 않고, `litopencode doctor`는 그 복사본을 보존된 스킬로 표시합니다.
-
-설치하기 전까지는 같은 이름의 짧은 안내 스킬이 같은 내용을 알려 줍니다. 설치 프로그램도 실행할 때 확장 스킬을 안내하고, 설치나 업데이트 뒤 첫 세션에서 한 번 더 알려 줍니다.
+아홉 개는 `lit-pptx`(발표자료), `lit-docx`(문서), `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`(그림), `frontend-ui-ux`, `visual-qa`(디자인), `lit-typographic-motion`, `readme-studio`(영상·커버)입니다. `XDG_CONFIG_HOME`을 설정했다면 `~/.config/opencode/` 대신 `$XDG_CONFIG_HOME/opencode/`를 쓰고, 설치한 뒤에는 새 세션을 여세요. 영상 스킬은 처음 한 번 `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`을 실행해야 합니다. `litopencode install`은 직접 넣은 복사본을 덮어쓰지 않고, `litopencode doctor`는 그 복사본을 보존된 스킬로 표시합니다. 설치하기 전까지는 같은 이름의 짧은 안내 스킬이 같은 내용을 알려 줍니다. 설치 프로그램도 실행할 때 확장 스킬을 안내하고, 설치나 업데이트 뒤 첫 세션에서 한 번 더 알려 줍니다.
 
 1.0.43 이하에서 업데이트하면 예전 스킬 폴더가 안내 폴더로 바뀝니다. 그 폴더 안에 직접 추가하거나 고친 파일은 먼저 `~/.config/opencode/.litopencode-skill-backups/` 아래 날짜 폴더로 복사되고, 설치 프로그램이 그 위치를 출력합니다. 예전 버전이 남긴 것도 알려 줍니다. `~/.cache/litopencode/motion-runtime`과 `~/.cache/litopencode/office`(`XDG_CACHE_HOME`을 설정했다면 그 아래), 그리고 `~/.cache/opencode/packages/@litfamily/` 아래에 OpenCode가 받아 둔 예전 플러그인입니다. 이제 아무것도 읽지 않고 확장 스킬은 자기 캐시를 따로 쓰므로 지워도 됩니다.
 

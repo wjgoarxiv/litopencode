@@ -13,7 +13,7 @@ export const frontendUiUxFeature = {
       kind: "config",
       id: "skills/frontend-ui-ux/SKILL.md",
       surface: "OpenCode native skill frontend-ui-ux",
-      description: "Same-name pointer: says the skill moved, names plugins/design/skills/frontend-ui-ux/ in wjgoarxiv-skills and gives the one OpenCode install line."
+      description: "Same-name pointer: says the skill moved, names plugins/design/skills/frontend-ui-ux/ in wjgoarxiv-skills and gives the OpenCode install lines."
     },
     {
       kind: "hook",
@@ -41,7 +41,7 @@ export const visualQaFeature = {
       kind: "config",
       id: "skills/visual-qa/SKILL.md",
       surface: "OpenCode native skill visual-qa",
-      description: "Same-name pointer: says the skill moved, names plugins/design/skills/visual-qa/ in wjgoarxiv-skills and gives the one OpenCode install line."
+      description: "Same-name pointer: says the skill moved, names plugins/design/skills/visual-qa/ in wjgoarxiv-skills and gives the OpenCode install lines."
     },
     {
       kind: "hook",

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -8,11 +10,15 @@ import { findLitOpenCodeCommand } from "../src/commands.ts";
 import { expectedManagedSkillFiles, managedSkillDefinition, managedSkillDiscoveryDescription } from "../src/cli/managed-skill-assets.ts";
 import { findLitOpenCodeRuntimeSkill } from "../src/skills.ts";
 import { runCli } from "../src/cli.ts";
+import { destinationState } from "../src/cli/native-skill-integrity.ts";
+import { movedSkillInstallSequence, movedSkillMoveAsideLine, movedSkillPreflightLine, movedSkillReceiptLine } from "../src/moved-skills.ts";
+import { runCli as runBin } from "../test-support/cli-fixture.ts";
 
 // Five content families left LitOpenCode for the separate wjgoarxiv-skills collection. Each skill id stays
 // as a same-name pointer: OpenCode's native skill picker, the `lit` routes and /lit-scientific-visualization
-// still land on it, and it says what moved, where it lives now, and the one OpenCode install line. OpenCode
-// keeps one skill per name, so the line replaces the pointer folder instead of adding a second copy.
+// still land on it, and it says what moved, where it lives now, and the OpenCode install lines. OpenCode
+// keeps one skill per name, so the lines move the pointer folder aside into a dated backup outside every folder
+// OpenCode reads skills from, then copy the extension into its place and write a receipt inside it.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const placeholder = "<path to your wjgoarxiv-skills clone>";
 const moved = [
@@ -39,8 +45,10 @@ for (const { id, family, made } of moved) {
     assert.match(stub, made);
     assert.match(stub, /wjgoarxiv-skills/u);
     assert.ok(stub.includes(`plugins/${family}/skills/${id}/`), "names the family folder in the collection");
-    assert.ok(stub.includes(`rm -r ~/.config/opencode/skills/${id}`), "removes the pointer folder first");
-    assert.ok(stub.includes(installLine(id)), "carries the one-skill OpenCode install line");
+    assert.ok(stub.includes(`\`\`\`sh\n${movedSkillInstallSequence(id).join("\n")}\n\`\`\``), "carries the four lines in order: check, move aside, copy, receipt");
+    assert.doesNotMatch(stub, /\brm -r/u, "never deletes the folder the user may have added files to");
+    assert.match(stub, /To update, run the four lines again/u);
+    assert.match(stub, /To remove the copy, run the second line/u);
     assert.ok(stub.includes("https://github.com/wjgoarxiv/wjgoarxiv-skills"), "names the public collection");
     assert.match(stub, /litopencode install/u, "says the installer leaves the copied folder alone");
     assert.match(stub, /## #contract\.activation/u);
@@ -50,7 +58,7 @@ for (const { id, family, made } of moved) {
   test(`${id} pointer is SKILL.md alone, small, and installs as SKILL.md only`, () => {
     const files = walk(path.join(root, "skills", id)).map((file) => path.relative(path.join(root, "skills", id), file));
     assert.deepEqual(files, ["SKILL.md"]);
-    assert.ok(Buffer.byteLength(stubOf(id)) < 4000, `${Buffer.byteLength(stubOf(id))} bytes`);
+    assert.ok(Buffer.byteLength(stubOf(id)) < 5000, `${Buffer.byteLength(stubOf(id))} bytes`);
     assert.equal(managedSkillDefinition(id), undefined, "no longer a managed nested tree");
     assert.deepEqual(expectedManagedSkillFiles(id), ["SKILL.md"]);
   });
@@ -68,6 +76,130 @@ test("lit-typographic-motion pointer names the copy's one-time runtime step, run
   const stub = stubOf("lit-typographic-motion");
   assert.ok(stub.includes("node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install"), "the copy's own installer, not a LitOpenCode command");
   assert.doesNotMatch(stub, /litopencode motion-runtime/u);
+});
+
+test("the check line names every user folder OpenCode reads skills from, and only reads", () => {
+  const line = movedSkillPreflightLine("lit-docx");
+  for (const dir of ["~/.config/opencode/skills/", "~/.agents/skills/", "~/.claude/skills/"]) assert.ok(line.includes(`${dir}lit-docx`), dir);
+  assert.match(line, /^ls -d /u);
+});
+
+test("the backup folder sits outside every folder OpenCode 1 and 2 read skills from", () => {
+  const line = movedSkillMoveAsideLine("lit-docx");
+  assert.match(line, /^d=~\/\.config\/opencode\/extension-backups\/\$\(date \+%Y%m%d-%H%M%S\); /u);
+  // Folders the hosts scan (OpenCode 1 `opencode debug skill`, OpenCode 2 watcher log, both probed in an isolated home).
+  for (const scanned of [/\/skills?\//u, /\.agents\//u, /\.claude\//u]) assert.doesNotMatch(line.slice(0, line.indexOf(";")), scanned);
+  assert.doesNotMatch(line, /\brm\b/u);
+});
+
+const shells = ["bash", "zsh"].filter((shell) => spawnSync(shell, ["-c", "true"]).status === 0);
+
+for (const shell of shells) {
+  test(`${shell}: the four lines move the pointer and a user file aside whole, copy clean, write a receipt, and survive litopencode install`, () => {
+    const dir = realpathSync(mkdtempSync(path.join(os.tmpdir(), "litopencode-ext-lines-")));
+    try {
+      const home = path.join(dir, "home");
+      const configRoot = path.join(home, ".config", "opencode");
+      const clone = path.join(dir, "clone");
+      const variant = path.join(clone, "variants", "litopencode", "lit-docx");
+      mkdirSync(path.join(variant, "scripts"), { recursive: true });
+      const copied = "---\nname: lit-docx\ndescription: Collection copy of the Word document skill.\n---\n\n# lit-docx\n";
+      writeFileSync(path.join(variant, "SKILL.md"), copied);
+      writeFileSync(path.join(variant, "scripts", "build.py"), "print('build')\n");
+      // XDG_CONFIG_HOME points elsewhere so --root is not the default root and no `opencode plugin` runs.
+      const env = { PATH: process.env.PATH, HOME: home, XDG_CONFIG_HOME: path.join(dir, "xdg-config"), XDG_CACHE_HOME: path.join(dir, "cache") };
+      assert.equal(runBin(["install", "--root", configRoot], { env }).status, 0);
+      const target = path.join(configRoot, "skills", "lit-docx");
+      writeFileSync(path.join(target, "notes.md"), "mine\n");
+      const run = (line) => spawnSync(shell, ["-c", line.replaceAll("<path to your wjgoarxiv-skills clone>", clone)], { env, encoding: "utf8" });
+      const [check, aside, copy, receipt] = movedSkillInstallSequence("lit-docx");
+      assert.equal(run(check).stdout.trim(), "~/.config/opencode/skills/lit-docx".replace("~", home), "the check lists the occupied target");
+      for (const line of [aside, copy, receipt]) assert.equal(run(line).status, 0, line);
+      const backups = path.join(configRoot, "extension-backups");
+      const [stamp] = readdirSync(backups);
+      assert.match(stamp, /^\d{8}-\d{6}$/u);
+      const saved = path.join(backups, stamp, "lit-docx");
+      assert.equal(readFileSync(path.join(saved, "notes.md"), "utf8"), "mine\n", "the user file moved with the folder");
+      assert.match(readFileSync(path.join(saved, "SKILL.md"), "utf8"), /moved to wjgoarxiv-skills/u, "the pointer moved whole");
+      assert.deepEqual(readdirSync(target).sort(), [".litfamily-extension.json", "SKILL.md", "scripts"], "no nesting and no merge");
+      const first = JSON.parse(readFileSync(path.join(target, ".litfamily-extension.json"), "utf8"));
+      assert.deepEqual(Object.keys(first), ["id", "source", "variant", "installed_at"]);
+      assert.equal(first.source, variant);
+      assert.equal(first.variant, "litopencode");
+      assert.match(first.installed_at, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/u);
+
+      // A LitOpenCode update leaves the extension and its receipt alone: the folder carries no generated marker.
+      const before = readFileSync(path.join(target, ".litfamily-extension.json"), "utf8");
+      const update = runBin(["install", "--root", configRoot], { env });
+      assert.equal(update.status, 0, update.stderr);
+      assert.equal(readFileSync(path.join(target, "SKILL.md"), "utf8"), copied);
+      assert.equal(readFileSync(path.join(target, ".litfamily-extension.json"), "utf8"), before);
+      const report = JSON.parse(runBin(["doctor", "--root", configRoot], { env }).stdout);
+      assert.ok(report.install.nativeSkills.preserved.includes("lit-docx"));
+      assert.deepEqual(report.install.nativeSkills.invalid, []);
+
+      // Updating the extension is the same lines again: the old copy goes aside whole and the receipt is rewritten.
+      writeFileSync(path.join(variant, "SKILL.md"), `${copied}\nv2\n`);
+      spawnSync("sleep", ["1"]);
+      for (const line of [aside, copy, receipt.replace("%Y-%m-%dT%H:%M:%SZ", "2099-01-01T00:00:00Z")]) assert.equal(run(line).status, 0, line);
+      assert.equal(readdirSync(backups).length, 2);
+      assert.match(readFileSync(path.join(target, "SKILL.md"), "utf8"), /v2/u);
+      assert.equal(JSON.parse(readFileSync(path.join(target, ".litfamily-extension.json"), "utf8")).installed_at, "2099-01-01T00:00:00Z");
+      assert.deepEqual(readdirSync(target).sort(), [".litfamily-extension.json", "SKILL.md", "scripts"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+}
+
+for (const shell of shells) {
+  test(`${shell}: in a home where OpenCode has no skills folder yet, the lines still install one clean copy`, () => {
+    const dir = realpathSync(mkdtempSync(path.join(os.tmpdir(), "litopencode-ext-empty-")));
+    try {
+      const home = path.join(dir, "home");
+      mkdirSync(home);
+      const variant = path.join(dir, "clone", "variants", "litopencode", "visual-qa");
+      mkdirSync(variant, { recursive: true });
+      writeFileSync(path.join(variant, "SKILL.md"), "copy\n");
+      const lines = movedSkillInstallSequence("visual-qa").map((line) => line.replaceAll("<path to your wjgoarxiv-skills clone>", path.join(dir, "clone")));
+      const results = lines.map((line) => spawnSync(shell, ["-c", line], { env: { PATH: process.env.PATH, HOME: home }, encoding: "utf8" }));
+      assert.equal(results[0].stdout, "", "nothing to report");
+      for (const result of results.slice(1)) assert.equal(result.status, 0, result.stderr);
+      const target = path.join(home, ".config", "opencode", "skills", "visual-qa");
+      assert.deepEqual(readdirSync(target).sort(), [".litfamily-extension.json", "SKILL.md"]);
+      assert.equal(existsSync(path.join(home, ".config", "opencode", "extension-backups")), false, "nothing was moved aside");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+}
+
+test("the installer's ownership check reads a receipt-bearing extension copy as preserved", async () => {
+  const dir = realpathSync(mkdtempSync(path.join(os.tmpdir(), "litopencode-ext-state-")));
+  try {
+    const folder = path.join(dir, "skills", "visual-qa");
+    mkdirSync(folder, { recursive: true });
+    writeFileSync(path.join(folder, "SKILL.md"), "---\nname: visual-qa\ndescription: copy\n---\n");
+    writeFileSync(path.join(folder, ".litfamily-extension.json"), "{}\n");
+    assert.equal((await destinationState(dir, { id: "visual-qa" })).kind, "preserved");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the receipt line writes valid JSON naming the id, source, variant and time", () => {
+  const line = movedSkillReceiptLine("readme-studio");
+  assert.ok(line.endsWith("> ~/.config/opencode/skills/readme-studio/.litfamily-extension.json"));
+  assert.ok(line.includes('"variant":"litopencode"'));
+  assert.ok(line.includes(' readme-studio "<path to your wjgoarxiv-skills clone>/variants/litopencode/readme-studio" '));
+});
+
+test("every README and the skills page give the same four lines and no delete", () => {
+  for (const [file, id] of [["README.md", "<skill>"], ["README-Ko-KR.md", "<skill>"], ["README-npm.md", "<skill>"], ["README-npm-Ko-KR.md", "<skill>"], ["docs/skills.md", "lit-docx"], ["docs/skills-Ko-KR.md", "lit-docx"]]) {
+    const text = readFileSync(path.join(root, file), "utf8");
+    assert.ok(text.includes(`\`\`\`sh\n${movedSkillInstallSequence(id).join("\n")}\n\`\`\``), file);
+    assert.doesNotMatch(text, /rm -r ~\/\.config\/opencode\/skills/u, file);
+  }
 });
 
 const routes = [
@@ -91,7 +223,7 @@ for (const [prompt, mode, id] of routes) {
     assert.match(text, /wjgoarxiv-skills/u, "names where the skill went");
     assert.ok(text.includes(installLine(id)), "the injected context carries the install line");
     for (const pattern of leftovers) assert.doesNotMatch(text, pattern, `${prompt}: ${pattern}`);
-    assert.ok(Buffer.byteLength(text) <= 4352, `${Buffer.byteLength(text)} bytes`);
+    assert.ok(Buffer.byteLength(text) <= 5120, `${Buffer.byteLength(text)} bytes`);
   });
 }
 

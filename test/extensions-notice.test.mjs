@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -11,11 +13,56 @@ import { createFakeV2Context } from "../test-support/opencode-v2-fake.mjs";
 
 // The nine file-making skills are LitFamily extensions now. The installer says so as it runs, and the first
 // session after it relays the same notice once. Machine-readable output never carries it.
-// The pointers' two lines; the copy line is split with a shell continuation so it fits an 80-column terminal.
-const installLines = [
-  "rm -r ~/.config/opencode/skills/<skill>",
-  'cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" \\\n    ~/.config/opencode/skills/<skill>'
+// The pointers' four lines (check, move aside, copy, receipt), split with shell continuations so each fits an
+// 80-column terminal. None of them deletes anything.
+const installBlock = [
+  "  ls -d ~/.config/opencode/skills/<skill> ~/.agents/skills/<skill> \\",
+  "    ~/.claude/skills/<skill> 2>/dev/null",
+  "  d=~/.config/opencode/extension-backups/$(date +%Y%m%d-%H%M%S); \\",
+  "    [ ! -e ~/.config/opencode/skills/<skill> ] || \\",
+  '    { mkdir -p "$d" && mv ~/.config/opencode/skills/<skill> "$d/"; }',
+  "  mkdir -p ~/.config/opencode/skills && \\",
+  '  cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" \\',
+  "    ~/.config/opencode/skills/<skill>",
+  "  printf \\",
+  "    '{\"id\":\"%s\",\"source\":\"%s\",\"variant\":\"litopencode\",\"installed_at\":\"%s\"}\\n' \\",
+  "    <skill> \\",
+  '    "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" \\',
+  '    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \\',
+  "    > ~/.config/opencode/skills/<skill>/.litfamily-extension.json"
 ];
+const installLines = [installBlock.join("\n")];
+
+test("the notice's lines delete nothing, fit 80 columns, and do what the pointer's one-line form does", () => {
+  const lines = extensionsNoticeLines();
+  assert.ok(lines.join("\n").includes(installBlock.join("\n")));
+  assert.doesNotMatch(lines.join("\n"), /\brm\b/u);
+  for (const line of installBlock) assert.ok(line.length <= 80, `${line.length}: ${line}`);
+  const shells = ["bash", "zsh"].filter((shell) => spawnSync(shell, ["-c", "true"]).status === 0);
+  for (const shell of shells) {
+    const dir = realpathSync(mkdtempSync(path.join(os.tmpdir(), "litopencode-notice-lines-")));
+    try {
+      const home = path.join(dir, "home");
+      const target = path.join(home, ".config", "opencode", "skills", "lit-docx");
+      mkdirSync(target, { recursive: true });
+      writeFileSync(path.join(target, "notes.md"), "mine\n");
+      const clone = path.join(dir, "clone");
+      mkdirSync(path.join(clone, "variants", "litopencode", "lit-docx"), { recursive: true });
+      writeFileSync(path.join(clone, "variants", "litopencode", "lit-docx", "SKILL.md"), "copy\n");
+      const script = installBlock.join("\n").replaceAll("<skill>", "lit-docx").replaceAll("<path to your wjgoarxiv-skills clone>", clone);
+      const result = spawnSync(shell, ["-c", script], { env: { PATH: process.env.PATH, HOME: home }, encoding: "utf8" });
+      assert.equal(result.stdout.trim(), target, `${shell}: the check line lists the occupied folder`);
+      const backups = path.join(home, ".config", "opencode", "extension-backups");
+      const [stamp] = readdirSync(backups);
+      assert.equal(readFileSync(path.join(backups, stamp, "lit-docx", "notes.md"), "utf8"), "mine\n", shell);
+      assert.deepEqual(readdirSync(target).sort(), [".litfamily-extension.json", "SKILL.md"], shell);
+      const receipt = JSON.parse(readFileSync(path.join(target, ".litfamily-extension.json"), "utf8"));
+      assert.deepEqual([receipt.id, receipt.variant], ["lit-docx", "litopencode"], shell);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
 
 async function withHome(fn) {
   const dir = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-extensions-")));

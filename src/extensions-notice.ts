@@ -35,11 +35,25 @@ export function extensionsNoticeLines(leftovers: readonly string[] = []): string
       "LitOpenCode's core is complete and works on its own. Nine skills that make files (decks, documents, " +
         `figures, design and video covers) are now LitFamily extensions, kept on the extension shelf at ${extensionsShelfUrl}. ` +
         "Install the ones you use alongside LitOpenCode to get the full LitFamily experience. " +
-        "Clone the shelf once, then for each skill you want:"
+        "Clone the shelf once, then for each skill you want run these four lines. The first lists same-name " +
+        "copies OpenCode would also read; the second moves the pointer folder whole into a dated backup that " +
+        "OpenCode never reads (nothing is deleted); the third copies the extension in; the fourth writes its receipt. " +
+        "To update, run them again."
     ),
-    "  rm -r ~/.config/opencode/skills/<skill>",
+    "  ls -d ~/.config/opencode/skills/<skill> ~/.agents/skills/<skill> \\",
+    "    ~/.claude/skills/<skill> 2>/dev/null",
+    "  d=~/.config/opencode/extension-backups/$(date +%Y%m%d-%H%M%S); \\",
+    "    [ ! -e ~/.config/opencode/skills/<skill> ] || \\",
+    '    { mkdir -p "$d" && mv ~/.config/opencode/skills/<skill> "$d/"; }',
+    "  mkdir -p ~/.config/opencode/skills && \\",
     `  cp -R "${wjgoarxivSkillsClonePlaceholder}/variants/litopencode/<skill>" \\`,
     "    ~/.config/opencode/skills/<skill>",
+    "  printf \\",
+    "    '{\"id\":\"%s\",\"source\":\"%s\",\"variant\":\"litopencode\",\"installed_at\":\"%s\"}\\n' \\",
+    "    <skill> \\",
+    `    "${wjgoarxivSkillsClonePlaceholder}/variants/litopencode/<skill>" \\`,
+    '    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \\',
+    "    > ~/.config/opencode/skills/<skill>/.litfamily-extension.json",
     ...wrap(`The nine: ${Object.keys(movedSkillFamilies).join(", ")}.`),
     ...(leftovers.length === 0
       ? []

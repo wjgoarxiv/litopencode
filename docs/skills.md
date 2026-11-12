@@ -272,14 +272,16 @@ The skills that made files and pictures moved to wjgoarxiv-skills, a separate co
 | `lit-typographic-motion` | `video-covers` |
 | `readme-studio` | `video-covers` |
 
-OpenCode keeps one skill per name and loads two same-name folders in no fixed order, so the copy replaces the pointer folder instead of sitting beside it. Clone the collection once from https://github.com/wjgoarxiv/wjgoarxiv-skills, then, for one skill:
+OpenCode keeps one skill per name and loads two same-name folders in no fixed order, so the copy replaces the pointer folder instead of sitting beside it. Clone the collection once from https://github.com/wjgoarxiv/wjgoarxiv-skills, then, for one skill, run four lines. The first only lists the same-name folders OpenCode reads (`~/.agents/skills` and `~/.claude/skills` too, and a project's `.opencode/`, `.agents/` and `.claude/` skills); move any copy outside `~/.config/opencode/skills` out of the way. The second moves the pointer folder whole into a dated folder under `~/.config/opencode/extension-backups/`, which neither OpenCode 1 nor OpenCode 2 reads skills from, so nothing is deleted. The third copies the extension in. The fourth writes `.litfamily-extension.json` inside it, a receipt naming the id, source, variant and install time that OpenCode ignores.
 
 ```sh
-rm -r ~/.config/opencode/skills/lit-docx
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" ~/.config/opencode/skills/lit-docx
+ls -d ~/.config/opencode/skills/lit-docx ~/.agents/skills/lit-docx ~/.claude/skills/lit-docx 2>/dev/null
+d=~/.config/opencode/extension-backups/$(date +%Y%m%d-%H%M%S); [ ! -e ~/.config/opencode/skills/lit-docx ] || { mkdir -p "$d" && mv ~/.config/opencode/skills/lit-docx "$d/"; }
+mkdir -p ~/.config/opencode/skills && cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" ~/.config/opencode/skills/lit-docx
+printf '{"id":"%s","source":"%s","variant":"litopencode","installed_at":"%s"}\n' lit-docx "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > ~/.config/opencode/skills/lit-docx/.litfamily-extension.json
 ```
 
-Use the same two lines with another skill's name. The film skill, `lit-typographic-motion`, then needs its fonts and pinned engine packages once, from a normal terminal: `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`. `litopencode install` and its auto-update leave a folder they did not write alone, and `litopencode doctor` lists it as preserved. Delete the folder and run `litopencode install` to get the pointer back.
+Use the same four lines with another skill's name, and run them again to update a copy. The film skill, `lit-typographic-motion`, then needs its fonts and pinned engine packages once, from a normal terminal: `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`. `litopencode install` and its auto-update leave a folder they did not write alone, and `litopencode doctor` lists it as preserved. To remove a copy, run the second line alone; `litopencode install` then brings the pointer back.
 
 ## Writing and the browser
 

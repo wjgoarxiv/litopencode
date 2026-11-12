@@ -272,14 +272,16 @@ flowchart TD
 | `lit-typographic-motion` | `video-covers` |
 | `readme-studio` | `video-covers` |
 
-OpenCode는 이름 하나에 스킬 하나만 두고, 이름이 같은 폴더가 둘이면 어느 쪽을 읽을지 정해져 있지 않습니다. 그래서 복사본은 안내 폴더 옆에 두지 않고 그 자리를 대신합니다. 모음을 https://github.com/wjgoarxiv/wjgoarxiv-skills 에서 한 번 클론한 뒤, 스킬 하나를 이렇게 넣습니다.
+OpenCode는 이름 하나에 스킬 하나만 두고, 이름이 같은 폴더가 둘이면 어느 쪽을 읽을지 정해져 있지 않습니다. 그래서 복사본은 안내 폴더 옆에 두지 않고 그 자리를 대신합니다. 모음을 https://github.com/wjgoarxiv/wjgoarxiv-skills 에서 한 번 클론한 뒤, 스킬 하나마다 네 줄을 실행합니다. 첫 줄은 OpenCode가 읽는 같은 이름의 폴더(`~/.agents/skills`, `~/.claude/skills`, 프로젝트의 `.opencode/`, `.agents/`, `.claude/` 스킬 폴더 포함)를 보여 주기만 합니다. `~/.config/opencode/skills` 밖의 사본이 나오면 다른 곳으로 옮겨 두세요. 둘째 줄은 안내 폴더를 통째로 `~/.config/opencode/extension-backups/` 아래 날짜 폴더로 옮깁니다. OpenCode 1과 2 모두 그곳에서 스킬을 읽지 않고, 지워지는 것은 없습니다. 셋째 줄은 확장 스킬을 복사합니다. 넷째 줄은 그 안에 `.litfamily-extension.json`을 남깁니다. id, 출처, 변형, 설치 시각을 적은 설치 기록이며 OpenCode는 이 파일을 읽지 않습니다.
 
 ```sh
-rm -r ~/.config/opencode/skills/lit-docx
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" ~/.config/opencode/skills/lit-docx
+ls -d ~/.config/opencode/skills/lit-docx ~/.agents/skills/lit-docx ~/.claude/skills/lit-docx 2>/dev/null
+d=~/.config/opencode/extension-backups/$(date +%Y%m%d-%H%M%S); [ ! -e ~/.config/opencode/skills/lit-docx ] || { mkdir -p "$d" && mv ~/.config/opencode/skills/lit-docx "$d/"; }
+mkdir -p ~/.config/opencode/skills && cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" ~/.config/opencode/skills/lit-docx
+printf '{"id":"%s","source":"%s","variant":"litopencode","installed_at":"%s"}\n' lit-docx "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-docx" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > ~/.config/opencode/skills/lit-docx/.litfamily-extension.json
 ```
 
-다른 스킬도 이름만 바꿔 같은 두 줄을 쓰면 됩니다. 영상 스킬 `lit-typographic-motion`은 복사한 뒤 글꼴과 고정된 엔진 패키지를 한 번 받아야 합니다. 일반 터미널에서 `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`을 실행하세요. `litopencode install`과 자동 업데이트는 자신이 쓰지 않은 폴더를 건드리지 않고, `litopencode doctor`는 그 폴더를 preserved로 보여 줍니다. 안내 스킬로 돌아가려면 폴더를 지우고 `litopencode install`을 실행하세요.
+다른 스킬도 이름만 바꿔 같은 네 줄을 쓰면 되고, 업데이트할 때도 같은 네 줄을 다시 실행합니다. 영상 스킬 `lit-typographic-motion`은 복사한 뒤 글꼴과 고정된 엔진 패키지를 한 번 받아야 합니다. 일반 터미널에서 `node ~/.config/opencode/skills/lit-typographic-motion/runtime.mjs install`을 실행하세요. `litopencode install`과 자동 업데이트는 자신이 쓰지 않은 폴더를 건드리지 않고, `litopencode doctor`는 그 폴더를 preserved로 보여 줍니다. 사본을 빼려면 둘째 줄만 실행하세요. 그다음 `litopencode install`을 실행하면 안내 스킬이 돌아옵니다.
 
 ## 글 다듬기와 브라우저
 

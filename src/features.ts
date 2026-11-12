@@ -1256,7 +1256,7 @@ export const litOpenCodeFeatures = Object.freeze([
     title: "Scientific Visualization",
     summary: "Pointer for the skill that moved to wjgoarxiv-skills (figures family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/lit-scientific-visualization/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/figures/skills/lit-scientific-visualization/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "config", id: "skills/lit-scientific-visualization/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/figures/skills/lit-scientific-visualization/ in wjgoarxiv-skills and gives the OpenCode install lines." },
       { kind: "command", id: "lit-scientific-visualization", surface: "OpenCode command /lit-scientific-visualization", description: "Injects the exact model probe line and the pointer with its install line." },
       { kind: "hook", id: "chat.message", surface: "OpenCode exact bare lit-scientific-visualization route", description: "Activates only when an entire non-code chat message is the exact skill id." },
       { kind: "hook", id: "experimental.text.complete", surface: "OpenCode user-facing completion hook", description: "Renders the standard mark on the first session completion and micro marks later, keeping the model-emitted probe separate." },
@@ -1269,7 +1269,7 @@ export const litOpenCodeFeatures = Object.freeze([
     title: "Diagram Drawer",
     summary: "Pointer for the skill that moved to wjgoarxiv-skills (figures family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/lit-diagram-drawer/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/figures/skills/lit-diagram-drawer/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "config", id: "skills/lit-diagram-drawer/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/figures/skills/lit-diagram-drawer/ in wjgoarxiv-skills and gives the OpenCode install lines." },
       { kind: "hook", id: "lit-task diagram intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit diagram requests to load the pointer before any drawing." },
       { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-diagram-drawer folder in place." }
     ],
@@ -1280,7 +1280,7 @@ export const litOpenCodeFeatures = Object.freeze([
     title: "Lit Schematic",
     summary: "Pointer for the skill that moved to wjgoarxiv-skills (figures family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/lit-schematic/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/figures/skills/lit-schematic/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "config", id: "skills/lit-schematic/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/figures/skills/lit-schematic/ in wjgoarxiv-skills and gives the OpenCode install lines." },
       { kind: "hook", id: "lit-task schematic drawing intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit P&ID, PFD, apparatus and cutaway drawing requests to load the pointer, ahead of the diagram, film and Office hand-offs; questions, reviews, charts and reports stay inert." },
       { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-schematic folder in place." }
     ],
@@ -1291,7 +1291,7 @@ export const litOpenCodeFeatures = Object.freeze([
     title: "Film director",
     summary: "Pointer for the skill that moved to wjgoarxiv-skills (video-covers family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/lit-typographic-motion/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/video-covers/skills/lit-typographic-motion/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "config", id: "skills/lit-typographic-motion/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/video-covers/skills/lit-typographic-motion/ in wjgoarxiv-skills and gives the OpenCode install lines." },
       { kind: "hook", id: "lit-task motion-video intent", surface: "OpenCode chat.message activation", description: "Routes bounded film requests to the pointer before slide and interface guidance." },
       { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-typographic-motion folder in place." }
     ],
@@ -1302,7 +1302,7 @@ export const litOpenCodeFeatures = Object.freeze([
     title: "Lit PowerPoint",
     summary: "Pointer for the skill that moved to wjgoarxiv-skills (decks family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/lit-pptx/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/decks/skills/lit-pptx/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "config", id: "skills/lit-pptx/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/decks/skills/lit-pptx/ in wjgoarxiv-skills and gives the OpenCode install lines." },
       { kind: "hook", id: "lit-task slide intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit slide requests to the pointer." },
       { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-pptx folder in place." }
     ],
@@ -1313,7 +1313,7 @@ export const litOpenCodeFeatures = Object.freeze([
     title: "Lit Word Documents",
     summary: "Pointer for the skill that moved to wjgoarxiv-skills (documents family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/lit-docx/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/documents/skills/lit-docx/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "config", id: "skills/lit-docx/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/documents/skills/lit-docx/ in wjgoarxiv-skills and gives the OpenCode install lines." },
       { kind: "hook", id: "lit-task report intent", surface: "OpenCode chat.message activation", description: "Directs bounded lit report requests to the pointer." },
       { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied lit-docx folder in place." }
     ],
@@ -1325,7 +1325,7 @@ export const litOpenCodeFeatures = Object.freeze([
     title: "README Studio",
     summary: "Pointer for the skill that moved to wjgoarxiv-skills (video-covers family): its routes still reach it, and it gives the OpenCode install line.",
     bindings: [
-      { kind: "config", id: "skills/readme-studio/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/video-covers/skills/readme-studio/ in wjgoarxiv-skills and gives the one OpenCode install line." },
+      { kind: "config", id: "skills/readme-studio/SKILL.md", surface: "OpenCode native skill picker", description: "Same-name pointer: says the skill moved, names plugins/video-covers/skills/readme-studio/ in wjgoarxiv-skills and gives the OpenCode install lines." },
       { kind: "cli", id: "litopencode install", surface: "LitOpenCode native skill installer", description: "Installs the pointer as SKILL.md alone and leaves a user-copied readme-studio folder in place." }
     ],
     verification: ["node --test test/moved-skill-stubs.test.mjs"]

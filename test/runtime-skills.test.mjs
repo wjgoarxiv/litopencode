@@ -147,7 +147,7 @@ test("UI/UX pointer activations stay bounded and carry the install line", () => 
     ["frontend-ui-ux", frontendUiUxPromptInjection],
     ["visual-qa", visualQaPromptInjection]
   ]) {
-    assert.ok(Buffer.byteLength(prompt, "utf8") <= 4352, `${skillId} activation exceeds 4352 UTF-8 bytes`);
+    assert.ok(Buffer.byteLength(prompt, "utf8") <= 5120, `${skillId} activation exceeds 5120 UTF-8 bytes`);
     assert.ok(prompt.includes(`variants/litopencode/${skillId}" ~/.config/opencode/skills/${skillId}`), `${skillId} carries its install line`);
   }
 });

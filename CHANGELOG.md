@@ -5,6 +5,8 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- The extension install lines no longer delete anything. Each pointer, both READMEs and the install notice now give four lines: one that lists any same-name skill folder OpenCode also reads (`~/.agents/skills`, `~/.claude/skills`), one that moves the pointer folder whole, with any file you added to it, into a dated folder under `~/.config/opencode/extension-backups/`, which OpenCode never reads skills from, one that copies the extension in, and one that writes a small receipt, `.litfamily-extension.json`, inside the copy. Run the same lines again to update an extension; the move line alone removes one. `litopencode install` and its updates leave the copy and its receipt alone.
+
 ## 1.0.44 - 2026-11-11
 
 - LitOpenCode's core is complete and works on its own, and the nine skills that make files are now LitFamily extensions, kept on the extension shelf wjgoarxiv-skills. Install the ones you use alongside LitOpenCode to get the full LitFamily experience. `litopencode install` says so when it runs, with the two install lines, and the first session after an install or update tells you once more. The README has a new Extensions section, and each pointer now calls its skill a LitFamily extension.

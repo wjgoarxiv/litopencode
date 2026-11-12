@@ -64,10 +64,10 @@
     },
     "frontend-ui-ux": {
       "minSkillBytes": 2000,
-      "maxSkillBytes": 4000,
+      "maxSkillBytes": 5000,
       "minFiles": 1,
       "maxFiles": 1,
-      "maxBytes": 4000
+      "maxBytes": 5000
     },
     "lit-adhd": {
       "minSkillBytes": 22500,
@@ -127,17 +127,17 @@
     },
     "lit-diagram-drawer": {
       "minSkillBytes": 2000,
-      "maxSkillBytes": 4000,
+      "maxSkillBytes": 5000,
       "minFiles": 1,
       "maxFiles": 1,
-      "maxBytes": 4000
+      "maxBytes": 5000
     },
     "lit-docx": {
       "minSkillBytes": 2000,
-      "maxSkillBytes": 4000,
+      "maxSkillBytes": 5000,
       "minFiles": 1,
       "maxFiles": 1,
-      "maxBytes": 4000
+      "maxBytes": 5000
     },
     "lit-fetch": {
       "minSkillBytes": 22800,
@@ -183,10 +183,10 @@
     },
     "lit-pptx": {
       "minSkillBytes": 2000,
-      "maxSkillBytes": 4000,
+      "maxSkillBytes": 5000,
       "minFiles": 1,
       "maxFiles": 1,
-      "maxBytes": 4000
+      "maxBytes": 5000
     },
     "lit-recap": {
       "minSkillBytes": 18900,
@@ -197,24 +197,24 @@
     },
     "lit-schematic": {
       "minSkillBytes": 2000,
-      "maxSkillBytes": 4000,
+      "maxSkillBytes": 5000,
       "minFiles": 1,
       "maxFiles": 1,
-      "maxBytes": 4000
+      "maxBytes": 5000
     },
     "lit-scientific-visualization": {
       "minSkillBytes": 2000,
-      "maxSkillBytes": 4000,
+      "maxSkillBytes": 5000,
       "minFiles": 1,
       "maxFiles": 1,
-      "maxBytes": 4000
+      "maxBytes": 5000
     },
     "lit-typographic-motion": {
       "minSkillBytes": 2000,
-      "maxSkillBytes": 4000,
+      "maxSkillBytes": 5000,
       "minFiles": 1,
       "maxFiles": 1,
-      "maxBytes": 4000
+      "maxBytes": 5000
     },
     "litgoal": {
       "minSkillBytes": 23000,
@@ -260,10 +260,10 @@
     },
     "readme-studio": {
       "minSkillBytes": 2000,
-      "maxSkillBytes": 4000,
+      "maxSkillBytes": 5000,
       "minFiles": 1,
       "maxFiles": 1,
-      "maxBytes": 4000
+      "maxBytes": 5000
     },
     "refactor": {
       "minSkillBytes": 18200,
@@ -330,10 +330,10 @@
     },
     "visual-qa": {
       "minSkillBytes": 2000,
-      "maxSkillBytes": 4000,
+      "maxSkillBytes": 5000,
       "minFiles": 1,
       "maxFiles": 1,
-      "maxBytes": 4000
+      "maxBytes": 5000
     },
     "wikify": {
       "minSkillBytes": 11400,
@@ -425,12 +425,12 @@
     },
     "frontend-ui-ux": {
       "skillMd": {
-        "bytes": 3229,
-        "sha256": "41de1fe06dda627589cf6b5c3b5e40a6b6d60256e45dfe8d92c9b7d6fd37dbe2"
+        "bytes": 4181,
+        "sha256": "f2f2d281c8aeafc67c0d7601445d5da5b30f2f91ddd554033d5ed1ac5d935072"
       },
       "files": 1,
-      "bytes": 3229,
-      "sha256": "6e443ea9287e96787b11087d786f56d155527b0aaf8b2a30d9507a9a96199930"
+      "bytes": 4181,
+      "sha256": "ea89d6e425cb94f36a39034a6ceba008589ca87b2cdbe2eebe52af63cbe43c17"
     },
     "lit-adhd": {
       "skillMd": {
@@ -506,21 +506,21 @@
     },
     "lit-diagram-drawer": {
       "skillMd": {
-        "bytes": 3115,
-        "sha256": "e925992b3c2ad047e2af76db3ac6da95d65b417a8cd4d7902ac55b3440451ae8"
+        "bytes": 4095,
+        "sha256": "76527ae86066b5c8b37bb72e5df287d3fc08f0612ef0bfe7e55e02d6dacd0bf1"
       },
       "files": 1,
-      "bytes": 3115,
-      "sha256": "20352c5b7216fa0640c2e730743f686a9e37a86adb6cb057ecb601dde61b40cb"
+      "bytes": 4095,
+      "sha256": "96d8a9d6ba08876508d0e4083ed5534bed73f2562967b442eff0d77fc9c73525"
     },
     "lit-docx": {
       "skillMd": {
-        "bytes": 3059,
-        "sha256": "1a25e25e6e5527f235d7c71e08c5c3d62e461eeb83f4f1903ff0c091f64e5483"
+        "bytes": 3969,
+        "sha256": "df32fea57f38f80266a9840f9bb4a51364d26944f3b4e5869ac9cb4c4e025c5b"
       },
       "files": 1,
-      "bytes": 3059,
-      "sha256": "e591de94e5341f0203b67ee6e35002485d095cef86d0b602909e120d23f81c7b"
+      "bytes": 3969,
+      "sha256": "9e3f342e87dbeaed01f4b228154249fdf7dd8d480b4cb3c18b066100e7abb973"
     },
     "lit-fetch": {
       "skillMd": {
@@ -578,12 +578,12 @@
     },
     "lit-pptx": {
       "skillMd": {
-        "bytes": 2989,
-        "sha256": "17b2178dff9fe82bc6a40403e6f6087494c35658c02c2d132b994f258a7f3ed9"
+        "bytes": 3899,
+        "sha256": "8504580927263e2e73104bd989205ceaa13a2702595a63a2ac76eebefffe73dd"
       },
       "files": 1,
-      "bytes": 2989,
-      "sha256": "eea67bbfee12cd2ce5111353c9e6213080afa52fdab0e46b2171d0d44649e437"
+      "bytes": 3899,
+      "sha256": "d18780499db4ba09cc42d2985f38f83c40a49857e4af328c9998fa898a225ea2"
     },
     "lit-recap": {
       "skillMd": {
@@ -596,30 +596,30 @@
     },
     "lit-schematic": {
       "skillMd": {
-        "bytes": 3099,
-        "sha256": "7534059e451a2e2d67262f921e3523f451ce619ae59d498aa00efb87f588d7e7"
+        "bytes": 4044,
+        "sha256": "5a0c5118df240cb73a4dc72f10981058edb0449cf487ef4f764f9589574e66cd"
       },
       "files": 1,
-      "bytes": 3099,
-      "sha256": "a380d6ed99989e419c7bae8485ec2e3ddfba58043ad9d860925542c2174345f4"
+      "bytes": 4044,
+      "sha256": "7333c4467747a7b77f30150e8a47687b3f1e8df7cd3d8b63bdf43c2c27e6660e"
     },
     "lit-scientific-visualization": {
       "skillMd": {
-        "bytes": 3520,
-        "sha256": "f3c59e70b64a05d0949fdd0170b87d82a05178bf5b0a6ba735ddfcd503f36b30"
+        "bytes": 4570,
+        "sha256": "f7346e2c680c540428b0ba4457bf841c779a3c2a6b316389ba704febb7d062e2"
       },
       "files": 1,
-      "bytes": 3520,
-      "sha256": "e279c012fdcf25f57a8bad294e44580c37b88c79f4c7e050691eacd11edd38b8"
+      "bytes": 4570,
+      "sha256": "77ff9d6507bcb421f60c2b265e09d9a996ae83c6fd939909706b464729640c3e"
     },
     "lit-typographic-motion": {
       "skillMd": {
-        "bytes": 3422,
-        "sha256": "0163f535ad6ebed2b3b087333b532b66826206ebd4e43f23af9f5a0866abccee"
+        "bytes": 4430,
+        "sha256": "c90108a4f3299a320cfffa3d493846ba420e3857deedf442a57cf85ba1a369bd"
       },
       "files": 1,
-      "bytes": 3422,
-      "sha256": "12da717b7f4f990879225a91563cd45e9104baae752deb09e0d512df25f8e837"
+      "bytes": 4430,
+      "sha256": "c76c29a8647b173a190296dddcebacec3d7afd24a813965678c6aaf0d9a16586"
     },
     "litgoal": {
       "skillMd": {
@@ -677,12 +677,12 @@
     },
     "readme-studio": {
       "skillMd": {
-        "bytes": 3020,
-        "sha256": "9ef62fe554f0597a549e74bc31b8383000ee7e0a6984d48b3a9f15ea6c582c91"
+        "bytes": 3965,
+        "sha256": "8882274a5dd727e2a0394337140101c4c45028c4a30d68b79453f87e65b0648d"
       },
       "files": 1,
-      "bytes": 3020,
-      "sha256": "13335f61f0d89b0e8d0a171b2873c3498b05e8477005de30beee320e7253c869"
+      "bytes": 3965,
+      "sha256": "7019a44f1ef4634b9650397ec90cb3985a89b52548965737cd2f877185ee265e"
     },
     "refactor": {
       "skillMd": {
@@ -767,12 +767,12 @@
     },
     "visual-qa": {
       "skillMd": {
-        "bytes": 3003,
-        "sha256": "980f42923d1527e5cc5763d8827f4fe01d79a165b06388588e56481caebc1754"
+        "bytes": 3920,
+        "sha256": "67c0242257f4208cecbd5baf45e2832001857ddf0c19798fef21469c683aeeb3"
       },
       "files": 1,
-      "bytes": 3003,
-      "sha256": "01a6f8c0879832444d79dca9e4d83f90f54f390135a56da26e24a22a4def1f14"
+      "bytes": 3920,
+      "sha256": "d3a5469360986f9b2693b3c2fea862aff7f560079b517d30992da8f1ef8d9564"
     },
     "wikify": {
       "skillMd": {

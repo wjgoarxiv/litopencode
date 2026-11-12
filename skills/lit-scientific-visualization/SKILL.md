@@ -1,6 +1,6 @@
 ---
 name: lit-scientific-visualization
-description: "Scientific Visualization moved to wjgoarxiv-skills (figures). This LitOpenCode pointer gives the one OpenCode install line and builds nothing."
+description: "Scientific Visualization moved to wjgoarxiv-skills (figures). This LitOpenCode pointer gives the OpenCode install lines and builds nothing."
 ---
 
 ## #contract.activation
@@ -39,23 +39,25 @@ The request that loaded this pointer. Nothing else is read.
 
 | Mode | Reply |
 | --- | --- |
-| Direct request | Asked for a figure: say it moved, give the two install lines, stop. Plot nothing and do not write a plotting script as a stand-in. |
+| Direct request | Asked for a figure: say it moved, give the four install lines, stop. Plot nothing and do not write a plotting script as a stand-in. |
 | Inside a larger task | Inside a larger lit task: name the missing skill once, finish the parts that need no figure, and do not report a figure as made. |
 
 ## #contract.procedure
 
-OpenCode keeps one skill per name and loads same-name folders in no fixed order, so the copy replaces this folder. Clone the collection once from https://github.com/wjgoarxiv/wjgoarxiv-skills, then:
+OpenCode keeps one skill per name, so the copy takes this folder's place. Clone https://github.com/wjgoarxiv/wjgoarxiv-skills once, then run the four lines. The first only lists same-name folders OpenCode reads; move any outside `~/.config/opencode/skills` out of the way (a project's `.opencode/`, `.agents/` and `.claude/` skills too). The second moves this folder whole into a dated backup, the third copies the extension in, the fourth writes its receipt.
 
 ```sh
-rm -r ~/.config/opencode/skills/lit-scientific-visualization
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-scientific-visualization" ~/.config/opencode/skills/lit-scientific-visualization
+ls -d ~/.config/opencode/skills/lit-scientific-visualization ~/.agents/skills/lit-scientific-visualization ~/.claude/skills/lit-scientific-visualization 2>/dev/null
+d=~/.config/opencode/extension-backups/$(date +%Y%m%d-%H%M%S); [ ! -e ~/.config/opencode/skills/lit-scientific-visualization ] || { mkdir -p "$d" && mv ~/.config/opencode/skills/lit-scientific-visualization "$d/"; }
+mkdir -p ~/.config/opencode/skills && cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-scientific-visualization" ~/.config/opencode/skills/lit-scientific-visualization
+printf '{"id":"%s","source":"%s","variant":"litopencode","installed_at":"%s"}\n' lit-scientific-visualization "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-scientific-visualization" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > ~/.config/opencode/skills/lit-scientific-visualization/.litfamily-extension.json
 ```
 
-With `XDG_CONFIG_HOME` set, use `$XDG_CONFIG_HOME/opencode/skills/`. Start a new session afterwards. `litopencode install` never overwrites a folder it did not write, and `litopencode doctor` counts the copy as preserved. To return to this pointer, delete the folder and run `litopencode install`.
+With `XDG_CONFIG_HOME` set, use `$XDG_CONFIG_HOME/opencode/` for `~/.config/opencode/`. No skill loads from `extension-backups/`. To update, run the four lines again. Start a new session afterwards. `litopencode install` never overwrites a folder it did not write, and `litopencode doctor` counts the copy as preserved. To remove the copy, run the second line; `litopencode install` then brings this pointer back.
 
 ## #contract.outputs
 
-A short reply: where the skill went and the two install lines.
+A short reply: where the skill went and the four install lines.
 
 ## #contract.output_channels
 

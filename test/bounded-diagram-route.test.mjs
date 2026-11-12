@@ -39,7 +39,7 @@ test("bounded diagram creation still hands off to the diagram skill, now a point
     assert.match(injection?.text ?? "", /native skill tool to load lit-diagram-drawer before making/u, text);
     assert.ok(injection.text.includes('cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/lit-diagram-drawer" ~/.config/opencode/skills/lit-diagram-drawer'));
     assert.equal(injection.metadata.litopencode.mode, "lit-task");
-    assert.ok(Buffer.byteLength(injection.text) <= 4352);
+    assert.ok(Buffer.byteLength(injection.text) <= 5120);
   }
 });
 

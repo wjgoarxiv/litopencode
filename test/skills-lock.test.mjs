@@ -53,7 +53,7 @@ test("the hand-owned policy carries the corpus floor docs.test.mjs used to hard-
   assert.equal(policy.minSkillDocs, 23);
   const docsTest = fs.readFileSync("test/docs.test.mjs", "utf8");
   assert.doesNotMatch(docsTest, /42_789|>= 23\b/, "the floor lives in the lock policy, not in the test");
-  assert.equal(readLock().budgets["lit-typographic-motion"]?.maxSkillBytes, 4000, "the motion pointer is capped like every moved-skill stub");
+  assert.equal(readLock().budgets["lit-typographic-motion"]?.maxSkillBytes, 5000, "the motion pointer is capped like every moved-skill stub");
 });
 
 test("budget checks catch a placeholder SKILL.md, a trimmed skill and a bloated one", () => {

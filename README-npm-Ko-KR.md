@@ -46,11 +46,13 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 ## 확장 스킬
 
-LitOpenCode의 핵심 기능은 그 자체로 완성되어 있어 따로 설치할 것 없이 동작합니다. 파일을 만드는 스킬 아홉 개(발표자료, 문서, 그림, 디자인, 영상·커버)는 LitFamily 확장 스킬로, 확장 스킬 모음 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 스킬을 LitOpenCode와 함께 설치하면 LitFamily의 기능을 빠짐없이 쓸 수 있습니다. 모음을 한 번 내려받고, 스킬마다 다음을 실행하세요.
+LitOpenCode의 핵심 기능은 그 자체로 완성되어 있어 따로 설치할 것 없이 동작합니다. 파일을 만드는 스킬 아홉 개(발표자료, 문서, 그림, 디자인, 영상·커버)는 LitFamily 확장 스킬로, 확장 스킬 모음 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 스킬을 LitOpenCode와 함께 설치하면 LitFamily의 기능을 빠짐없이 쓸 수 있습니다. 모음을 한 번 내려받고, 스킬마다 다음 네 줄을 실행하세요. 같은 이름의 사본을 확인하고, 안내 폴더를 OpenCode가 읽지 않는 날짜별 백업 폴더로 통째로 옮기고(지우는 것은 없습니다), 확장 스킬을 복사하고, 설치 기록을 남깁니다. 업데이트할 때도 같은 네 줄을 다시 실행합니다.
 
 ```sh
-rm -r ~/.config/opencode/skills/<skill>
-cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" ~/.config/opencode/skills/<skill>
+ls -d ~/.config/opencode/skills/<skill> ~/.agents/skills/<skill> ~/.claude/skills/<skill> 2>/dev/null
+d=~/.config/opencode/extension-backups/$(date +%Y%m%d-%H%M%S); [ ! -e ~/.config/opencode/skills/<skill> ] || { mkdir -p "$d" && mv ~/.config/opencode/skills/<skill> "$d/"; }
+mkdir -p ~/.config/opencode/skills && cp -R "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" ~/.config/opencode/skills/<skill>
+printf '{"id":"%s","source":"%s","variant":"litopencode","installed_at":"%s"}\n' <skill> "<path to your wjgoarxiv-skills clone>/variants/litopencode/<skill>" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > ~/.config/opencode/skills/<skill>/.litfamily-extension.json
 ```
 
 ## 업데이트와 제거
