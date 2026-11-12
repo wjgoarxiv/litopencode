@@ -23,6 +23,7 @@ type ExtensionVerb = (typeof extensionVerbs)[number];
 export const extensionReceiptName = ".litfamily-extension.json";
 export const extensionBackupsDirectoryName = "extension-backups";
 const variantPath = ["variants", "litopencode"] as const;
+const receiptVariant = "litopencode";
 
 export type ExtensionReceipt = {
   readonly id: string;
@@ -90,6 +91,7 @@ export function extensionsUsage(): string {
     "  litopencode extensions remove <skill...> [--yes]",
     "  litopencode extensions prune-backups [--older-than <days>] [--yes]",
     "",
+    "Every verb takes --root <OpenCode config folder> (default: $XDG_CONFIG_HOME/opencode or ~/.config/opencode).",
     "Every verb that writes is a dry run until you add --yes. Without --from, the shelf is fetched with git into",
     "the LitOpenCode cache. A replaced folder moves whole into extension-backups beside skills/; nothing is deleted",
     "except by prune-backups --yes.",
@@ -154,7 +156,8 @@ async function readReceipt(folder: string, id: string): Promise<ExtensionReceipt
     const parsed: unknown = JSON.parse(await fs.readFile(file, "utf8"));
     if (typeof parsed !== "object" || parsed === null) return undefined;
     const record = parsed as Record<string, unknown>;
-    if (record.id !== id || typeof record.source !== "string" || typeof record.variant !== "string" || typeof record.installed_at !== "string") return undefined;
+    // A receipt another product wrote does not make the folder ours.
+    if (record.id !== id || typeof record.source !== "string" || record.variant !== receiptVariant || typeof record.installed_at !== "string") return undefined;
     return {
       id,
       source: record.source,
@@ -225,6 +228,14 @@ async function pointerIsStale(entry: ExtensionEntry): Promise<boolean> {
   return (await fs.readFile(path.join(entry.path, "SKILL.md"), "utf8")) !== expected;
 }
 
+/** The `.<id>.<uuid>.stage` folders placeExtension makes; one survives only when a run was killed mid-copy. */
+async function leftoverStages(skillsRoot: string): Promise<string[]> {
+  const stat = await lstatIfPresent(skillsRoot);
+  if (stat === null || !stat.isDirectory()) return [];
+  const pattern = /^\.([a-z0-9-]+)\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.stage$/u;
+  return (await fs.readdir(skillsRoot)).filter((name) => pattern.test(name) && isMovedSkillId(pattern.exec(name)?.[1] ?? "")).sort().map((name) => path.join(skillsRoot, name));
+}
+
 /** Read only. What `extensions list` and `check` show, and what doctor and the install notice summarize. */
 export async function inspectExtensions(root: string, workDir: string = process.cwd()): Promise<ExtensionsReport> {
   const skillsRoot = await nativeSkillsRoot(root);
@@ -261,6 +272,12 @@ export async function inspectExtensions(root: string, workDir: string = process.
       needsAction.push({ id: entry.id, problem: `The ${entry.id} pointer is from another LitOpenCode version.`, fix: "litopencode install" });
     }
   }
+  for (const stage of await leftoverStages(skillsRoot)) {
+    needsAction.push({
+      problem: `${stage} is a half-made copy left by an interrupted install or update.`,
+      fix: `rm -r "${stage}"`
+    });
+  }
   if (backups.length > 0) {
     const bytes = backups.reduce((sum, backup) => sum + backup.bytes, 0);
     notes.push({ problem: `${backups.length} backup ${backups.length === 1 ? "folder" : "folders"} in ${backupsRoot}, ${formatBytes(bytes)} in all.`, fix: "litopencode extensions prune-backups --older-than 30" });
@@ -289,9 +306,19 @@ export function extensionsSummaryLine(report: ExtensionsReport): string {
 
 type Source = { readonly variants: string; readonly fetched: boolean; readonly pending?: string };
 
-function git(args: readonly string[]): void {
+// The variables `git rev-parse --local-env-vars` lists. Inherited from a git hook or an IDE task they would point
+// `git -C <cache>` at the user's own repository, so `reset --hard` would land there.
+const gitLocationVariables = [
+  "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT", "GIT_OBJECT_DIRECTORY",
+  "GIT_DIR", "GIT_WORK_TREE", "GIT_IMPLICIT_WORK_TREE", "GIT_GRAFT_FILE", "GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS",
+  "GIT_REPLACE_REF_BASE", "GIT_PREFIX", "GIT_SHALLOW_FILE", "GIT_COMMON_DIR"
+] as const;
+
+function git(args: readonly string[], env: NodeJS.ProcessEnv): void {
+  const childEnv: NodeJS.ProcessEnv = { ...env, GIT_TERMINAL_PROMPT: "0" };
+  for (const name of gitLocationVariables) delete childEnv[name];
   try {
-    execFileSync("git", args, { stdio: ["ignore", "pipe", "pipe"], timeout: 180_000, env: { ...process.env, GIT_TERMINAL_PROMPT: "0" } });
+    execFileSync("git", args, { stdio: ["ignore", "pipe", "pipe"], timeout: 180_000, env: childEnv });
   } catch (error) {
     const code = error instanceof Error && "code" in error ? (error as { code?: unknown }).code : undefined;
     if (code === "ENOENT") throw new Error("git is not installed or not on PATH, so the shelf cannot be fetched. Nothing was installed. Clone wjgoarxiv-skills yourself and pass --from <path to the clone>.");
@@ -310,24 +337,25 @@ async function resolveSource(args: ExtensionsArgs, env: NodeJS.ProcessEnv, refre
   const cache = cacheSourceDirectory(env);
   const variants = path.join(cache, ...variantPath);
   const present = (await lstatIfPresent(path.join(cache, ".git"))) !== null;
+  // A dry run never fetches: it compares with the cached copy, or says the comparison waits for the fetch.
   if (!args.yes) {
     return present
-      ? { variants, fetched: false, ...(refresh ? { pending: `With --yes the shelf in ${cache} is fetched again first.` } : {}) }
-      : { variants, fetched: false, pending: `With --yes the shelf is fetched with git from ${extensionsShelfUrl} into ${cache} (only variants/litopencode).` };
+      ? { variants, fetched: false, ...(refresh ? { pending: `Compared with the cached copy in ${cache}. --yes fetches the shelf first, so the result may differ.` } : {}) }
+      : { variants, fetched: false, pending: `No cached copy yet. --yes fetches the shelf with git from ${extensionsShelfUrl} into ${cache} (only variants/litopencode) and compares after the fetch.` };
   }
   if (!present) {
     await fs.mkdir(path.dirname(cache), { recursive: true });
     const temp = `${cache}.${process.pid}.${randomUUID()}.tmp`;
     try {
-      git(["clone", "--depth", "1", "--filter=blob:none", "--sparse", `${extensionsShelfUrl}.git`, temp]);
-      git(["-C", temp, "sparse-checkout", "set", variantPath.join("/")]);
+      git(["clone", "--depth", "1", "--filter=blob:none", "--sparse", `${extensionsShelfUrl}.git`, temp], env);
+      git(["-C", temp, "sparse-checkout", "set", variantPath.join("/")], env);
       await fs.rename(temp, cache);
     } finally {
       await fs.rm(temp, { recursive: true, force: true });
     }
   } else if (refresh) {
-    git(["-C", cache, "fetch", "--depth", "1", "origin", "HEAD"]);
-    git(["-C", cache, "reset", "--hard", "FETCH_HEAD"]);
+    git(["-C", cache, "fetch", "--depth", "1", "origin", "HEAD"], env);
+    git(["-C", cache, "reset", "--hard", "FETCH_HEAD"], env);
   }
   const stat = await lstatIfPresent(variants);
   if (stat === null || !stat.isDirectory()) throw new Error(`The fetched shelf in ${cache} has no variants/litopencode folder. Nothing was installed.`);
@@ -347,6 +375,18 @@ async function treeHash(folder: string): Promise<string> {
 }
 
 // ---------------------------------------------------------------- writing
+
+/** A whole-folder move. rename cannot cross volumes, so a skills folder linked to another disk gets a plain reason. */
+async function moveWhole(from: string, to: string): Promise<void> {
+  try {
+    await fs.rename(from, to);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "EXDEV") {
+      throw new Error(`Cannot move ${from} to ${to}: they are on different volumes (the skills folder or extension-backups is probably a link to another disk). Nothing was moved. Keep both on one volume, or pass --root <folder> on that volume.`);
+    }
+    throw error;
+  }
+}
 
 function localStamp(now: Date): string {
   const pad = (value: number) => String(value).padStart(2, "0");
@@ -391,11 +431,13 @@ async function copyTree(source: string, destination: string): Promise<void> {
 }
 
 /** Same content from a different clone: rewrite only the receipt's source, through a temp file renamed over it. */
-async function rewriteReceiptSource(folder: string, receipt: ExtensionReceipt, source: string): Promise<void> {
+async function rewriteReceiptSource(folder: string, source: string): Promise<void> {
   const file = path.join(folder, extensionReceiptName);
+  // Start from the file as written so fields this version does not know survive the rewrite.
+  const raw = JSON.parse(await fs.readFile(file, "utf8")) as Record<string, unknown>;
   const temp = path.join(folder, `.${extensionReceiptName}.${randomUUID()}.tmp`);
   try {
-    await fs.writeFile(temp, `${JSON.stringify({ ...receipt, source })}\n`, { flag: "wx" });
+    await fs.writeFile(temp, `${JSON.stringify({ ...raw, source })}\n`, { flag: "wx" });
     await fs.rename(temp, file);
   } finally {
     await fs.rm(temp, { force: true });
@@ -412,7 +454,7 @@ async function placeExtension(skillsRoot: string, entry: ExtensionEntry, source:
     const receipt: ExtensionReceipt = {
       id: entry.id,
       source,
-      variant: "litopencode",
+      variant: receiptVariant,
       installed_at: new Date().toISOString().replace(/\.\d{3}Z$/u, "Z"),
       sha256: sourceHash
     };
@@ -422,10 +464,10 @@ async function placeExtension(skillsRoot: string, entry: ExtensionEntry, source:
     if (current?.isSymbolicLink() === true) throw new Error(`${entry.path} is a symbolic link; nothing was replaced`);
     if (current !== null) {
       movedTo = path.join(await backup.get(), entry.id);
-      await fs.rename(entry.path, movedTo);
+      await moveWhole(entry.path, movedTo);
     }
     try {
-      await fs.rename(stage, entry.path);
+      await moveWhole(stage, entry.path);
     } catch (error) {
       if (movedTo !== undefined) await fs.rename(movedTo, entry.path);
       throw error;
@@ -489,7 +531,7 @@ async function runInstallOrUpdate(args: ExtensionsArgs, env: NodeJS.ProcessEnv, 
   if (errors.length > 0) return { exitCode: 1, stderr: [...errors, "Nothing was installed."].join("\n") };
   const source = await resolveSource(args, env, update);
 
-  type Plan = { entry: ExtensionEntry; from: string; hash?: string; action: "install" | "current" | "update" };
+  type Plan = { entry: ExtensionEntry; from: string; hash?: string; action: "install" | "current" | "update" | "after-fetch" };
   const plans: Plan[] = [];
   if (source.pending === undefined || (await lstatIfPresent(source.variants)) !== null) {
     for (const entry of chosen) {
@@ -506,7 +548,7 @@ async function runInstallOrUpdate(args: ExtensionsArgs, env: NodeJS.ProcessEnv, 
       plans.push({ entry, from, hash, action: same ? "current" : entry.state === "installed" ? "update" : "install" });
     }
   } else {
-    for (const entry of chosen) plans.push({ entry, from: path.join(source.variants, entry.id), action: entry.state === "installed" ? "update" : "install" });
+    for (const entry of chosen) plans.push({ entry, from: path.join(source.variants, entry.id), action: entry.state === "installed" ? "after-fetch" : "install" });
   }
   if (errors.length > 0) return { exitCode: 1, stderr: [...errors, "Nothing was installed."].join("\n") };
 
@@ -522,9 +564,13 @@ async function runInstallOrUpdate(args: ExtensionsArgs, env: NodeJS.ProcessEnv, 
       } else if (!args.yes) {
         lines.push(`${entry.id}: current (would record ${plan.from} as the source in ${extensionReceiptName})`);
       } else {
-        await rewriteReceiptSource(entry.path, entry.receipt, plan.from);
+        await rewriteReceiptSource(entry.path, plan.from);
         lines.push(`${entry.id}: current (the receipt now names ${plan.from} as the source)`);
       }
+      continue;
+    }
+    if (plan.action === "after-fetch") {
+      lines.push(`${entry.id}: installed; compared with the shelf after the fetch`);
       continue;
     }
     const verbWord = plan.action === "update" ? "update" : "install";
@@ -570,7 +616,7 @@ async function runRemove(args: ExtensionsArgs, workDir: string): Promise<CliResu
       continue;
     }
     const movedTo = path.join(await backup.get(), entry.id);
-    await fs.rename(entry.path, movedTo);
+    await moveWhole(entry.path, movedTo);
     removed += 1;
     lines.push(`${entry.id}: moved to ${movedTo}`);
   }

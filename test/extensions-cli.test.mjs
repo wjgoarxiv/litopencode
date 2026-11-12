@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { test } from "node:test";
+import fsp from "node:fs/promises";
+import { mock, test } from "node:test";
 import { extensionsNoticeLines } from "../src/extensions-notice.ts";
+import { runExtensionsCommand } from "../src/cli/extensions.ts";
 import { runCli as runBin } from "../test-support/cli-fixture.ts";
 
 // `litopencode extensions` does the pointer's four lines in code: it checks for same-name skills OpenCode also reads,
@@ -272,4 +275,157 @@ test("help and the install notice name the extensions verbs; the four lines stay
   const flagged = extensionsNoticeLines([], true).join("\n");
   assert.match(flagged, /litopencode extensions check/u);
   assert.doesNotMatch(notice, /extensions check/u, "the check line appears only when check found something");
+});
+
+// ---------------------------------------------------------------- review fixes
+
+// A local "shelf" repository and a cache cloned from it, so update can fetch without the network.
+function gitIn(cwd, ...args) {
+  const result = spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.invalid", "-c", "commit.gpgsign=false", ...args], { cwd, encoding: "utf8", env: { PATH: process.env.PATH, HOME: cwd } });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout.trim();
+}
+
+function withCachedShelf({ dir, clone, env }) {
+  const shelf = path.join(dir, "shelf");
+  cpSync(clone, shelf, { recursive: true });
+  gitIn(shelf, "init", "-q", "-b", "main");
+  gitIn(shelf, "add", "-A");
+  gitIn(shelf, "commit", "-q", "-m", "v1");
+  const cache = path.join(env.XDG_CACHE_HOME, "litopencode", "extensions-src");
+  mkdirSync(path.dirname(cache), { recursive: true });
+  gitIn(dir, "clone", "-q", shelf, cache);
+  return { shelf, cache };
+}
+
+test("update ignores GIT_DIR and GIT_WORK_TREE from the caller, so the user's repository is never fetched into or reset", () => {
+  sandbox(({ cli, dir, clone, env, target }) => {
+    const { shelf } = withCachedShelf({ dir, clone, env });
+    assert.equal(cli(["extensions", "install", "lit-docx", "--yes"]).status, 0);
+    writeFileSync(path.join(shelf, "variants", "litopencode", "lit-docx", "SKILL.md"), "---\nname: lit-docx\ndescription: v2\n---\n");
+    gitIn(shelf, "commit", "-q", "-am", "v2");
+
+    const decoy = path.join(dir, "decoy");
+    mkdirSync(decoy);
+    gitIn(decoy, "init", "-q", "-b", "main");
+    writeFileSync(path.join(decoy, "work.txt"), "unsaved work\n");
+    gitIn(decoy, "add", "work.txt");
+    gitIn(decoy, "commit", "-q", "-m", "mine");
+    writeFileSync(path.join(decoy, "work.txt"), "edited, not committed\n");
+    const head = gitIn(decoy, "rev-parse", "HEAD");
+
+    const updated = cli(["extensions", "update", "--yes"], { GIT_DIR: path.join(decoy, ".git"), GIT_WORK_TREE: decoy, GIT_INDEX_FILE: path.join(decoy, ".git", "index") });
+    assert.equal(updated.status, 0, updated.stderr);
+    assert.match(updated.stdout, /lit-docx: updated/u);
+    assert.match(readFileSync(path.join(target("lit-docx"), "SKILL.md"), "utf8"), /v2/u);
+    assert.equal(readFileSync(path.join(decoy, "work.txt"), "utf8"), "edited, not committed\n", "the caller's work tree is untouched");
+    assert.equal(gitIn(decoy, "rev-parse", "HEAD"), head);
+  });
+});
+
+test("a competing copy is named once when the working directory is the home folder", () => {
+  sandbox(({ home, env }) => {
+    const personal = path.join(home, ".agents", "skills", "lit-docx");
+    mkdirSync(personal, { recursive: true });
+    writeFileSync(path.join(personal, "SKILL.md"), "---\nname: lit-docx\ndescription: mine\n---\n");
+    const list = runBin(["extensions", "list", "--json"], { env, cwd: home });
+    assert.equal(list.status, 0, list.stderr);
+    assert.deepEqual(JSON.parse(list.stdout).extensions.find((entry) => entry.id === "lit-docx").competing, [personal]);
+    const check = JSON.parse(runBin(["extensions", "check", "--json"], { env, cwd: home }).stdout);
+    assert.equal(check.needsAction.filter((issue) => issue.id === "lit-docx").length, 1);
+  });
+});
+
+test("only a litopencode receipt makes a folder installed, and the source rewrite keeps fields it does not know", () => {
+  sandbox(({ cli, dir, clone, target }) => {
+    mkdirSync(target("lit-pptx"), { recursive: true });
+    writeFileSync(path.join(target("lit-pptx"), "SKILL.md"), "---\nname: lit-pptx\ndescription: copied by hand\n---\n");
+    writeFileSync(path.join(target("lit-pptx"), ".litfamily-extension.json"), JSON.stringify({ id: "lit-pptx", source: clone, variant: "another-product", installed_at: "2026-11-01T00:00:00Z" }));
+    assert.equal(JSON.parse(cli(["extensions", "list", "--json"]).stdout).extensions.find((entry) => entry.id === "lit-pptx").state, "user-managed");
+    const refused = cli(["extensions", "remove", "lit-pptx", "--yes"]);
+    assert.equal(refused.status, 1);
+    assert.ok(existsSync(path.join(target("lit-pptx"), "SKILL.md")));
+
+    assert.equal(cli(["extensions", "install", "lit-docx", "--from", clone, "--yes"]).status, 0);
+    const receiptFile = path.join(target("lit-docx"), ".litfamily-extension.json");
+    writeFileSync(receiptFile, `${JSON.stringify({ ...receiptOf(target("lit-docx")), note: "kept" })}\n`);
+    const other = path.join(dir, "other-clone");
+    cpSync(clone, other, { recursive: true });
+    assert.equal(cli(["extensions", "update", "lit-docx", "--from", other, "--yes"]).status, 0);
+    const receipt = receiptOf(target("lit-docx"));
+    assert.equal(receipt.note, "kept");
+    assert.equal(receipt.source, path.join(other, "variants", "litopencode", "lit-docx"));
+  });
+});
+
+test("a move across volumes stops with a plain reason and leaves the old folder in place", async () => {
+  const dir = realpathSync(mkdtempSync(path.join(os.tmpdir(), "litopencode-extensions-exdev-")));
+  const previousHome = process.env.HOME;
+  try {
+    const home = path.join(dir, "home");
+    const root = path.join(home, ".config", "opencode");
+    const clone = path.join(dir, "clone");
+    const variant = path.join(clone, "variants", "litopencode", "lit-docx");
+    mkdirSync(variant, { recursive: true });
+    writeFileSync(path.join(variant, "SKILL.md"), "---\nname: lit-docx\ndescription: shelf\n---\n");
+    const mine = path.join(root, "skills", "lit-docx");
+    mkdirSync(mine, { recursive: true });
+    writeFileSync(path.join(mine, "SKILL.md"), "mine\n");
+    process.env.HOME = home;
+    const env = { HOME: home, XDG_CONFIG_HOME: path.join(home, ".config"), XDG_CACHE_HOME: path.join(dir, "cache") };
+    const rename = mock.method(fsp, "rename", async () => {
+      throw Object.assign(new Error("EXDEV: cross-device link not permitted"), { code: "EXDEV" });
+    });
+    try {
+      const result = await runExtensionsCommand(["install", "lit-docx", "--from", clone, "--yes"], env, dir);
+      assert.equal(result.exitCode, 1);
+      assert.match(result.stderr, /different volumes/u);
+      assert.match(result.stderr, /Nothing was moved/u);
+    } finally {
+      rename.mock.restore();
+    }
+    assert.equal(readFileSync(path.join(mine, "SKILL.md"), "utf8"), "mine\n");
+    assert.deepEqual(readdirSync(path.join(root, "skills")), ["lit-docx"], "the stage is cleaned up");
+  } finally {
+    if (previousHome === undefined) delete process.env.HOME;
+    else process.env.HOME = previousHome;
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("an update dry run fetches nothing: it says it compared with the cache, or that the comparison waits for the fetch", () => {
+  sandbox(({ cli, dir, clone, env }) => {
+    assert.equal(cli(["extensions", "install", "lit-docx", "--from", clone, "--yes"]).status, 0);
+    const cache = path.join(env.XDG_CACHE_HOME, "litopencode", "extensions-src");
+    const noCache = cli(["extensions", "update"]);
+    assert.equal(noCache.status, 0, noCache.stderr);
+    assert.doesNotMatch(noCache.stdout, /would update/u);
+    assert.match(noCache.stdout, /lit-docx: installed; compared with the shelf after the fetch/u);
+    assert.match(noCache.stdout, /No cached copy yet/u);
+    assert.equal(existsSync(cache), false, "a dry run clones nothing");
+
+    rmSync(path.join(env.XDG_CACHE_HOME), { recursive: true, force: true });
+    withCachedShelf({ dir, clone, env });
+    const cached = cli(["extensions", "update"]);
+    assert.equal(cached.status, 0, cached.stderr);
+    assert.match(cached.stdout, /Compared with the cached copy in .+--yes fetches the shelf first, so the result may differ\./u);
+    assert.equal(existsSync(path.join(cache, ".git", "FETCH_HEAD")), false, "a dry run fetches nothing");
+  });
+});
+
+test("check reports a stage folder an interrupted install left behind", () => {
+  sandbox(({ cli, root }) => {
+    const stage = path.join(root, "skills", ".lit-docx.0f8fad5b-d9cb-469f-a165-70867728950e.stage");
+    mkdirSync(stage, { recursive: true });
+    writeFileSync(path.join(stage, "SKILL.md"), "half\n");
+    const check = cli(["extensions", "check"]);
+    assert.equal(check.status, 1);
+    assert.ok(check.stdout.includes(`rm -r "${stage}"`), check.stdout);
+  });
+});
+
+test("extensions help names --root", () => {
+  sandbox(({ cli }) => {
+    assert.match(cli(["extensions", "--help"]).stdout, /--root <OpenCode config folder>/u);
+  });
 });

@@ -130,7 +130,16 @@ export async function detectShadowedSkills(
   workDir: string = process.cwd()
 ): Promise<readonly ShadowedSkill[]> {
   const managedRealpath = await realpathOrResolved(managedSkillsRoot);
-  const candidates = shadowSkillCandidateRoots(homeDir, workDir);
+  // When the working directory is the home folder (or a root is a link to another), two candidates name one folder;
+  // keep the first so one competing copy is reported once.
+  const candidates: ShadowSkillLocation[] = [];
+  const seen = new Set<string>();
+  for (const candidate of shadowSkillCandidateRoots(homeDir, workDir)) {
+    const real = await realpathOrResolved(candidate.root);
+    if (seen.has(real)) continue;
+    seen.add(real);
+    candidates.push(candidate);
+  }
   const shadowed: ShadowedSkill[] = [];
   for (const id of skillIds) {
     const locations: ShadowSkillLocation[] = [];
