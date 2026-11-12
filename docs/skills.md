@@ -256,6 +256,8 @@ flowchart TD
     class Skills,Records local
 ```
 
+Follow one prompt through. The activation hook sees `lit` and raises the LIT IGNITED mark, then hands the turn to an agent: `lit-loop` for a task you want done now, `lit-plan` when the job needs a plan first, `lit-implement` once a plan is approved. The planner can read but cannot edit files or run a shell. The agent works through the plugin's tools, writes its criteria and evidence into `.litopencode/litgoal/`, and sends the change to `/review-work`, which checks it in five lanes. Every turn also carries your repository rules and the reader contract, which the system-prompt hook adds before the model starts.
+
 ## Moved to wjgoarxiv-skills
 
 The skills that made files and pictures moved to wjgoarxiv-skills, a separate collection grouped into families, so you install only the ones you use and LitOpenCode stays light. Each old name stays behind as a short pointer. OpenCode's skill picker, a `lit` request for a deck, report, diagram, P&ID or film, interface requests in chat and `/lit-scientific-visualization` all still land on it, and it tells you where the skill went and how to put it back.

@@ -34,6 +34,14 @@ An interactive install asks once. `--yes` adds the block, `--no-agent-file` leav
 
 What install actually does is small. It adds the plugin to OpenCode's config and copies LitOpenCode's commands and skills into your OpenCode config folder. Your routes, which say which model handles each kind of work, are kept in `~/.config/opencode/litopencode.json`. If you set `XDG_CONFIG_HOME`, that whole config folder moves with it. Routes you've already customized are left as they are. The [installation and model reference](./reference.md#install) covers custom roots, provider choices, terminal behavior, and unattended setup.
 
+OpenCode 1 and OpenCode 2 can sit on the same machine, and they load plugins in different ways, so install takes the path that suits each host:
+
+| Host | What install does |
+| --- | --- |
+| OpenCode 1 | Registers the plugin with `opencode plugin` and adds the TUI entry |
+| OpenCode 2 | The host fetches the package itself, so install only clears duplicate entries and keeps a backup of `cli.json` |
+| Both | Read the same config folder; install leaves your `permissions` and `policies` alone |
+
 This checkout is `@litfamily/litopencode@1.0.44`. The registry's `@latest` can be different, so run `npm view @litfamily/litopencode version` when the exact version matters.
 
 ## Your first task
@@ -74,7 +82,19 @@ To turn it on, send `lit-handoff auto on 70` as a chat message, or run `/lit-han
 
 If you prefer the environment, set `LITOPENCODE_AUTO_HANDOFF=1` and set `LITOPENCODE_AUTO_HANDOFF_PERCENT` to a whole number from 1 to 99. The environment wins over the saved setting. The config file holds the same two values in an `autoHandoff` block. A percent outside 1 to 99 switches the feature off, and `litopencode doctor` says why.
 
+To keep the setting in a file, add an `autoHandoff` block to `.litopencode/config.json` in your project, or to `~/.config/opencode/litopencode.json` for every project. The environment and the chat setting both come before the file.
+
+```json
+{ "autoHandoff": { "enabled": true, "percent": 70 } }
+```
+
 Pick a percent below the point where OpenCode compacts by itself. With the limits LitOpenCode installs, that point is 90% of the window, and doctor warns when your percent is at or above it, because OpenCode would compact first and the handoff would have no time to run. The [reference](./reference.md#automatic-handoff) lists every setting, what is written to disk, and how the reload works.
+
+## The LIT card
+
+The [README](../README.md#the-lit-card) shows the card in its three states. Each LitOpenCode skill the request uses gets a bright chip of its own, with a short sweep of light as it arrives; skills from earlier turns wait in grey. When the turn ends the chips dim but stay, newest first, so you can still see what ran. A skill used again lights up again, and when there are more chips than room, the rest fold into `+N`.
+
+The track is a map of the whole workflow. A request that starts with an interview walks through `interview › plan › work › review › done`, and the step you are on is lit with its count, such as `WORK 3/7` while `/start-work` works through a saved plan. A lit-loop goal counts its criteria and loop turns instead, and a litresearch run follows its own steps from `decompose` through each `wave` to `synthesis`. The chip beside the prompt shows the same map around the current step, the sidebar draws it top to bottom with a line that fills as you move forward, and while a tool runs its name and elapsed time sit beside it, like `⠹ bash · 0:48`.
 
 ## Safety and updates
 
@@ -85,6 +105,10 @@ When LitOpenCode fetches a public page, it first checks where the request is goi
 LitOpenCode can update itself. On interactive startup, and after an install or doctor run succeeds, it may check for a new release, and it does that in the foreground, so you may wait a moment. To turn automatic updates off, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`.
 
 Skill learning has been removed. If an earlier release left learning records in a project's `.litopencode` folder, LitOpenCode no longer reads, changes or deletes them; they're yours to keep or remove. [More on that state](./reference.md#skill-learning-state).
+
+## Updating from 1.0.43 or earlier
+
+The update replaces the old skill folders with pointers. A file you added or changed inside one of them is copied first to a dated folder under `~/.config/opencode/.litopencode-skill-backups/`, and the installer prints where. It also names what the old version left behind: `~/.cache/litopencode/motion-runtime` and `~/.cache/litopencode/office` (under `$XDG_CACHE_HOME` when that is set), and OpenCode's copy of the old plugin under `~/.cache/opencode/packages/@litfamily/`. Nothing reads them now and the extensions keep their own, so you can delete them.
 
 ## Troubleshooting
 

@@ -34,6 +34,14 @@ npm exec --package @litfamily/litopencode@latest -- litopencode install --yes   
 
 설치가 하는 일은 많지 않습니다. OpenCode 설정에 플러그인을 등록하고, LitOpenCode의 명령과 스킬 파일을 OpenCode 설정 폴더에 복사합니다. 어떤 일에 어떤 모델을 쓸지 정한 route는 `~/.config/opencode/litopencode.json`에 저장됩니다. `XDG_CONFIG_HOME`을 지정하면 설정 폴더가 통째로 그쪽으로 옮겨 갑니다. 이미 손봐 둔 route는 건드리지 않습니다. 설정 폴더를 직접 정하는 방법, 모델 선택, 터미널 정책, 무인 설치는 [상세 안내](./reference-Ko-KR.md#설치)에 있습니다.
 
+OpenCode 1과 OpenCode 2는 한 컴퓨터에 같이 있을 수 있고, 플러그인을 불러오는 방식이 서로 다릅니다. 그래서 설치는 호스트마다 맞는 길로 진행합니다.
+
+| 호스트 | 설치가 하는 일 |
+| --- | --- |
+| OpenCode 1 | `opencode plugin`으로 플러그인을 등록하고 TUI 항목을 더합니다 |
+| OpenCode 2 | 패키지를 호스트가 스스로 받아 오므로, 설치는 중복 항목만 정리하고 `cli.json` 백업을 남깁니다 |
+| 공통 | 두 호스트가 같은 설정 폴더를 읽고, `permissions`와 `policies`는 설치가 건드리지 않습니다 |
+
 이 체크아웃의 패키지 버전은 `@litfamily/litopencode@1.0.44`입니다. registry의 `@latest`와 다를 수 있으니, 정확한 버전이 중요하면 `npm view @litfamily/litopencode version`으로 확인하세요.
 
 ## 첫 작업
@@ -74,7 +82,19 @@ OpenCode는 플러그인이 압축을 직접 시작하도록 허용하므로, Op
 
 환경 변수로 정하고 싶다면 `LITOPENCODE_AUTO_HANDOFF=1`을 설정하고, `LITOPENCODE_AUTO_HANDOFF_PERCENT`에 1부터 99 사이의 정수를 넣으세요. 환경 변수는 저장된 설정보다 우선합니다. 설정 파일의 `autoHandoff` 블록에도 같은 두 값을 적을 수 있습니다. 1~99 밖의 퍼센트는 기능을 끄고, 이유는 `litopencode doctor`가 알려 줍니다.
 
+설정을 파일에 두고 싶다면 프로젝트의 `.litopencode/config.json`에, 모든 프로젝트에 적용하려면 `~/.config/opencode/litopencode.json`에 `autoHandoff` 블록을 넣으세요. 환경 변수와 채팅 설정이 모두 파일보다 먼저입니다.
+
+```json
+{ "autoHandoff": { "enabled": true, "percent": 70 } }
+```
+
 OpenCode가 스스로 압축하는 지점보다 낮은 퍼센트를 고르세요. LitOpenCode가 설치하는 한도에서는 그 지점이 창의 90%입니다. 고른 퍼센트가 그 지점과 같거나 더 높으면 OpenCode가 먼저 압축해 인수인계가 돌 틈이 없으므로, doctor가 경고합니다. 모든 설정과 디스크에 남는 내용, 다시 불러오는 방식은 [레퍼런스](./reference-Ko-KR.md#자동-인수인계)에 있습니다.
+
+## LIT 상태 카드
+
+카드의 세 가지 상태는 [README](../README-Ko-KR.md#lit-상태-카드)에 그림으로 있습니다. 요청이 쓰는 LitOpenCode 스킬마다 밝은 칩이 하나씩 붙고, 새 칩이 붙을 때는 빛이 한 번 훑고 지나갑니다. 앞선 차례에 쓴 스킬은 회색으로 남습니다. 차례가 끝나면 칩은 흐려지지만 사라지지 않고 가장 최근에 쓴 것부터 남아 무엇이 돌았는지 보여 줍니다. 같은 스킬을 다시 쓰면 그 칩이 다시 밝아지고, 칩이 자리보다 많으면 나머지는 `+N`으로 접힙니다.
+
+단계 표시는 작업 흐름 전체를 담은 지도입니다. 인터뷰로 시작한 요청은 `interview › plan › work › review › done`을 따라가고, 지금 단계는 개수와 함께 밝게 켜집니다. 예를 들어 `/start-work`가 저장된 계획을 처리하는 동안에는 `WORK 3/7`처럼 보입니다. lit-loop 목표는 기준과 반복 횟수를 세고, litresearch 실행은 `decompose`에서 `wave`를 거쳐 `synthesis`까지 자기 단계를 따릅니다. 입력창 옆 칩은 지금 단계 앞뒤를, 사이드바는 같은 지도를 위에서 아래로 그리며 다음 단계로 넘어갈 때 선이 차오릅니다. 도구가 도는 동안에는 `⠹ bash · 0:48`처럼 도구 이름과 걸린 시간이 함께 보입니다.
 
 ## 안전과 업데이트
 
@@ -85,6 +105,10 @@ planner는 계획만 세웁니다. `lit-plan`은 `edit`, `bash`, `task` 권한�
 LitOpenCode는 스스로 업데이트할 수 있습니다. 대화형으로 시작할 때와 install이나 doctor가 성공한 뒤에 새 버전을 확인할 수 있는데, 이 확인이 끝날 때까지 기다리므로 잠깐 멈출 수 있습니다. 자동 업데이트를 끄려면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요.
 
 스킬 학습 기능은 제거되었습니다. 이전 릴리스가 프로젝트의 `.litopencode` 폴더에 남긴 학습 기록이 있더라도, LitOpenCode는 이제 그 파일을 읽지도, 바꾸지도, 지우지도 않습니다. 남겨 둘지 지울지는 직접 정하면 됩니다. [자세한 내용](./reference.md#skill-learning-state)
+
+## 1.0.43 이하에서 업데이트하기
+
+업데이트하면 예전 스킬 폴더가 안내 폴더로 바뀝니다. 그 폴더 안에 직접 추가하거나 고친 파일은 먼저 `~/.config/opencode/.litopencode-skill-backups/` 아래 날짜 폴더로 복사되고, 설치 프로그램이 그 위치를 출력합니다. 예전 버전이 남긴 것도 알려 줍니다. `~/.cache/litopencode/motion-runtime`과 `~/.cache/litopencode/office`(`XDG_CACHE_HOME`을 설정했다면 그 아래), 그리고 `~/.cache/opencode/packages/@litfamily/` 아래에 OpenCode가 받아 둔 예전 플러그인입니다. 이제 아무것도 읽지 않고 확장 스킬은 자기 캐시를 따로 쓰므로 지워도 됩니다.
 
 ## 문제 해결
 
