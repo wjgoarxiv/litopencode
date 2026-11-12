@@ -105,7 +105,7 @@ Each route leaves a note you can read later, so a task can stop and resume acros
 | `/lit-recap` | Reads back what is done, what is blocked and what is next |
 | `/litresearch` | Works in rounds and keeps a source next to each claim, along with what is still uncertain |
 | `/lit-humanizer` | Rewrites stiff English or Korean prose, keeping the facts, the writer's voice and the qualifiers that matter |
-| `/rules` | Shows the repository rules that load once per session and again for files you edit |
+| `/rules` | Loads the repository rules, once per session and again for files you edit |
 
 ```text
 Add a dark-mode toggle to the settings page and keep the existing tests passing lit
