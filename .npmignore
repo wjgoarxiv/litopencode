@@ -29,7 +29,8 @@ docs/brand.md
 docs/brand-Ko-KR.md
 # README media and linked licenses are pinned to this package version.
 # The on-screen pictures (install-output-*, doctor-output-*, ignition-toast-*,
-# planner-permissions-*), the status card and automatic handoff pictures (status-card-*, auto-handoff-*) and the
+# planner-permissions-*), the status card and automatic handoff pictures (status-card-*, auto-handoff-*), the
+# How it works and Extensions diagrams (core-extensions.*, lit-route.*, two-hosts.*, lit-plant*) and the
 # promo film (promo-*, promo-source/) are shown only by the GitHub pages, so the docs/assets/readme/* rule below
 # keeps them out of the package.
 docs/assets/readme/*

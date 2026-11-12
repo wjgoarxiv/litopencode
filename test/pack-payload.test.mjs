@@ -65,8 +65,8 @@ const requiredReadmePaths = [
 ];
 const readmeCdn = `https://cdn.jsdelivr.net/npm/${packageId}/`;
 // The npm pages pin package-CDN images; the GitHub pages load the same shipped files by relative path.
-// The on-screen pictures, the status card, showcase and automatic handoff pictures and the promo film are shown by the GitHub pages only and stay out of the package.
-const githubOnlyReadmeMedia = /^docs\/assets\/readme\/(?:(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|status-card-(?:idle|working|recent)\.webp|showcase-(?:adhd-brief|deck|ui|pid)\.webp|auto-handoff-(?:settings|compact|doctor)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
+// The on-screen pictures, the status card, the How it works and Extensions diagrams, showcase and automatic handoff pictures and the promo film are shown by the GitHub pages only and stay out of the package.
+const githubOnlyReadmeMedia = /^docs\/assets\/readme\/(?:(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|status-card-(?:idle|working|recent)\.webp|(?:core-extensions|lit-route|two-hosts)\.(?:en|ko)\.(?:dark|light)\.png|lit-plant\.(?:en|ko)(?:\.dark)?\.png|lit-plant-loop\.(?:en|ko)(?:\.dark)?\.webp|showcase-(?:adhd-brief|deck|ui|pid)\.webp|auto-handoff-(?:settings|compact|doctor)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
 // The landing README's demo film is GitHub-only as well.
 const githubOnlyDemoFilm = "docs/assets/demo.webp";
 // The GitHub docs pages hold what moved off the landing README; their images resolve relative to docs/.

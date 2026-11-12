@@ -126,6 +126,10 @@ lit research 쓰기가 많은 로컬 앱에서 가장 중요한 SQLite 설정은
 
 LitOpenCode의 핵심 기능은 그 자체로 완성되어 있어서 다른 것을 더 설치하지 않아도 동작합니다. 계획, 구현, 검토, 조사, 인수인계를 비롯해 이 문서에 나온 기능은 모두 핵심에 들어 있습니다. 파일을 만드는 스킬은 그 바깥에 한 층으로 따로 있습니다. 발표자료, 워드 문서, 개념도, 장치 도면, 학술지 그림, 화면과 화면 점검, 영상과 README 커버를 만드는 스킬은 이제 LitFamily 확장 스킬이고, 확장 스킬을 모아 둔 [wjgoarxiv-skills](https://github.com/wjgoarxiv/wjgoarxiv-skills)에 있습니다. 쓰는 스킬을 LitOpenCode와 함께 설치하면 LitFamily의 기능을 빠짐없이 쓸 수 있습니다.
 
+경계가 어디에 그어지는지는 그림으로 보는 편이 빠릅니다. 왼쪽은 모두 LitOpenCode와 함께 설치되고, 다른 것 없이 돌아갑니다. 가운데의 확장 스킬은 자기 이름 그대로 작은 안내 폴더를 남겨 두고, 모음에 있는 OpenCode용 복사본을 설치하면 그 폴더 자리에 들어갑니다.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/core-extensions.ko.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/core-extensions.ko.light.png" /><img src="./docs/assets/readme/core-extensions.ko.light.png" width="900" alt="왼쪽은 litopencode install이 설치하는 LitOpenCode 핵심으로, 계획하고 만들기, 검토하고 고치기, 기억하고 이어 가기, 조사하고 쓰기, 코드 도구로 묶여 있고 전체 목록은 docs/skills.md에 있습니다. 가운데는 발표자료, 문서, 그림, 디자인, 영상·커버를 맡던 스킬의 같은 이름 안내 폴더 아홉 개입니다. 오른쪽은 wjgoarxiv-skills 확장 모음으로, 묶음마다 variants/litopencode 복사본이 안내 폴더 자리를 대신합니다. 아래에는 모음 내려받기, 안내 폴더 지우기, OpenCode용 복사본 넣기, 새 세션 열기의 네 단계가 있습니다." /></picture></p>
+
 모음을 한 번 내려받은 뒤, 원하는 스킬마다 안내 폴더를 모음에 있는 OpenCode용 복사본으로 바꿉니다.
 
 ```sh
@@ -201,17 +205,19 @@ OpenCode 1과 2.2 이전 OpenCode 2에는 `/goal`이 없습니다. 거기서는 
 
 ## 동작 방식
 
-OpenCode는 설정 파일에서 LitOpenCode를 플러그인으로 불러옵니다. 프롬프트나 명령을 보내면 플러그인이 알맞은 워크플로를 고르고, 필요한 스킬을 모델에게 알려 줍니다. 도구와 훅이 일어난 일을 프로젝트에 적어 두고, `/lit-recap`이나 다음 세션이 그 기록을 다시 읽습니다.
+OpenCode는 설정 파일에서 LitOpenCode를 플러그인으로 불러옵니다. 프롬프트나 명령을 보내면 플러그인이 알맞은 워크플로를 고르고, 필요한 스킬을 모델에게 알려 줍니다. 도구와 훅이 일어난 일을 프로젝트에 적어 두고, `/lit-recap`이나 다음 세션이 그 기록을 다시 읽습니다. 프롬프트 하나를 따라가 보겠습니다. 활성화 훅이 `lit`을 알아보고 LIT IGNITED 표시를 띄운 다음, 차례를 에이전트에게 넘깁니다. 지금 바로 끝낼 일이면 `lit-loop`, 계획부터 세워야 하는 일이면 `lit-plan`, 승인된 계획을 실행할 때는 `lit-implement`가 맡습니다. 계획 에이전트는 읽기만 하고 파일 수정이나 셸 실행은 할 수 없습니다. 에이전트는 플러그인의 도구로 일하면서 완료 조건과 증거를 `.litopencode/litgoal/`에 적고, 바뀐 내용을 `/review-work`에 보내 다섯 레인으로 검토받습니다. 모델이 답하기 전에 시스템 프롬프트 훅이 저장소 규칙과 독자 계약을 매 턴 덧붙입니다.
 
-```mermaid
-flowchart LR
-    Prompt["lit을 붙인 프롬프트"] --> Plugin["OpenCode 안의 LitOpenCode 플러그인"]
-    Plugin --> Agents["lit-loop, lit-plan, lit-implement와 스킬"]
-    Agents --> Record["프로젝트의 .litopencode/litgoal/"]
-    Record -->|"/lit-recap, 다음 세션"| Agents
-```
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/lit-route.ko.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/lit-route.ko.light.png" /><img src="./docs/assets/readme/lit-route.ko.light.png" width="900" alt="lit이나 /lit을 붙인 프롬프트가 활성화 훅에 닿으면 LIT IGNITED 토스트가 뜨고, 워크플로가 에이전트(lit-loop, lit-plan, lit-implement)에게 넘어갑니다. lit-plan은 파일을 고치거나 셸을 실행할 수 없습니다. 에이전트는 lit, litwork, start-work, review-work, wikify 도구를 부르고, 스킬은 ~/.config/opencode/skills에서 불러옵니다. 기록은 프로젝트의 .litopencode/litgoal/과 .litopencode/plans/에 남고, /lit-recap과 다음 세션이 다시 읽습니다. /review-work는 scope, tests, package, security, surface 다섯 레인에서 pass, fail, blocked 판정을 돌려줍니다. 아래 띠에는 같은 경로가 두 호스트에서 어떤 훅을 거치는지 나옵니다. OpenCode 1은 chat.message, command.execute.before, experimental.chat.system.transform, tool.execute.before/after를, OpenCode 2는 세션 훅 prompt, context, compaction과 도구 훅 execute.before/after, 권한 훅 evaluate를 씁니다." /></picture></p>
 
 설치는 OpenCode 설정(`opencode.jsonc`)에 플러그인을 등록하고, 명령과 스킬 파일을 OpenCode 설정 폴더에 복사하고, 모델 경로 설정을 `~/.config/opencode/litopencode.json`에 저장합니다. 자세한 내용은 [사용 안내](./docs/guide-Ko-KR.md#설치)에 있습니다.
+
+OpenCode 1과 OpenCode 2는 한 컴퓨터에 같이 있을 수 있고, 플러그인을 불러오는 방식이 서로 다릅니다. `litopencode install`은 `opencode`와 `opencode2` 뒤에 있는 npm 패키지를 보고 어느 쪽이 설치돼 있는지 알아냅니다. 둘 다 실행하지 않고 확인만 한 뒤, 호스트마다 맞는 길로 설치합니다. OpenCode 1에서는 `opencode plugin`으로 플러그인을 등록하고 TUI 항목을 더합니다. OpenCode 2는 패키지를 스스로 받아 오므로, 설치는 중복 항목만 정리하고 `cli.json` 백업을 남깁니다. 그 뒤로 두 호스트는 같은 설정 폴더를 읽고, `permissions`와 `policies`는 설치가 건드리지 않습니다.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/two-hosts.ko.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/two-hosts.ko.light.png" /><img src="./docs/assets/readme/two-hosts.ko.light.png" width="900" alt="litopencode install은 opencode와 opencode2 뒤의 npm 패키지를 읽어 호스트를 찾고, 어느 쪽도 실행하지 않습니다. 둘 다 있으면 둘 다 설치합니다. OpenCode 1 쪽은 opencode plugin --global로 플러그인을 등록한 뒤 tui.json에 TUI 항목을 더합니다. OpenCode 2 쪽은 호스트가 패키지를 받아 오므로 opencode plugin을 실행하지 않고, plugins 키와 cli.json의 중복 항목을 백업을 남기고 정리합니다. 두 길은 ~/.config/opencode라는 설정 폴더 하나에서 만납니다. 그 안에는 플러그인 항목 하나가 든 opencode.jsonc, command/<id>.md, skills/<id>/, 모델 경로를 담은 litopencode.json, 먼저 물어보고 넣는 AGENTS.md 표시 블록이 있고, permissions와 policies는 쓰지 않습니다. 아래 띠는 설치 뒤 달라 보이는 점을 비교합니다. OpenCode 1에서는 LIT IGNITED 표시가 답변에 나오고 토스트는 서버 플러그인이 띄우며 일은 기록이 이어 갑니다. OpenCode 2에서는 표시가 프롬프트 아래 한 줄로 나오고 토스트는 TUI 플러그인이 띄우며, 2.2부터는 lit loop와 /start-work가 /goal을 세웁니다."></picture></p>
+
+공정 흐름도가 익숙하다면 같은 고리를 이렇게 읽을 수 있습니다. 요청은 왼쪽으로 들어오고, 계획 드럼에서 나온 계획은 `/start-work`를 거쳐 빌드 반응기로 갑니다. 반응기에서 나온 것은 모두 검토 탑을 지납니다. 조절기가 레인 판정을 읽고 분기 밸브를 움직이면, 통과한 변경은 밖으로 나가고 실패한 레인은 빌드로 돌아갑니다. 빌드와 검토에서 나온 증거는 기록 탱크에 쌓이고, 다음 세션에서 `/lit-recap`이 거기서 꺼내 씁니다.
+
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="./docs/assets/readme/lit-plant.ko.dark.png" /><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/readme/lit-plant.ko.png" /><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/lit-plant-loop.ko.dark.webp" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/lit-plant-loop.ko.webp" /><img src="./docs/assets/readme/lit-plant-loop.ko.webp" width="900" alt="LitOpenCode를 공정 흐름도로 그린 그림입니다. lit 프롬프트가 활성화 훅으로 들어옵니다. 2번 흐름은 계획 드럼(lit-plan, edit·shell·subagent 막힘)으로 올라가고, 승인된 계획인 3번 흐름이 빌드 반응기(lit-loop)로 들어갑니다. 계획 없는 lit 작업은 4번 흐름으로 곧장 들어갑니다. 반응기는 검토 탑(/review-work, scope·tests·package·security·surface 다섯 레인)으로 이어집니다. 조절기 AIC-101이 레인 판정을 읽어 삼방 분기 밸브를 움직이고, 7번 흐름은 완료로 나가며 8번 흐름은 실패한 레인을 빌드로 돌려보냅니다. 증거 흐름 9번과 10번은 프로젝트의 .litopencode/ 폴더에 있는 기록 탱크로 가고, 11번 흐름이 기록을 /lit-recap으로 보냅니다. 아래에 스트림 표와 요청, 진행 중인 작업, 통과, 재작업, 증거, 레인 판정의 범례가 있습니다." /></picture></p>
 
 ## 준비물, 업데이트, 제거
 
