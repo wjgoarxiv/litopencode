@@ -42,7 +42,7 @@ OpenCode 1과 OpenCode 2는 한 컴퓨터에 같이 있을 수 있고, 플러그
 | OpenCode 2 | 패키지를 호스트가 스스로 받아 오므로, 설치는 중복 항목만 정리하고 `cli.json` 백업을 남깁니다 |
 | 공통 | 두 호스트가 같은 설정 폴더를 읽고, `permissions`와 `policies`는 설치가 건드리지 않습니다 |
 
-이 체크아웃의 패키지 버전은 `@litfamily/litopencode@1.0.44`입니다. registry의 `@latest`와 다를 수 있으니, 정확한 버전이 중요하면 `npm view @litfamily/litopencode version`으로 확인하세요.
+이 체크아웃의 패키지 버전은 `@litfamily/litopencode@1.0.45`입니다. registry의 `@latest`와 다를 수 있으니, 정확한 버전이 중요하면 `npm view @litfamily/litopencode version`으로 확인하세요.
 
 ## 첫 작업
 

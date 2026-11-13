@@ -42,7 +42,7 @@ OpenCode 1 and OpenCode 2 can sit on the same machine, and they load plugins in 
 | OpenCode 2 | The host fetches the package itself, so install only clears duplicate entries and keeps a backup of `cli.json` |
 | Both | Read the same config folder; install leaves your `permissions` and `policies` alone |
 
-This checkout is `@litfamily/litopencode@1.0.44`. The registry's `@latest` can be different, so run `npm view @litfamily/litopencode version` when the exact version matters.
+This checkout is `@litfamily/litopencode@1.0.45`. The registry's `@latest` can be different, so run `npm view @litfamily/litopencode version` when the exact version matters.
 
 ## Your first task
 

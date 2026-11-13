@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.45 Release Scope
+
+- `litopencode extensions` (`list`, `install`, `update`, `remove`, `check`, `prune-backups`) installs and manages the nine extensions from wjgoarxiv-skills with a content-hashed receipt and a dry run until `--yes`; doctor prints an `EXTENSIONS` line and the install notice points at `check`. The pointer, README and notice install lines now move the old folder into `extension-backups/` instead of deleting it. The READMEs are rewritten as shorter landing pages with the long reference detail moved or collapsed.
+
 ## 1.0.44 Release Scope
 
 - Nine content skills (`lit-pptx`, `lit-docx`, `lit-diagram-drawer`, `lit-schematic`, `lit-scientific-visualization`, `frontend-ui-ux`, `visual-qa`, `lit-typographic-motion`, `readme-studio`) leave the package for https://github.com/wjgoarxiv/wjgoarxiv-skills and stay as one-file same-name pointers. `litopencode motion-runtime`, the install pre-warm and doctor's motion, Office and plotting probes are removed. `skills.lock.json` is the one skill-volume and pack-list pin (`npm run gen:skills-lock`, `npm run check:skills-lock`).
