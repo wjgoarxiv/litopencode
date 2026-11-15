@@ -91,8 +91,33 @@ test("a damaged or unwritable record leaves the suggestion at once-per-launch, a
 
 const installArgs = (root) => ["install", "--root", root, "--provider", "openai", "--model", "gpt-5.6-luna", "--effort", "high", "--no-agent-file"];
 
+// The root is the default OpenCode root, so install calls `opencode plugin`. A stand-in on PATH registers the
+// target, so the test needs no OpenCode on the machine and never runs the real one.
+async function fakeOpenCodeBin(home) {
+  const binDir = path.join(home, "fake-bin");
+  const script = path.join(home, "fake-opencode.mjs");
+  await fs.mkdir(binDir, { recursive: true });
+  await fs.writeFile(script, [
+    "import fs from 'node:fs/promises';",
+    "import path from 'node:path';",
+    "if (process.argv[2] !== 'plugin') process.exit(2);",
+    "const dir = path.join(process.env.XDG_CONFIG_HOME, 'opencode');",
+    "const configFile = await fs.stat(path.join(dir, 'opencode.json')).then(() => path.join(dir, 'opencode.json'), () => path.join(dir, 'opencode.jsonc'));",
+    "const parsed = await fs.readFile(configFile, 'utf8').then(JSON.parse, () => ({}));",
+    "const plugins = Array.isArray(parsed.plugin) ? parsed.plugin : [];",
+    "if (!plugins.includes(process.argv[3])) plugins.push(process.argv[3]);",
+    "await fs.mkdir(path.dirname(configFile), { recursive: true });",
+    "await fs.writeFile(configFile, JSON.stringify({ ...parsed, plugin: plugins }, null, 2) + '\\n');"
+  ].join("\n"));
+  await fs.writeFile(path.join(binDir, "opencode"), "#!/bin/sh\nexec node " + JSON.stringify(script) + ' "$@"\n');
+  await fs.chmod(path.join(binDir, "opencode"), 0o755);
+  return binDir;
+}
+
 async function installOnce(root) {
-  const result = runCli(installArgs(root), { env: { ...process.env, HOME: path.dirname(path.dirname(root)) } });
+  const home = path.dirname(path.dirname(root));
+  const binDir = await fakeOpenCodeBin(home);
+  const result = runCli(installArgs(root), { env: { ...process.env, HOME: home, PATH: binDir + path.delimiter + process.env.PATH } });
   assert.equal(result.status, 0, result.stderr);
   return result.stdout ?? "";
 }
