@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.46 Release Scope
+
+- Automatic handoff is on by default at 70% of the context window (`autoHandoff.enabled: false`, `lit-handoff auto off` and `LITOPENCODE_AUTO_HANDOFF=0` turn it off; the old `{"enabled": false, "percent": null}` block reads as no choice). The install's extensions notice and the "Earlier work here" suggestion are shown once through an append-only `shown.jsonl` record, and each start-work run's end is written there too.
+
 ## 1.0.45 Release Scope
 
 - `litopencode extensions` (`list`, `install`, `update`, `remove`, `check`, `prune-backups`) installs and manages the nine extensions from wjgoarxiv-skills with a content-hashed receipt and a dry run until `--yes`; doctor prints an `EXTENSIONS` line and the install notice points at `check`. The pointer, README and notice install lines now move the old folder into `extension-backups/` instead of deleting it. The READMEs are rewritten as shorter landing pages with the long reference detail moved or collapsed.

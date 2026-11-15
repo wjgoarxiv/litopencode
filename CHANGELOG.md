@@ -3,7 +3,7 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
-## Unreleased
+## 1.0.46 - 2026-11-16
 
 - Automatic handoff is now on by default at 70% of the context window, so a long conversation saves its place, compacts and loads the handoff back without you switching anything on. `"autoHandoff": { "enabled": false }` in `~/.config/opencode/litopencode.json` or `.litopencode/config.json` turns it off; `lit-handoff auto off` and `LITOPENCODE_AUTO_HANDOFF=0` still work. The block earlier installs wrote into `litopencode.json`, `{"enabled": false, "percent": null}`, is read as no choice, so it does not hold the new default off.
 - LitOpenCode now remembers what it already showed you. The install's extensions notice prints and is relayed once per config folder until its text changes, and the "Earlier work here" suggestion appears at most once a day per project, across OpenCode launches. The record is an append-only `shown.jsonl` (a hash and a time per notice) in the project's `.litopencode` folder, or `.litopencode-shown.jsonl` in the OpenCode config folder for the install notice; a missing or damaged record shows the notice as before. Each start-work run's end is written there too: `sent` when it completes, `nothing` when it is cancelled, `waiting` when it parks a step for you.
