@@ -38,7 +38,8 @@ import { renderLitOpenCodeWordmark } from "./install-tui.ts";
 import { promptModelSelection, promptOutputStyle, promptPermissionMode } from "./model-routing.ts";
 import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } from "./native-skills.ts";
-import { extensionsNoticeLines, previousVersionLeftovers, writePendingExtensionsNotice } from "../extensions-notice.ts";
+import { extensionsNoticeLines, previousVersionLeftovers, shownNoticesName, writePendingExtensionsNotice } from "../extensions-notice.ts";
+import { noticeHash, noticeShown, recordNotice } from "../shown-record.ts";
 import { inspectExtensions } from "./extensions.ts";
 import { installAgentFile, planAgentFile } from "./agent-file-command.ts";
 import { applyPluginMutation, describePluginMutation, isLitOpenCodeEntry } from "./plugin-mutation.ts";
@@ -550,7 +551,15 @@ export async function install(
   // An existing user is pointed at `extensions check` once when it finds something; nothing changes on its own.
   const needsCheck = await inspectExtensions(root).then((report) => report.needsAction.length > 0, () => false);
   const notice = extensionsNoticeLines(await previousVersionLeftovers(metadata.version), needsCheck).join("\n");
-  await writePendingExtensionsNotice(root, notice);
+  // The same notice text is printed and relayed once per config root; a changed text (a new leftover, a folder
+  // that needs a look) is a new notice. An unreadable record shows it again.
+  const shownFile = path.join(root, shownNoticesName);
+  const noticeKey = noticeHash(notice);
+  const noticeSeen = noticeShown(shownFile, noticeKey);
+  if (!noticeSeen) {
+    await writePendingExtensionsNotice(root, notice);
+    recordNotice(shownFile, noticeKey);
+  }
   const backupLines = skillBackup.directory === undefined
     ? ""
     : wrapReceiptLine(
@@ -559,7 +568,7 @@ export async function install(
       ) + `\n  ${skillBackup.directory}\n`;
   // The block is the last step: it asks a question, and a refusal here never undoes a finished install.
   const agentFileLine = wrapReceiptLine(await installAgentFile(agentFileInput));
-  const tail = backupLines + "\n" + notice + "\n\n" + agentFileLine;
+  const tail = backupLines + "\n" + (noticeSeen ? "" : notice + "\n\n") + agentFileLine;
 
   return {
     exitCode: 0,

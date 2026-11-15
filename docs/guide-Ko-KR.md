@@ -62,9 +62,9 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 ## 자동 인수인계
 
-대화가 길어지면 모델의 컨텍스트 창이 차고, 넘친 내용은 잊힙니다. 자동 인수인계는 그렇게 되기 전에 지금까지의 진행 상황을 저장해 둡니다. 기본은 꺼져 있고, 몇 퍼센트에서 시작할지는 직접 정합니다. LitOpenCode가 정해 둔 기본 퍼센트는 없습니다.
+대화가 길어지면 모델의 컨텍스트 창이 차고, 넘친 내용은 잊힙니다. 자동 인수인계는 그렇게 되기 전에 지금까지의 진행 상황을 저장해 둡니다. 처음부터 켜져 있고 컨텍스트 창의 70%에서 시작하며, 켜고 끄는 것과 퍼센트는 직접 바꿀 수 있습니다.
 
-켜 두면 LitOpenCode가 컨텍스트 창이 얼마나 찼는지 지켜봅니다. 대화가 정한 퍼센트에 닿고 진행 중인 차례가 끝나면, 모델에게 인수인계 파일을 쓰라고 요청합니다. 그다음 파일이 정말 저장됐는지 확인하고, 대화를 압축하고, 다음 차례에 그 인수인계의 앞부분을 모델 앞에 다시 놓습니다.
+LitOpenCode가 컨텍스트 창이 얼마나 찼는지 지켜봅니다. 대화가 정한 퍼센트에 닿고 진행 중인 차례가 끝나면, 모델에게 인수인계 파일을 쓰라고 요청합니다. 그다음 파일이 정말 저장됐는지 확인하고, 대화를 압축하고, 다음 차례에 그 인수인계의 앞부분을 모델 앞에 다시 놓습니다.
 
 OpenCode는 플러그인이 압축을 직접 시작하도록 허용하므로, OpenCode에서는 모든 단계가 저절로 진행됩니다.
 
@@ -78,11 +78,11 @@ OpenCode는 플러그인이 압축을 직접 시작하도록 허용하므로, Op
 
 인수인계는 모델이 쓰는데, 모델이 지시를 놓칠 때도 있습니다. 압축 전에 저장 여부를 확인하는 이유입니다. OpenCode가 압축을 시작하지 못하면 알림으로 한 번 알려 줍니다. "Handoff saved. Run /compact now."
 
-켜려면 채팅에 `lit-handoff auto on 70`을 보내거나 `/lit-handoff auto on 70`을 실행하세요. 70 자리에 원하는 숫자를 넣으면 됩니다. `lit-handoff auto off`는 끄면서 숫자를 기억해 두므로, 나중에 숫자 없이 `lit-handoff auto on`을 보내면 그 숫자를 다시 씁니다. `lit-handoff auto status`는 지금 상태를 보여 줍니다. 설정은 프로젝트의 `.litopencode` 폴더에 저장됩니다.
+다른 퍼센트를 쓰려면 채팅에 `lit-handoff auto on 60`을 보내거나 `/lit-handoff auto on 60`을 실행하세요. 60 자리에 원하는 숫자를 넣으면 됩니다. `lit-handoff auto off`는 끄면서 숫자를 기억해 두므로, 나중에 숫자 없이 `lit-handoff auto on`을 보내면 그 숫자를 다시 씁니다. `lit-handoff auto status`는 지금 상태를 보여 줍니다. 설정은 프로젝트의 `.litopencode` 폴더에 저장됩니다.
 
 환경 변수로 정하고 싶다면 `LITOPENCODE_AUTO_HANDOFF=1`을 설정하고, `LITOPENCODE_AUTO_HANDOFF_PERCENT`에 1부터 99 사이의 정수를 넣으세요. 환경 변수는 저장된 설정보다 우선합니다. 설정 파일의 `autoHandoff` 블록에도 같은 두 값을 적을 수 있습니다. 1~99 밖의 퍼센트는 기능을 끄고, 이유는 `litopencode doctor`가 알려 줍니다.
 
-설정을 파일에 두고 싶다면 프로젝트의 `.litopencode/config.json`에, 모든 프로젝트에 적용하려면 `~/.config/opencode/litopencode.json`에 `autoHandoff` 블록을 넣으세요. 환경 변수와 채팅 설정이 모두 파일보다 먼저입니다.
+설정을 파일에 두고 싶다면 프로젝트의 `.litopencode/config.json`에, 모든 프로젝트에 적용하려면 `~/.config/opencode/litopencode.json`에 `autoHandoff` 블록을 넣으세요. 거기에 `"autoHandoff": { "enabled": false }`를 적으면 꺼집니다. 환경 변수와 채팅 설정이 모두 파일보다 먼저입니다.
 
 ```json
 { "autoHandoff": { "enabled": true, "percent": 70 } }

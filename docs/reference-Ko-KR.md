@@ -602,7 +602,7 @@ LitOpenCode 항목이 있는 파일을 고치고, 없으면 `tui.json`과 `tui.j
 
 ## 자동 인수인계
 
-자동 인수인계는 직접 켜야 하며 기본은 꺼져 있습니다. 기본 퍼센트는 없습니다. 플러그인의 `event` 훅과 `experimental.chat.system.transform` 훅에서 동작하고, 대화 내용은 읽지 않으며 assistant 메시지의 토큰 수만 봅니다.
+자동 인수인계는 기본으로 켜져 있고, 컨텍스트 창의 70%에서 시작합니다. LitOpenCode 설정 파일에 `"autoHandoff": { "enabled": false }`를 적으면 꺼집니다. 플러그인의 `event` 훅과 `experimental.chat.system.transform` 훅에서 동작하고, 대화 내용은 읽지 않으며 assistant 메시지의 토큰 수만 봅니다.
 
 ### 한 번의 흐름
 
@@ -623,10 +623,10 @@ OpenCode는 세션이 바쁜 동안 들어온 `summarize` 호출을 줄 세웠�
 | --- | --- | --- |
 | 채팅 `lit-handoff auto on <percent>`, `lit-handoff auto off`, `lit-handoff auto status` | 저장된 설정 | 메시지 전체가 그 한 줄이어야 합니다. `/lit-handoff auto ...`도 같습니다. 숫자 없는 `on`은 마지막 퍼센트를 다시 쓰고, 없으면 물어봅니다 |
 | `.litopencode/auto-handoff.json` | `{"enabled": true, "percent": 70}` | 위 경로가 쓰고 사용할 때마다 읽습니다 |
-| `litopencode.json` 또는 `.litopencode/config.json`의 `autoHandoff` | `{"enabled": false, "percent": null}` | 알 수 없는 키와 잘못된 타입은 설정을 읽을 때 거부합니다 |
+| `litopencode.json` 또는 `.litopencode/config.json`의 `autoHandoff` | `{"enabled": true, "percent": 70}` | `{"enabled": false}`가 끄는 스위치입니다. 알 수 없는 키와 잘못된 타입은 설정을 읽을 때 거부합니다. 예전 설치가 써 둔 `{"enabled": false, "percent": null}`은 선택으로 보지 않고 기본값을 그대로 둡니다 |
 | `LITOPENCODE_AUTO_HANDOFF`, `LITOPENCODE_AUTO_HANDOFF_PERCENT` | `1` 또는 `0`, 1~99 정수 | 우선순위가 가장 높습니다 |
 
-우선순위는 환경 변수, 저장된 설정, 설정 파일, 기본값(꺼짐, 퍼센트 없음) 순서입니다. 1~99 밖의 퍼센트, 1과 0이 아닌 스위치 값, 퍼센트 없이 켜진 스위치는 기능을 끄고, 이유가 상태 응답과 `litopencode doctor`에 나옵니다.
+우선순위는 환경 변수, 저장된 설정, 설정 파일, 기본값(켜짐, 70%) 순서입니다. 1~99 밖의 퍼센트, 1과 0이 아닌 스위치 값, 퍼센트 없이 켜진 스위치는 기능을 끄고, 이유가 상태 응답과 `litopencode doctor`에 나옵니다.
 
 ### Doctor
 

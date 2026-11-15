@@ -10,7 +10,7 @@ import { jsx } from "@opentui/solid/jsx-runtime";
 import { buildMissionView, lastMission, leadingNotice, missionNotices, type MissionNotice, type MissionView } from "./tui/mission-model.ts";
 import { idleMotion, motionTiming, planMotion, sampleMotion, type MotionState } from "./tui/mission-motion.ts";
 import { chipBudget, chipLine, homeLine, missionPanel, paletteFromTheme, panelWidth, type Line, type MissionPalette } from "./tui/mission-text.ts";
-import { adhdSuggestDue, createLedgerReader, createWorkReader, earlierWorkWindowMs, hasEarlierWork, messageTimes, missionProjectRoot, wayBackDue, readCardInput, readLatestResearchRun, readMissionInput, readThreadSources, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
+import { adhdNudgeText, adhdSuggestDue, createLedgerReader, createWorkReader, earlierWorkWindowMs, hasEarlierWork, messageTimes, missionProjectRoot, wayBackDue, readCardInput, readLatestResearchRun, readMissionInput, readThreadSources, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
 import { chipShimmer, idleChipMotion, planChipMotion, type ChipMotion } from "./tui/mission-skills.ts";
 import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "./tui/mission-band.ts";
 import { activeSkillLook, turnGlow, waitingOnYou } from "./tui/mission-looks.ts";
@@ -183,7 +183,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     if (source.session.messages(sessionID).length > 0 || typeof created !== "number" || now - created > 2 * 60_000) return;
     const root = missionProjectRoot(source.path);
     if (root === undefined || !hasEarlierWork(root, sessionID, now, earlierWorkWindowMs) || !adhdSuggestDue(suggestedDays, root, now)) return;
-    api.ui.toast({ variant: "info", title: "🔥 LIT", message: "Earlier work here. Say lit adhd to pick up where you left off.", duration: toastMs });
+    api.ui.toast({ variant: "info", title: "🔥 LIT", message: adhdNudgeText, duration: toastMs });
   }
 
   function refresh(sessionID: string): void {

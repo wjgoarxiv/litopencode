@@ -3,6 +3,7 @@ import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { classifyRunPath, defaultRunPathContext } from "./run-paths.ts";
+import { recordRunEnd, runOutcome } from "./shown-record.ts";
 import { createRuntimePaths, type RuntimePaths } from "./state.ts";
 
 export const boundedAuthoritySchemaVersion = 3 as const;
@@ -824,6 +825,9 @@ export function createBoundedAuthorityLifecycle(
     const compacted = [...events, event].slice(-options.maxEvents);
     await writeAtomically(paths.lifecycleEventsFile, compacted.map((entry) => JSON.stringify(entry)).join("\n") + "\n");
     await writeAtomically(paths.lifecycleStateFile, JSON.stringify(state, null, 2) + "\n");
+    // Every run ending and every new wait on the user is also written to the project's shown record.
+    const outcome = runOutcome(event.type, events.at(-1)?.state?.parkedBoundaries?.length ?? 0, state.parkedBoundaries?.length ?? 0);
+    if (outcome !== undefined) recordRunEnd(paths.shownFile, outcome, state.workId);
   }
 
   function nextState(

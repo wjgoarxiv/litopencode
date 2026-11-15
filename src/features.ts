@@ -1235,7 +1235,7 @@ export const litOpenCodeFeatures = Object.freeze([
         kind: "config",
         id: "autoHandoff",
         surface: "litopencode.json and .litopencode/config.json",
-        description: "Holds the OFF-by-default switch and the user's percent; LITOPENCODE_AUTO_HANDOFF and LITOPENCODE_AUTO_HANDOFF_PERCENT override it and doctor reports it."
+        description: "Holds the switch (ON at 70% by default; enabled false turns it off) and the percent; LITOPENCODE_AUTO_HANDOFF and LITOPENCODE_AUTO_HANDOFF_PERCENT override it and doctor reports it."
       },
       {
         kind: "config",

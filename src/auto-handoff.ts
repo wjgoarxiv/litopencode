@@ -8,6 +8,13 @@ export const autoHandoffEnvPercent = "LITOPENCODE_AUTO_HANDOFF_PERCENT";
 
 export type AutoHandoffSource = "env" | "command" | "config" | "default" | "none";
 
+/**
+ * Shipped default: ON at 70% of the context window, early enough that the handoff turn itself still fits
+ * before OpenCode compacts on its own. `autoHandoff.enabled: false` in a LitOpenCode config file, the
+ * saved `lit-handoff auto off` setting or LITOPENCODE_AUTO_HANDOFF=0 turns it off.
+ */
+export const defaultAutoHandoff: { readonly enabled: boolean; readonly percent: number } = Object.freeze({ enabled: true, percent: 70 });
+
 export type AutoHandoffResolution = {
   readonly enabled: boolean;
   readonly percent: number | null;
@@ -44,7 +51,7 @@ const sourceLabel: Readonly<Record<"env" | "command" | "config", string>> = Obje
 
 /**
  * Environment beats the saved command setting, which beats the config file, which beats the default
- * (OFF, no percent). A percent that is not a whole number from 1 to 99 switches the feature OFF and
+ * (ON at 70%). A percent that is not a whole number from 1 to 99 switches the feature OFF and
  * says which source carried it; nothing falls back to a quieter source behind the user's back.
  */
 export function resolveAutoHandoff(input: {
@@ -57,8 +64,10 @@ export function resolveAutoHandoff(input: {
   if (input.stateProblem !== undefined) warnings.push(input.stateProblem);
   let invalid = false;
 
+  // A config that still holds the shipped values was never chosen by the user.
+  const configIsDefault = input.config.enabled === defaultAutoHandoff.enabled && input.config.percent === defaultAutoHandoff.percent;
   let enabled = input.config.enabled;
-  let enabledSource: AutoHandoffSource = input.config.enabled ? "config" : "default";
+  let enabledSource: AutoHandoffSource = configIsDefault ? "default" : "config";
   if (input.state !== undefined) {
     enabled = input.state.enabled;
     enabledSource = "command";
@@ -87,7 +96,7 @@ export function resolveAutoHandoff(input: {
     const numeric = typeof first.value === "string" ? percentFromText(first.value) : first.value;
     if (isValidAutoHandoffPercent(numeric)) {
       percent = numeric;
-      percentSource = first.source;
+      percentSource = first.source === "config" && configIsDefault ? "default" : first.source;
     } else {
       warnings.push(
         `${sourceLabel[first.source]} is ${String(first.value)}, which is not a whole number from 1 to 99. Auto-handoff stays OFF.`

@@ -198,7 +198,7 @@ OpenCode 2.2 added `/goal`, which keeps a session going until a reviewer agrees 
 
 ## Automatic handoff
 
-A long conversation eventually fills the model's context window, and whatever falls out is forgotten. Automatic handoff saves your place first; it stays off until you turn it on, at a percent you choose. Send one of these as a message on its own: LitOpenCode answers with the new setting, and the model passes it on in a sentence or two.
+A long conversation eventually fills the model's context window, and whatever falls out is forgotten. Automatic handoff saves your place first; it is on from the start at 70% of the window, and you can move the percent or turn it off. Send one of these as a message on its own: LitOpenCode answers with the new setting, and the model passes it on in a sentence or two.
 
 | Message | What it does |
 | --- | --- |

@@ -22,6 +22,7 @@ export type RuntimePaths = {
   knowledgeClaimsFile: string;
   autoHandoffFile: string;
   noticesFile: string;
+  shownFile: string;
   workflowStackDir: string;
   adhdDir: string;
   livenessDir: string;
@@ -68,6 +69,7 @@ export function createRuntimePaths(projectRoot: string): RuntimePaths {
     knowledgeClaimsFile: path.join(runtimeDir, "knowledge", "claims.jsonl"),
     autoHandoffFile: path.join(runtimeDir, "auto-handoff.json"),
     noticesFile: path.join(runtimeDir, "notices.jsonl"),
+    shownFile: path.join(runtimeDir, "shown.jsonl"),
     workflowStackDir: path.join(runtimeDir, "workflow-stack"),
     adhdDir: path.join(runtimeDir, "adhd"),
     livenessDir: path.join(runtimeDir, "liveness"),

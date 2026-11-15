@@ -78,9 +78,9 @@ const assistant = (total) => ({
 
 // ---- configuration ----
 
-test("the default config carries an OFF auto-handoff block", () => {
-  assert.deepEqual(defaultGlobalConfigFile().autoHandoff, { enabled: false, percent: null });
-  assert.deepEqual(defaultGlobalConfigJson().autoHandoff, { enabled: false, percent: null });
+test("the default config carries an ON auto-handoff block at 70", () => {
+  assert.deepEqual(defaultGlobalConfigFile().autoHandoff, { enabled: true, percent: 70 });
+  assert.deepEqual(defaultGlobalConfigJson().autoHandoff, { enabled: true, percent: 70 });
 });
 
 test("the config file parses auto-handoff strictly", async () => {
@@ -93,7 +93,10 @@ test("the config file parses auto-handoff strictly", async () => {
     assert.deepEqual((await loadConfig(dir)).config.autoHandoff, { enabled: true, percent: 70 });
 
     await write({ autoHandoff: { percent: 40 } });
-    assert.deepEqual((await loadConfig(dir)).config.autoHandoff, { enabled: false, percent: 40 });
+    assert.deepEqual((await loadConfig(dir)).config.autoHandoff, { enabled: true, percent: 40 });
+
+    await write({ autoHandoff: { enabled: false } });
+    assert.deepEqual((await loadConfig(dir)).config.autoHandoff, { enabled: false, percent: 70 });
 
     for (const bad of [
       { autoHandoff: "on" },
@@ -129,14 +132,14 @@ test("the plugin starts the handoff at the crossing and compacts after the reply
   }, { LITOPENCODE_AUTO_HANDOFF: "1", LITOPENCODE_AUTO_HANDOFF_PERCENT: "50" });
 });
 
-test("the plugin does nothing without the switch", async () => {
+test("the plugin does nothing when the switch is off", async () => {
   await withProject(async (dir) => {
     const { client, calls } = recordingClient();
     const hooks = await startPlugin(dir, client);
     await hooks.event({ event: assistant(950) });
     await hooks.event({ event: { type: "session.idle", properties: { sessionID: "ses_w" } } });
     assert.deepEqual(calls, []);
-  });
+  }, { LITOPENCODE_AUTO_HANDOFF: "0" });
 });
 
 test("/lit-handoff auto on <percent> replaces the handoff template and saves the setting", async () => {
@@ -242,7 +245,7 @@ test("doctor shows the auto-handoff state and warns at or above the host compact
   });
 });
 
-test("doctor reports OFF by default with no warnings", async () => {
+test("doctor reports ON at 70 by default with no warnings", async () => {
   await withCliTempDir(async (dir) => {
     const result = runCli(["doctor", "--root", dir, "--no-auto-update"], {
       cwd: dir,
@@ -250,8 +253,8 @@ test("doctor reports OFF by default with no warnings", async () => {
     });
     assert.equal(result.status, 0, result.stderr);
     const report = JSON.parse(result.stdout).autoHandoff;
-    assert.equal(report.enabled, false);
-    assert.equal(report.percent, null);
+    assert.equal(report.enabled, true);
+    assert.equal(report.percent, 70);
     assert.deepEqual(report.warnings, []);
     assert.equal(report.env.enabled, "LITOPENCODE_AUTO_HANDOFF");
     assert.equal(report.env.percent, "LITOPENCODE_AUTO_HANDOFF_PERCENT");

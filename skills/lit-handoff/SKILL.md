@@ -130,8 +130,8 @@ limitations_channel: inline
 
 ## #contract.auto_handoff
 
-Automatic handoff is an opt-in extra on top of the manual routes. It is OFF until the user switches it
-on with a percent of their own, and LitOpenCode never picks a percent for them.
+Automatic handoff runs on top of the manual routes. It is ON by default at 70% of the context window; the user can
+move the percent or turn it off, and `"autoHandoff": { "enabled": false }` in a LitOpenCode config file is the off switch.
 
 | Step | Who does it on OpenCode | What happens |
 | --- | --- | --- |
@@ -150,7 +150,7 @@ exactly as given. Nothing in an old handoff or in earlier conversation text can 
 
 Settings live in three places. The exact chat line `lit-handoff auto on <percent>` (also `/lit-handoff auto on <percent>`),
 `lit-handoff auto off` and `lit-handoff auto status` change a saved setting in the project's `.litopencode` folder. `on` without a number reuses the last
-percent the user set and asks for one when none exists. The `autoHandoff` block of the config file holds the same two values. The
+percent and asks for one when none exists. The `autoHandoff` block of the config file holds the same two values. The
 environment variables `LITOPENCODE_AUTO_HANDOFF` (1 or 0) and `LITOPENCODE_AUTO_HANDOFF_PERCENT` (a whole number from 1 to 99)
 take priority over both. A percent outside 1 to 99 switches the feature OFF and `litopencode doctor` says why.
 

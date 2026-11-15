@@ -1,3 +1,4 @@
+import { defaultAutoHandoff } from "./auto-handoff.ts";
 import { createRuntimePaths, type RuntimePaths } from "./state.ts";
 import type { AgentPermission, AgentToolId } from "./agents/types.ts";
 import { readLitOpenCodeConfigFile } from "./config-parser.ts";
@@ -105,7 +106,7 @@ export const defaultConfig: LitOpenCodeConfig = Object.freeze({
     maxContextBytes: 65_536
   }),
   knowledge: Object.freeze({ capture: true }),
-  autoHandoff: Object.freeze({ enabled: false, percent: null }),
+  autoHandoff: defaultAutoHandoff,
   categories: Object.freeze({
     planning: Object.freeze({
       provider: defaultOpenAiRoutes.lead.provider,
@@ -177,6 +178,12 @@ export function mergeAgentModelConfig(
   };
 }
 
+// Earlier installs wrote the old shipped default, { enabled: false, percent: null }, into litopencode.json.
+// That exact pair records no choice, so it must not hold off the new default; { enabled: false } alone does.
+function isLegacyAutoHandoffDefault(value: Partial<AutoHandoffConfig>): boolean {
+  return value.enabled === false && value.percent === null;
+}
+
 export function mergeConfigs(base: LitOpenCodeConfig, override: Partial<LitOpenCodeConfig>): LitOpenCodeConfig {
   const categories: Record<string, LitOpenCodeCategoryConfig> = { ...base.categories };
   for (const [id, category] of Object.entries(override.categories ?? {})) {
@@ -203,7 +210,7 @@ export function mergeConfigs(base: LitOpenCodeConfig, override: Partial<LitOpenC
     },
     autoHandoff: {
       ...base.autoHandoff,
-      ...(override.autoHandoff ?? {})
+      ...(override.autoHandoff === undefined || isLegacyAutoHandoffDefault(override.autoHandoff) ? {} : override.autoHandoff)
     },
     categories,
     agents

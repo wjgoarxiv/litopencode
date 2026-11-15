@@ -10,6 +10,8 @@ import { movedSkillFamilies, wjgoarxivSkillsClonePlaceholder } from "./moved-ski
 // file and relays the notice once. Machine-readable output never carries it.
 export const extensionsShelfUrl = "https://github.com/wjgoarxiv/wjgoarxiv-skills";
 export const pendingExtensionsNoticeName = ".litopencode-extensions-notice";
+// Which install notices this config root has already been shown, so a repeat install does not print them again.
+export const shownNoticesName = ".litopencode-shown.jsonl";
 const pendingCapBytes = 8192;
 
 // Prose wraps at 78 columns to fit an 80-column terminal; command lines are written to fit on their own.

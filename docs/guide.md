@@ -62,9 +62,9 @@ Everything it records, from progress to the checks it ran, goes into `.litopenco
 
 ## Automatic handoff
 
-A long conversation eventually fills the model's context window, and whatever falls out is forgotten. Automatic handoff saves your place before that happens. It is off until you turn it on, and the percent is yours to pick: LitOpenCode has no default percent.
+A long conversation eventually fills the model's context window, and whatever falls out is forgotten. Automatic handoff saves your place before that happens. It is on from the start, at 70% of the window, and both the switch and the percent are yours to change.
 
-Once it is on, LitOpenCode watches how full the context window is. When the conversation reaches your percent and the current turn ends, it asks the model to write a handoff. It then checks that the handoff file was really saved, compacts the conversation, and puts the start of that handoff back in front of the model on the next turn.
+LitOpenCode watches how full the context window is. When the conversation reaches your percent and the current turn ends, it asks the model to write a handoff. It then checks that the handoff file was really saved, compacts the conversation, and puts the start of that handoff back in front of the model on the next turn.
 
 OpenCode lets a plugin start compaction, so on OpenCode every step runs by itself:
 
@@ -78,11 +78,11 @@ OpenCode lets a plugin start compaction, so on OpenCode every step runs by itsel
 
 The model writes the handoff, and a model can miss an instruction. That is why the check comes before the compaction. If OpenCode cannot start the compaction, a toast tells you once: "Handoff saved. Run /compact now."
 
-To turn it on, send `lit-handoff auto on 70` as a chat message, or run `/lit-handoff auto on 70`, with the number you want in place of 70. `lit-handoff auto off` turns it off and remembers your number, so a later `lit-handoff auto on` without a number reuses it. `lit-handoff auto status` shows where things stand. The setting is saved in your project's `.litopencode` folder.
+To pick another percent, send `lit-handoff auto on 60` as a chat message, or run `/lit-handoff auto on 60`, with the number you want in place of 60. `lit-handoff auto off` turns it off and remembers your number, so a later `lit-handoff auto on` without a number reuses it. `lit-handoff auto status` shows where things stand. The setting is saved in your project's `.litopencode` folder.
 
 If you prefer the environment, set `LITOPENCODE_AUTO_HANDOFF=1` and set `LITOPENCODE_AUTO_HANDOFF_PERCENT` to a whole number from 1 to 99. The environment wins over the saved setting. The config file holds the same two values in an `autoHandoff` block. A percent outside 1 to 99 switches the feature off, and `litopencode doctor` says why.
 
-To keep the setting in a file, add an `autoHandoff` block to `.litopencode/config.json` in your project, or to `~/.config/opencode/litopencode.json` for every project. The environment and the chat setting both come before the file.
+To keep the setting in a file, add an `autoHandoff` block to `.litopencode/config.json` in your project, or to `~/.config/opencode/litopencode.json` for every project. `"autoHandoff": { "enabled": false }` turns it off there. The environment and the chat setting both come before the file.
 
 ```json
 { "autoHandoff": { "enabled": true, "percent": 70 } }

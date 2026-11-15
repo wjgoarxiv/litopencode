@@ -750,7 +750,7 @@ the `plugin` list stops the install before anything is written. `doctor` reports
 
 ## Automatic handoff
 
-Automatic handoff is opt-in and OFF by default. There is no default percent. It works in the plugin's `event` hook and its `experimental.chat.system.transform` hook, and it reads nothing from the conversation except each assistant message's token counts.
+Automatic handoff is ON by default at 70% of the context window. `"autoHandoff": { "enabled": false }` in a LitOpenCode config file turns it off. It works in the plugin's `event` hook and its `experimental.chat.system.transform` hook, and it reads nothing from the conversation except each assistant message's token counts.
 
 ### How one cycle runs
 
@@ -771,10 +771,10 @@ OpenCode queues a `summarize` call made while a session is busy and answers it o
 | --- | --- | --- |
 | Chat `lit-handoff auto on <percent>`, `lit-handoff auto off`, `lit-handoff auto status` | Saved setting | The whole message must be that one line. `/lit-handoff auto ...` does the same. `on` without a number reuses the last percent and asks for one when none exists |
 | `.litopencode/auto-handoff.json` | `{"enabled": true, "percent": 70}` | Written by the route above, read on every use |
-| `autoHandoff` in `litopencode.json` or `.litopencode/config.json` | `{"enabled": false, "percent": null}` | Unknown keys and wrong types are rejected when the config loads |
+| `autoHandoff` in `litopencode.json` or `.litopencode/config.json` | `{"enabled": true, "percent": 70}` | `{"enabled": false}` is the off switch. Unknown keys and wrong types are rejected when the config loads. The block earlier installs wrote, `{"enabled": false, "percent": null}`, records no choice and leaves the default in place |
 | `LITOPENCODE_AUTO_HANDOFF`, `LITOPENCODE_AUTO_HANDOFF_PERCENT` | `1` or `0`, and a whole number from 1 to 99 | Highest priority |
 
-The order is environment, then saved setting, then config file, then the default (OFF, no percent). A percent outside 1 to 99, a switch value other than 1 or 0, or an enabled switch without any percent turns the feature OFF, and the reason appears in the status reply and in `litopencode doctor`.
+The order is environment, then saved setting, then config file, then the default (ON at 70%). A percent outside 1 to 99, a switch value other than 1 or 0, or an enabled switch without any percent turns the feature OFF, and the reason appears in the status reply and in `litopencode doctor`.
 
 ### Doctor
 

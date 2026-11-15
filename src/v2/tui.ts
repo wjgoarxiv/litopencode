@@ -15,6 +15,7 @@ import { buildMissionView, lastMission, leadingNotice, missionNotices, type Miss
 import { idleMotion, motionTiming, planMotion, sampleMotion, type MotionState } from "../tui/mission-motion.ts";
 import { latestLitMarkV2, missionStateFromV2, sessionMessagesV2, type MissionDataV2 } from "../tui/mission-source-v2.ts";
 import {
+  adhdNudgeText,
   adhdSuggestDue,
   createLedgerReader,
   createWorkReader,
@@ -308,7 +309,7 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     if (source.session.messages(sessionID).length > 0 || typeof created !== "number" || now - created > 2 * 60_000) return;
     const projectRoot = missionProjectRoot(source.path);
     if (projectRoot === undefined || !hasEarlierWork(projectRoot, sessionID, now, earlierWorkWindowMs) || !adhdSuggestDue(suggestedDays, projectRoot, now)) return;
-    context.ui.toast.show({ variant: "info", title: "🔥 LIT", message: "Earlier work here. Say lit adhd to pick up where you left off.", duration: toastMs });
+    context.ui.toast.show({ variant: "info", title: "🔥 LIT", message: adhdNudgeText, duration: toastMs });
   }
 
   // One session's view, card and the notices from its previous entry. Pure reads; nothing is armed here.

@@ -20,6 +20,8 @@ import { readSkillUse, skillChips, type SkillChip, type SkillUse } from "./missi
 import { isRealCount, type ThreadRow, type ThreadSource } from "./mission-threads.ts";
 import { readSiblingStacksSync, readStackSync, type WorkflowStack } from "../workflow-stack.ts";
 import { readLivenessSync, type LivenessRecord } from "../session-liveness.ts";
+import { noticeHash, noticeShown, recordNotice } from "../shown-record.ts";
+import { createRuntimePaths } from "../state.ts";
 
 const ledgerByteLimit = 1024 * 1024;
 
@@ -518,11 +520,25 @@ function localDay(at: number): string {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
-/** At most one start suggestion per workspace per local day; records the day when it answers true. */
+export const adhdNudgeText = "Earlier work here. Say lit adhd to pick up where you left off.";
+
+function startOfLocalDay(at: number): number {
+  const date = new Date(at);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+/**
+ * At most one start suggestion per workspace per local day; records the day when it answers true. The day map
+ * lives in one OpenCode launch, so the workspace's shown record keeps the rule across launches.
+ */
 export function adhdSuggestDue(days: Map<string, string>, root: string, now: number): boolean {
   const day = localDay(now);
   if (days.get(root) === day) return false;
   days.set(root, day);
+  const file = createRuntimePaths(root).shownFile;
+  const hash = noticeHash(adhdNudgeText);
+  if (noticeShown(file, hash, startOfLocalDay(now))) return false;
+  recordNotice(file, hash, now);
   return true;
 }
 
