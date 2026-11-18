@@ -3,7 +3,7 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
-## Unreleased
+## 1.0.47 - 2026-11-18
 
 - A `lit` prompt that asks for more than one kind of work now gets up to three skills at once. LitOpenCode names them on the line after the LIT IGNITED line, picks a companion only for what you asked (a chart, a diagram, a deck, a review, a risky design) and never adds a write-capable skill to a read-only route. A skill from the extras package is used only when it is installed; otherwise you get its one install line. `lit +viz +review …` picks the skills yourself.
 - `ultra-brainstorm` (`/ultra-brainstorm`, or `ultra-brainstorm …` in chat) brainstorms at a scale one context cannot hold. It asks once how many idea lanes to launch (100, 300 or a number) and shows a token range calibrated from a real 100-lane OpenCode 2 run (about 3.5–6.7M tokens for 100 lanes, most of it the session dispatching the lanes; per-lane figures count only the lanes that answered), then sends the lanes through OpenCode's `task` tool to a new `lit-ideator` agent that uses no tools and the lowest effort its model accepts. One reducer per 30 lanes folds the ideas and one judge scores them; you get a sorted top list and pick. Notes go to `.litopencode/brainstorm/<slug>/`. Without the `task` tool it says BLOCKED.

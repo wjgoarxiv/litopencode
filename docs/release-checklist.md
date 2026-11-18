@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.47 Release Scope
+
+- `lit <prompt>` plans up to three skills at once; `ultra-brainstorm` fans out 100 or more cheap idea lanes behind one launch question with a measured cost range; `lit-team` makes the session the orchestrator; one exact `yes` at plan save starts the start-work run and sets the goal (native `/goal` on OpenCode 2, an advisory check on OpenCode 1); `lit adhd` answers with a Korean verdict card and absorbs `lit-recap` (the old words still open the recap view). Windows host detection and the browser-drive probe find commands whatever the PATH key's case.
+
 ## 1.0.46 Release Scope
 
 - Automatic handoff is on by default at 70% of the context window (`autoHandoff.enabled: false`, `lit-handoff auto off` and `LITOPENCODE_AUTO_HANDOFF=0` turn it off; the old `{"enabled": false, "percent": null}` block reads as no choice). The install's extensions notice and the "Earlier work here" suggestion are shown once through an append-only `shown.jsonl` record, and each start-work run's end is written there too.
