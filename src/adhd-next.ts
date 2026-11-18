@@ -1,3 +1,4 @@
+import { answerConsent, consentAnswer, liveConsent, updateIntent } from "./goal-pipeline.ts";
 import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -169,8 +170,10 @@ export async function routeGo(input: {
 export type TypedPromptReply = {
   readonly text: string;
   readonly mode: ChatActivationMode;
-  readonly kind: "approve" | "deny" | "cancel" | NextKind;
+  readonly kind: "approve" | "deny" | "cancel" | "goal" | NextKind;
   readonly continued: boolean;
+  /** Set when the user's `yes` armed a goal condition; OpenCode 2 sets it as its native `/goal`. */
+  readonly goalCondition?: string;
 };
 
 /**
@@ -184,9 +187,30 @@ export async function typedPromptReply(
   memory: ActivationMemory | undefined,
   boundedAuthority: BoundedAuthorityOptions | undefined,
   messageID?: string,
-  directory?: string
+  directory?: string,
+  goalHost: "advisory" | "native" = "advisory"
 ): Promise<TypedPromptReply | undefined> {
+  // The plan-approval answer. `yes` starts the plan's start-work run through the same typed start path as
+  // `go` and `start-work <plan>` (same grants), then arms the goal; a refused start arms nothing.
+  const asked = consentAnswer(text) === undefined ? undefined : liveConsent(projectRoot, sessionID);
+  if (asked !== undefined) {
+    const start = consentAnswer(text) === "yes"
+      ? await startTypedWork({ projectRoot, sessionID, plan: asked.plan, ...(boundedAuthority === undefined ? {} : { options: boundedAuthority }) })
+      : undefined;
+    const consent = answerConsent(projectRoot, sessionID, text, goalHost === "advisory", Date.now(), start);
+    if (consent !== undefined) {
+      const started = start?.started === true;
+      return {
+        text: started ? `${start.text}\n${consent.line}\n${startWorkPromptInjection}` : consent.line,
+        mode: "start-work",
+        kind: "goal",
+        continued: false,
+        ...(consent.intent === undefined || goalHost !== "native" ? {} : { goalCondition: consent.intent.condition })
+      };
+    }
+  }
   if (typedCancel(text)) {
+    updateIntent(projectRoot, sessionID, { closed: "cancelled" });
     const reply = await cancelTypedWork({
       projectRoot,
       sessionID,

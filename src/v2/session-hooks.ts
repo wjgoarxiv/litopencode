@@ -7,8 +7,12 @@
 // reply) rides the latest user message instead, the channel it had on OpenCode 1.
 import { fileURLToPath } from "node:url";
 import { typedPromptReply } from "../adhd-next.ts";
+import { proposeGoal } from "../goal-pipeline.ts";
+import { savedPlanStop } from "../commands.ts";
+import { formatSavedPlanNotice, parsePlanSaveArgument, persistApprovedPlan, PlanScopeError } from "../durable-plan.ts";
 import { createActivationMemory, decideReentry, recordActivation } from "../activation-reentry.ts";
-import { detectChatActivationMode, promptForChatActivationMode, type ChatActivationMode } from "../activation-routing.ts";
+import { detectChatActivationMode, promptForChatActivationMode, skillPlanForPrompt, type ChatActivationMode } from "../activation-routing.ts";
+import { installedExtensionSkills } from "../skill-plan.ts";
 import { adhdSessionNote, litAdhdPromptInjection, startWorkPromptInjection } from "../activation-workflow-prompts.ts";
 import { autoHandoffSettingText, type AutoHandoffRouteMode } from "../auto-handoff.ts";
 import { applyTrustedStartWorkDirective, parseStartWorkLifecycleDirective } from "../bounded-authority-hooks.ts";
@@ -145,20 +149,46 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     }
   }
 
-  /** Keeps a command mark only when the plugin sent it; returns true for such a trusted command turn. */
-  function admitCommandMark(event: PromptEvent): boolean {
+  /** Keeps a command mark only when the plugin sent it; returns the accepted mark for such a trusted command turn. */
+  function admitCommandMark(event: PromptEvent): { readonly command: string; readonly work: string } | undefined {
     const metadata = event.metadata;
-    if (metadata === undefined || !("litopencode" in metadata)) return false;
+    if (metadata === undefined || !("litopencode" in metadata)) return undefined;
     const { litopencode: marker, ...rest } = metadata;
     const accepted = options.acceptCommandMark?.(event.sessionID, marker);
     if (accepted === undefined) {
       event.metadata = Object.keys(rest).length === 0 ? undefined : rest;
-      return false;
+      return undefined;
     }
     event.metadata = { ...rest, litopencode: { command: accepted.command, banner: accepted.banner, source: "command" } };
     options.onActivation?.(event.sessionID, accepted.command);
-    startNativeGoal(event.sessionID, nativeGoalRoute(accepted.command, ""), accepted.work ?? "");
-    return true;
+    const work = accepted.work ?? "";
+    if (!(accepted.command === "start-work" && /^save-plan(?:\s|$)/u.test(work.trim()))) startNativeGoal(event.sessionID, nativeGoalRoute(accepted.command, ""), work);
+    return { command: accepted.command, work };
+  }
+
+  /**
+   * `/start-work save-plan <JSON>` on OpenCode 2: saves the approved plan and asks the one approval question
+   * (start work and set goal). The question goes to the TUI notice row and, for a one-shot run that has no
+   * TUI, into this turn with the instruction to end the reply with it and start nothing.
+   */
+  async function savePlan(sessionID: string, work: string): Promise<string | undefined> {
+    if (!/^save-plan(?:\s|$)/u.test(work.trim())) return undefined;
+    const request = parsePlanSaveArgument(work.trim());
+    if (request === undefined) return "BLOCKED: malformed or unapproved save-plan argument. Provide the approved plan as one bounded JSON argument.";
+    try {
+      const saved = await persistApprovedPlan(options.projectRoot, request);
+      const asked = proposeGoal({ projectRoot: options.projectRoot, plan: saved.relativePath, planText: saved.text, sessionID });
+      appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode", message: asked.line.split("\n")[0] ?? asked.line, variant: "info", duration: 15000 });
+      return [
+        formatSavedPlanNotice(saved, saved.replayed === true),
+        savedPlanStop,
+        asked.line
+      ].join("\n");
+    } catch (error) {
+      return error instanceof PlanScopeError
+        ? `BLOCKED: the approved plan was not saved. ${error.message}`
+        : "BLOCKED: the approved plan was not saved because the request is stale, repeated with different content, or conflicts with existing state.";
+    }
   }
 
   async function prompt(event: PromptEvent): Promise<void> {
@@ -168,10 +198,15 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     } catch { // no-excuse-ok: catch -- a failed route switch must never block the user message.
       // The session keeps the model the host chose.
     }
-    if (admitCommandMark(event)) {
+    const mark = admitCommandMark(event);
+    if (mark !== undefined) {
       const state = stateFor(event.sessionID);
       state.turn = [];
       state.user = [];
+      if (mark.command === "start-work") {
+        const saved = await savePlan(event.sessionID, mark.work);
+        if (saved !== undefined) state.user.push(saved);
+      }
       return;
     }
     const session = await lookup(event.sessionID);
@@ -210,10 +245,13 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
       activationMemory,
       options.config.boundedAuthority as BoundedAuthorityOptions,
       event.messageID,
-      options.directory
+      options.directory,
+      "native"
     );
     if (typed !== undefined) {
       state.turn.push(typed.text);
+      if (typed.goalCondition !== undefined) void options.nativeGoal?.arm(event.sessionID);
+      if (typed.kind === "cancel") void options.nativeGoal?.cancel(event.sessionID);
       if (typed.kind === "cancel" && /cancelled the start-work run/u.test(typed.text)) {
         appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode", message: "start-work run cancelled", variant: "warning", duration: 8000 });
       }
@@ -232,6 +270,16 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     }
 
     const alias = aliasGoalRoute(input);
+    // `opencode2 run "/start-work save-plan <JSON>"` arrives as typed text, with no command dispatch.
+    const typedSave = /^\/start-work\s+(save-plan\s[\s\S]*)$/u.exec(input.trim())?.[1];
+    if (alias?.route === "start-work" || typedSave !== undefined) {
+      const saved = await savePlan(event.sessionID, typedSave ?? alias?.work ?? "");
+      if (saved !== undefined) {
+        state.user.push(saved);
+        event.metadata = { ...(event.metadata ?? {}), litopencode: { mode: "start-work", trigger: "lit", source: "alias", operation: "save-plan" } };
+        return;
+      }
+    }
     if (alias !== undefined) startNativeGoal(event.sessionID, alias.route, alias.work);
 
     const mode = detectChatActivationMode(input, session.agent);
@@ -239,6 +287,8 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     startNativeGoal(event.sessionID, nativeGoalRoute(mode, input), input);
     const trigger = mode === "lit-handoff" ? "handoff" : mode === "lit-scientific-visualization" ? mode : "lit";
     let activation = promptForChatActivationMode(mode, input);
+    const skillPlan = skillPlanForPrompt(mode, input, options.extensionsNoticeRoot === undefined ? new Set() : installedExtensionSkills(options.extensionsNoticeRoot));
+    if (skillPlan !== undefined) activation = `${activation}\n${skillPlan}`;
     if (mode === "lit-adhd") activation = `${activation}\n${adhdSessionNote(event.sessionID)}`;
     if (mode === "start-work" && session.agent !== "lit-plan") {
       const directive = parseStartWorkLifecycleDirective(input, { chat: true });
@@ -288,7 +338,7 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     };
     options.onActivation?.(event.sessionID, mode);
 
-    if (mode === "lit-task" || mode === "lit-recap" || mode === "lit-brainstorm" || isReadOnlyWorkflowFamilyPlan(mode)) return;
+    if (mode === "lit-task" || mode === "lit-brainstorm" || mode === "ultra-brainstorm" || isReadOnlyWorkflowFamilyPlan(mode)) return;
     try {
       await operations.init();
       await operations.append({

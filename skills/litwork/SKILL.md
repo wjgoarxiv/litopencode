@@ -148,7 +148,7 @@ Actual runtime surfaces are the `/litwork` command, `chat.message` hook, `comman
 
 ## Activation Model
 
-Litwork activation describes how LitOpenCode becomes visible inside OpenCode. The package uses several host surfaces because users enter workflows in different ways. A natural language prompt may contain a standalone `lit` trigger. A user may run `/litwork`, `/lit-plan`, `/start-work`, `/review-work`, `/lit-recap`, or `/lit-korean`. A tool call may request `lit`, `litwork`, `start-work`, or `review-work`. The config hook registers agents and permissions. Tool guards inspect supported tool calls before and after execution. These surfaces should agree on the workflow contract without pretending they are identical.
+Litwork activation describes how LitOpenCode becomes visible inside OpenCode. The package uses several host surfaces because users enter workflows in different ways. A natural language prompt may contain a standalone `lit` trigger. A user may run `/litwork`, `/lit-plan`, `/start-work`, `/review-work`, `/lit-adhd`, or `/lit-korean`. A tool call may request `lit`, `litwork`, `start-work`, or `review-work`. The config hook registers agents and permissions. Tool guards inspect supported tool calls before and after execution. These surfaces should agree on the workflow contract without pretending they are identical.
 
 Activation should inject guidance, not surprise side effects. A command hook can add mode text and route intent. A chat hook can detect a standalone trigger and add mode-aware instructions. A tool can return status or start a package-owned operation. Static skill docs can teach the user. None of those should publish packages, write host config, or mutate files merely because the word `lit` appeared in a prompt.
 
@@ -160,7 +160,7 @@ The injected text should be bounded. It should tell the agent which mode applies
 
 ## `command.execute.before` Routes
 
-Slash commands are explicit activation. `/lit-plan` should route planning-only behavior. `/start-work` should route approved execution behavior. `/review-work` should route five-lane review. `/lit-recap` should route read-only recap. `/lit-korean` and `/text-neutralization` should route prose review. `/litwork` should expose the work loop. Command hook tests should prove command ids are enrolled and that mode prompts contain the expected boundaries.
+Slash commands are explicit activation. `/lit-plan` should route planning-only behavior. `/start-work` should route approved execution behavior. `/review-work` should route five-lane review. `/lit-adhd` should route the read-only verdict card, and `/lit-recap` its recap view. `/lit-korean` and `/text-neutralization` should route prose review. `/litwork` should expose the work loop. Command hook tests should prove command ids are enrolled and that mode prompts contain the expected boundaries.
 
 Command activation differs from tool invocation because a command can participate in OpenCode routing. This matters most for `start-work`: if a user needs the `lit-implement` path, they should use the command. Calling a tool from inside `lit-plan` cannot be trusted to switch the active planning agent into an implementation agent. The activation docs must keep that distinction visible.
 
@@ -184,7 +184,7 @@ Durable metadata is not proof that a workflow completed. It proves activation oc
 
 ## Safety Boundaries
 
-Activation should stop at policy boundaries. If `/start-work` has no approved plan, block. If `/review-work` has no DoneClaim or diff to review, ask for one. If `/lit-recap` lacks ledger state, recap from session context and say ledger is absent. If a natural `lit` trigger appears inside code, do not activate. If an activation payload would include private content, redact it.
+Activation should stop at policy boundaries. If `/start-work` has no approved plan, block. If `/review-work` has no DoneClaim or diff to review, ask for one. If `/lit-adhd` cannot read a session store, the card says so in its coverage line instead of guessing. If a natural `lit` trigger appears inside code, do not activate. If an activation payload would include private content, redact it.
 
 Do not use activation hooks to bypass user approval for release actions. A prompt saying “lit publish” should route to planning or guardrails, not publish. A command saying `/litwork` should not write host config. A tool call should not create commits. Activation is the doorway, not the whole workflow.
 

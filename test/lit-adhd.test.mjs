@@ -474,8 +474,12 @@ test("round three: the brief opens with done so far, doing now and next", async 
       const ascii = renderDetail(await collect({ root: dir, db: file, now: NOW }), { ascii: true });
       assert.match(ascii.split("\n")[1], /^\*\*Doing now:\*\* nothing running {2}$/u);
       const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop", "work-schema-3.json");
+      // port.md is all ticked, so an "active" record on it reads finished; a run on an open plan is doing now.
       await fs.writeFile(loop, JSON.stringify({ schemaVersion: 3, sessionID: "ses_run", status: "active", plan: { path: path.join(dir, "plans", "port.md") }, updatedAt: new Date(NOW).toISOString() }));
-      assert.match(renderDetail(await collect({ root: dir, db: file, now: NOW })).split("\n")[1], /^\*\*Doing now:\*\* start-work · plans\/port\.md {2}$/u);
+      assert.doesNotMatch(renderDetail(await collect({ root: dir, db: file, now: NOW })).split("\n")[1], /start-work · plans\/port\.md/u);
+      await fs.writeFile(path.join(dir, "plans", "run-open.md"), "# Run\n\n- [x] 1. one\n- [ ] 2. two\n");
+      await fs.writeFile(loop, JSON.stringify({ schemaVersion: 3, sessionID: "ses_run", status: "active", plan: { path: path.join(dir, "plans", "run-open.md") }, updatedAt: new Date(NOW).toISOString() }));
+      assert.match(renderDetail(await collect({ root: dir, db: file, now: NOW })).split("\n")[1], /^\*\*Doing now:\*\* start-work · plans\/run-open\.md {2}$/u);
     } finally {
       await fs.rm(file, { force: true });
     }
@@ -549,13 +553,14 @@ async function fakeHerdr(dir, agents) {
 
 const agent = (pane, status, extra = {}) => ({ agent: "opencode", agent_status: status, pane_id: pane, workspace_id: pane.split(":")[0], cwd: "/elsewhere", foreground_cwd: "/elsewhere", agent_session: { value: `ses_${pane.replace(":", "")}` }, terminal_title_stripped: `lane ${pane}`, ...extra });
 
-test("lanes: herdr agents at work in this workspace or repo hold back go on an open plan", async () => {
+test("lanes: only herdr agents whose cwd is inside this repo hold back go on an open plan", async () => {
   await repo(async (dir) => {
     const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
     const herdr = await fakeHerdr(dir, [
-      agent("w1:p1", "working"),
-      agent("w1:p2", "working"),
+      agent("w1:p1", "working", { cwd: dir }),
+      agent("w1:p2", "working", { cwd: dir }),
       agent("w2:p1", "working", { cwd: path.join(dir, "src") }),
+      agent("w1:p6", "working"),
       agent("w3:p1", "working"),
       agent("w1:p3", "idle"),
       agent("w1:p4", "done"),
@@ -566,7 +571,7 @@ test("lanes: herdr agents at work in this workspace or repo hold back go on an o
       await fs.writeFile(path.join(dir, "plans", "p.md"), "# Demo\n\n- [ ] 1. one\n");
       const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true, env: herdr.env });
       assert.equal(report.recommended.kind, "lanes");
-      assert.equal(report.recommended.lanes, 2, "own pane, other workspace, idle and done agents are not lanes");
+      assert.equal(report.recommended.lanes, 2, "own pane, agents working elsewhere (even in this herdr workspace), idle and done agents are not lanes");
       assert.equal(report.nextRecord, null, "nothing is armed for go");
       assert.equal(await consumeNext(dir, "ses_me", NOW), undefined);
       const brief = renderDetail(report, { sessionID: "ses_me" });
@@ -585,7 +590,7 @@ test("lanes: herdr agents at work in this workspace or repo hold back go on an o
 test("lanes: a blocked herdr agent is named to answer, and a broken herdr reads unknown", async () => {
   await repo(async (dir) => {
     const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
-    let herdr = await fakeHerdr(dir, [agent("w1:p2", "blocked", { terminal_title_stripped: "lane waiting" }), agent("w1:p5", "working")]);
+    let herdr = await fakeHerdr(dir, [agent("w1:p2", "blocked", { terminal_title_stripped: "lane waiting", cwd: dir }), agent("w1:p5", "working", { cwd: dir })]);
     try {
       buildStore(file, { sessions: [] });
       await fs.mkdir(path.join(dir, "plans"));
@@ -721,7 +726,7 @@ test("HANDOFF Next skips items marked done and reads the newest handoff file fir
 test("a live lane outranks the HANDOFF Next item", async () => {
   await repo(async (dir) => {
     const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
-    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working")]);
+    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working", { cwd: dir })]);
     try {
       buildStore(file, { sessions: [] });
       await fs.writeFile(path.join(dir, "HANDOFF.md"), "# H\n\n## Next\n\n1. Wire the exporter\n");
@@ -740,7 +745,7 @@ test("a live lane outranks the HANDOFF Next item", async () => {
 test("lanes hold this session's own paused spine: no continue, no go, no resume line", async () => {
   await repo(async (dir) => {
     const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
-    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working")]);
+    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working", { cwd: dir })]);
     try {
       buildStore(file, { sessions: [{ id: "ses_p", directory: dir, title: "Loop the migration", created: NOW - 60 * 60_000, updated: NOW - 30 * 60_000, messages: [{ role: "user", parts: [text("loop", "user")] }] }] });
       await fs.mkdir(path.join(dir, ".litopencode", "workflow-stack"), { recursive: true });
@@ -767,7 +772,7 @@ test("lanes hold this session's own paused spine: no continue, no go, no resume 
 test("lanes hold this session's own running start-work run: no go", async () => {
   await repo(async (dir) => {
     const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
-    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working")]);
+    const herdr = await fakeHerdr(dir, [agent("w1:p2", "working", { cwd: dir })]);
     try {
       buildStore(file, { sessions: [] });
       await fs.mkdir(path.join(dir, "plans"));
@@ -803,6 +808,34 @@ test("lanes do not hide a pending approval: it is still the step", async () => {
     } finally {
       await fs.rm(file, { force: true });
       await fs.rm(herdr.bin, { recursive: true, force: true });
+    }
+  });
+});
+
+test("an active run whose own plan is all ticked reads finished while another plan is still open", async () => {
+  await repo(async (dir) => {
+    const file = path.join(dir, "..", `store-${path.basename(dir)}.db`);
+    try {
+      buildStore(file, { sessions: [] });
+      await fs.mkdir(path.join(dir, "plans"));
+      await fs.writeFile(path.join(dir, "plans", "a.md"), "# Plan A\n\n- [x] 1. one\n- [x] 2. two\n");
+      await fs.writeFile(path.join(dir, "plans", "b.md"), "# Plan B\n\n- [ ] 1. one\n");
+      const loop = path.join(dir, ".litopencode", "litgoal", "lit-loop");
+      await fs.mkdir(loop, { recursive: true });
+      const runOf = (sessionID, plan) => fs.writeFile(path.join(loop, "work-schema-3.json"), JSON.stringify({ schemaVersion: 3, sessionID, status: "active", ...(plan === undefined ? {} : { plan: { path: plan } }), updatedAt: new Date(NOW).toISOString() }));
+      for (const sessionID of ["ses_other", "ses_me"]) {
+        await runOf(sessionID, path.join(dir, "plans", "a.md"));
+        const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
+        assert.notEqual(report.recommended.kind, "work", `${sessionID}: a finished run is not kept going`);
+        assert.notEqual(report.recommended.say?.reason, "run-elsewhere", `${sessionID}: a finished run is not followed`);
+        assert.doesNotMatch(renderDetail(report, { sessionID: "ses_me" }), /Keep the running start-work|start-work on .* is running/u);
+      }
+      // An old record without a plan path: plan B is still open, so the run may still be going.
+      await runOf("ses_other", undefined);
+      const old = await collect({ root: dir, db: file, now: NOW, session: "ses_me", writeNext: true });
+      assert.equal(old.recommended.say?.reason, "run-elsewhere");
+    } finally {
+      await fs.rm(file, { force: true });
     }
   });
 });

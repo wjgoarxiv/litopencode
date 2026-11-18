@@ -167,7 +167,7 @@ test("slash command activations carry the matching static skill, or point to it 
     const reviewWorkSkill = await skillBody("review-work");
     const litResearchSkill = await skillBody("litresearch");
     const litGoalSkill = await skillBody("litgoal");
-    const litRecapSkill = await skillBody("lit-recap");
+    const litAdhdSkill = await skillBody("lit-adhd");
 
     await ensureCommandAliases(dir);
     const litworkAlias = await fs.readFile(path.join(dir, "command", "litwork.md"), "utf8");
@@ -188,7 +188,8 @@ test("slash command activations carry the matching static skill, or point to it 
     assertNoHtmlCommentArtifact(litResearchAlias, "/lit-research alias");
     assert.ok(litGoalAlias.includes(litGoalSkill), "/litgoal alias should include the full litgoal skill body");
     assertNoHtmlCommentArtifact(litGoalAlias, "/litgoal alias");
-    assert.ok(litRecapAlias.includes(litRecapSkill), "/lit-recap alias should include the full lit-recap skill body");
+    assert.ok(litRecapAlias.includes("lit-recap moved into lit-adhd (lit adhd recap)."), "/lit-recap alias should say it moved");
+    assert.ok(!litRecapAlias.includes(litAdhdSkill), "/lit-recap alias should point to lit-adhd, not paste it");
     assertNoHtmlCommentArtifact(litRecapAlias, "/lit-recap alias");
 
     await hook({ command: "/litwork", sessionID: "session-litwork", arguments: "" }, output);
@@ -210,14 +211,14 @@ test("slash command activations carry the matching static skill, or point to it 
     assertNoHtmlCommentArtifact(output.parts[3].text, "/litresearch hook output");
     assert.ok(output.parts[4].text.includes(litGoalSkill), "/litgoal hook should include the full litgoal skill body");
     assertNoHtmlCommentArtifact(output.parts[4].text, "/litgoal hook output");
-    assert.ok(output.parts[5].text.includes(litRecapSkill), "/lit-recap hook should include the full lit-recap skill body");
+    assert.match(output.parts[5].text, /skill name: lit-adhd/u, "/lit-recap hook should point to the lit-adhd skill");
     assertNoHtmlCommentArtifact(output.parts[5].text, "/lit-recap hook output");
     assert.equal(output.parts[0].metadata.litopencode.mode, "lit-loop");
     assert.equal(output.parts[1].metadata.litopencode.mode, "start-work");
     assert.equal(output.parts[2].metadata.litopencode.mode, "lit-loop");
     assert.equal(output.parts[3].metadata.litopencode.mode, "lit-research");
     assert.equal(output.parts[4].metadata.litopencode.mode, "litgoal");
-    assert.equal(output.parts[5].metadata.litopencode.mode, "lit-recap");
+    assert.equal(output.parts[5].metadata.litopencode.mode, "lit-adhd");
   });
 });
 

@@ -14,7 +14,8 @@ import {
   defaultOpenAiRoutes,
   newGenerationOpenAiModels,
   openAiModelEfforts,
-  openaiProviderModels
+  openaiProviderModels,
+  stripFastSuffix
 } from "../cli/model-catalog.ts";
 import { assertSafeEffectiveAgentRoutes } from "../model-route-policy.ts";
 import type { AgentConfigTarget, AgentPermission, AgentToolId, LitOpenCodeAgent, OpenCodeAgentConfig } from "./types.ts";
@@ -141,6 +142,17 @@ function modePermission(agent: LitOpenCodeAgent): OpenCodeAgentConfig["permissio
   return undefined;
 }
 
+const ideatorDeniedTools = Object.freeze(["read", "write", "edit", "bash", "grep", "glob", "list", "webfetch", "websearch", "todowrite", "task", "skill", "lsp", "question"]);
+
+// ultra-brainstorm's idea lanes run on the helper route at the lowest effort its model accepts, unless the
+// user set lit-ideator's own variant. A model outside the OpenAI catalog keeps its route as configured.
+function lowestEffortRoute(litConfig: LitOpenCodeConfig, route: LitOpenCodeAgentModelConfig): LitOpenCodeAgentModelConfig {
+  if (litConfig.agents["lit-ideator"]?.variant !== undefined || route.model === undefined) return route;
+  const efforts = openAiModelEfforts(stripFastSuffix(route.model.slice(route.model.lastIndexOf("/") + 1)));
+  if (route.provider !== undefined && route.provider !== "openai") return route;
+  return efforts.length === 0 ? route : { ...route, variant: efforts[0] };
+}
+
 function mergeTools(
   agent: LitOpenCodeAgent,
   override: LitOpenCodeAgentModelConfig["tools"] | undefined
@@ -154,6 +166,10 @@ function mergeTools(
   }
   if (agent.mode !== "primary") {
     tools.task = false;
+  }
+  if (agent.id === "lit-ideator") {
+    // An idea lane only thinks: every host tool is off, so the brief is the whole input.
+    for (const tool of ideatorDeniedTools) tools[tool] = false;
   }
   return tools;
 }
@@ -363,7 +379,9 @@ export function registerLitOpenCodeAgents(
   const primaryTaskAllow = litConfig?.permissionMode === "yolo" || litConfig?.permissionMode === "balanced";
   for (const agent of litOpenCodeAgents) {
     const authoredOverride = effectiveAgentConfig(litConfig, agent.id);
-    const override = agent.id === "lit-loop" ? routeLeadAgent(litConfig, authoredOverride) : authoredOverride;
+    const override = agent.id === "lit-loop"
+      ? routeLeadAgent(litConfig, authoredOverride)
+      : agent.id === "lit-ideator" ? lowestEffortRoute(litConfig, authoredOverride) : authoredOverride;
     const agentConfig = toOpenCodeAgentConfig(agent, override);
     const entry =
       primaryTaskAllow && agent.mode === "primary" && agent.id !== "lit-plan"

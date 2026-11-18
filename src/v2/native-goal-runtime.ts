@@ -11,6 +11,9 @@ import {
   type NativeGoalLedgerEvent
 } from "../native-goal-ledger.ts";
 import { litOpenCodeCommands } from "../commands.ts";
+import { falsifyTimeoutMs, planRows, readIntent, runCheck, updateIntent } from "../goal-pipeline.ts";
+import fs from "node:fs";
+import path from "node:path";
 import {
   decideNativeGoal,
   nativeGoalLine,
@@ -143,7 +146,8 @@ export function createNativeGoal(options: { readonly projectRoot: string; readon
         return;
       }
       case "create": {
-        const objective = nativeGoalObjective(work, sessionID);
+        // An armed goal is the condition the user said yes to, sent unchanged.
+        const objective = readIntent(projectRoot, sessionID)?.condition ?? nativeGoalObjective(work, sessionID);
         try {
           await host.session.command({ sessionID, name: "goal", text: objective, delivery: "queue" });
         } catch (error) {
@@ -172,6 +176,7 @@ export function createNativeGoal(options: { readonly projectRoot: string; readon
         }
         const event: NativeGoalLedgerEvent = control === "resume" ? { type: "native-goal.resumed", goalID: record.id } : { type: "native-goal.cleared", goalID: record.id };
         await recordNativeGoal(projectRoot, sessionID, route, event);
+        if (control === "clear") updateIntent(projectRoot, sessionID, { closed: "met" });
         await notice(sessionID, nativeGoalLine(action, { route, goal: record }), key(control));
         return;
       }
@@ -184,15 +189,46 @@ export function createNativeGoal(options: { readonly projectRoot: string; readon
     if (route === undefined && owned.goalID === undefined) return;
     const state = await read(sessionID);
     const goal = state.supported ? state.goal : null;
+    const intent = readIntent(projectRoot, sessionID);
     const action = decideNativeGoal({
       route,
       supported: state.supported,
       goal,
       ownedGoalID: owned.goalID,
-      ledgerDone: owned.goalID === undefined ? false : await ledgerGoalDone(projectRoot, sessionID, owned.createdAt),
-      resumes: owned.resumes
+      // The check runs only when OpenCode already says the goal is met.
+      ledgerDone: owned.goalID === undefined || goal === null || goal === "unreadable" || goal.status !== "complete"
+        ? false
+        : intent === undefined ? await ledgerGoalDone(projectRoot, sessionID, owned.createdAt) : intentMet(intent.plan, intent.check),
+      resumes: owned.resumes,
+      armed: intent !== undefined
     });
     await perform(sessionID, route, action, goal, work);
+  }
+
+  /** An armed condition holds when every plan row is ticked and its check exits 0. */
+  function intentMet(plan: string, check: string): boolean {
+    try {
+      const text = fs.readFileSync(path.resolve(projectRoot, plan), "utf8");
+      return planRows(text).open === 0 && runCheck(projectRoot, check, text, falsifyTimeoutMs).state === "pass";
+    } catch { // no-excuse-ok: catch -- an unreadable plan is not done.
+      return false;
+    }
+  }
+
+  /** `lit cancel`: clears the goal only when it is the one LitOpenCode created for this session. */
+  async function cancelOwned(sessionID: string): Promise<void> {
+    const owned = await nativeGoalOwnership(projectRoot, sessionID);
+    if (owned.goalID === undefined) return;
+    const state = await read(sessionID);
+    if (!state.supported || state.goal === null || state.goal === "unreadable" || state.goal.id !== owned.goalID) return;
+    try {
+      await host.session.command({ sessionID, name: "goal", text: "clear", delivery: "queue" });
+    } catch (error) {
+      await fail(sessionID, "start-work", "clear", error);
+      return;
+    }
+    await recordNativeGoal(projectRoot, sessionID, "start-work", { type: "native-goal.cleared", goalID: owned.goalID });
+    await notice(sessionID, `LitOpenCode goal cleared (cancelled) [${owned.goalID.slice(0, 8)}]`, `${sessionID}:cancel:${owned.goalID}`);
   }
 
   /** One step at a time per session, so a repeated activation sees the goal the first one made. */
@@ -213,6 +249,14 @@ export function createNativeGoal(options: { readonly projectRoot: string; readon
     /** Starts the goal step for a qualifying activation without holding up the user's prompt. */
     activate(sessionID: string, route: NativeGoalRoute, work: string): Promise<void> {
       return track(sessionID, () => step(sessionID, route, work));
+    },
+    /** The user said `yes` to the goal question: set the armed condition as the native goal. */
+    arm(sessionID: string): Promise<void> {
+      return track(sessionID, () => step(sessionID, "start-work", ""));
+    },
+    /** `lit cancel` ended the run: clear the goal only if LitOpenCode owns it. */
+    cancel(sessionID: string): Promise<void> {
+      return track(sessionID, () => cancelOwned(sessionID));
     },
     /** The session finished its model work: clear a finished owned goal or report a conflict. */
     idle(sessionID: string): Promise<void> {

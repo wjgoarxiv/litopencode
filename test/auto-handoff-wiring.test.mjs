@@ -325,3 +325,20 @@ test("doctor reads the auto-handoff setting from the project, the same place the
     assert.deepEqual({ enabled: report.enabled, percent: report.percent, sources: report.sources }, { enabled: true, percent: 60, sources: { enabled: "config", percent: "config" } }, "the project's config file counts too");
   });
 });
+
+test("OpenCode 1 save-plan: the notice and approval question reach the model on the chat turn and the TUI as a toast", async () => {
+  await withProject(async (dir) => {
+    const { client, calls } = recordingClient();
+    const hooks = await startPlugin(dir, client);
+    const plan = "# P\n\n## TODOs\n\n- [ ] 1. write scripts/check.sh — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `bash scripts/check.sh`\n";
+    // The host resolves command parts into a new array, so the parts the hook adds never reach the model.
+    await hooks["command.execute.before"]({ command: "start-work", sessionID: "ses_w", arguments: `save-plan ${JSON.stringify({ approved: true, slug: "p", markdown: plan })}` }, { parts: [] });
+    assert.ok(calls.some((call) => call.kind === "toast" && /^Approve plan, start work and set goal: /u.test(call.body.message)));
+    const turn = { message: { id: "msg_u" }, parts: [{ type: "text", text: "start-work template\n\nsave-plan {...}" }] };
+    await hooks["chat.message"]({ sessionID: "ses_w", messageID: "msg_u", agent: "lit-loop" }, turn);
+    const notice = turn.parts.find((part) => part.metadata?.litopencode?.operation === "save-plan");
+    assert.ok(notice, "the saved-plan notice rides the command turn");
+    assert.match(notice.text, /Do not start it, edit files or run commands\./u);
+    assert.match(notice.text, /\nApprove plan, start work and set goal: \/goal Every row in \.litopencode\/plans\/p\.md/u);
+  });
+});

@@ -9,6 +9,8 @@ import { renamedSkillIds } from "../skill-renames.ts";
 // that does not install cannot be invoked.
 export type ManagedSkillId =
   | "lit-brainstorm"
+  | "ultra-brainstorm"
+  | "lit-team"
   | "lit-hijack"
   | "lit-adhd"
   | "lit-comprehend"
@@ -51,6 +53,8 @@ if (managedSkillManifest.schemaVersion !== 1) {
 export function managedSkillDefinition(id: LitOpenCodeRuntimeSkillId): ManagedSkillDefinition | undefined {
   if (
     id !== "lit-brainstorm" &&
+    id !== "ultra-brainstorm" &&
+    id !== "lit-team" &&
     id !== "lit-hijack" &&
     id !== "lit-adhd" &&
     id !== "lit-comprehend" &&
@@ -155,10 +159,14 @@ const skillDiscoveryDescriptions = Object.freeze({
     "Trigger when a repository needs agent-facing guidance created or refreshed: \"set up AGENTS.md\", \"document this repo for agents\", onboarding an unfamiliar codebase, or a restructure that left directory guidance stale and misleading.",
   "lit-brainstorm":
     "Trigger when the question is still open and the user wants options before a decision — \"what could we call it\", \"any ideas for\", \"how else could we do this\", \"brainstorm\", \"ideation\", `lit idea`, `lit brainstorm` — so many different options are generated, clustered, scored against stated criteria, and narrowed to a short list with trade-offs before one hand-off to deep-interview or lit-plan. Do not trigger to plan a chosen thing, to interview toward one spec, or to implement.",
+  "ultra-brainstorm":
+    "Trigger when the user asks for `ultra-brainstorm` or `lit ultra-brainstorm` — a wide question where missing a direction is expensive and many cheap idea lanes should be fanned out, reduced and judged into a sorted top list. Ask the launch question with the cost first. Do not trigger for an everyday \"give me options\" (lit-brainstorm), to plan a chosen thing, or to implement.",
+  "lit-team":
+    "Trigger when the user types `lit team <goal>` or `/lit-team`, or asks for a team of agents, coordinated parallel work or member briefs — so this session splits the goal, picks task-tool subagents, batches, git worktrees or herdr panes, briefs and watches the members, merges, re-verifies and returns one report. Do not trigger for a single one-shot delegation, which needs no team.",
   "lit-hijack":
     "Trigger when the user wants the technique in someone else's published work — an X post or article, a repo, a gist, a blog post, a PDF, a transcript — ported into their own skill or system: \"hijack this\", \"port this technique\", `lit hijack`, `lit 하이재킹` — so it is captured with provenance, licence-gated, compared with the target, written as a source-free spec, built apart, and proven on the real surface. Do not trigger to find sources, to brainstorm options, or to copy source text.",
   "lit-adhd":
-    "Trigger when the user lost the thread or comes back to earlier work — \"where was I\", \"pick up where we left off\", \"what is still open\", several half-finished sessions — via `lit adhd` or `lit rewind`: a read-only brief with one next step that `go` follows.",
+    "Trigger when the user lost the thread or comes back to earlier work — \"where was I\", \"pick up where we left off\", \"what is still open\", \"recap\", several half-finished sessions — via `lit adhd`, `lit rewind`, `lit adhd recap` or the old `lit recap`: a read-only verdict card with one next step that `go` follows, the KPI board on `detail`, the per-session recap on `recap`.",
   "lit-crucible":
     "Trigger before planning when the approach itself is uncertain, contested, or expensive to reverse — competing designs, hidden coupling, a request to pressure-test assumptions or find what will go wrong — so independent read-only lanes attack the idea and only surviving evidence-backed insights reach lit-plan.",
   refactor:
@@ -191,8 +199,6 @@ const skillDiscoveryDescriptions = Object.freeze({
     "Trigger when a reader-facing draft needs a focused prose revision — translated-sounding or templated wording, a request to 자연스럽게 / 다듬기 / revise for the reader, or review of documentation, reports, slides, comments, or README text — while preserving meaning, facts, citations, useful qualifiers, and the author's voice.",
   "lit-comprehend":
     "Trigger when the user needs to UNDERSTAND completed work rather than just see its status — after a long agent session, an overnight lit-loop, or a multi-file change — so the answer is a self-contained explainer with delta-anchored themes, intuition-first diagrams, and a micro-world, not a chronological recap.",
-  "lit-recap":
-    "Trigger when the user asks what has happened so far — \"recap\", \"리캡\", \"where are we\", \"summarize this session\", or resuming after a break — so the answer is a read-only Korean-default digest built from the durable ledger and session evidence instead of a new action.",
   "lit-handoff":
     "Trigger only for explicit `/lit-handoff`, an exact bare `handoff` message, or native selection by the exact `lit-handoff` id.",
   "lit-scientific-visualization":

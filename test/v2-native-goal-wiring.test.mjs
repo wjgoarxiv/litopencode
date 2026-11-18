@@ -4,6 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { findLitOpenCodeCommand } from "../src/commands.ts";
+import { answerConsent, proposeGoal } from "../src/goal-pipeline.ts";
+import { startTypedWork } from "../src/start-work-typed.ts";
 import { recordNativeGoal } from "../src/native-goal-ledger.ts";
 import { createRuntimePaths } from "../src/state.ts";
 import { setupLitOpenCodeServer } from "../src/v2/server.ts";
@@ -36,6 +38,13 @@ async function withHost(options, fn) {
   }
 }
 
+// The user said yes to the goal question for this session: the only way a goal gets set.
+const goalPlan = "# P\n\n## TODOs\n\n- [ ] 1. a — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `npm test`\n";
+function arm(dir, sessionID = "ses_root") {
+  proposeGoal({ projectRoot: dir, plan: "plans/p.md", planText: goalPlan, sessionID, run: () => ({ status: 1, signal: null, error: undefined }) });
+  return answerConsent(dir, sessionID, "yes", false).intent.condition;
+}
+
 const prompt = (text, sessionID = "ses_root") => ({ sessionID, messageID: "msg_1", prompt: { text }, delivery: "queue" });
 const lines = (fake) => fake.notices.map((notice) => notice.text);
 const slashGoal = (fake) => fake.goalCommands.filter((command) => command.name === "goal");
@@ -53,24 +62,29 @@ async function markLedgerGoalComplete(dir, sessionId, at = new Date().toISOStrin
   await fs.writeFile(paths.goalsFile, JSON.stringify({ version: 1, createdAt: now, updatedAt: now, activeGoalId: "g1", goals: [goal] }));
 }
 
-test("lit-loop sets a goal that carries the work and the completion conditions, and the ledger remembers its id", async () => {
+test("lit-loop alone sets no goal; after the user's yes it sends the armed condition and the ledger remembers its id", async () => {
+  await withHost({}, async (_dir, fake, finish) => {
+    await fake.run("session", "prompt", prompt("lit loop make the parser tests pass"));
+    await finish();
+    assert.equal(slashGoal(fake).length, 0, "no consent, no goal");
+  });
   await withHost({}, async (dir, fake) => {
+    const condition = arm(dir);
     await fake.run("session", "prompt", prompt("lit loop make the parser tests pass"));
     await until(() => fake.goals.has("ses_root") && lines(fake).length > 0);
     const [command] = slashGoal(fake);
     assert.equal(slashGoal(fake).length, 1);
-    assert.match(command.text, /make the parser tests pass/u);
-    assert.match(command.text, /ledger/iu);
-    assert.match(command.text, /real-surface/iu);
+    assert.equal(command.text, condition);
     assert.match(lines(fake)[0], /^LitOpenCode goal: created/u);
     const events = await ledgerEvents(dir);
     assert.deepEqual(events.filter((event) => event.type === "native-goal.created").map((event) => event.goalID), [fake.goals.get("ses_root").id]);
   });
 });
 
-test("start-work and litwork set a goal as well", async () => {
+test("start-work and litwork set the armed goal as well", async () => {
   for (const text of ["start-work", "litwork finish the migration"]) {
-    await withHost({}, async (_dir, fake) => {
+    await withHost({}, async (dir, fake) => {
+      arm(dir);
       await fake.run("session", "prompt", prompt(text));
       await until(() => fake.goals.has("ses_root"));
       assert.equal(slashGoal(fake).length, 1, text);
@@ -79,7 +93,8 @@ test("start-work and litwork set a goal as well", async () => {
 });
 
 test("a second lit-loop prompt keeps the goal it made: no second /goal, no second line", async () => {
-  await withHost({}, async (_dir, fake, finish) => {
+  await withHost({}, async (dir, fake, finish) => {
+    arm(dir);
     await fake.run("session", "prompt", prompt("lit loop first"));
     await until(() => fake.goals.has("ses_root") && lines(fake).length > 0);
     await fake.run("session", "prompt", prompt("lit loop keep going"));
@@ -227,6 +242,7 @@ test("an unreadable goal state never creates a goal over it", async () => {
 
 test("a rejected /goal is recorded, claims no ownership, and does not stop the work", async () => {
   await withHost({ failGoalCommand: true }, async (dir, fake, finish) => {
+    arm(dir);
     const admitted = await fake.run("session", "prompt", prompt("lit loop go"));
     await finish();
     assert.equal(admitted.metadata?.litopencode?.mode, "lit-loop");
@@ -236,8 +252,9 @@ test("a rejected /goal is recorded, claims no ownership, and does not stop the w
   });
 });
 
-test("a command the plugin sends (lit-loop) and an expanded command alias body both set a goal with their own work", async () => {
-  await withHost({}, async (_dir, fake) => {
+test("a command the plugin sends (lit-loop) and an expanded command alias body both set the armed goal", async () => {
+  await withHost({}, async (dir, fake) => {
+    const condition = arm(dir);
     const editor = fake.applyCommands();
     const definition = editor.commands.find((command) => command.name === "lit-loop");
     assert.ok(definition, "lit-loop is plugin-owned when no alias file exists");
@@ -245,18 +262,20 @@ test("a command the plugin sends (lit-loop) and an expanded command alias body b
     const sent = fake.prompts.at(-1);
     await fake.run("session", "prompt", { sessionID: "ses_root", messageID: "msg_cmd", prompt: { text: sent.text }, metadata: sent.metadata, delivery: "queue" });
     await until(() => fake.goals.has("ses_root"));
-    assert.match(slashGoal(fake)[0].text, /tidy the logger/u);
+    assert.equal(slashGoal(fake)[0].text, condition);
   });
-  await withHost({}, async (_dir, fake) => {
+  await withHost({}, async (dir, fake) => {
+    const condition = arm(dir);
     await fake.run("session", "prompt", prompt(`${findLitOpenCodeCommand("lit-loop").activationText}\n\nwire the exporter`));
     await until(() => fake.goals.has("ses_root"));
-    assert.match(slashGoal(fake)[0].text, /wire the exporter/u);
+    assert.equal(slashGoal(fake)[0].text, condition);
   });
 });
 
 test("the expanded alias bodies of /litwork and /start-work qualify, and bare /lit does not", async () => {
   for (const [id, route] of [["litwork", "litwork"], ["lit-work", "litwork"], ["start-work", "start-work"]]) {
     await withHost({}, async (dir, fake) => {
+      arm(dir);
       await fake.run("session", "prompt", prompt(`${findLitOpenCodeCommand(id).activationText}\n\nship the thing`));
       // The notice is sent after the ledger event is written; the goal alone shows up in the fake host earlier.
       await until(() => fake.goals.has("ses_root") && lines(fake).length > 0);
@@ -265,6 +284,7 @@ test("the expanded alias bodies of /litwork and /start-work qualify, and bare /l
     });
   }
   await withHost({}, async (dir, fake, finish) => {
+    arm(dir);
     await fake.run("session", "prompt", prompt(`${findLitOpenCodeCommand("lit").activationText}\n\ndo a small thing`));
     await finish();
     assert.equal(fake.goalCommands.length, 0, "/lit sets no goal");
@@ -272,11 +292,14 @@ test("the expanded alias bodies of /litwork and /start-work qualify, and bare /l
   });
 });
 
-test("the goal objective names the session id the ledger goal must use", async () => {
-  await withHost({}, async (_dir, fake) => {
+test("the armed goal is the condition alone, within 500 characters, and only for the session that said yes", async () => {
+  await withHost({}, async (dir, fake) => {
+    const condition = arm(dir);
     await fake.run("session", "prompt", prompt("lit loop tidy it"));
     await until(() => fake.goals.has("ses_root"));
-    assert.match(slashGoal(fake)[0].text, /--session-id ses_root/u);
+    assert.equal(slashGoal(fake)[0].text, condition);
+    assert.ok(condition.length <= 500);
+    assert.match(condition, /^Every row in plans\/p\.md is ticked and `npm test` exits 0 \[lit:[0-9a-f]{8}\]$/u);
   });
 });
 
@@ -310,4 +333,37 @@ test("a host that cannot register the idle hook still starts", async () => {
     else process.env.XDG_CONFIG_HOME = previous;
     await fs.rm(dir, { recursive: true, force: true });
   }
+});
+
+test("save-plan on OpenCode 2 asks the approval question; yes starts the run and sets the goal (one-shot safe)", async () => {
+  await withHost({}, async (dir, fake) => {
+    const plan = "# P\n\n## TODOs\n\n- [ ] 1. write scripts/check.sh — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `bash scripts/check.sh`\n";
+    const body = `${findLitOpenCodeCommand("start-work").activationText}\n\nsave-plan ${JSON.stringify({ approved: true, slug: "p", markdown: plan })}`;
+    const saved = await fake.run("session", "prompt", prompt(body));
+    assert.equal(saved.metadata?.litopencode?.operation, "save-plan");
+    assert.equal(slashGoal(fake).length, 0, "saving sets no goal and starts nothing");
+    const consent = JSON.parse(await fs.readFile(path.join(dir, ".litopencode", "goal", "consent.json"), "utf8"));
+    assert.equal(consent.plan, ".litopencode/plans/p.md");
+    const notices = await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8");
+    assert.match(notices, /Approve plan, start work and set goal: \/goal Every row in \.litopencode\/plans\/p\.md/u);
+    const yes = await fake.run("session", "prompt", prompt("yes"));
+    assert.equal(yes.metadata?.litopencode?.typed, "goal");
+    await until(() => fake.goals.has("ses_root"));
+    assert.equal(slashGoal(fake)[0].text, consent.condition);
+    // The goal is armed only after the start went through; a second start now finds that run active.
+    const again = await startTypedWork({ projectRoot: dir, sessionID: "ses_root" });
+    assert.match(again.text, /already active/u);
+  });
+});
+
+test("a one-shot run's typed /start-work save-plan text asks the same question and starts nothing", async () => {
+  await withHost({}, async (dir, fake) => {
+    const plan = "# P\n\n## TODOs\n\n- [ ] 1. write scripts/check.sh — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `bash scripts/check.sh`\n";
+    const saved = await fake.run("session", "prompt", prompt(`/start-work save-plan ${JSON.stringify({ approved: true, slug: "q", markdown: plan })}`));
+    assert.equal(saved.metadata?.litopencode?.operation, "save-plan");
+    await fs.access(path.join(dir, ".litopencode", "plans", "q.md"));
+    assert.equal(JSON.parse(await fs.readFile(path.join(dir, ".litopencode", "goal", "consent.json"), "utf8")).plan, ".litopencode/plans/q.md");
+    assert.equal(slashGoal(fake).length, 0);
+    assert.match((await startTypedWork({ projectRoot: dir, sessionID: "ses_other" })).text, /^(?!.*already active)/su, "no run was started by the save");
+  });
 });

@@ -117,7 +117,7 @@ test("lit-comprehend template carries methodology keywords and canonical section
     assert.ok(text.includes("--en"));
     assert.ok(text.includes("--md"));
     assert.ok(text.includes("verbatim"));
-    assert.ok(text.includes("lit-recap"));
+    assert.ok(text.includes("lit-adhd"));
     assert.match(text, /OUTSIDE|outside.*repo.*worktree|OUTSIDE the repo/i);
     assert.match(text, /<lit-loop-mode>/);
   }
@@ -242,7 +242,7 @@ test("lit-comprehend skill directory contains scaffold, references, and verifier
   assert.match(skill, /--en/);
   assert.match(skill, /--md/);
   assert.match(skill, /verbatim/);
-  assert.match(skill, /lit-recap/);
+  assert.match(skill, /lit-adhd/);
 });
 
 test("SKILL.md documents the execution gate contract", () => {

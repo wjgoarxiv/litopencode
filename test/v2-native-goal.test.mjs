@@ -33,8 +33,11 @@ test("a read-only route takes no action, even without /goal or with a goal prese
   assert.deepEqual(decide({ route: "review-work", goal: { id: "x", objective: "y", status: "active" } }), { kind: "none" });
 });
 
-test("no goal on a qualifying route: create; on idle (no route): nothing", () => {
-  for (const route of ["lit-loop", "start-work", "litwork"]) assert.deepEqual(decide({ route }), { kind: "create" }, route);
+test("no goal on a qualifying route: create only after the user's yes; on idle (no route): nothing", () => {
+  for (const route of ["lit-loop", "start-work", "litwork"]) {
+    assert.deepEqual(decide({ route }), { kind: "none" }, route);
+    assert.deepEqual(decide({ route, armed: true }), { kind: "create" }, route);
+  }
   assert.deepEqual(decide({ route: undefined }), { kind: "none" });
 });
 

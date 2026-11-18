@@ -5,6 +5,7 @@ import {
 } from "./activation-managed-prompts.ts";
 import { litLoopPromptInjection, litPlanPromptInjection, litTaskPromptInjection } from "./activation-primary-prompts.ts";
 import { interfaceWorkHandoff } from "./interface-handoff.ts";
+import { buildSkillPlan, parseSkillHatch, skillPlanContext, withoutSkillHatch } from "./skill-plan.ts";
 import { movedSkillRouteContext, type MovedSkillId } from "./moved-skills.ts";
 import {
   detectWorkflowFamilyChatMode,
@@ -19,12 +20,15 @@ import {
   frontendUiUxPromptInjection,
   gitMasterPromptInjection,
   litBrainstormPromptInjection,
+  ultraBrainstormPromptInjection,
+  litTeamPromptInjection,
   litHijackPromptInjection,
   litAdhdPromptInjection,
   litCruciblePromptInjection,
   initDeepPromptInjection,
   litGoalPromptInjection,
-  litRecapPromptInjection,
+  adhdViewNote,
+  type AdhdView,
   litResearchPromptInjection,
   lspPromptInjection,
   lspSetupPromptInjection,
@@ -54,6 +58,8 @@ export type ChatActivationMode =
   | "lit-init"
   | "lit-crucible"
   | "lit-brainstorm"
+  | "ultra-brainstorm"
+  | "lit-team"
   | "lit-hijack"
   | "lit-adhd"
   | "lit-burnoff-file"
@@ -71,7 +77,6 @@ export type ChatActivationMode =
   | "browser-drive"
   | "frontend-ui-ux"
   | "visual-qa"
-  | "lit-recap"
   | "lit-comprehend"
   | "lit-handoff"
   | "lit-scientific-visualization";
@@ -209,6 +214,63 @@ export function hasSchematicRequest(raw: string): boolean {
   return draws || !(reportNoun.test(raw) || slidesNoun.test(raw));
 }
 
+// Companion-only detectors for the skill plan. Neither ever becomes the routed mode: a chart or a diagram
+// alone must not pull loop or interface work away. A figure of data needs a plot noun plus measured data or a
+// plotting verb; a diagram needs a diagram noun plus a drawing or making verb.
+const vizNoun = /(?<![a-z])(?:plots?(?!\s+plans?(?![a-z]))|charts?|graphs?|figures?|histograms?|heat\s?maps?|scatter\s?plots?|box\s?plots?)(?![a-z])|그래프|차트|플롯|히스토그램|산점도|시각화/u;
+const vizCue = /(?<![a-z])(?:data|dataset|csv|xlsx|measure(?:d|ments?)|results?|experiments?|publication|paper|journal|plot|visuali[sz]e)(?![a-z])|데이터|측정|실험|결과|논문|저널/u;
+const diagramNoun = /(?<![a-z])(?:diagrams?|flow\s?charts?|sequence\s+diagrams?|architecture\s+(?:diagram|map)|system\s+map)(?![a-z])|다이어그램|도식|흐름도|구성도|순서도/u;
+
+const companionModeIds: Readonly<Partial<Record<ChatActivationMode, string>>> = Object.freeze({
+  "lit-research": "litresearch",
+  "lit-task": "lit"
+});
+
+/** The skill id a routed mode stands for in a skill plan. */
+export function skillPlanPrimary(mode: ChatActivationMode): string {
+  return companionModeIds[mode] ?? mode;
+}
+
+/** Every content route a lit prompt matches, in the cascade's priority order, without duplicates. */
+export function skillPlanCompanions(text: string): readonly string[] {
+  const raw = rawTriggerText(withoutSkillHatch(text));
+  const words = routeWords(normalizedTriggerText(withoutSkillHatch(text)));
+  const routes: string[] = [];
+  if (hasMotionVideoIntent(raw)) routes.push("lit-typographic-motion");
+  if (hasSchematicRequest(raw)) routes.push("lit-schematic");
+  if (officeAuthoringVerb.test(raw) && !markdownDeliverable.test(raw)) {
+    if (reportNoun.test(raw)) routes.push("lit-docx");
+    if (slidesNoun.test(raw)) routes.push("lit-pptx");
+  }
+  if (containsLitRoute(words, "research")) routes.push("litresearch");
+  if (uiIntentNoun.test(raw) && (hasUiBuildIntent(raw) || uiAuditCue.test(raw) || uiHardenCue.test(raw))) routes.push("frontend-ui-ux");
+  if (vizNoun.test(raw) && vizCue.test(raw)) routes.push("lit-scientific-visualization");
+  if (diagramNoun.test(raw) && (schematicDrawVerb.test(raw) || schematicMakeVerb.test(raw) || officeAuthoringVerb.test(raw))) routes.push("lit-diagram-drawer");
+  if (structuralVerb.test(raw) && structuralShape.test(raw)) routes.push("structural-search");
+  return [...new Set(routes)];
+}
+
+const unplannedModes: ReadonlySet<ChatActivationMode> = new Set(["lit-handoff", "lit-scientific-visualization", "start-work"]);
+
+/**
+ * The skill-plan block for a routed lit prompt, or undefined when the plan is the routed skill alone. Only a
+ * prompt that carries `lit` gets one; quoted, fenced and back-ticked text never adds a companion.
+ */
+export function skillPlanForPrompt(mode: ChatActivationMode, text: string, installed: ReadonlySet<string> = new Set()): string | undefined {
+  if (unplannedModes.has(mode)) return undefined;
+  const inert = rawTriggerText(text);
+  if (!hasLitTrigger(inert)) return undefined;
+  const hatch = parseSkillHatch(inert);
+  const plan = buildSkillPlan({
+    primary: skillPlanPrimary(mode),
+    companions: hatch === undefined ? skillPlanCompanions(text) : [],
+    ...(hatch === undefined ? {} : { forced: hatch }),
+    raw: rawTriggerText(withoutSkillHatch(text)),
+    installed
+  });
+  return plan === undefined ? undefined : skillPlanContext(plan, installed);
+}
+
 const litSlashCommands = Object.freeze([
   ...Object.values(renamedSkillAliases).flat(),
   "lit-burnoff-file",
@@ -227,6 +289,8 @@ const litSlashCommands = Object.freeze([
   "lit-init",
   "lit-crucible",
   "lit-brainstorm",
+  "ultra-brainstorm",
+  "lit-team",
   "lit-hijack",
   "lit-adhd",
   "lit-rewind",
@@ -322,6 +386,25 @@ function containsLitRoute(words: readonly string[], ...route: readonly string[])
 const standaloneLitToken = new RegExp(`(?<![\\w./\\\\~@$-])(?:${routeTriggerWords.join("|")})(?!\\w)`, "u");
 const brainstormRouteAfterLit = new RegExp(`^(?:\\s+(?:${brainstormRouteWords.join("|")})|-brainstorm)(?![\\w/\\\\-]|\\.\\w)`, "u");
 
+// `ultra-brainstorm <topic>` as the first word, or `lit ultra-brainstorm <topic>` (also `lit ultra brainstorm`).
+// It is decided before the plain brainstorm route, whose `lit brainstorm` words it would otherwise match.
+const ultraBrainstormRouteAfterLit = /^(?:\s+ultra[\s-]?brainstorm(?:ing)?|-ultra-brainstorm)(?![\w/\\-]|\.\w)/u;
+
+// `lit team <goal>` (also `lit-team <goal>` as the first word): the session becomes the team's orchestrator.
+const teamRouteAfterLit = /^(?:\s+team|-team)(?![\w/\\-]|\.\w)/u;
+
+function startsTeamRoute(raw: string): boolean {
+  if (/^lit-team(?:$|[\s,.:;!?])/u.test(raw.trimStart())) return true;
+  const token = standaloneLitToken.exec(raw);
+  return token !== null && teamRouteAfterLit.test(raw.slice(token.index + token[0].length));
+}
+
+function startsUltraBrainstormRoute(raw: string): boolean {
+  if (/^ultra-brainstorm(?:$|[\s,.:;!?])/u.test(raw.trimStart())) return true;
+  const token = standaloneLitToken.exec(raw);
+  return token !== null && ultraBrainstormRouteAfterLit.test(raw.slice(token.index + token[0].length));
+}
+
 function startsBrainstormRoute(raw: string): boolean {
   const token = standaloneLitToken.exec(raw);
   return token !== null && brainstormRouteAfterLit.test(raw.slice(token.index + token[0].length));
@@ -374,7 +457,9 @@ function containsLitSlashCommandMention(text: string): boolean {
   return mentions.some((mention) => litSlashCommands.includes(mention.trim().slice(1) as (typeof litSlashCommands)[number]));
 }
 
-export function detectChatActivationMode(text: string, agent?: string): ChatActivationMode | undefined {
+export function detectChatActivationMode(input: string, agent?: string): ChatActivationMode | undefined {
+  // A `lit +viz +ui …` plan names skills, not the task: the cascade routes the text without those names.
+  const text = withoutSkillHatch(input);
   if (text.trim().toLowerCase() === "handoff") return "lit-handoff";
   if (text.trim().toLowerCase() === "lit-scientific-visualization") return "lit-scientific-visualization";
   const raw = rawTriggerText(text);
@@ -383,6 +468,8 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
   if (containsLitSlashCommandMention(raw)) return undefined;
   // An explicit `lit brainstorm ...` invocation wins over every word-anywhere route below, so a later
   // "refactor", "plan" or "dashboard" in the same sentence cannot steal the open question.
+  if (startsUltraBrainstormRoute(raw)) return "ultra-brainstorm";
+  if (startsTeamRoute(raw)) return "lit-team";
   if (startsBrainstormRoute(raw)) return "lit-brainstorm";
   // Same precedence for `lit hijack ...`: porting a published technique outranks the plan, review and
   // research words that its sources and targets usually contain.
@@ -397,7 +484,8 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
   if (startsWithStartWorkInvocation(raw, normalized)) return "start-work";
   if (containsCompoundBoundedWord(raw, "review-work")) return "review-work";
   if (containsRenamedSkillTrigger(raw, "litgoal") || containsCompoundBoundedWord(raw, "lit-goal")) return "litgoal";
-  if (containsRecapTrigger(raw)) return "lit-recap";
+  // lit-recap moved into lit-adhd: the recap words open lit-adhd's recap view.
+  if (containsRecapTrigger(raw)) return "lit-adhd";
   if (containsCompoundBoundedWord(raw, "lit-comprehend")) return "lit-comprehend";
   if (containsCompoundBoundedWord(raw, "lit comprehend")) return "lit-comprehend";
   if (containsCompoundBoundedWord(raw, "$lit-comprehend")) return "lit-comprehend";
@@ -447,10 +535,29 @@ export function detectChatActivationMode(text: string, agent?: string): ChatActi
 }
 
 
+const adhdDetailCue = /(?<![a-z])(?:detail|details|detailed)(?![a-z])|자세히|상세/u;
+const recapSessionArgument = /(?:^|\s)(?:recap|리캡)\s+((?:ses_)?[A-Za-z0-9_-]*\d[A-Za-z0-9_-]{3,})(?=\s|$)/u;
+
+/** Which lit-adhd view a prompt asked for: the recap (and whether it came through an old lit-recap word), the detail, or the card. */
+export function adhdViewForPrompt(text: string): { readonly view: AdhdView; readonly movedFrom: boolean; readonly recapSession?: string; readonly lang: "ko" | "en" } {
+  const raw = rawTriggerText(text);
+  // English only when asked for; an English-looking prompt alone still gets the Korean card.
+  const lang = /(?:^|\s)--en(?:\s|$)|\bin english\b|영어로/iu.test(raw) ? "en" : "ko";
+  if (containsRecapTrigger(raw)) {
+    const session = recapSessionArgument.exec(withoutInactiveContent(text))?.[1];
+    return { view: "recap", movedFrom: !startsAdhdRoute(raw), lang, ...(session === undefined ? {} : { recapSession: session }) };
+  }
+  return { view: adhdDetailCue.test(raw) ? "detail" : "card", movedFrom: false, lang };
+}
+
 export function promptForChatActivationMode(mode: ChatActivationMode, triggerText = ""): string {
   const prompt = canonicalChatPrompt(mode);
   const raw = rawTriggerText(triggerText);
   let targetedPrompt = prompt;
+  if (mode === "lit-adhd") {
+    const { view, movedFrom, recapSession, lang } = adhdViewForPrompt(triggerText);
+    targetedPrompt += `\n${adhdViewNote(view, { movedFrom, lang, ...(recapSession === undefined ? {} : { recapSession }) })}`;
+  }
   if (mode === "frontend-ui-ux") targetedPrompt += `\nSelected interface mode: ${frontendUiUxModeForPrompt(raw)}.`;
   if (mode === "review-work") targetedPrompt += reviewModeForcedNote(forcedReviewMode(routeWords(normalizedTriggerText(triggerText))) ?? "");
   if (mode === "lit-loop" && needsInterfaceHandoff(raw)) targetedPrompt += `\nInterface hand-off for this request: ${interfaceWorkHandoff}`;
@@ -540,6 +647,10 @@ function canonicalChatPrompt(mode: ChatActivationMode): string {
       return litCruciblePromptInjection;
     case "lit-brainstorm":
       return litBrainstormPromptInjection;
+    case "ultra-brainstorm":
+      return ultraBrainstormPromptInjection;
+    case "lit-team":
+      return litTeamPromptInjection;
     case "lit-hijack":
       return litHijackPromptInjection;
     case "lit-adhd":
@@ -568,8 +679,6 @@ function canonicalChatPrompt(mode: ChatActivationMode): string {
       return frontendUiUxPromptInjection;
     case "visual-qa":
       return visualQaPromptInjection;
-    case "lit-recap":
-      return litRecapPromptInjection;
     case "lit-comprehend":
       return comprehendPromptInjection;
     case "lit-handoff":

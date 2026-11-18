@@ -215,7 +215,7 @@ Research loops should also have stop conditions. Frame the question, gather loca
 
 The static skill corpus is a set of specialized maps, but the workflow loop decides when to use them. Use `lit-plan` when mutation needs approval. Use `start-work` when an approved plan should execute. Use `review-work` before completion for HEAVY work and explicitly requested review or release, using its full five-lane path; LIGHT work may use the root self-review instead. Use `litresearch` when facts are uncertain. Use `release-guardrails` before release claims. Use `doctor-installer` for installer surfaces. Use `tool-guards` when tool policy is the question. Use `lit-commit` only for authorized git actions. Use `lit-korean` for prose cleanup that must preserve meaning.
 
-Skills should not fight each other. If `lit-crucible` says ready for planning, it still hands to `lit-plan`. If `lit-recap` reveals remaining work, it does not execute it. If `review-work` blocks completion, return to execution or planning. The loop is the traffic controller.
+Skills should not fight each other. If `lit-crucible` says ready for planning, it still hands to `lit-plan`. If the `lit-adhd` recap view reveals remaining work, it does not execute it. If `review-work` blocks completion, return to execution or planning. The loop is the traffic controller.
 
 ## Failure Recovery
 
@@ -223,7 +223,7 @@ When a test fails, do not immediately patch around it. Read the failure, identif
 
 ## Recap Discipline
 
-At natural pauses, produce a recap that is factual and evidence-backed. In Korean by default for `lit-recap`, but in the user’s requested language for normal answers. A good recap says completed, ongoing, blockers, evidence, and next steps. It should not claim final completion unless review and verification support it. It should not write state unless a handoff or ledger operation is explicitly in scope.
+At natural pauses, produce a recap that is factual and evidence-backed. In Korean by default for the `lit-adhd` recap view, but in the user’s requested language for normal answers. A good recap says completed, ongoing, blockers, evidence, and next steps. It should not claim final completion unless review and verification support it. It should not write state unless a handoff or ledger operation is explicitly in scope.
 
 ## Loop Metrics
 

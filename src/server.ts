@@ -1,3 +1,4 @@
+import { advisoryGoalCheck } from "./goal-pipeline.ts";
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 import { fileURLToPath } from "node:url";
 import { createChatMessageActivationHook, showActivationToast } from "./activation.ts";
@@ -67,12 +68,20 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
     const boundedAuthorityEvent = createBoundedAuthorityEventHook(root, input?.client, loaded.config.boundedAuthority);
     // Keyed by session: the host resolves command parts into a new array before chat.message runs.
     const trustedCommandActivations = new Map<string, string>();
+    const commandNotices = new Map<string, string>();
     const commandActivation = createCommandActivationHook(root, {
       commandAliasRoot: defaultOpenCodeConfigRoot(),
       boundedAuthority: loaded.config.boundedAuthority,
       knowledgeCaptureEnabled: loaded.config.knowledge.capture,
       autoHandoffRoute: autoHandoff.route,
-      onSkillActivation: recordSkillActivation
+      onSkillActivation: recordSkillActivation,
+      onPlanQuestion: (line) => {
+        try {
+          void input?.client?.tui?.showToast({ body: { title: "LitOpenCode plan", message: line, variant: "info", duration: 30000 } })?.catch(() => undefined);
+        } catch { // no-excuse-ok: catch -- a missing TUI must never block the plan save.
+          // The question still rides the saved-plan notice.
+        }
+      }
     });
 
     const hooks: Hooks = {
@@ -80,7 +89,17 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         registerLitOpenCodeAgents(config, loaded.config);
       },
       event: async (eventInput) => {
-        if (eventInput.event.type === "session.idle") await markLiveness(root, eventInput.event.properties.sessionID, "idle");
+        if (eventInput.event.type === "session.idle") {
+          await markLiveness(root, eventInput.event.properties.sessionID, "idle");
+          // OpenCode 1 has no /goal: an armed goal is checked here, as an advisory, when the turn ends.
+          const line = advisoryGoalCheck(root, eventInput.event.properties.sessionID);
+          if (line !== undefined) {
+            try {
+              await input?.client?.tui?.showToast({ body: { title: "LitOpenCode goal", message: line, variant: "info", duration: 10000 } });
+            } catch { // no-excuse-ok: catch -- a missing toast must not stop the session; the intent file holds the result.
+            }
+          }
+        }
         if (eventInput.event.type === "session.deleted") {
           await markLiveness(root, eventInput.event.properties.info.id, "ended");
           ignitionState.clear(eventInput.event.properties.info.id);
@@ -113,7 +132,12 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         onTrustedSkillResume: (sessionID, skillId) => {
           ignitionState.activate(sessionID, skillId);
         },
-        extensionsNoticeRoot: defaultOpenCodeConfigRoot()
+        extensionsNoticeRoot: defaultOpenCodeConfigRoot(),
+        takeCommandNotice: (sessionID) => {
+          const notice = commandNotices.get(sessionID);
+          commandNotices.delete(sessionID);
+          return notice;
+        }
       }),
       "command.execute.before": async (commandInput, commandOutput) => {
         const priorLength = commandOutput.parts.length;
@@ -122,6 +146,10 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           (part) => trustedCommandSkillId(part) !== undefined
         );
         const skillId = trustedCommandSkillId(activationPart);
+        // The saved-plan notice and its approval question reach the model through chat.message.
+        const saved = commandOutput.parts.slice(priorLength).find((part) => part.type === "text" && (part.metadata as { litopencode?: { operation?: string } } | undefined)?.litopencode?.operation === "save-plan");
+        if (saved?.type === "text") commandNotices.set(commandInput.sessionID, saved.text);
+        else commandNotices.delete(commandInput.sessionID);
         if (skillId === undefined) trustedCommandActivations.delete(commandInput.sessionID);
         else trustedCommandActivations.set(commandInput.sessionID, skillId);
       },

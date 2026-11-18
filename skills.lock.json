@@ -188,13 +188,6 @@
       "maxFiles": 1,
       "maxBytes": 5000
     },
-    "lit-recap": {
-      "minSkillBytes": 18900,
-      "maxSkillBytes": 29000,
-      "minFiles": 1,
-      "maxFiles": 2,
-      "maxBytes": 29000
-    },
     "lit-schematic": {
       "minSkillBytes": 2000,
       "maxSkillBytes": 5000,
@@ -208,6 +201,13 @@
       "minFiles": 1,
       "maxFiles": 1,
       "maxBytes": 5000
+    },
+    "lit-team": {
+      "minSkillBytes": 10300,
+      "maxSkillBytes": 16000,
+      "minFiles": 2,
+      "maxFiles": 3,
+      "maxBytes": 31000
     },
     "lit-typographic-motion": {
       "minSkillBytes": 2000,
@@ -328,6 +328,13 @@
       "maxFiles": 2,
       "maxBytes": 29000
     },
+    "ultra-brainstorm": {
+      "minSkillBytes": 12300,
+      "maxSkillBytes": 19000,
+      "minFiles": 3,
+      "maxFiles": 5,
+      "maxBytes": 26000
+    },
     "visual-qa": {
       "minSkillBytes": 2000,
       "maxSkillBytes": 5000,
@@ -380,12 +387,12 @@
     },
     "browser-drive": {
       "skillMd": {
-        "bytes": 10738,
-        "sha256": "041d8c962d3ad4f12a53c200df1f54da3d2d71f9be5aa66607bf5834a628337e"
+        "bytes": 11001,
+        "sha256": "edacbd092d734e0b5cca2c41859ad260becd79a84486b5e05009dbdfa45be984"
       },
       "files": 3,
-      "bytes": 25898,
-      "sha256": "574dc7c0bbf1390fe4ed13786608b39bd93c900318167432a783c93d873c1c41"
+      "bytes": 28883,
+      "sha256": "04e259c566a79359f6b70fa0548c9b5525bdbb1ed93c59930fe88a21838d404c"
     },
     "comment-checker": {
       "skillMd": {
@@ -434,12 +441,12 @@
     },
     "lit-adhd": {
       "skillMd": {
-        "bytes": 22576,
-        "sha256": "5709953f2f5be45e9214c0d65fcba2f4251e9e59abf8d2e6c7db2de1fa03153e"
+        "bytes": 26307,
+        "sha256": "fd3e8e3a23a407b7c695c641a456e8b443ccce3fc2b1d59b830909121af8fc20"
       },
-      "files": 5,
-      "bytes": 122726,
-      "sha256": "c6b5753dc53dfc18dc10e588f60245187bafc4df3fffeef417fa0f65386edada"
+      "files": 6,
+      "bytes": 147937,
+      "sha256": "28c8645e23c1ce2948d321f6143b6bfe178f714860b12e095a1fc5a2f9721f6e"
     },
     "lit-brainstorm": {
       "skillMd": {
@@ -488,12 +495,12 @@
     },
     "lit-comprehend": {
       "skillMd": {
-        "bytes": 16578,
-        "sha256": "a815f61dcc22c862c57ff10ec03d3192ef10bd0a8546df6f80e4adf898fccb2d"
+        "bytes": 16606,
+        "sha256": "f77214ea921833b089c98f5fdeba29739160ed8b1263273e790faf939fb2c947"
       },
       "files": 5,
-      "bytes": 40903,
-      "sha256": "e7e1acb5bca316e16e150367392cb88b54aaf66908f4b28337d0a193e9ece3ab"
+      "bytes": 40931,
+      "sha256": "3c3771eb0b49cbaf46a6ac08456fe4478294575227ea2c9939700ead7b44091a"
     },
     "lit-crucible": {
       "skillMd": {
@@ -569,12 +576,12 @@
     },
     "lit-plan": {
       "skillMd": {
-        "bytes": 31735,
-        "sha256": "707e3df36221bf9237264c54e7ba7b80b46cb59c8c818ac20d406aeae8426a2d"
+        "bytes": 33736,
+        "sha256": "52a17852219616f2eb1f7be86ac9dfb6af16a1642bb38b371db4e0f01675f08f"
       },
       "files": 2,
-      "bytes": 42716,
-      "sha256": "03a62f56cd313d90ce21f10a57d2c2701d3689065a733971e014143610feecc8"
+      "bytes": 44717,
+      "sha256": "0663142b28136992ac015762b9915f40d7218fe9689e98ac6a80fcea46762ff2"
     },
     "lit-pptx": {
       "skillMd": {
@@ -584,15 +591,6 @@
       "files": 1,
       "bytes": 4014,
       "sha256": "f790206c40939aa57dd58942c1dd60d37bb233a93b16cbbad007eebb05d57f84"
-    },
-    "lit-recap": {
-      "skillMd": {
-        "bytes": 18987,
-        "sha256": "a8ff47e7ffbeb4e9486fe99bce7ecbcb646b7d1f30dc6798a924d07499c341bf"
-      },
-      "files": 1,
-      "bytes": 18987,
-      "sha256": "7002288206fb140c5b7df2103944604476a058bce69540bf1689a25bfa18a81d"
     },
     "lit-schematic": {
       "skillMd": {
@@ -611,6 +609,15 @@
       "files": 1,
       "bytes": 4705,
       "sha256": "e2fca3955b8b4844e175495c853dbee13a3f22da2f8dfbcc92672c7cba9ce761"
+    },
+    "lit-team": {
+      "skillMd": {
+        "bytes": 10313,
+        "sha256": "c24ba3fd515a874717eb25d32ba140f06e72d24aa0d8a542c275d61eea0d74dc"
+      },
+      "files": 2,
+      "bytes": 20116,
+      "sha256": "61a5ebf73790cfd22c4d290392a680c961d9e92382a88deec525dc783210f0b8"
     },
     "lit-typographic-motion": {
       "skillMd": {
@@ -641,12 +648,12 @@
     },
     "litwork": {
       "skillMd": {
-        "bytes": 20847,
-        "sha256": "5bf418e2f6565bcdb40dedfb4bb96c34e42a4704ab79ecdfe37f5601be855536"
+        "bytes": 20903,
+        "sha256": "042da0a3acbb0c8eb3c008ba7a0d2691384f868be217e4669e1a915853b1e6c0"
       },
       "files": 1,
-      "bytes": 20847,
-      "sha256": "a9fbdc3f937febdf71875356eb5c82bec68d135924602911e194ecfc5313ae53"
+      "bytes": 20903,
+      "sha256": "26c55f59d5aef0fe7248b198b79e7cd0021fe36c74f09e05d7af1a3ff284e032"
     },
     "lsp": {
       "skillMd": {
@@ -668,12 +675,12 @@
     },
     "native-goal-verdict": {
       "skillMd": {
-        "bytes": 15591,
-        "sha256": "974ff322b61983facbd0b123663744b54e7c623aeb063068a2c48a6c98c28132"
+        "bytes": 16191,
+        "sha256": "b42cb11b4ee2833a7a30b057bd9541d0ceb1d75adda742179a70283c3d9234dd"
       },
       "files": 1,
-      "bytes": 15591,
-      "sha256": "5ceac6855555158dd0619a5d0463ba25e80a7b05ed0e678704bae7d4fbe3621d"
+      "bytes": 16191,
+      "sha256": "e7b649ac7007bc31bfabd44dde9102ac8120b9a24c126012b6476fadfaa755ae"
     },
     "readme-studio": {
       "skillMd": {
@@ -765,6 +772,15 @@
       "bytes": 19008,
       "sha256": "a973ae51094ac86ceef5c6d8443aeac2afea6a1bcc343e90fbae31170fbc9662"
     },
+    "ultra-brainstorm": {
+      "skillMd": {
+        "bytes": 13864,
+        "sha256": "c094b643cea1ee7cf4e094275eec1159dcebfe4eafb94f51589525f713d80c68"
+      },
+      "files": 3,
+      "bytes": 20514,
+      "sha256": "610c9da7ab8b39c3c0c4fa7bd2b945742af57ec3300ecd028381004cdf5217af"
+    },
     "visual-qa": {
       "skillMd": {
         "bytes": 4036,
@@ -776,21 +792,21 @@
     },
     "wikify": {
       "skillMd": {
-        "bytes": 11470,
-        "sha256": "e391ac2fa14edf33e5d292c149bb1e654c97ddb18e06aebc69fc9f36b74094cd"
+        "bytes": 11474,
+        "sha256": "3575d4e7361bae24ddae5793997d7160a55be87bf9790486c98f9adc2cb11397"
       },
       "files": 14,
-      "bytes": 80868,
-      "sha256": "89c2674bf91ec254507ff182b19fbd5478d889466c94bd24d8feaef8294f016e"
+      "bytes": 80882,
+      "sha256": "e8877091b53c106fca37a88b88ab4fd2354422ab2a9c9f90c28220644c964556"
     },
     "workflow-loop": {
       "skillMd": {
-        "bytes": 33045,
-        "sha256": "5eed536e5d07109a96f960f13ea00517138fb29bae66383ffc9d20ed6984b123"
+        "bytes": 33073,
+        "sha256": "495f300bbcb9237ac85f56be5d37ba6e87455ea39e0970b903f6fd0554c62635"
       },
       "files": 1,
-      "bytes": 33045,
-      "sha256": "a27b05b5dc1e75206c11b5c5a41f3ef7133d718adb0d3c8543b0eb4c1d1e3f7b"
+      "bytes": 33073,
+      "sha256": "25b7c318009da213bd6938c938c52c740d048a51704e9d877fd40d77a1886405"
     }
   },
   "pack": [
@@ -937,6 +953,8 @@
     "dist/extensions-notice.js",
     "dist/features.d.ts",
     "dist/features.js",
+    "dist/goal-pipeline.d.ts",
+    "dist/goal-pipeline.js",
     "dist/hooks.d.ts",
     "dist/hooks.js",
     "dist/host/server.d.ts",
@@ -1015,6 +1033,8 @@
     "dist/session-liveness.js",
     "dist/shown-record.d.ts",
     "dist/shown-record.js",
+    "dist/skill-plan.d.ts",
+    "dist/skill-plan.js",
     "dist/skill-renames.d.ts",
     "dist/skill-renames.js",
     "dist/skills.d.ts",
@@ -1246,6 +1266,7 @@
     "skills/lit-adhd/references/card-examples.md",
     "skills/lit-adhd/references/status-taxonomy.md",
     "skills/lit-adhd/scripts/rewind.mjs",
+    "skills/lit-adhd/scripts/verdict.mjs",
     "skills/lit-brainstorm/SKILL.md",
     "skills/lit-brainstorm/references/handoff-briefs.md",
     "skills/lit-brainstorm/references/lenses.md",
@@ -1370,9 +1391,10 @@
     "skills/lit-plan/SKILL.md",
     "skills/lit-plan/scripts/scaffold-plan.mjs",
     "skills/lit-pptx/SKILL.md",
-    "skills/lit-recap/SKILL.md",
     "skills/lit-schematic/SKILL.md",
     "skills/lit-scientific-visualization/SKILL.md",
+    "skills/lit-team/SKILL.md",
+    "skills/lit-team/scripts/team.mjs",
     "skills/lit-typographic-motion/SKILL.md",
     "skills/litgoal/SKILL.md",
     "skills/litresearch/SKILL.md",
@@ -1414,6 +1436,9 @@
     "skills/start-work/SKILL.md",
     "skills/structural-search/SKILL.md",
     "skills/tool-guards/SKILL.md",
+    "skills/ultra-brainstorm/SKILL.md",
+    "skills/ultra-brainstorm/references/lenses.md",
+    "skills/ultra-brainstorm/scripts/estimate.mjs",
     "skills/visual-qa/SKILL.md",
     "skills/wikify/LICENSE",
     "skills/wikify/PROVENANCE.md",

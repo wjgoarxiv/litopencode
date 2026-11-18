@@ -21,6 +21,8 @@ export type LitOpenCodeFeatureId =
   | "lit-init"
   | "lit-crucible"
   | "lit-brainstorm"
+  | "ultra-brainstorm"
+  | "lit-team"
   | "lit-hijack"
   | "lit-adhd"
   | "workflow-stack"
@@ -38,7 +40,6 @@ export type LitOpenCodeFeatureId =
   | "structural-search"
   | "browser-drive"
   | "lit-humanizer"
-  | "lit-recap"
   | "lit-comprehend"
   | "lit-handoff"
   | "lit-scientific-visualization"
@@ -612,6 +613,60 @@ export const litOpenCodeFeatures = Object.freeze([
     verification: ["node --test test/lit-brainstorm.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
   },
   {
+    id: "ultra-brainstorm",
+    title: "Ultra Brainstorm",
+    summary:
+      "Asks how many cheap idea lanes to launch with the cost first, fans them out through OpenCode's task tool, reduces and judges the ideas, and shows a sorted top list for the user to pick, combine or widen.",
+    bindings: [
+      {
+        kind: "config",
+        id: "skills/ultra-brainstorm/SKILL.md",
+        surface: "LitOpenCode native-installed managed skill",
+        description: "Ships the launch question, the three-stage fan-out, the 32 lenses and the cost estimator."
+      },
+      {
+        kind: "command",
+        id: "ultra-brainstorm",
+        surface: "OpenCode command /ultra-brainstorm",
+        description: "Makes Ultra Brainstorm directly invocable; chat routes ultra-brainstorm and lit ultra-brainstorm reach the same surface."
+      },
+      {
+        kind: "agent",
+        id: "lit-ideator",
+        surface: "OpenCode task delegation",
+        description: "Runs each idea lane on the helper route at its lowest effort with every tool off; lit-explorer reduces and lit-oracle judges."
+      }
+    ],
+    verification: ["node --test test/ultra-brainstorm.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
+  },
+  {
+    id: "lit-team",
+    title: "Lit Team",
+    summary:
+      "Turns the session into the orchestrator of a small team: it picks the distribution (task-tool subagents, batches, git worktrees, or herdr panes when herdr is present), writes one brief per member, watches them, merges and re-verifies, and returns one reader-mode report.",
+    bindings: [
+      {
+        kind: "config",
+        id: "skills/lit-team/SKILL.md",
+        surface: "LitOpenCode native-installed managed skill",
+        description: "Ships the distribution rules, the four-part brief, the stall check and the merge-and-reverify procedure, with the team.mjs packet script."
+      },
+      {
+        kind: "command",
+        id: "lit-team",
+        surface: "OpenCode command /lit-team",
+        description: "Makes Lit Team directly invocable; the chat route lit team reaches the same surface."
+      },
+      {
+        kind: "agent",
+        id: "lit-forge-worker",
+        surface: "OpenCode task delegation",
+        description: "Builds a member's slice; lit-explorer maps and lit-critical-reviewer reviews when a member's brief names them."
+      }
+    ],
+    verification: ["node --test test/lit-team.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
+  },
+  {
     id: "lit-hijack",
     title: "Lit Hijack",
     summary:
@@ -642,7 +697,7 @@ export const litOpenCodeFeatures = Object.freeze([
     id: "lit-adhd",
     title: "Lit Adhd",
     summary:
-      "Shows a read-only KPI board of this worktree family from a deterministic collector (the one step to take now and what to type, done, in-progress, waiting and left counts with an overall bar, milestones, done lately, still to do, action-shaped reminders), keeps the per-session detail on request, and follows the step on go; typed start-work, lit approve, lit deny and lit cancel drive the bounded run without pasted JSON.",
+      "Shows a read-only verdict card of this worktree family from a deterministic collector (what changed since the last look, the one step to take now and the exact text to type, why and what skipping it costs, what else waits, and which records were read), keeps the KPI board with the per-session cards on request (detail), recaps each session (recap, which replaced lit-recap), and follows the step on go; typed start-work, lit approve, lit deny and lit cancel drive the bounded run without pasted JSON.",
     bindings: [
       {
         kind: "config",
@@ -653,8 +708,8 @@ export const litOpenCodeFeatures = Object.freeze([
       {
         kind: "command",
         id: "lit-adhd",
-        surface: "OpenCode commands /lit-adhd and /lit-rewind",
-        description: "Makes the brief directly invocable; chat routes lit adhd and lit rewind reach the same surface, and a live go follows the armed step."
+        surface: "OpenCode commands /lit-adhd, /lit-rewind and /lit-recap",
+        description: "Makes the card directly invocable; chat routes lit adhd and lit rewind reach the same surface, /lit-recap, lit recap and litrecap open the recap view with a moved note, and a live go follows the armed step."
       },
       {
         kind: "hook",
@@ -663,7 +718,7 @@ export const litOpenCodeFeatures = Object.freeze([
         description: "Routes go, lit approve, lit deny, lit cancel and start-work [plan] from the user's own root-session prompt into the existing re-entry and bounded-authority lifecycle."
       }
     ],
-    verification: ["node --test test/lit-adhd.test.mjs", "node --test test/lit-adhd-board.test.mjs", "node --test test/adhd-go.test.mjs", "node --test test/start-work-typed.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
+    verification: ["node --test test/lit-adhd.test.mjs", "node --test test/lit-adhd-board.test.mjs", "node --test test/adhd-verdict.test.mjs", "node --test test/lit-recap-command.test.mjs", "node --test test/adhd-go.test.mjs", "node --test test/start-work-typed.test.mjs", "node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
   },
   {
     id: "workflow-stack",
@@ -1153,27 +1208,6 @@ export const litOpenCodeFeatures = Object.freeze([
       }
     ],
     verification: ["node --test test/runtime-skills.test.mjs", "node --test test/docs.test.mjs"]
-  },
-  {
-    id: "lit-recap",
-    title: "Lit Recap",
-    summary:
-      "Provides a read-only Korean-default work recap synthesized from the durable LitOpenCode ledger and current session context without writing any state.",
-    bindings: [
-      {
-        kind: "command",
-        id: "lit-recap",
-        surface: "OpenCode command /lit-recap",
-        description: "Injects the static recap template without ledger writes, goal dispatch, or file creation."
-      },
-      {
-        kind: "config",
-        id: "skills/lit-recap/SKILL.md",
-        surface: "LitOpenCode visible static skills corpus",
-        description: "Documents the five-section recap format, brief digest, language switching, and read-only contract."
-      }
-    ],
-    verification: ["node --test test/lit-recap-command.test.mjs", "node --test test/runtime-skills.test.mjs"]
   },
   {
     id: "lit-comprehend",

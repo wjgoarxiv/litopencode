@@ -91,7 +91,8 @@ test("LitOpenCode includes every upstream specialist as a brand-clean adapted en
       "lit-systems-architect",
       "lit-critical-reviewer",
       "lit-context-cartographer",
-      "lit-persistence-runner"
+      "lit-persistence-runner",
+      "lit-ideator"
     ]
   );
   assert.equal(litOpenCodeSpecialistAgents.filter((agent) => agent.tier === "specialist").every((agent) => !agent.recommended), true);
@@ -196,7 +197,7 @@ test("agent registry ships the Astra lead/review routes and ordinary Luna helper
     const category = agent.id === "lit-loop" ? "planning" : defaults.agents[agent.id].category;
     const expected = category === "planning" || category === "review"
       ? { model: "openai/gpt-6-astra", variant: "xhigh" }
-      : { model: "openai/gpt-6-luna", variant: "max" };
+      : { model: "openai/gpt-6-luna", variant: agent.id === "lit-ideator" ? "none" : "max" };
     assert.equal(config.agent[agent.id].model, expected.model, `${agent.id} should use its shipped model default`);
     assert.equal(config.agent[agent.id].variant, expected.variant, `${agent.id} should use its shipped effort default`);
     if (expected.model === "openai/gpt-6-astra") assert.equal(config.agent[agent.id].reasoningEffort, "xhigh");

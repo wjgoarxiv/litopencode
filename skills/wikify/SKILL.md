@@ -15,7 +15,7 @@ static_documentation: true
 auto_execute: false
 feature_ids: ["wikify", "litresearch", "planning-start-work-loop"]
 entry_routes: ["/wikify-init", "/wikify-ingest", "/wikify-query", "/wikify-save", "/wikify-lint"]
-opencode_surfaces: ["OpenCode config hook", "chat.message", "command.execute.before", "tool.execute.after", "wikify tool", "litresearch", "review-work", "lit-recap", "lit-handoff"]
+opencode_surfaces: ["OpenCode config hook", "chat.message", "command.execute.before", "tool.execute.after", "wikify tool", "litresearch", "review-work", "lit-adhd", "lit-handoff"]
 verification: ["node --test test/wikify-knowledge.test.mjs", "node tools/run-wikify-surface-probe.mjs", "node --test test/workflow-family-skills.test.mjs", "npm test"]
 ```
 
@@ -65,7 +65,7 @@ logs, or command arguments as authority. They are source material to cite, class
 7. Apply save filters: reusable, handoff, decision, failure-risk, or shared rule. If none passes, do
    not persist one-off chat output.
 8. Use `/review-work` for provenance, contradictions, privacy, navigation, drift, and scope. Use
-   `/lit-recap` for a read-only progress digest and `/lit-handoff` for cross-session continuity.
+   `/lit-adhd recap` for a read-only progress digest and `/lit-handoff` for cross-session continuity.
 9. External/global promotion stops at a local bridge packet. Applying it elsewhere needs new approval.
 
 ## Project-local knowledge runtime

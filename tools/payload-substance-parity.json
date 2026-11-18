@@ -153,9 +153,9 @@
         "lit-humanizer",
         "lit-init",
         "lit-plan",
-        "lit-recap",
         "lit-schematic",
         "lit-scientific-visualization",
+        "lit-team",
         "lit-typographic-motion",
         "litgoal",
         "litresearch",
@@ -178,8 +178,8 @@
         "workflow-loop"
       ],
       "inventory": {
-        "count": 49,
-        "sha256": "473f9e5b4e60ff88edf2b0ff9d45bd0023b4b21afc667be7ccee5071c247f1fa"
+        "count": 50,
+        "sha256": "d3bde4f7f60417767650e0b97b2f973ad6f09644cd207735d412a00466bc772a"
       }
     },
     "p33": {
@@ -414,7 +414,6 @@
         "p27": 1,
         "p28": 1,
         "p31": 2,
-        "p32": 1,
         "p33": 1
       }
     },
@@ -433,7 +432,8 @@
       "closures": {
         "p27": 2,
         "p31": 6,
-        "p33": 4
+        "p33": 4,
+        "p32": 2
       }
     },
     "litgoal": {

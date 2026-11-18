@@ -106,6 +106,22 @@ async function stagedCleanup(stage: string): Promise<() => Promise<void>> {
   };
 }
 
+// Skills LitOpenCode no longer ships. An install removes the copy an earlier install wrote, so the native
+// skill tool stops listing it; a folder the user owns or changed is kept and named once.
+export const retiredSkillIds = Object.freeze(["lit-recap"]);
+
+async function removeRetiredSkill(root: string, skillsRoot: string, id: string): Promise<void> {
+  const folder = path.join(skillsRoot, id);
+  assertContained(skillsRoot, folder, `Retired native skill ${id}`);
+  const state = await destinationState(root, { id });
+  if (state.kind === "absent") return;
+  if (state.kind === "managed") {
+    await fs.rm(folder, { recursive: true });
+    return;
+  }
+  process.stderr.write(`LitOpenCode: kept ${folder}; ${id} moved into lit-adhd (lit adhd recap) and this copy is user-owned. Remove it when you no longer need it.\n`);
+}
+
 async function retirePreviousSkill(root: string, skillsRoot: string, skill: RuntimeSkill): Promise<void> {
   const previousId = previousManagedSkillId(skill.id);
   if (previousId === undefined) return;
@@ -218,5 +234,6 @@ export async function ensureNativeSkills(root: string, metadata: PackageMetadata
       throw error;
     }
   }
+  for (const id of retiredSkillIds) await removeRetiredSkill(root, skillsRoot, id);
   return backupDirectory === undefined ? { files: [] } : { directory: backupDirectory, files: backedUp };
 }

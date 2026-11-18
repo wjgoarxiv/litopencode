@@ -27,6 +27,8 @@ export type NativeGoalInput = {
   readonly ledgerDone: boolean;
   /** How many times LitOpenCode already resumed the owned goal. */
   readonly resumes: number;
+  /** Whether the user answered `yes` to this session's goal question; nothing is created without it. */
+  readonly armed?: boolean;
 };
 
 export type NativeGoalAction =
@@ -64,7 +66,7 @@ export function decideNativeGoal(input: NativeGoalInput): NativeGoalAction {
   if (!input.supported) return routed ? { kind: "unavailable" } : { kind: "none" };
   const goal = input.goal;
   if (goal === "unreadable") return routed ? { kind: "report-conflict", reason: "the goal state could not be read, so none was set" } : { kind: "none" };
-  if (goal === null) return routed ? { kind: "create" } : { kind: "none" };
+  if (goal === null) return routed && input.armed === true ? { kind: "create" } : { kind: "none" };
   if (input.ownedGoalID === undefined || goal.id !== input.ownedGoalID) return routed ? { kind: "report-user-goal" } : { kind: "none" };
   if (goal.status === "complete") {
     return input.ledgerDone ? { kind: "clear" } : { kind: "report-conflict", reason: "OpenCode says the goal is met but the ledger is still open" };

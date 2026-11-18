@@ -27,7 +27,7 @@ the exact paths and evidence. Wait for approval and explicit `/start-work` befor
 changing anything.
 
 Use `/review-work` to challenge citation coverage and read-only compliance when
-the answer supports a completion claim. `lit-recap` and `lit-handoff` may convey
+the answer supports a completion claim. `lit-adhd recap` and `lit-handoff` may convey
 existing evidence but do not grant mutation authority.
 
 ## Stop conditions

@@ -34,7 +34,7 @@ All LitOpenCode-owned environment variables use `LITOPENCODE_`. Legacy prefixes 
 
 ## D7 - Workflow Vocabulary
 
-Current workflow names: `lit`, `litwork`, `lit-loop`, `litgoal`, `lit-plan`, `lit-crucible`, `litresearch`, `start-work`, `review-work`, `lit-init`, `lit-recap`, `lit-handoff`, `lit-scientific-visualization`, and `lit-humanizer`.
+Current workflow names: `lit`, `litwork`, `lit-loop`, `litgoal`, `lit-plan`, `lit-crucible`, `litresearch`, `start-work`, `review-work`, `lit-init`, `lit-adhd`, `lit-handoff`, `lit-scientific-visualization`, and `lit-humanizer`.
 
 `lit` and `litwork` activate the durable `lit-loop`; `litgoal` owns package-managed goal state. `lit-plan` is planning-only, while `lit-crucible` adversarially tests assumptions before handing surviving insights to `lit-plan`. `litresearch` owns evidence-backed research, `start-work` routes approved execution to `lit-implement`, and `review-work` reviews either draft plans or completed work. The remaining names expose the installed repository-discovery, recap, handoff, scientific-visualization, and prose-review workflows; D7 does not reserve names for absent surfaces.
 

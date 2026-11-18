@@ -21,7 +21,8 @@ test("Astra routes the lead and review roles while execution/research agents sta
   for (const agent of litOpenCodeAgents.filter((candidate) => candidate.id !== "lit-loop")) {
     const category = defaults.agents[agent.id].category;
     const expectedModel = category === "planning" || category === "review" ? "openai/gpt-6-astra" : "openai/gpt-6-luna";
-    const expectedVariant = expectedModel === "openai/gpt-6-astra" ? "xhigh" : "max";
+    // lit-ideator is the ultra-brainstorm idea lane: the helper route at the lowest effort its model accepts.
+    const expectedVariant = expectedModel === "openai/gpt-6-astra" ? "xhigh" : agent.id === "lit-ideator" ? "none" : "max";
     assert.deepEqual(
       { model: config.agent[agent.id].model, variant: config.agent[agent.id].variant },
       { model: expectedModel, variant: expectedVariant },

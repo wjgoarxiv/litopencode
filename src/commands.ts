@@ -1,5 +1,7 @@
 import { activationBanner } from "./activation-probe.ts";
+import { adhdViewForPrompt } from "./activation-routing.ts";
 import { renamedSkillId, skillRenameNote } from "./skill-renames.ts";
+import { proposeGoal } from "./goal-pipeline.ts";
 import type { Hooks } from "@opencode-ai/plugin";
 import {
   comprehendPromptInjection,
@@ -13,9 +15,12 @@ import {
   structuralSearchPromptInjection,
   litGoalPromptInjection,
   litBrainstormPromptInjection,
+  ultraBrainstormPromptInjection,
+  litTeamPromptInjection,
   litHijackPromptInjection,
   litAdhdPromptInjection,
   adhdSessionNote,
+  adhdViewNote,
   litCruciblePromptInjection,
   initDeepPromptInjection,
   litLoopPromptInjection,
@@ -78,6 +83,8 @@ export type LitOpenCodeCommandId =
   | "lit-init"
   | "lit-crucible"
   | "lit-brainstorm"
+  | "ultra-brainstorm"
+  | "lit-team"
   | "lit-hijack"
   | "lit-adhd"
   | "lit-rewind"
@@ -141,6 +148,9 @@ type CommandArgumentSummary = {
   readonly length: number;
 };
 
+/** Saving a plan approves nothing: the model asks the one question and waits for the user's answer. */
+export const savedPlanStop = "The plan is saved, not started. Do not start it, edit files or run commands. End your reply with the question below, word for word, then stop and wait for the user's answer:";
+
 export type CommandActivationOptions = {
   readonly commandAliasRoot?: string;
   readonly boundedAuthority?: BoundedAuthorityOptions;
@@ -148,6 +158,8 @@ export type CommandActivationOptions = {
   readonly autoHandoffRoute?: (text: string, mode: AutoHandoffRouteMode) => Promise<string | undefined>;
   readonly onScientificVisualizationActivation?: (sessionID: string) => void;
   readonly onSkillActivation?: (sessionID: string, skillId: string) => void | Promise<void>;
+  /** Shows the plan-approval question where the user sees it: OpenCode 1 drops parts a command hook adds. */
+  readonly onPlanQuestion?: (line: string) => void;
 };
 
 export { litActivationBanner, startWorkPromptInjection } from "./activation.ts";
@@ -296,6 +308,22 @@ export const litOpenCodeCommands = Object.freeze([
     activationText: litBrainstormPromptInjection
   },
   {
+    id: "ultra-brainstorm",
+    slash: "/ultra-brainstorm",
+    title: "LitOpenCode Ultra Brainstorm",
+    description: "Ask how many cheap idea lanes to launch with the cost first, fan them out through the task tool, reduce and judge the ideas, and show a sorted top list to pick from without implementing.",
+    banner: activationBanner("ultra-brainstorm"),
+    activationText: ultraBrainstormPromptInjection
+  },
+  {
+    id: "lit-team",
+    slash: "/lit-team",
+    title: "LitOpenCode Lit Team",
+    description: "This session becomes the orchestrator: it splits the goal, picks task-tool subagents, batches, git worktrees or herdr panes, briefs and watches the members, merges and re-verifies, and returns one report.",
+    banner: activationBanner("lit-team"),
+    activationText: litTeamPromptInjection
+  },
+  {
     id: "lit-hijack",
     slash: "/lit-hijack",
     title: "LitOpenCode Lit Hijack",
@@ -411,9 +439,9 @@ export const litOpenCodeCommands = Object.freeze([
   {
     id: "lit-recap",
     slash: "/lit-recap",
-    title: "LitOpenCode Recap",
-    description: "Read-only Korean work recap from durable ledger and session context (--brief, --en supported).",
-    banner: activationBanner("lit-recap"),
+    title: "LitOpenCode Recap (moved into lit-adhd)",
+    description: "Opens the recap view of lit-adhd: what each session was asked, what it did, what waits and what is next. lit-recap moved into lit-adhd (lit adhd recap).",
+    banner: activationBanner("lit-adhd"),
     activationText: litRecapPromptInjection,
     readOnly: true
   },
@@ -471,7 +499,7 @@ function commandMode(command: LitOpenCodeCommand): string {
   if (isWorkflowFamilyMode(command.id)) return command.id;
   if (command.id === "lit-plan") return "lit-plan";
   if (command.id === "start-work") return "start-work";
-  if (command.id === "lit-recap") return "lit-recap";
+  if (command.id === "lit-recap") return "lit-adhd";
   if (command.id === "lit-comprehend") return "lit-comprehend";
   if (command.id === "lit-handoff") return "lit-handoff";
   if (command.id === "lit-scientific-visualization") return "lit-scientific-visualization";
@@ -479,6 +507,8 @@ function commandMode(command: LitOpenCodeCommand): string {
   if (command.id === "lit-init") return "lit-init";
   if (command.id === "lit-crucible") return "lit-crucible";
   if (command.id === "lit-brainstorm") return "lit-brainstorm";
+  if (command.id === "ultra-brainstorm") return "ultra-brainstorm";
+  if (command.id === "lit-team") return "lit-team";
   if (command.id === "lit-hijack") return "lit-hijack";
   if (command.id === "lit-adhd" || command.id === "lit-rewind") return "lit-adhd";
   if (command.id === "litgoal" || command.id === "lit-goal") return "litgoal";
@@ -658,12 +688,14 @@ export function createCommandActivationHook(
           // The saved plan becomes this session's next step, so a bare `go` starts it through the typed path.
           const goArmed = await writeNext(projectRoot, { kind: "plan", target: saved.relativePath, at: Date.now(), sessionID: input.sessionID })
             .then(() => true, () => false);
+          const asked = proposeGoal({ projectRoot, plan: saved.relativePath, planText: saved.text, sessionID: input.sessionID }).line;
+          options.onPlanQuestion?.(asked);
           output.parts.push({
             id: "prt_litopencode_start_work_plan_saved",
             sessionID: input.sessionID,
             messageID: "msg_litopencode_start_work_plan_saved",
             type: "text",
-            text: formatSavedPlanNotice(saved, replayed, goArmed),
+            text: `${formatSavedPlanNotice(saved, replayed, goArmed)}\n${savedPlanStop}\n${asked}`,
             synthetic: true,
             metadata: {
               litopencode: {
@@ -776,7 +808,12 @@ export function createCommandActivationHook(
         activationText = `${command.activationText}\n\n${formatResolvedPlanNotice(durablePlan)}`;
       }
     }
-    if (command.id === "lit-adhd" || command.id === "lit-rewind") activationText = `${activationText}\n${adhdSessionNote(input.sessionID)}`;
+    if (command.id === "lit-adhd" || command.id === "lit-rewind") {
+      // `/lit-adhd detail` and `/lit-adhd recap [session]` pick the view; bare `/lit-adhd` is the card.
+      const { view, recapSession, lang } = adhdViewForPrompt(`lit adhd ${typeof input.arguments === "string" ? input.arguments : ""}`);
+      activationText = `${activationText}\n${adhdViewNote(view, { lang, ...(recapSession === undefined ? {} : { recapSession }) })}`;
+    }
+    if (command.id === "lit-adhd" || command.id === "lit-rewind" || command.id === "lit-recap") activationText = `${activationText}\n${adhdSessionNote(input.sessionID)}`;
     if (typedStartNote !== undefined) activationText = `${typedStartNote}\n${activationText}`;
 
     output.parts.push({

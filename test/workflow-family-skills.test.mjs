@@ -1278,7 +1278,7 @@ test("family runtime modes stop before publication and deployment commands", asy
 
 test("wikify connects inert local research review to LitOpenCode continuity surfaces", async () => {
   const text = await familyText("wikify");
-  for (const phrase of ["litresearch", "inert", "review-work", "lit-recap", "lit-handoff"]) {
+  for (const phrase of ["litresearch", "inert", "review-work", "lit-adhd", "lit-handoff"]) {
     assert.match(text, new RegExp(phrase, "i"));
   }
   for (const asset of [

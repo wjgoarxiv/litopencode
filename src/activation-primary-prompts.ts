@@ -176,7 +176,8 @@ planning mode. Tell the user to run /start-work instead. Once /start-work save-p
 approved plan, the user may instead type \`go\` within 30 minutes in that same session to start it;
 say so in one line. When a checklist item names an absolute path outside the project, put a
 \`Scope roots: <folder> (read|write|execute)\` line near the top of the plan; save-plan refuses
-an uncovered outside folder and start-work grants each line. Do not start implementation yourself. After implementation is complete,
+an uncovered outside folder and start-work grants each line. End the plan with a \`## Done when\` block holding one
+check line (the test command in backticks); LitOpenCode turns it into the goal question at approval. Do not start implementation yourself. After implementation is complete,
 use /review-work or the review-work tool to check behavior, tests, docs, safety, and
 package readiness.
 

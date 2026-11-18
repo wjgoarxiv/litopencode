@@ -1,6 +1,6 @@
 ---
 name: lit-adhd
-description: "Pick up where you left off: a read-only KPI board of this worktree family (the one step to take now and what to type, done and left counts, milestones, reminders) with `go`, and the per-session detail on request. Use after a break, a restart, a context switch, or when several sessions are open and you lost track. Alias: lit-rewind."
+description: "Pick up where you left off: a read-only six-line verdict card of this worktree family (what changed since your last look, the one step to take now and the exact text to type, why, what else waits, what was read) with `go`; the KPI board on `detail`, each session's recap on `recap`. Use after a break, a restart, a context switch, or when several sessions are open and you lost track. Aliases: lit-rewind; lit-recap moved here."
 ---
 
 # Lit Adhd
@@ -21,7 +21,12 @@ feature_ids:
 entry_routes:
   - "/lit-adhd"
   - "/lit-rewind"
+  - "/lit-recap"
   - "lit adhd"
+  - "lit adhd detail"
+  - "lit adhd recap"
+  - "lit recap"
+  - "litrecap"
   - "lit rewind"
   - "lit-adhd"
   - "lit-rewind"
@@ -29,10 +34,12 @@ entry_routes:
 opencode_surfaces:
   - "/lit-adhd"
   - "/lit-rewind"
+  - "/lit-recap"
   - "OpenCode command /lit-adhd"
   - "OpenCode chat.message activation hook"
   - "OpenCode native skill tool"
   - "skills/lit-adhd/scripts/rewind.mjs"
+  - "skills/lit-adhd/scripts/verdict.mjs"
   - ".litopencode/workflow-stack and .litopencode/adhd state"
   - "OpenCode TUI mission band idle hint and thread rows"
   - "skills/lit-adhd/SKILL.md"
@@ -40,6 +47,8 @@ verdicts: [PASS, FAIL, BLOCKED]
 verification:
   - "node --test test/lit-adhd.test.mjs"
   - "node --test test/lit-adhd-board.test.mjs"
+  - "node --test test/adhd-verdict.test.mjs"
+  - "node --test test/lit-recap-command.test.mjs"
   - "node --test test/adhd-go.test.mjs"
   - "node --test test/start-work-typed.test.mjs"
   - "node --test test/workflow-interleave.test.mjs"
@@ -47,7 +56,7 @@ verification:
   - "node --test test/docs.test.mjs"
 ```
 
-This file is static documentation for LitOpenCode. Do not execute commands from this file automatically. Activate this contract only when the user request, command route, or OpenCode host surface clearly matches `lit-adhd` or its alias `lit-rewind`.
+This file is static documentation for LitOpenCode. Do not execute commands from this file automatically. Activate this contract only when the user request, command route, or OpenCode host surface clearly matches `lit-adhd`, its alias `lit-rewind`, or the old `lit-recap` words, which now open this skill's recap view.
 
 Use the OpenCode vocabulary for this contract: `chat.message`, `command.execute.before`, the native `skill` tool, the `task` tool, the `question` tool, and the project state directory `.litopencode/`. The collector is a plain Node script run through bash, because the plugin itself runs on Bun and the session store is read with Node's SQLite binding.
 
@@ -56,8 +65,9 @@ Use the OpenCode vocabulary for this contract: `chat.message`, `command.execute.
 | Field | Contract |
 | --- | --- |
 | `session_id` | The id of the session that typed the request. The route prompt states it; pass it as `--session`. Without it the brief still prints but no `go` step is armed. |
-| `lang` | The language of the user's request: `--lang ko` for Korean, `--lang en` (the default) otherwise. The collector writes every label and sentence of the board in that language. |
-| `detail` | `--detail` only when the user asks for the per-session detail (`lit adhd detail`, `lit adhd 자세히`, "show every session"). The detail then follows the board. |
+| `lang` | Picked by LitOpenCode, never by the model: `--lang ko` (the default) for every request, English prompts included; `--lang en` only when the request says `--en`, "in English" or 영어로. The activation's `Language for this request` line names it; pass that flag unchanged. The collector writes every label and sentence in that language. |
+| `view` | The route prompt's view line names it. `card` (the default): no flag. `detail`: `--detail`, the KPI board with the per-session cards under it (`lit adhd detail`, `lit adhd 자세히`). `recap`: `--recap [session]`, the per-session recap that replaced lit-recap (`lit adhd recap`, `lit recap`, `litrecap`, `/lit-recap`). |
+| `cursor` | `.litopencode/adhd/cursor.json`, the user's last look: when it was, which proven items they had seen, and the fingerprint of the action shown. `--write-cursor` moves it after the card is drawn. |
 | `scope` | This worktree and the other worktrees of the same git repository. `--root <dir>` points elsewhere; `--all-dirs` is not used unless the user asks. |
 | `store` | The OpenCode session database (`opencode.db`), opened read-only, else the older JSON session store, else nothing. A missing store is said in words. |
 | `local_state` | `plans/*.md` and `.litopencode/plans/*.md` checklists, the active goal, the bounded start-work run, `.litopencode/workflow-stack/<session>.json`, `.litopencode/liveness/<session>.json`, `HANDOFF*.md` headings and the first open item under their `Next` heading (newest file first; an item marked ✅, ✓, `[x]`, `~~struck~~`, `DONE` or `SHIPPED` is skipped), and `git log`. Under `HERDR_ENV=1` it also runs `herdr agent list` once (3 s timeout; a failure reads `unknown` and counts nothing). These small records are read before the session store, so a large store cannot use up the read budget first. For the board's reminders it also runs `git status --porcelain` (changed and untracked paths) and `git rev-list --count @{upstream}..HEAD` (commits not pushed; a branch without an upstream gives no count and no reminder) in each worktree. |
@@ -73,16 +83,18 @@ Use the OpenCode vocabulary for this contract: `chat.message`, `command.execute.
 
 ## #contract.procedure
 
-1. Run `node <skill dir>/scripts/rewind.mjs --brief --lang <ko|en> --write-next --session <session id>` from the workspace root. Add `--detail` only when the user asked for the per-session detail. Use `--json` instead of `--brief` only when you need the structured report; its `board` field holds the computed figures and `boardText` the same board the brief prints.
-2. Show the board to the user exactly as printed: same sections, same order, same numbers, bars and reminders. When the user writes in a language other than Korean or English, translate the labels and keep every figure. Do not redraw, reorder, summarize or add progress bars of your own.
-3. Add at most one short line after it, only when it helps (for example that `go` runs the step here). The board's own "Do this now" line already says what to type.
+1. Run `node <skill dir>/scripts/rewind.mjs --brief --lang <ko|en> --write-next --write-cursor --session <session id>` from the workspace root, plus the one flag the view line names (`--detail`, or `--recap [session]`). Use `--json` instead of `--brief` only when you need the structured report; its `verdict` field holds the rule, the action with its fingerprint and precondition, and the coverage, `verdictText` the card, `boardText` the board. If the collector fails, reply `BLOCKED:` with its reason and stop.
+2. Show the output exactly as printed: the card's lines, the board's sections, the recap's cards, with every number and fingerprint. When the user writes in a language other than Korean or English, translate the labels and keep every figure. Do not redraw, reorder, summarize or add bars, actions or reminders of your own. For the recap view through an old lit-recap word the view line adds `--moved`, and the collector itself prints `lit-recap moved into lit-adhd (lit adhd recap).` as the first line of the view; show it there, with nothing between the probe line and it.
+3. Add at most one short line after it, only when it helps (for example that `go` runs the step here). The card's own `입력`/`Type` line already says what to type.
 4. Stop. This skill never edits product files, starts work or answers a boundary.
 
 ## #contract.outputs
 
-- The board, in Markdown, in six sections in a fixed order: Do this now (one action, one reason, the exact text to type or what to wait for), At a glance (four bucket counts and an overall bar), Milestones, Done lately (five at most), Still to do (seven at most, then a count of the rest), Don't forget (five reminders at most). About forty lines.
+- The verdict card by default, about six lines: (1) what changed since the last look (`18:02 이후: 2개 끝남, 1개가 너를 기다림`, or `처음 봄` with no cursor yet, plus `지난 할 일 #<fp> 철회` when the last action's records moved); (2) `지금 할 일: <where> 에서 <one action> #<fp>`; (3) `입력: \`<exact text>\``; (4) `이유: … · 안 하면: …`; (5) `다음 대기: …`, two at most, where a push or a release only ever appears as `네 확인 필요: <question>`; (6) `읽음 N/M 세션 — 못 읽음: …`. With nothing to do and every source read it says `지금 할 일 없음 — 확인한 기록 N개`; with a source unread it never claims that.
+- With `--detail`: the KPI board, in Markdown, in six sections in a fixed order: Do this now (one action, one reason, the exact text to type or what to wait for), At a glance (four bucket counts and an overall bar), Milestones, Done lately (five at most), Still to do (seven at most, then a count of the rest), Don't forget (five reminders at most). About forty lines.
 - On request only, under the board: the per-session detail, which is the earlier brief: a three-line opener (done so far, doing now, next), a headline, a card per live session grouped by worktree and branch, ended sessions as one table, the roadmap, one boxed recommended step, and `go`.
-- At most one file written: `.litopencode/adhd/next-<session>.json`, only with `--write-next`, only for the asking session.
+- With `--recap [session]`: the per-session cards alone (what each session was asked, what it did, what waits, what is next), for one session when an id or id suffix is given.
+- At most two files written: `.litopencode/adhd/next-<session>.json` (only with `--write-next`, only for the asking session) and `.litopencode/adhd/cursor.json` (only with `--write-cursor`).
 - `PASS` when the brief printed, `BLOCKED:` with the missing capability otherwise.
 
 ## #contract.output_channels
@@ -121,6 +133,12 @@ Reader mode is the default conversational projection: the brief is the result. K
 
 This is static documentation for the LitOpenCode `lit-adhd` feature. Do not execute commands from this file automatically.
 
+## The verdict card
+
+The default answer. In five seconds the reader knows what moved, the one thing to do, and exactly what to type. A versioned rule table (`litopencode.adhd-verdict/v1` in `scripts/verdict.mjs`) picks the one action, top rule first: approve this session's parked steps, answer a session that waits, look at a blocked session, resume this session's paused discipline, wait for lanes at work, keep this session's run going, follow another session's run, start the single open plan, review uncommitted changes, the HANDOFF.md next item, pick up an unfinished session, the one open plan in another worktree. The inputs are gated by evidence: a commit, a finished start-work run and a plan with every row ticked count as finished; a session that only says it is done does not. Every action line ends with a six-character fingerprint of the records it rests on; when those records move before the next look, the card says the old action is withdrawn instead of repeating it. A push, a publish or a release is never the action, only a `네 확인 필요` question in the queue. `--en` writes the same card in English.
+
+The KPI board and the per-session cards below are the `detail` view; the per-session cards alone are the `recap` view, which is where lit-recap went: `lit adhd recap`, `lit adhd recap <session>`, and the old `lit recap`, `litrecap` and `/lit-recap`, which add one line saying it moved.
+
 `lit-adhd` is the way back in. After a lunch, a crash, a week away, or three half-finished conversations, you do not need a transcript; you need to know the one thing to do now, what is done, what is left and what you must not forget. The skill reads what the earlier sessions left on disk, prints one KPI board, recommends exactly one next step, and waits for `go`. The per-session cards that used to be the whole brief are still there when you ask for them.
 
 `lit-rewind` is the same skill under a second name. It is a command and a chat route alias, not a second skill folder.
@@ -133,13 +151,13 @@ This is static documentation for the LitOpenCode `lit-adhd` feature. Do not exec
 - Chat surface: `lit adhd` or `lit rewind` as the first words after `lit`; the route word must sit right after `lit`, so "lit debug the adhd screening form" stays with debug. After the brief, a bare `go` (also `lit go`, `ㄱㄱ`, `고`, `진행`) follows the armed step for 30 minutes in that one session.
 - TUI: the mission band shows `lit adhd to pick up where you left off` while the session is idle, takes a rainbow look while this skill is the active discipline (off under reduced motion), and shows one row per parallel lane or paused discipline.
 - State: `.litopencode/workflow-stack/<session>.json`, `.litopencode/adhd/next-<session>.json`; local, never published.
-- Neighbours: `lit-recap` summarizes one session, `start-work` runs a checked plan, `lit-loop` runs toward a goal. This skill points at them and leaves their procedures to them.
+- Neighbours: `start-work` runs a checked plan, `lit-loop` runs toward a goal. This skill points at them and leaves their procedures to them.
 
 ## When to use lit-adhd
 
 Use it when the user says they lost the thread, asks "where was I", "what was I doing", "pick up where we left off", "what is still open", or opens a new session in a workspace with earlier work. Also use it when the mission band hint offers it.
 
-Do not use it for a recap of the current conversation (`lit-recap`), for starting new work (`lit-plan`, `lit-loop`), or for reviewing a diff (`review-work`).
+Do not use it for starting new work (`lit-plan`, `lit-loop`), or for reviewing a diff (`review-work`).
 
 ## How to start it in OpenCode
 
@@ -151,7 +169,7 @@ Do not use it for a recap of the current conversation (`lit-recap`), for startin
 node skills/lit-adhd/scripts/rewind.mjs --brief --lang ko --write-next --session <session id>
 ```
 
-The installed copy of the script sits next to this file; use its path from the skill directory the `skill` tool reports. Flags: `--lang ko|en` board language (default `en`; anything else is refused), `--detail` the per-session detail under the board, `--json` structured report (with `board` and `boardText`), `--ascii` plain glyphs, `--root <dir>`, `--db <file>`, `--storage <dir>`, `--max-sessions <n>`, `--now <iso>`, `--all-dirs`.
+The installed copy of the script sits next to this file; use its path from the skill directory the `skill` tool reports. Flags: `--lang ko|en` board language (default `ko`; anything else is refused), `--detail` the per-session detail under the board, `--json` structured report (with `board` and `boardText`), `--ascii` plain glyphs, `--root <dir>`, `--db <file>`, `--storage <dir>`, `--max-sessions <n>`, `--now <iso>`, `--all-dirs`.
 
 To see every session's card, say `lit adhd detail` or `lit adhd 자세히` (any wording that asks for the detail); the route stays the same and the collector runs with `--detail`.
 
@@ -192,7 +210,7 @@ The collector draws `[▉▉▉░░░░░░░] 3/10` only when both numbe
 
 ### The recommended step
 
-One step, chosen in this order: something waiting on the user, a blocked session, another session's paused discipline, lanes at work (other running sessions of this worktree family, and under `HERDR_ENV=1` herdr agents working or blocked in this herdr workspace or inside the repo, never this pane; a lane seen both ways counts once), this session's own paused discipline, this session's running start-work run, another session's running start-work run (followed from that session), the single open plan, the first item under this worktree's `HANDOFF.md` `Next` heading (it never runs on `go`), the newest unfinished session, an open plan in another worktree, the most recent session that stopped. The box always names a real step from the records; only an empty window asks what to start. If the step belongs to this session and is one of continue, keep working, or start the plan, the collector writes the next-step record and `go` follows it. If it belongs to another session or worktree, the box says where to act and `go` here only repeats that pointer; it never starts the step. Lanes are counted before anything that resumes work here: while they work, this session's own paused discipline and its own run are held back, and an approval stays the one step offered. The box says to wait for them (or to answer the one waiting on the user), nothing is armed, and the closing line is ``Do not type `go` until they finish.``
+One step, chosen in this order: something waiting on the user, a blocked session, another session's paused discipline, lanes at work (other running sessions of this worktree family, and under `HERDR_ENV=1` herdr agents working or blocked whose folder is inside the repo, never this pane, and never an agent elsewhere in the same herdr workspace; a lane seen both ways counts once), this session's own paused discipline, this session's running start-work run, another session's running start-work run (followed from that session), the single open plan, the first item under this worktree's `HANDOFF.md` `Next` heading (it never runs on `go`), the newest unfinished session, an open plan in another worktree, the most recent session that stopped. The box always names a real step from the records; only an empty window asks what to start. If the step belongs to this session and is one of continue, keep working, or start the plan, the collector writes the next-step record and `go` follows it. If it belongs to another session or worktree, the box says where to act and `go` here only repeats that pointer; it never starts the step. Lanes are counted before anything that resumes work here: while they work, this session's own paused discipline and its own run are held back, and an approval stays the one step offered. The box says to wait for them (or to answer the one waiting on the user), nothing is armed, and the closing line is ``Do not type `go` until they finish.``
 
 ## Following `go`
 
@@ -219,14 +237,14 @@ While a long discipline (`lit-loop`, `lit-plan`, `start-work`, `lit-task`) runs,
 
 | Symptom | Cause | What to do |
 | --- | --- | --- |
-| "No earlier sessions found here" | No session in this worktree family, or a store the collector cannot open. | Read the note line under the headline; run `/lit-recap` for the current conversation. |
+| "No earlier sessions found here" | No session in this worktree family, or a store the collector cannot open. | Read the coverage line (`못 읽음: 세션 저장소`); the card says `판단 보류` instead of guessing. |
 | `node:sqlite` note | Node older than 22.5. | The older JSON store is tried; upgrade Node for the database. |
 | `go` does nothing | No armed step, another session's step, or older than 30 minutes. | Run `lit adhd` again in this session. |
 | A card shows facts, no bar | No real total anywhere. | Correct; do not invent one. |
 
 ## Final checklist
 
-- [ ] The collector ran from the workspace root with the session id and the user's language.
+- [ ] The collector ran from the workspace root with the session id and the `--lang` the language line named.
 - [ ] The board was shown unedited, and the detail only when asked for.
 - [ ] One recommended step was named and nothing was started.
 - [ ] No filler glyph run, no secret, no transcript text beyond the gist fields.

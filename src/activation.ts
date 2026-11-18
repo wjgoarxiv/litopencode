@@ -6,8 +6,10 @@ import {
   endsWithStandaloneLitInvocation,
   unwrapOpenCodeRunMessage,
   promptForChatActivationMode,
+  skillPlanForPrompt,
   type ChatActivationMode
 } from "./activation-routing.ts";
+import { installedExtensionSkills } from "./skill-plan.ts";
 import { createLitGoalOperations } from "./ledger.ts";
 import type { SessionLookup } from "./session-lineage.ts";
 import {
@@ -47,9 +49,12 @@ export {
   deepInterviewPromptInjection,
   gitMasterPromptInjection,
   litBrainstormPromptInjection,
+  ultraBrainstormPromptInjection,
+  litTeamPromptInjection,
   litHijackPromptInjection,
   litAdhdPromptInjection,
   adhdSessionNote,
+  adhdViewNote,
   litCruciblePromptInjection,
   initDeepPromptInjection,
   litGoalPromptInjection,
@@ -128,6 +133,8 @@ export type ChatMessageActivationOptions = {
   readonly onTrustedSkillResume?: (sessionID: string, skillId: string) => void | Promise<void>;
   /** The OpenCode config root where an install leaves its one-time extensions notice for the next session. */
   readonly extensionsNoticeRoot?: string;
+  /** Consumes the notice a command hook wrote for this turn (OpenCode 1 drops the parts a command hook adds). */
+  readonly takeCommandNotice?: (sessionID: string) => string | undefined;
 };
 
 // Activation belongs to root user sessions only: a delegated child prompt that
@@ -186,6 +193,19 @@ export function createChatMessageActivationHook(
       // Taken here, once per root turn; added after routing so its skill names never read as the user's request.
       if (options.extensionsNoticeRoot !== undefined) {
         deferred.extensionsNotice = await takePendingExtensionsNotice(options.extensionsNoticeRoot);
+      }
+      // Only the command's own turn carries the notice (its text holds the save-plan argument); a later turn drops it.
+      const commandNotice = options.takeCommandNotice?.(input.sessionID);
+      if (commandNotice !== undefined && output.parts.some((part) => part.type === "text" && /(?:^|\s)save-plan\s/u.test(part.text))) {
+        output.parts.push({
+          id: `prt_litopencode_command_notice_${idSuffix(input.messageID ?? output.message.id)}`,
+          sessionID: input.sessionID,
+          messageID: input.messageID ?? output.message.id,
+          type: "text",
+          text: commandNotice,
+          synthetic: true,
+          metadata: { litopencode: { mode: "start-work", source: "chat.message", operation: "save-plan" } }
+        });
       }
       if (trustedInjectedSkill !== undefined) {
         await options.onTrustedSkillResume?.(input.sessionID, trustedInjectedSkill);
@@ -282,6 +302,10 @@ export function createChatMessageActivationHook(
 
     const triggerText = nonEmptyTextParts.find((part) => detectChatActivationMode(part.text, agent) === mode)?.text;
     let activationText = promptForChatActivationMode(mode, triggerText);
+    const skillPlan = triggerText === undefined
+      ? undefined
+      : skillPlanForPrompt(mode, triggerText, options.extensionsNoticeRoot === undefined ? new Set() : installedExtensionSkills(options.extensionsNoticeRoot));
+    if (skillPlan !== undefined) activationText = `${activationText}\n${skillPlan}`;
     if (mode === "lit-adhd") activationText = `${activationText}\n${adhdSessionNote(input.sessionID)}`;
     if (mode === "start-work" && agent !== "lit-plan" && nonEmptyTextParts.length === 1) {
       const directive = parseStartWorkLifecycleDirective(nonEmptyTextParts[0].text, { chat: true });
@@ -364,7 +388,7 @@ export function createChatMessageActivationHook(
       options.onScientificVisualizationActivation?.(input.sessionID);
     }
 
-    if (mode === "lit-task" || mode === "lit-recap" || mode === "lit-brainstorm" || isReadOnlyWorkflowFamilyPlan(mode)) return;
+    if (mode === "lit-task" || mode === "lit-brainstorm" || mode === "ultra-brainstorm" || isReadOnlyWorkflowFamilyPlan(mode)) return;
 
     try {
       await operations.init();

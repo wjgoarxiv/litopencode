@@ -146,7 +146,8 @@ test("install dry-run prints exact opencode.json mutation without writing", asyn
         "lit-systems-architect",
         "lit-critical-reviewer",
         "lit-context-cartographer",
-        "lit-persistence-runner"
+        "lit-persistence-runner",
+        "lit-ideator"
       ],
       categories: ["planning", "execution", "review", "research"],
       model: {

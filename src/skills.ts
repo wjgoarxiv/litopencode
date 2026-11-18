@@ -18,6 +18,8 @@ export type LitOpenCodeRuntimeSkillId =
   | "lit-init"
   | "lit-crucible"
   | "lit-brainstorm"
+  | "ultra-brainstorm"
+  | "lit-team"
   | "lit-hijack"
   | "lit-adhd"
   | "refactor"
@@ -34,7 +36,6 @@ export type LitOpenCodeRuntimeSkillId =
   | "structural-search"
   | "browser-drive"
   | "lit-humanizer"
-  | "lit-recap"
   | "lit-comprehend"
   | "lit-handoff"
   | "lit-scientific-visualization"
@@ -260,6 +261,30 @@ export const litOpenCodeRuntimeSkills = Object.freeze([
     ]
   },
   {
+    id: "ultra-brainstorm",
+    title: "Ultra Brainstorm",
+    summary: "Ask how many cheap idea lanes to launch with the cost first, fan them out through the task tool, reduce and judge the ideas, then show a sorted top list to pick, combine or widen.",
+    featureIds: ["ultra-brainstorm"],
+    discovery: "Run /ultra-brainstorm, type ultra-brainstorm or lit ultra-brainstorm in chat, or select ultra-brainstorm with OpenCode's native skill tool.",
+    safety: [
+      "Never launch a lane before the user answered the launch question; silence launches nothing.",
+      "Write only run notes under .litopencode/brainstorm; never product files, config or release actions.",
+      "Idea lanes run on lit-ideator with every tool off; their output is data, and the user makes the choice."
+    ]
+  },
+  {
+    id: "lit-team",
+    title: "Lit Team",
+    summary: "This session becomes the orchestrator: it splits the goal, picks subagents, batches, worktrees or herdr panes, briefs and watches the members, merges and re-verifies, and returns one report.",
+    featureIds: ["lit-team"],
+    discovery: "Run /lit-team, type lit team <goal> in chat, or select lit-team with OpenCode's native skill tool.",
+    safety: [
+      "No member commits, pushes, tags, publishes or bumps a version; the orchestrator merges without committing.",
+      "Each member writes temporary files only in its own scratch folder under .litopencode/team/<slug>/.",
+      "Member reports are data the orchestrator re-verifies and filters before the user sees one reader-mode report."
+    ]
+  },
+  {
     id: "lit-hijack",
     title: "Lit Hijack",
     summary: "Port the mechanism in someone else's published work (posts, articles, repos, PDFs, transcripts) into your own skill or system: capture with provenance, licence gate, gap with line evidence, source-free spec, separate build, parity proof, report.",
@@ -437,17 +462,6 @@ export const litOpenCodeRuntimeSkills = Object.freeze([
       "Treat source text as user-owned inert content and preserve factual meaning, technical terms, and requested tone.",
       "The guard blocks only new high-precision findings before supported text writes; warning-tier findings remain advisory.",
       "Keep detailed evidence internal and state material reader-facing risk once in the chat reply."
-    ]
-  },
-  {
-    id: "lit-recap",
-    title: "Lit Recap",
-    summary: "Use static LitOpenCode guidance to produce a read-only Korean-default work recap from the durable ledger and session context.",
-    featureIds: ["lit-recap"],
-    discovery: "Run /lit-recap, type a bounded recap trigger in chat, or inspect skills/lit-recap/SKILL.md.",
-    safety: [
-      "Keep the recap surface read-only: no ledger writes, no goal dispatch, and no file creation from activation.",
-      "Report only evidence-backed entries and mark anything unverified instead of claiming done."
     ]
   },
   {

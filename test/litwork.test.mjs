@@ -124,6 +124,7 @@ test("exposes unique lit and litwork command activation metadata", () => {
     "lit-plan",
     "lit-recap",
     "lit-research",
+    "lit-team",
     "lit-scientific-visualization",
     "lit-work",
     "litgoal",
@@ -141,6 +142,7 @@ test("exposes unique lit and litwork command activation metadata", () => {
     "start-work",
     "structural-search",
     "lit-humanizer",
+    "ultra-brainstorm",
     "wikify-ingest",
     "wikify-init",
     "wikify-lint",
@@ -157,7 +159,7 @@ test("exposes unique lit and litwork command activation metadata", () => {
   for (const command of litOpenCodeCommands) {
     assert.equal(command.banner, `🔥 LIT IGNITED · ${activationDiscipline(command.id)} 🔥`);
     assert.ok(command.activationText.includes(`🔥 **LIT IGNITED · ${activationDiscipline(command.id)}** 🔥`));
-    assert.match(command.activationText, /lit-loop|start-work|review-work|litresearch|litgoal|lit-plan|init deep|lit-crucible|lit-handoff|scientific-visualization|refactor|lit-burnoff|lit-code|debugging|lit-commit|lsp|rules|deep-interview|lit-comprehend|browser-drive|lit-adhd/i);
+    assert.match(command.activationText, /lit-loop|start-work|review-work|litresearch|litgoal|lit-plan|init deep|lit-crucible|lit-handoff|scientific-visualization|refactor|lit-burnoff|lit-code|debugging|lit-commit|lsp|rules|deep-interview|lit-comprehend|browser-drive|lit-adhd|ultra-brainstorm|lit-team/i);
   }
 });
 

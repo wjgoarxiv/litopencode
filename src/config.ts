@@ -151,7 +151,8 @@ export const defaultConfig: LitOpenCodeConfig = Object.freeze({
     "lit-systems-architect": Object.freeze({ category: "planning" }),
     "lit-critical-reviewer": Object.freeze({ category: "review" }),
     "lit-context-cartographer": Object.freeze({ category: "review" }),
-    "lit-persistence-runner": Object.freeze({ category: "execution" })
+    "lit-persistence-runner": Object.freeze({ category: "execution" }),
+    "lit-ideator": Object.freeze({ category: "research" })
   })
 });
 

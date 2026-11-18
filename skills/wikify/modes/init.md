@@ -34,7 +34,7 @@ Preserve user-owned collisions byte-for-byte, write the locality boundary into
 
 Verify the resulting index links, canonical containment, and changed-file list.
 Use `/review-work` to assess the DoneClaim. Record blockers rather than widening
-scope, and use `lit-recap` or `lit-handoff` only for continuity.
+scope, and use `lit-adhd recap` or `lit-handoff` only for continuity.
 
 ## Stop conditions
 

@@ -119,7 +119,7 @@ This is static documentation for the LitOpenCode `lit-comprehend` feature. Do no
 
 Use this skill when the user needs to UNDERSTAND work that was already done -- after a long agent session, an overnight lit-loop, or a multi-file change -- so they can reason about the work and propose the next change. Understanding, not correctness, is the bottleneck this skill addresses.
 
-Lit Comprehend is not lit-recap. Lit-recap answers "what happened" (status, chronology). Lit Comprehend builds the artifact a person needs to actually REASON about the work: explainer documents, literate diffs, intuition-building diagrams, and micro-worlds.
+Lit Comprehend is not the `lit-adhd` recap view. That view answers "what happened" (status, chronology). Lit Comprehend builds the artifact a person needs to actually REASON about the work: explainer documents, literate diffs, intuition-building diagrams, and micro-worlds.
 
 ## Feature Binding
 
@@ -133,7 +133,7 @@ Lit Comprehend is not lit-recap. Lit-recap answers "what happened" (status, chro
 
 | The user wants... | Use |
 | --- | --- |
-| Quick status of what happened | lit-recap |
+| Quick status of what happened | lit-adhd (recap view) |
 | Deep understanding to reason about changes | **lit-comprehend** |
 | Achievability review of a plan | review-work |
 | A handoff for a future agent | lit-handoff |

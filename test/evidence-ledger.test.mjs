@@ -68,7 +68,7 @@ test("create-goals writes goals.json, brief.md, and an audit line the recap path
     const goal = await seedGoal(dir);
     const paths = createRuntimePaths(dir);
 
-    // The four sources skills/lit-recap/SKILL.md names must all exist once a goal is opened.
+    // The four sources the lit-adhd recap view reads must all exist once a goal is opened.
     for (const file of [paths.goalsFile, paths.briefFile, paths.ledgerFile, paths.evidenceDir]) {
       assert.ok(await fs.stat(file), `${file} should exist`);
     }

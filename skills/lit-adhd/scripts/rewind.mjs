@@ -2,12 +2,14 @@
 // lit-adhd collector. It reads what earlier OpenCode sessions in this worktree family left behind and
 // prints one brief to pick the work back up. Everything it opens is opened read-only, every string it
 // prints passes through redact(), and it never writes anything except the one-line next-step record
-// that `go` follows (and only when asked with --write-next). Zero dependencies: Node built-ins, git on PATH.
+// that `go` follows (only with --write-next) and the look cursor the verdict card compares against (only
+// with --write-cursor). Zero dependencies: Node built-ins, git on PATH.
 import { execFileSync } from "node:child_process";
 import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { CURSOR_SCHEMA, nextCursor, renderVerdict } from "./verdict.mjs";
 
 export const REWIND_SCHEMA = "litopencode.rewind/v1";
 export const NEXT_SCHEMA = "litopencode.adhd-next/v1";
@@ -326,6 +328,13 @@ export function readLocalState(dir) {
       // Steps the run parked while it keeps working; a count only, never a reason to wait.
       parked: Array.isArray(work.parkedBoundaries) ? work.parkedBoundaries.filter(isRecord).length : 0,
     };
+    // An "active" run whose own plan has every row ticked is finished, whatever the record still says. A record
+    // without a plan path (older runs) is guessed finished only when no plan in the folder is open.
+    if (state.work.status === "active") {
+      const own = planPath === "" ? undefined : state.plans.find((entry) => planPath.endsWith(entry.path));
+      const finished = own !== undefined ? own.total > 0 && own.complete : planPath === "" && state.plans.length > 0 && state.plans.every((entry) => entry.complete);
+      if (finished) state.work = { ...state.work, status: "completed", finishedByPlan: true };
+    }
   }
   // Each session's last lifecycle signal (alive, idle, ended), written by the plugin's hooks.
   const livenessDir = join(dir, ".litopencode", "liveness");
@@ -649,8 +658,8 @@ function roadmapOf(local) {
 }
 
 /**
- * Herdr agents at work beside this session, read only under HERDR_ENV=1: working or blocked, in this
- * herdr workspace or with a cwd inside one of `dirs`, never the asking pane. A failed, slow or malformed
+ * Herdr agents at work beside this session, read only under HERDR_ENV=1: working or blocked, with a cwd
+ * inside one of `dirs`, never the asking pane. A herdr workspace spans other repos, so it is not a scope. A failed, slow or malformed
  * `herdr agent list` reads "unknown" and counts no lane.
  */
 export function readHerdrLanes(dirs, env = process.env) {
@@ -668,11 +677,10 @@ export function readHerdrLanes(dirs, env = process.env) {
     return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
   });
   const ownPane = str(env.HERDR_PANE_ID);
-  const workspace = str(env.HERDR_WORKSPACE_ID);
   const agents = list
     .filter((entry) => isRecord(entry) && (entry.agent_status === "working" || entry.agent_status === "blocked"))
     .filter((entry) => ownPane === "" || str(entry.pane_id) !== ownPane)
-    .filter((entry) => (workspace !== "" && str(entry.workspace_id) === workspace) || inside(entry.cwd) || inside(entry.foreground_cwd))
+    .filter((entry) => inside(entry.cwd) || inside(entry.foreground_cwd))
     .slice(0, 40)
     .map((entry) => ({ pane: clean(str(entry.pane_id), 32), status: entry.agent_status, session: isRecord(entry.agent_session) ? str(entry.agent_session.value) : "", title: clean(str(entry.terminal_title_stripped), 60) }));
   return { state: "read", agents };
@@ -1193,12 +1201,46 @@ export function renderBoard(report, { ascii = false, lang = "en" } = {}) {
   return lines.join("\n");
 }
 
-/** The default brief is the board; the older per-session detail follows it only when asked for. */
+/** The detail view: the KPI board, then the per-session cards under it. */
 export function renderBrief(report, { ascii = false, width = 72, sessionID, lang = "en", detail = false } = {}) {
   const board = renderBoard(report, { ascii, lang });
   if (!detail) return board;
   const L = LABELS[lang] ?? LABELS.en;
   return `${board}\n\n---\n\n## ${ascii ? "" : "🔎 "}${L.detail}\n\n${renderDetail(report, { ascii, width, sessionID })}`;
+}
+
+export const MOVED_NOTE = "lit-recap moved into lit-adhd (lit adhd recap).";
+
+/** The recap view (what lit-recap was): the per-session cards, for every session or the one whose id ends with `only`. */
+export function renderRecap(report, { ascii = false, width = 72, sessionID, only } = {}) {
+  if (only === undefined || only === "") return renderDetail(report, { ascii, width, sessionID });
+  const groups = report.groups
+    .map((group) => ({ ...group, sessions: group.sessions.filter((card) => card.id === only || card.id.endsWith(only)) }))
+    .filter((group) => group.sessions.length > 0);
+  if (groups.length === 0) return `No session matching ${md(only)} in this worktree family.`;
+  return renderDetail({ ...report, groups }, { ascii, width, sessionID });
+}
+
+export const cursorFile = (root) => join(root, ".litopencode", "adhd", "cursor.json");
+
+/** The user's last look, or null. Anything that is not this schema reads as no look yet. */
+export function readCursor(root) {
+  const value = readJson(cursorFile(root), 64 * 1024);
+  return isRecord(value) && value.schema === CURSOR_SCHEMA && typeof value.at === "string" ? value : null;
+}
+
+export function writeCursor(root, cursor) {
+  const file = cursorFile(root);
+  mkdirSync(join(root, ".litopencode", "adhd"), { recursive: true });
+  try {
+    if (!lstatSync(file).isFile()) return false;
+  } catch {
+    // no earlier look
+  }
+  const temp = `${file}.${process.pid}.tmp`;
+  writeFileSync(temp, `${JSON.stringify(cursor)}\n`, { mode: 0o600 });
+  renameSync(temp, file);
+  return true;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1212,6 +1254,12 @@ function parseArgs(argv) {
     else if (arg === "--brief") options.format = "brief";
     else if (arg === "--ascii") options.ascii = true;
     else if (arg === "--detail") options.detail = true;
+    else if (arg === "--recap") {
+      options.recap = true;
+      if (argv[index + 1] !== undefined && !argv[index + 1].startsWith("--")) options.recapSession = value();
+    } else if (arg === "--en") options.lang = "en";
+    else if (arg === "--write-cursor") options.writeCursor = true;
+    else if (arg === "--moved") options.moved = true;
     else if (arg === "--lang") options.lang = value();
     else if (arg === "--write-next") options.writeNext = true;
     else if (arg === "--all-dirs") options.allDirs = true;
@@ -1224,6 +1272,7 @@ function parseArgs(argv) {
     else throw new Error(`unknown argument ${arg}`);
   }
   if (options.session !== undefined && !SAFE_SESSION.test(options.session)) throw new Error("--session must match [A-Za-z0-9_-]");
+  if (options.recapSession !== undefined && !SAFE_SESSION.test(options.recapSession)) throw new Error("--recap <session> must match [A-Za-z0-9_-]");
   if (options.now !== undefined && Number.isNaN(options.now)) throw new Error("--now must be an ISO date");
   if (options.lang !== undefined && !BOARD_LANGS.includes(options.lang)) throw new Error(`--lang must be one of ${BOARD_LANGS.join(", ")}`);
   return options;
@@ -1233,8 +1282,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   try {
     const options = parseArgs(process.argv.slice(2));
     const report = await collect(options);
-    const view = { ascii: options.ascii === true || process.env.NO_COLOR !== undefined && process.env.TERM === "dumb", sessionID: options.session, lang: options.lang ?? "en", detail: options.detail === true };
-    process.stdout.write(`${options.format === "brief" ? renderBrief(report, view) : JSON.stringify({ ...report, boardText: renderBoard(report, view) }, null, 2)}\n`);
+    const root = resolve(options.root ?? process.cwd());
+    const view = { ascii: options.ascii === true || process.env.NO_COLOR !== undefined && process.env.TERM === "dumb", sessionID: options.session, lang: options.lang ?? "ko", detail: options.detail === true };
+    // The default view is the verdict card; --detail is the KPI board with the session cards, --recap the cards alone.
+    const card = renderVerdict(report, { lang: view.lang, cursor: readCursor(root) });
+    if (options.writeCursor) writeCursor(root, nextCursor(card.verdict, options.now ?? Date.now()));
+    const recap = options.recap ? renderRecap(report, { ...view, only: options.recapSession }) : undefined;
+    // --moved: the old lit-recap words opened this view, so its first line says where lit-recap went.
+    const brief = recap !== undefined ? `${options.moved ? `${MOVED_NOTE}\n` : ""}${recap}` : options.detail ? renderBrief(report, view) : card.text;
+    process.stdout.write(`${options.format === "brief" ? brief : JSON.stringify({ ...report, verdict: card.verdict, verdictText: card.text, boardText: renderBoard(report, view) }, null, 2)}\n`);
   } catch (error) {
     process.stderr.write(`rewind: ${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 2;

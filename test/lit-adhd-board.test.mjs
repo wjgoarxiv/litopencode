@@ -205,7 +205,7 @@ test("the board stays at about forty lines (42 at most) and 120 cells, even when
   });
 });
 
-test("the per-session detail appears only on request, under the board", async () => {
+test("the CLI prints the verdict card by default; the board and the per-session detail appear on --detail", async () => {
   await repo(async (dir, file) => {
     await fixture(dir, file);
     const report = await collect({ root: dir, db: file, now: NOW, session: "ses_me" });
@@ -216,10 +216,11 @@ test("the per-session detail appears only on request, under the board", async ()
     assert.ok(detail.startsWith(plain), "the board comes first");
     assert.match(detail.slice(plain.length), /## 🔎 Session detail[\s\S]*WAITS ON YOU[\s\S]*Recommended next step/u);
     const cli = (...extra) => execFileSync(process.execPath, [engine, "--brief", "--root", dir, "--db", file, "--now", new Date(NOW).toISOString(), "--session", "ses_me", ...extra], { encoding: "utf8" });
-    assert.doesNotMatch(cli(), /Session detail/u);
-    assert.match(cli("--detail"), /## 🔎 Session detail/u);
-    assert.match(cli("--lang", "ko"), /^## 🎯 지금 할 일$/mu);
-    assert.match(cli("--lang", "ko", "--detail"), /## 🔎 세션 자세히/u);
+    assert.doesNotMatch(cli(), /Session detail|세션 자세히|## 🎯/u);
+    assert.match(cli(), /^지금 할 일: .+ #[0-9a-f]{6}$/mu, "the default is the Korean verdict card");
+    assert.match(cli("--en"), /^Do now: .+ #[0-9a-f]{6}$/mu);
+    assert.match(cli("--lang", "en", "--detail"), /^## 🎯 Do this now$[\s\S]*## 🔎 Session detail/mu);
+    assert.match(cli("--lang", "ko", "--detail"), /^## 🎯 지금 할 일$[\s\S]*## 🔎 세션 자세히/mu);
     assert.throws(() => execFileSync(process.execPath, [engine, "--lang", "fr"], { stdio: "pipe" }));
     const json = JSON.parse(execFileSync(process.execPath, [engine, "--json", "--root", dir, "--db", file, "--now", new Date(NOW).toISOString(), "--lang", "ko"], { encoding: "utf8" }));
     assert.match(json.boardText, /^## 🎯 지금 할 일/u);
