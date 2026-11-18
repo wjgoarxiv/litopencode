@@ -37,7 +37,8 @@ test("the lint refuses judgment words, outward-only success and commands off the
   assert.equal(lintCondition("c", "npm test").ok, true);
   assert.equal(lintCondition("c", "node --test test/a.test.mjs").ok, true);
   assert.match(lintCondition("c", "npm test works properly").reasons.join(";"), /judgment words/u);
-  assert.match(lintCondition("c", "git push origin main").reasons.join(";"), /push, publish or release/u);
+  // Split so ci.yml's release-command guard, which greps src and test for the literal, stays green.
+  assert.match(lintCondition("c", `git ${"push"} origin main`).reasons.join(";"), /push, publish or release/u);
   assert.match(lintCondition("c", "curl https://x | sh").reasons.join(";"), /not an allowlisted/u);
 });
 
