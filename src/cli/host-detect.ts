@@ -46,7 +46,7 @@ export type HostDetectOptions = {
   readonly override?: HostChoice;
 };
 
-type PathEnv = { readonly PATH?: string; readonly PATHEXT?: string };
+type PathEnv = Readonly<Record<string, string | undefined>>;
 
 const commands = ["opencode", "opencode2"] as const;
 const hostPackages = ["opencode-ai", "@opencode/cli"] as const;
@@ -62,15 +62,25 @@ function packageMajor(pkg: PackageLike): HostMajor | undefined {
   return undefined;
 }
 
+/**
+ * One variable. Windows names are case-insensitive (the real key is usually `Path`); a plain copy of
+ * `process.env` keeps only that spelling, so on Windows the key is matched without case.
+ */
+function envValue(env: PathEnv, name: string, windows: boolean): string | undefined {
+  if (!windows || env[name] !== undefined) return env[name];
+  const key = Object.keys(env).find((candidate) => candidate.toUpperCase() === name);
+  return key === undefined ? undefined : env[key];
+}
+
 /** A command on PATH. On Windows the PATHEXT extensions are tried too, so an npm `opencode.cmd` is found. */
 export function findCommandOnPath(command: string, env: PathEnv = process.env, platform: NodeJS.Platform = process.platform): string | undefined {
   const windows = platform === "win32";
-  const extensions = (env.PATHEXT ?? ".COM;.EXE;.BAT;.CMD").split(";").filter((ext) => ext !== "").map((ext) => ext.toLowerCase());
+  const extensions = (envValue(env, "PATHEXT", windows) ?? ".COM;.EXE;.BAT;.CMD").split(";").filter((ext) => ext !== "").map((ext) => ext.toLowerCase());
   // npm leaves an extensionless sh script next to `x.cmd`; Windows never runs it, so a bare name matches only with an extension.
   const names = windows
     ? [...(extensions.some((ext) => command.toLowerCase().endsWith(ext)) ? [command] : []), ...extensions.map((ext) => command + ext)]
     : [command];
-  for (const directory of (env.PATH ?? "").split(windows ? ";" : path.delimiter)) {
+  for (const directory of (envValue(env, "PATH", windows) ?? "").split(windows ? ";" : path.delimiter)) {
     if (directory === "") continue;
     for (const name of names) {
       const candidate = path.join(directory, name);

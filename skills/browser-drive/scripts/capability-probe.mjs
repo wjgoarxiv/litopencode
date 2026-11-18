@@ -10,7 +10,8 @@
 // something else entirely, so identity is checked against the version banner before the driver is
 // reported usable. This is the engine-probe discipline structural-search already applies here.
 import { spawnSync } from "node:child_process";
-import { posix, win32 } from "node:path";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { basename, dirname, extname, join, posix, win32 } from "node:path";
 import process from "node:process";
 
 export const DRIVER_COMMAND = "agent-browser";
@@ -35,6 +36,12 @@ const bannerMarkup = /(?:<\/?[A-Za-z][^>\r\n]{0,128}>|<!--|-->|<!\[CDATA\[|\{\{|
 // cmd.exe interpretation, which reopens the injection surface the direct spawn closes.
 const windowsDirectlyExecutable = /\.(?:exe|com)$/iu;
 const windowsUnsafeCommand = /["%!^&|<>*?]/u;
+const windowsDefaultPathext = ".COM;.EXE;.BAT;.CMD";
+const windowsShimByteLimit = 4 * 1024;
+// The quoted target of an npm .cmd shim, relative to the shim's directory: the native
+// `"%~dp0node_modules\...\agent-browser-win32-x64.exe" %*` agent-browser's installer writes, or
+// npm's own `"%dp0%\node_modules\...\agent-browser.js" %*`.
+const windowsShimTarget = /"%(?:~dp0|dp0%)\\?([^"%\r\n]+)"\s+%\*/iu;
 // This copy stays in the installed skill because the browser asset runs without the TypeScript
 // source tree. The parity test keeps this boundary aligned with src/secret-shapes.ts.
 const browserCredentialShapeAlternatives = [
@@ -160,10 +167,54 @@ function minimalProbeEnvironment(searchPath, platform) {
   return env;
 }
 
-function resolverInvocation(platform) {
-  return platform === "win32"
-    ? { command: "where.exe", args: [DRIVER_COMMAND], shell: false }
-    : { command: "command", args: ["-v", DRIVER_COMMAND], shell: true };
+// Windows has no resolver process to ask: cmd.exe lacks `command -v`, and where.exe lists every
+// match (npm's extensionless shell shim beside its .cmd) in the console code page, which garbles a
+// non-ASCII profile path. The lookup walks PATH in order and tries each PATHEXT extension, so the
+// extensionless shim Windows cannot start is never picked.
+function windowsPathCandidate(searchPath, pathext) {
+  const extensions = pathext.split(";").map((value) => value.trim()).filter((value) => value.startsWith("."));
+  for (const entry of searchPath.split(win32.delimiter)) {
+    const directory = entry.trim().replace(/^"(.*)"$/u, "$1");
+    if (directory === "") continue;
+    for (const extension of extensions) {
+      const candidate = join(directory, `${DRIVER_COMMAND}${extension}`);
+      try {
+        if (statSync(candidate).isFile()) return candidate;
+      } catch {
+        // Not in this directory.
+      }
+    }
+  }
+  return null;
+}
+
+// A .cmd shim needs cmd.exe, which would re-parse every argument. The shim is followed to the native
+// binary it starts instead; any other batch file stays refused.
+function windowsNativeDriver(candidate) {
+  if (![".cmd", ".bat"].includes(extname(candidate).toLowerCase())) return candidate;
+  try {
+    if (statSync(candidate).size > windowsShimByteLimit) return null;
+    const match = windowsShimTarget.exec(readFileSync(candidate, "utf8"));
+    if (!match) return null;
+    const target = join(dirname(candidate), ...match[1].split(/[\\/]+/u).filter(Boolean));
+    if (extname(target).toLowerCase() === ".exe") return existsSync(target) ? target : null;
+    // npm's shim runs agent-browser's JS launcher, which only starts the native binary beside it;
+    // an arm64 host falls back to x64 as the launcher does.
+    if (basename(target).toLowerCase() !== `${DRIVER_COMMAND}.js`) return null;
+    return [...new Set([process.arch, "x64"])]
+      .map((arch) => join(dirname(target), `${DRIVER_COMMAND}-win32-${arch}.exe`))
+      .find((file) => existsSync(file)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function windowsResolution(searchPath, env) {
+  const candidate = windowsPathCandidate(searchPath, env.PATHEXT || windowsDefaultPathext);
+  const command = candidate === null ? null : windowsNativeDriver(candidate);
+  return command === null
+    ? { status: 1, stdout: "", stderr: "" }
+    : { status: 0, stdout: `${command}\n`, stderr: "" };
 }
 
 function safeDirectExecutable(command, platform) {
@@ -194,14 +245,15 @@ function resolvedCommand(result, platform) {
 export function probeBrowserDriver({ path, runCommand = runCommandSync, platform = process.platform } = {}) {
   const searchPath = typeof path === "string" ? path : (process.env.PATH ?? "");
   const env = minimalProbeEnvironment(searchPath, platform);
-  const resolver = resolverInvocation(platform);
 
-  const resolved = attempt(runCommand, resolver.command, resolver.args, {
-    encoding: "utf8",
-    env,
-    shell: resolver.shell,
-    maxBuffer: spawnOutputLimit
-  });
+  const resolved = platform === "win32"
+    ? windowsResolution(searchPath, env)
+    : attempt(runCommand, "command", ["-v", DRIVER_COMMAND], {
+      encoding: "utf8",
+      env,
+      shell: true,
+      maxBuffer: spawnOutputLimit
+    });
   if (resolved?.error?.code === BROWSER_PROCESS_CLEANUP_FAILED) {
     return report("unverified-identity", {
       blocker: BROWSER_DRIVE_BLOCKER.cleanup,

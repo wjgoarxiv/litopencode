@@ -12,30 +12,37 @@ import {
   probeBrowserDriver,
   runCommandSync
 } from "../skills/browser-drive/scripts/capability-probe.mjs";
-// B9-LOC-2: shell-free Windows resolver execution.
-test("the win32 probe resolves with where.exe and runs the resolved command without a shell", () => {
-  for (const resolvedPath of ["C:\\Tools\\agent-browser.exe", "C:\\Program Files\\Agent Browser\\agent-browser.exe"]) {
-    const calls = [];
-    const report = probeBrowserDriver({
-      path: "C:\\Tools",
-      platform: "win32",
-      runCommand(command, args, options) {
-        calls.push({ command, args, options });
-        return command === "where.exe"
-          ? { status: 0, stdout: `${resolvedPath}\n`, stderr: "" }
-          : { status: 0, stdout: `${DRIVER_COMMAND} 0.34.0\n`, stderr: "" };
-      }
-    });
+// B9-LOC-2: shell-free Windows resolver execution. Windows resolves on disk through PATH and
+// PATHEXT (cmd.exe has no `command -v`, and where.exe garbles non-ASCII paths), so no resolver
+// process runs at all.
+test("the win32 probe resolves on disk without a resolver process and runs the resolved command without a shell", () => {
+  for (const directoryName of ["Tools", "Agent Browser"]) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "litopencode-b9-win-"));
+    try {
+      const directory = path.join(root, directoryName);
+      fs.mkdirSync(directory);
+      // Upper case, as in the default PATHEXT, so a case-sensitive host filesystem finds it too.
+      const resolvedPath = path.join(directory, `${DRIVER_COMMAND}.EXE`);
+      fs.writeFileSync(resolvedPath, "");
+      const calls = [];
+      const report = probeBrowserDriver({
+        path: directory,
+        platform: "win32",
+        runCommand(command, args, options) {
+          calls.push({ command, args, options });
+          return { status: 0, stdout: `${DRIVER_COMMAND} 0.34.0\n`, stderr: "" };
+        }
+      });
 
-    assert.equal(calls.length, 2, resolvedPath);
-    assert.equal(calls[0].command, "where.exe");
-    assert.deepEqual(calls[0].args, [DRIVER_COMMAND]);
-    assert.equal(calls[0].options.shell, false, "the resolver must not use a shell");
-    assert.equal(calls[1].command, resolvedPath, "the resolved path must be the argv[0], not shell text");
-    assert.deepEqual(calls[1].args, ["--version"]);
-    assert.equal(calls[1].options.shell, false, "the version run must not use a shell");
-    assert.equal(report.status, "available", resolvedPath);
-    assert.equal(report.command, resolvedPath);
+      assert.equal(calls.length, 1, resolvedPath);
+      assert.equal(calls[0].command, resolvedPath, "the resolved path must be the argv[0], not shell text");
+      assert.deepEqual(calls[0].args, ["--version"]);
+      assert.equal(calls[0].options.shell, false, "the version run must not use a shell");
+      assert.equal(report.status, "available", resolvedPath);
+      assert.equal(report.command, resolvedPath);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   }
 });
 

@@ -66,3 +66,30 @@ test("PATHEXT finds a .cmd or .exe, and the extensionless sh shim npm leaves bes
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// Windows names the variable `Path`. `process.env` reads it case-insensitively, but a copy such as
+// `{ ...process.env, X: "1" }` is a plain object holding only `Path`, so `env.PATH` is undefined there.
+test("a copied Windows env with Path and PathExt (no PATH key) still finds opencode.cmd", () => {
+  const dir = tmp("lit-win-pathcase-");
+  try {
+    fs.writeFileSync(path.join(dir, "opencode.cmd"), "@echo off\r\n");
+    const copied = { Path: dir, PathExt: ".CMD", LITOPENCODE_NO_AUTO_UPDATE: "1" };
+    assert.equal(findCommandOnPath("opencode", copied, "win32"), path.join(dir, "opencode.cmd"));
+    const plan = commandPlan("opencode", ["plugin", "x", "--global", "--force"], { platform: "win32", env: copied });
+    assert.equal(plan.shell, true);
+    assert.equal(plan.command, quoteForCmd(path.join(dir, "opencode.cmd")));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("POSIX keeps PATH case-sensitive: a lone Path key is not a search path there", () => {
+  const dir = tmp("lit-posix-pathcase-");
+  try {
+    fs.writeFileSync(path.join(dir, "opencode"), "#!/bin/sh\n", { mode: 0o755 });
+    assert.equal(findCommandOnPath("opencode", { Path: dir }, "linux"), undefined);
+    assert.equal(findCommandOnPath("opencode", { PATH: dir }, "linux"), path.join(dir, "opencode"));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

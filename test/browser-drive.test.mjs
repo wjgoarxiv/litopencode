@@ -45,7 +45,8 @@ async function withStubDriver(script, fn) {
     }
     : undefined;
   try {
-    if (!windows) await fs.writeFile(driverPath, script, { mode: 0o755 });
+    // Windows resolves the driver on disk too; there the scripted runner answers the version call.
+    await fs.writeFile(driverPath, script, { mode: 0o755 });
     await fn(root, driverPath, runCommand);
   } finally {
     await fs.rm(root, { recursive: true, force: true });
@@ -918,4 +919,70 @@ test("G20 records the agent-browser source, verified floor, and local observatio
   assert.match(browserDrivePromptInjection, /vercel-labs\/agent-browser/u);
   assert.match(browserDrivePromptInjection, /agent-browser --version/u);
   assert.match(browserDrivePromptInjection, /0\.34\.0/u);
+});
+
+// Windows resolution. cmd.exe has no `command -v`, and where.exe prints every match (npm writes an
+// extensionless shell shim beside its .cmd shim) in the console code page, so a non-ASCII profile
+// path comes back garbled. The probe walks PATH and PATHEXT itself and follows an npm .cmd shim to
+// the native binary agent-browser ships, which runs directly with no shell. A real npm global prefix
+// is laid out in a temporary directory; only the version run is scripted, so this runs on every host.
+async function withWindowsPrefix(cmdShim, fn) {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-browser-drive-win-"));
+  try {
+    const bin = path.join(root, "node_modules", DRIVER_COMMAND, "bin");
+    await fs.mkdir(bin, { recursive: true });
+    await fs.writeFile(path.join(root, DRIVER_COMMAND), "#!/bin/sh\nexec node \"$basedir/node_modules/agent-browser/bin/agent-browser.js\" \"$@\"\n");
+    // Upper case, as in the default PATHEXT, so a case-sensitive host filesystem finds it too.
+    if (cmdShim !== null) await fs.writeFile(path.join(root, `${DRIVER_COMMAND}.CMD`), cmdShim);
+    const native = path.join(bin, `${DRIVER_COMMAND}-win32-x64.exe`);
+    await fs.writeFile(native, "");
+    const calls = [];
+    const report = probeBrowserDriver({
+      platform: "win32",
+      path: root,
+      runCommand(command, args, options) {
+        calls.push({ command, args, options });
+        return { status: 0, stdout: `${DRIVER_COMMAND} 0.39.1\r\n`, stderr: "" };
+      }
+    });
+    await fn({ report, calls, native });
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+}
+
+const NPM_CMD_SHIM = [
+  "@ECHO off", "GOTO start", ":find_dp0", "SET dp0=%~dp0", "EXIT /b", ":start", "SETLOCAL", "CALL :find_dp0", "",
+  "IF EXIST \"%dp0%\\node.exe\" (", "  SET \"_prog=%dp0%\\node.exe\"", ") ELSE (", "  SET \"_prog=node\"",
+  "  SET PATHEXT=%PATHEXT:;.JS;=;%", ")", "",
+  "endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & \"%_prog%\"  \"%dp0%\\node_modules\\agent-browser\\bin\\agent-browser.js\" %*", ""
+].join("\r\n");
+
+test("Windows follows the native shim agent-browser's installer writes, with no resolver process", async () => {
+  await withWindowsPrefix("@ECHO off\r\n\"%~dp0node_modules\\agent-browser\\bin\\agent-browser-win32-x64.exe\" %*\r\n", ({ report, calls, native }) => {
+    assert.equal(report.status, "available", report.detail);
+    assert.equal(report.command, native);
+    assert.equal(report.version, `${DRIVER_COMMAND} 0.39.1`);
+    assert.deepEqual(calls.map(({ command, args }) => [command, ...args]), [[native, "--version"]]);
+    assert.equal(calls[0].options.shell, false);
+  });
+});
+
+test("Windows follows npm's own .cmd shim to the native binary beside agent-browser.js", async () => {
+  await withWindowsPrefix(NPM_CMD_SHIM, ({ report, calls, native }) => {
+    assert.equal(report.status, "available", report.detail);
+    assert.equal(report.command, native);
+    assert.deepEqual(calls.map(({ command, args }) => [command, ...args]), [[native, "--version"]]);
+  });
+});
+
+test("Windows refuses a .cmd that does not start the native binary, and a PATH holding only the shell shim", async () => {
+  for (const shim of ["@ECHO off\r\nnode \"%~dp0something-else.js\" %*\r\n", null]) {
+    await withWindowsPrefix(shim, ({ report, calls }) => {
+      assert.equal(report.status, "unavailable", String(shim));
+      assert.equal(report.blocker, BROWSER_DRIVE_BLOCKER.unavailable);
+      assert.equal(report.command, null);
+      assert.deepEqual(calls, [], "nothing runs: no resolver, no version check");
+    });
+  }
 });
