@@ -16,10 +16,12 @@ LitOpenCode가 설치하는 것 전부를, 스킬마다 만들어 내는 결과�
 | `/review-work` | `lit-plan` 뒤에는 계획을, `lit-loop`나 `/start-work` 뒤에는 끝난 작업을 검토합니다. 있는 것을 보고 고르며 `/review-work plan`, `/review-work work`로 직접 정할 수 있습니다. |
 | `lit brainstorm …`, `lit ideation …`, `lit idea …` 또는 `/lit-brainstorm` | 아직 정하지 못한 질문을 여러 선택지로 펼친 뒤 짧은 목록으로 좁히고, 고른 것을 `deep-interview`나 `lit-plan`에 넘깁니다. 직접 만들지는 않습니다. |
 | `lit 하이재킹 …`, `lit 하이잭 …`, `lit hijack …` 또는 `/lit-hijack` | 다른 사람이 공개한 글, 논문, 저장소, 영상에서 기법의 원리를 뽑아 내 스킬이나 시스템에 옮깁니다. 출처를 기록하고 라이선스를 확인한 뒤 원문과 분리된 명세로 만들고, 실제 화면에서 달라졌는지 확인합니다. |
-| `lit adhd …`, `lit rewind …` 또는 `/lit-adhd` | 하던 일을 이어서 시작합니다. 이 작업 폴더를 읽기 전용 KPI 보드로 보여 줍니다. 지금 할 일 하나와 정확히 입력할 말, 끝남·진행 중·나를 기다림·남음 개수와 전체 진행 막대, 마일스톤, 최근 끝낸 일, 남은 일, 잊지 말 것이 차례로 나옵니다. `go`가 그 단계를 따라가고, `lit adhd 자세히`를 치면 세션별 카드가 보드 아래에 붙습니다. |
+| `lit adhd …`, `lit rewind …` 또는 `/lit-adhd` | 하던 일을 이어서 시작합니다. 여섯 줄 카드에 마지막으로 본 뒤 바뀐 것, 지금 할 일 하나와 그대로 입력할 말, 이유, 기다리는 일, 읽은 세션이 나옵니다. `go`가 그 단계를 따라가고, `lit adhd 자세히`는 KPI 보드를, `lit adhd recap`은 세션별 리캡을 보여 줍니다. |
+| `ultra-brainstorm …` 또는 `/ultra-brainstorm` | 값싼 아이디어 레인 백 개 이상으로 브레인스토밍합니다. 몇 개를 띄울지 비용과 함께 먼저 묻고, 점수를 매긴 상위 목록을 보여 준 뒤 고르게 합니다. 직접 만들지는 않습니다. |
+| `lit team …` 또는 `/lit-team` | 목표를 주면 이 세션이 작은 팀을 대신 굴립니다. 일을 나누고, 팀원마다 지시서를 쓰고, 진행을 확인하고, 결과를 합쳐 다시 확인한 뒤 보고서 하나로 알려 줍니다. 팀원은 커밋이나 push를 하지 않습니다. |
 | `/litgoal` | 끝나는 지점을 정하고 지킵니다. `lit-loop`와 `/start-work`가 그 목표를 향해 일합니다. |
 | `handoff` 또는 `/lit-handoff` | 현재 결과와 다음 할 일을 다음 세션에 넘깁니다. |
-| `/lit-recap` | 로컬 기록을 짧게 요약해 보여 줍니다. |
+| `/lit-recap` | lit-adhd로 옮겨 왔고, 리캡 화면을 엽니다. |
 | `/litresearch` 또는 `/lit-research` | 주장마다 출처를 남기며 조사합니다. OpenCode가 허용하면 보조 에이전트가 나눠서 동시에 조사하고, 아니면 차례로 진행합니다. |
 | `/lit-code`, `/debugging`, `/refactor` | 코딩, 디버깅, 리팩터링 지침을 씁니다. |
 | `/lit-korean` | 의미는 그대로 두고 한국어 문장을 다듬습니다. |
@@ -154,8 +156,8 @@ Autoresearch, Autoconference, Wikify, UI/UX는 [전체 경로 안내](./referenc
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-recap.webp" width="240" alt="읽기 전용 요약입니다. 끝난 일, 진행 중인 일, 막힌 곳, 증거 위치, 다음 단계를 보여줍니다." /></td>
-<td><code>lit-recap</code><br /><sub><code>/lit-recap</code></sub></td>
-<td>읽기 전용 요약입니다. 끝난 일, 진행 중인 일, 막힌 곳, 증거 위치, 다음 단계를 보여줍니다.</td>
+<td><code>lit-adhd recap</code><br /><sub><code>/lit-recap</code></sub></td>
+<td>세션마다 끝난 일, 진행 중인 일, 막힌 곳, 다음 단계를 보여 주는 읽기 전용 요약입니다. 예전 lit-recap이 이제 lit-adhd의 한 화면이 되었습니다.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-comprehend.webp" width="240" alt="에이전트가 쓴 작업을 이해하도록 돕는 설명 페이지입니다. 직관, 흐름 설명, 짧은 퀴즈 순서입니다." /></td>

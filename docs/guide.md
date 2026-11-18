@@ -54,7 +54,11 @@ lit Build a to-do list in one index.html with no dependencies; check adding and 
 
 Your first result is `index.html`. Open it and try adding and completing an item.
 
-When you come back later, `/lit-recap` reads the record and shows you the next step.
+When you come back later, `/lit-adhd` reads the record and shows a short card: what changed since you last looked, the one thing to do now and the exact text to type. `lit adhd recap` gives each session's recap, which is where `lit-recap` went; the old `/lit-recap` still opens it.
+
+When a `lit` prompt asks for more than one kind of work, say a plan that also needs a chart, LitOpenCode lines up to three skills for it and names them on the line after the LIT IGNITED line. A skill from the extras package joins only when it is installed; otherwise you get the one install line. A read-only route such as `review-work` never pulls in a skill that writes. To pick the skills yourself, add them after `lit`: `lit +viz +review compare the two runs`.
+
+A plan can end with a `## Done when` block naming one test command. When the approved plan is saved, LitOpenCode turns that into one goal condition, checks it is not already true, and asks once: `Approve plan, start work and set goal: /goal <condition>? (yes / edit / no)`. An exact `yes` starts the work on that plan and sets the goal together; if the work cannot start, no goal is set and you are told why. On OpenCode 2 the goal becomes the native `/goal`; OpenCode 1 has no goal, so LitOpenCode runs the same check when each turn ends and tells you when it is met. `lit cancel` clears a goal LitOpenCode set and leaves yours alone.
 
 `/lit` starts the same workflow. Bigger jobs are worth planning first. Pick `lit-plan`, read the plan and approve it, run `/start-work`, and finish with `/review-work`. The planner only plans: it waits for explicit user confirmation and has no way to edit files or run shell commands. Once you approve, `lit-implement` carries the plan out.
 

@@ -50,7 +50,7 @@ Use LitOpenCode vocabulary in docs, config, runtime output, and issue reports:
 
 - product: `LitOpenCode`
 - npm package and OpenCode package-loading entry: `@litfamily/litopencode`; native namespace and binary: `litopencode`
-- activation commands/tools: `lit`, `litwork`, `start-work`, `review-work`, `lit-recap`, `lit-korean`, `text-neutralization`
+- activation commands/tools: `lit`, `litwork`, `start-work`, `review-work`, `lit-adhd` (with `lit-recap` as its recap alias), `lit-korean`, `text-neutralization`
 - durable loop: `lit-loop`
 - durable goal manager: `litgoal` (sets and keeps the finish line; `lit-loop` and `start-work` run toward it)
 - current planning/research workflow names: `lit-plan`, `lit-crucible`, `litresearch`, `start-work`, `review-work`

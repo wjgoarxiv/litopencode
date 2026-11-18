@@ -166,11 +166,13 @@ litopencode install
 | `/review-work` | `lit-plan` 뒤에는 계획 검토, `lit-loop`나 `/start-work` 뒤에는 작업 검토. 있는 것을 보고 고르며 `/review-work plan`, `/review-work work`로 직접 정할 수 있음 |
 | `/litgoal` | 끝나는 지점을 정하고 지킴: 확인 가능한 기준이 붙은 목표 하나를 디스크에 남김. `lit-loop`와 `/start-work`가 그 목표를 향해 일함 |
 | `/lit-brainstorm` | 열린 질문을 여러 선택지로 펼친 뒤 짧은 목록으로 좁히고, 고른 것을 `deep-interview`나 `lit-plan`에 넘김. 채팅에서는 `lit brainstorm`, `lit brainstorming`, `lit ideation`, `lit ideate`, `lit idea`, `lit ideas`. 직접 만들지는 않음 |
+| `/ultra-brainstorm` | 한 맥락에 다 담을 수 없는 규모의 브레인스토밍. 아이디어 레인을 몇 개 띄울지(100, 300, 직접 입력) 비용 줄과 함께 한 번 묻고, OpenCode의 `task` 도구로 `lit-ideator`(보조 경로, 가장 낮은 노력, 도구 없음, 레인마다 아이디어 최대 다섯 개)에 나눠 보낸 뒤, 30레인마다 정리자 하나가 묶고 판정자 하나가 점수를 매김. 기록은 `.litopencode/brainstorm/<slug>/`에 남김. `task` 도구가 없으면 BLOCKED라고 알림. 직접 만들지는 않음. 채팅에서는 `ultra-brainstorm …`, `lit ultra-brainstorm …` |
+| `/lit-team` | 이 세션이 작은 팀을 직접 굴림. `lit team <목표>`를 치면 세션이 목표를 나누고 팀원이 일할 방식을 고름: 따로 떨어진 조각 2~6개는 task 도구 서브에이전트, 비슷한 항목이 많으면 task 호출 묶음, 같은 파일을 고치는 조각은 git worktree, herdr 창은 `HERDR_ENV=1`이고 `herdr`가 PATH에 있을 때만. 팀원마다 TASK/DELIVERABLE/SCOPE/VERIFY 지시서와 `.litopencode/team/<slug>/` 아래 전용 임시 폴더를 만들고, 멈춘 팀원을 확인하고, 결과를 합친 뒤 합친 상태에서 모든 확인을 다시 돌려 보고서 하나로 답함. 팀원은 커밋이나 push를 하지 않음. 동봉된 `team.mjs`가 기록을 관리함 |
 | `/lit-hijack` | 다른 사람이 공개한 작업의 기법 원리를 내 스킬이나 시스템에 옮김: 출처 기록, 라이선스 확인, 격차 분석, 원문 없는 명세, 분리된 구현, 동작 비교, 보고서. 각 단계의 완료는 동봉된 `hijack.mjs`가 판정함. 채팅에서는 `lit hijack`, `lit hijacking`, `lit 하이재킹`, `lit 하이잭` |
-| `/lit-adhd`, `/lit-rewind` | 하던 일을 이어서 시작: 여섯 칸(지금 할 일과 정확히 입력할 말, 한눈에 보기의 네 개수와 전체 진행 막대, 마일스톤, 최근 끝낸 일, 남은 일, 잊지 말 것)으로 된 읽기 전용 KPI 보드를 요청 언어(`--lang ko` 또는 `en`)로 보여 줌. 잊지 말 것은 "무엇 → 할 일" 꼴로, 나를 기다리는 세션, 아직 일하는 레인, 커밋 안 된 변경과 푸시 안 한 커밋, 7일째 멈춘 계획, `HANDOFF.md`의 다음 항목을 알려 줌. 요청하면(`lit adhd 자세히`, `lit adhd detail`) 예전 브리핑이 보드 아래에 붙음: 세 줄(지금까지, 지금, 다음)로 시작해 이전 세션의 상태, 실제 진행 또는 아는 사실, 로드맵, 추천 한 단계. 끝난 계획과 완료된 start-work 실행은 끝난 일로 세고, liveness 기록으로 쉬는 세션을 가리며, 7일 넘은 계획은 빼고, 이 워크트리 `HANDOFF.md`의 `Next` 항목을 마지막 대안으로 씀. 동봉된 `rewind.mjs`가 수집함. 채팅에서는 `lit adhd`, `lit rewind`, 이어서 `go`가 30분간 준비된 단계를 따라감. `lit approve`와 `lit deny`는 실행이 미뤄 둔 단계를 정리하며 쓰지 않아도 됨. `lit cancel`(또는 `lit 취소`)은 어느 창에서든 실행을 끝냄. |
+| `/lit-adhd`, `/lit-rewind` | 하던 일을 이어서 시작. 기본은 여섯 줄 판정 카드: 마지막으로 본 뒤 바뀐 것, 짧은 지문이 붙은 지금 할 일 하나, 그대로 입력할 말, 이유와 안 했을 때 드는 비용, 기다리는 일 최대 두 개(push나 배포는 질문으로만 나옴), 읽은 세션. 고정된 규칙표가 할 일을 고르고, 커밋, 끝난 실행, 모두 체크된 계획만 끝난 일로 셈. 지난 할 일의 근거가 바뀌면 카드가 철회했다고 알려 줌. `lit adhd detail`은 KPI 보드와 세션별 카드를, `lit adhd recap [세션]`은 세션별 리캡을 보여 줌(lit-recap이 이 화면으로 옮겨 옴). 기본은 한국어, 영어는 `--en`. 동봉된 `rewind.mjs`와 `verdict.mjs`가 수집함. 채팅에서는 `lit adhd`, `lit rewind`, 이어서 `go`가 30분간 준비된 단계를 따라감. `lit approve`와 `lit deny`는 실행이 미뤄 둔 단계를 정리하며 쓰지 않아도 됨. `lit cancel`(또는 `lit 취소`)은 어느 창에서든 실행을 끝냄. |
 | `/litresearch` 또는 `/lit-research` | 순차 대체 경로를 포함한 근거 기반 연구 |
 | `/lit-handoff` | 이어서 작업할 수 있는 핸드오프 작성 |
-| `/lit-recap` | 로컬 ledger와 세션 맥락으로 짧은 리캡 작성 |
+| `/lit-recap` | lit-adhd로 옮겨 옴: 리캡 화면을 열고 옮겨 왔다고 한 줄로 알려 줌. `lit recap`, `litrecap`도 같음 |
 | `/lit-scientific-visualization` | 그림 스킬이 옮겨 간 곳과 OpenCode 설치 줄 안내 |
 | `/lit-korean` | 의미를 바꾸지 않고 문장 흐름 검토 |
 | `/text-neutralization` | neutralization 계약에 따른 문장 검토 |

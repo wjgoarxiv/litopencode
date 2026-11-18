@@ -25,8 +25,8 @@ OpenCode 2.2 can hold a goal for one session, but nothing carries what you decid
 ```text
 Evening:  lit add a --shout flag that prints the greeting in capitals, with a test
           → the flag lands with its test, and the run is written to .litopencode/litgoal/
-Morning:  /lit-recap
-          → what was built, what was checked, what is next
+Morning:  /lit-adhd
+          → what changed overnight, the one thing to do now, and what to type
 ```
 
 It suits work that spans several sittings: a feature, a planned refactor, research you come back to, or a report or deck built from your notes. OpenCode still runs the model, asks for permission and keeps your provider login, and LitOpenCode needs no other LitFamily product.
@@ -89,7 +89,7 @@ lit Build a to-do list in one index.html with no dependencies; check adding and 
 
 For six seconds a toast reads `🔥 LIT IGNITED` with the name of the workflow that started. That tells you LitOpenCode picked up your prompt. [Screens](./docs/screens.md) shows the installer, the toast, the health check and the planner's locked permissions, so a healthy install looks familiar.
 
-When the work is done, you have an `index.html` to try and a record of what was built and checked in `.litopencode/litgoal/`. On another day, `/lit-recap` tells you what was done and what comes next. The model inside OpenCode does the work and makes mistakes, so when a reply says something passed, open the file and check.
+When the work is done, you have an `index.html` to try and a record of what was built and checked in `.litopencode/litgoal/`. On another day, `/lit-adhd` shows a short card with what changed since you last looked and the one thing to do next; `lit adhd recap` reads back each session. The model inside OpenCode does the work and makes mistakes, so when a reply says something passed, open the file and check.
 
 ## What you get
 
@@ -102,7 +102,7 @@ Each route leaves a note you can read later, so a task can stop and resume acros
 | `/start-work` | Carries the approved plan out one slice at a time |
 | `/review-work` | Looks at the change from five angles, worst findings first |
 | A bare `handoff`, or `/lit-handoff` | Leaves a continuation file for the next session; [automatic handoff](#automatic-handoff) can write it before the context window fills |
-| `/lit-recap` | Reads back what is done, what is blocked and what is next |
+| `/lit-adhd` | Shows what changed, the one thing to do now and the exact text to type; `lit adhd recap` reads back each session (the old `/lit-recap` opens it too) |
 | `/litresearch` | Works in rounds and keeps a source next to each claim, along with what is still uncertain |
 | `/lit-humanizer` | Rewrites stiff English or Korean prose, keeping the facts, the writer's voice and the qualifiers that matter |
 | `/rules` | Loads the repository rules, once per session and again for files you edit |
@@ -129,7 +129,7 @@ Planning, building, review, research, handoffs and the rest of this page work wi
 
 Until you do, each keeps a small pointer folder under its own name. Ask for a deck with `lit` and the pointer says where the skill went and gives the command that copies it into OpenCode ([the list](./docs/skills.md#moved-to-wjgoarxiv-skills)). The installer mentions the extensions when it runs, and the first session after an install or update mentions them once more.
 
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/core-extensions.en.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/core-extensions.en.light.png" /><img src="./docs/assets/readme/core-extensions.en.light.png" width="900" alt="Left: the LitOpenCode core installed by litopencode install, grouped as plan and build, check and fix, remember and resume, research and write, and code tools, with docs/skills.md holding the full list. Middle: nine same-name pointer folders for decks, documents, figures, design and video covers. Right: the wjgoarxiv-skills shelf, where each family has a variants/litopencode copy that takes the pointer's place. Below: the litopencode extensions commands, list, check, install, update, remove and prune-backups, each a dry run until --yes, and the four things install does for one skill: check for same-name copies, move the old folder whole into extension-backups, copy in the OpenCode edition, and write the receipt." /></picture></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/core-extensions.en.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/core-extensions.en.light.png" /><img src="./docs/assets/readme/core-extensions.en.light.png" width="900" alt="Left: the LitOpenCode core of 41 skills installed by litopencode install, grouped as plan and build, check and fix, remember and resume, research and write, and code tools, with docs/skills.md holding the full list. Middle: nine same-name pointer folders for decks, documents, figures, design and video covers. Right: the wjgoarxiv-skills shelf, where each family has a variants/litopencode copy that takes the pointer's place. Below: the litopencode extensions commands, list, check, install, update, remove and prune-backups, each a dry run until --yes, and the four things install does for one skill: check for same-name copies, move the old folder whole into extension-backups, copy in the OpenCode edition, and write the receipt." /></picture></p>
 
 LitOpenCode can install them for you. Each command that changes something prints what it would do and changes nothing until `--yes`. It fetches the shelf with git into its own cache or uses your clone with `--from <clone>`, and outside a global install needs `npm exec --package @litfamily/litopencode@latest --` in front.
 
@@ -224,7 +224,7 @@ The environment and a config file can hold the setting too. The [guide](./docs/g
 
 ## How it works
 
-OpenCode loads LitOpenCode as a plugin from its config file. For each prompt or command, the plugin picks the workflow that fits and points the model at the skills it needs; its tools and hooks write down what happened in your project. `/lit-recap` or the next session reads that record back, and [Skills and commands](./docs/skills.md#how-the-plugin-works) follows one prompt through.
+OpenCode loads LitOpenCode as a plugin from its config file. For each prompt or command, the plugin picks the workflow that fits and points the model at the skills it needs; its tools and hooks write down what happened in your project. `lit adhd recap` or the next session reads that record back, and [Skills and commands](./docs/skills.md#how-the-plugin-works) follows one prompt through.
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/lit-route.en.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/lit-route.en.light.png" /><img src="./docs/assets/readme/lit-route.en.light.png" width="900" alt="A prompt with lit or /lit reaches the activation hook, which shows the LIT IGNITED toast and passes the workflow to an agent (lit-loop, lit-plan or lit-implement; lit-plan cannot edit files or run shell). The agent calls the tools lit, litwork, start-work, review-work and wikify, with skills loaded from ~/.config/opencode/skills. It writes to your project's record in .litopencode/litgoal/ and .litopencode/plans/, which /lit-recap and the next session read back. /review-work returns a pass, fail or blocked verdict from five lanes: scope, tests, package, security and surface. A lower band shows the same route on two hosts: OpenCode 1 through chat.message, command.execute.before, experimental.chat.system.transform and tool.execute.before/after; OpenCode 2 through the session hooks prompt, context and compaction, the tool hooks execute.before/after and the permission hook evaluate." /></picture></p>
 

@@ -25,8 +25,8 @@ OpenCode 2.2는 세션 하나에 목표를 둘 수 있지만, 무엇을 정했�
 ```text
 저녁:  lit add a --shout flag that prints the greeting in capitals, with a test
        → 테스트와 함께 플래그가 추가되고, 작업 내용이 .litopencode/litgoal/에 남습니다
-아침:  /lit-recap
-       → 무엇을 만들었고 무엇을 확인했는지, 다음에 할 일이 무엇인지 알려 줍니다
+아침:  /lit-adhd
+       → 밤사이 바뀐 것, 지금 할 일 하나, 그대로 입력할 말을 알려 줍니다
 ```
 
 기능 하나, 계획을 세운 리팩터링, 며칠 이어 가는 조사, 메모로 만드는 보고서나 발표자료처럼 여러 번에 걸쳐 하는 일에 어울립니다. 모델 실행, 권한 확인, 모델 제공자 로그인은 여전히 OpenCode가 맡고, 다른 LitFamily 제품은 필요 없습니다.
@@ -89,7 +89,7 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 `🔥 LIT IGNITED` 문구와 시작된 워크플로 이름을 담은 알림이 6초 동안 뜹니다. 이 알림이 보이면 LitOpenCode가 프롬프트를 받은 것입니다. 설치 화면, 알림, 상태 점검, 잠긴 계획 에이전트 권한은 [화면 미리 보기](./docs/screens-Ko-KR.md)에서 미리 볼 수 있습니다.
 
-작업이 끝나면 직접 열어 볼 `index.html`이 생기고, 무엇을 만들고 확인했는지가 `.litopencode/litgoal/`에 남습니다. 며칠 뒤 `/lit-recap`을 입력하면 끝낸 일과 다음 할 일을 알려 줍니다. 실제 작업은 OpenCode 안의 모델이 하고 모델도 실수를 하니, 답변에 통과했다고 나오면 파일을 직접 열어 확인하세요.
+작업이 끝나면 직접 열어 볼 `index.html`이 생기고, 무엇을 만들고 확인했는지가 `.litopencode/litgoal/`에 남습니다. 며칠 뒤 `/lit-adhd`를 입력하면 마지막으로 본 뒤 바뀐 것과 지금 할 일 하나를 짧은 카드로 보여 주고, `lit adhd recap`은 세션별로 다시 읽어 줍니다. 실제 작업은 OpenCode 안의 모델이 하고 모델도 실수를 하니, 답변에 통과했다고 나오면 파일을 직접 열어 확인하세요.
 
 ## 할 수 있는 일
 
@@ -102,7 +102,7 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 | `/start-work` | 승인한 계획을 한 조각씩 실행합니다 |
 | `/review-work` | 다섯 가지 관점에서 변경 내용을 검토해 심각한 문제부터 알려 줍니다 |
 | `handoff` 단독 입력, 또는 `/lit-handoff` | 다음 세션이 읽고 이어 갈 인수인계 파일을 남깁니다. 원하면 컨텍스트 창이 차기 전에 [자동 인수인계](#자동-인수인계)가 대신 써 줍니다 |
-| `/lit-recap` | 끝낸 일, 막힌 일, 다음 할 일을 다시 읽어 줍니다 |
+| `/lit-adhd` | 바뀐 것, 지금 할 일 하나, 그대로 입력할 말을 보여 줍니다. `lit adhd recap`은 세션별로 다시 읽어 줍니다(예전 `/lit-recap`도 같은 화면을 엽니다) |
 | `/litresearch` | 여러 차례에 걸쳐 조사하고, 주장마다 출처와 아직 불확실한 점을 함께 남깁니다 |
 | `/lit-humanizer` | 딱딱한 영어나 한국어 문장을 다시 씁니다. 사실관계와 글쓴이의 목소리, 꼭 필요한 한정 표현은 그대로 둡니다 |
 | `/rules` | 저장소 규칙을 세션마다 한 번, 파일을 고칠 때 다시 읽어 옵니다 |
@@ -129,7 +129,7 @@ lit research 쓰기가 많은 로컬 앱에서 가장 중요한 SQLite 설정은
 
 설치하기 전에는 스킬마다 같은 이름의 작은 안내 폴더가 남아 있습니다. `lit`으로 발표자료를 부탁하면 안내 폴더가 스킬이 옮겨 간 곳과 OpenCode에 복사해 넣는 명령을 알려 줍니다([목록](./docs/skills-Ko-KR.md#wjgoarxiv-skills로-옮긴-스킬)). 설치 프로그램도 실행할 때 확장 스킬을 안내하고, 설치나 업데이트 뒤 첫 세션에서 한 번 더 알려 줍니다.
 
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/core-extensions.ko.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/core-extensions.ko.light.png" /><img src="./docs/assets/readme/core-extensions.ko.light.png" width="900" alt="왼쪽은 litopencode install이 설치하는 LitOpenCode 핵심으로, 계획하고 만들기, 검토하고 고치기, 기억하고 이어 가기, 조사하고 쓰기, 코드 도구로 묶여 있고 전체 목록은 docs/skills.md에 있습니다. 가운데는 발표자료, 문서, 그림, 디자인, 영상·커버를 맡던 스킬의 같은 이름 안내 폴더 아홉 개입니다. 오른쪽은 wjgoarxiv-skills 확장 모음으로, 묶음마다 variants/litopencode 복사본이 안내 폴더 자리를 대신합니다. 아래에는 --yes 전까지는 출력만 하는 litopencode extensions 명령(list, check, install, update, remove, prune-backups)과, install이 스킬 하나에 하는 네 가지 일, 곧 같은 이름 사본 확인, 예전 폴더를 extension-backups로 통째로 옮기기, OpenCode용 복사본 넣기, 설치 기록 남기기가 있습니다." /></picture></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/core-extensions.ko.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/core-extensions.ko.light.png" /><img src="./docs/assets/readme/core-extensions.ko.light.png" width="900" alt="왼쪽은 litopencode install이 설치하는 LitOpenCode 핵심 스킬 41개로, 계획하고 만들기, 검토하고 고치기, 기억하고 이어 가기, 조사하고 쓰기, 코드 도구로 묶여 있고 전체 목록은 docs/skills.md에 있습니다. 가운데는 발표자료, 문서, 그림, 디자인, 영상·커버를 맡던 스킬의 같은 이름 안내 폴더 아홉 개입니다. 오른쪽은 wjgoarxiv-skills 확장 모음으로, 묶음마다 variants/litopencode 복사본이 안내 폴더 자리를 대신합니다. 아래에는 --yes 전까지는 출력만 하는 litopencode extensions 명령(list, check, install, update, remove, prune-backups)과, install이 스킬 하나에 하는 네 가지 일, 곧 같은 이름 사본 확인, 예전 폴더를 extension-backups로 통째로 옮기기, OpenCode용 복사본 넣기, 설치 기록 남기기가 있습니다." /></picture></p>
 
 설치는 LitOpenCode에 맡겨도 됩니다. 무언가 바꾸는 명령은 할 일을 출력만 하고, `--yes`를 붙여야 실제로 바꿉니다. 모음은 git으로 자기 캐시에 받아 오거나 `--from <clone>`으로 준 폴더를 쓰며, 전역 설치가 아니라면 앞에 `npm exec --package @litfamily/litopencode@latest --`를 붙입니다.
 
@@ -224,7 +224,7 @@ OpenCode 2.2가 추가한 `/goal`은 평가자가 목표를 이뤘다고 볼 때
 
 ## 동작 방식
 
-OpenCode는 설정 파일에서 LitOpenCode를 플러그인으로 불러옵니다. 프롬프트나 명령을 보내면 플러그인이 알맞은 워크플로를 고르고 필요한 스킬을 모델에게 알려 주며, 도구와 훅이 일어난 일을 프로젝트에 적어 둡니다. `/lit-recap`이나 다음 세션이 그 기록을 다시 읽고, 프롬프트 하나를 따라가는 설명은 [스킬과 명령](./docs/skills-Ko-KR.md#플러그인이-동작하는-방식)에 있습니다.
+OpenCode는 설정 파일에서 LitOpenCode를 플러그인으로 불러옵니다. 프롬프트나 명령을 보내면 플러그인이 알맞은 워크플로를 고르고 필요한 스킬을 모델에게 알려 주며, 도구와 훅이 일어난 일을 프로젝트에 적어 둡니다. `lit adhd recap`이나 다음 세션이 그 기록을 다시 읽고, 프롬프트 하나를 따라가는 설명은 [스킬과 명령](./docs/skills-Ko-KR.md#플러그인이-동작하는-방식)에 있습니다.
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme/lit-route.ko.dark.png" /><source media="(prefers-color-scheme: light)" srcset="./docs/assets/readme/lit-route.ko.light.png" /><img src="./docs/assets/readme/lit-route.ko.light.png" width="900" alt="lit이나 /lit을 붙인 프롬프트가 활성화 훅에 닿으면 LIT IGNITED 토스트가 뜨고, 워크플로가 에이전트(lit-loop, lit-plan, lit-implement)에게 넘어갑니다. lit-plan은 파일을 고치거나 셸을 실행할 수 없습니다. 에이전트는 lit, litwork, start-work, review-work, wikify 도구를 부르고, 스킬은 ~/.config/opencode/skills에서 불러옵니다. 기록은 프로젝트의 .litopencode/litgoal/과 .litopencode/plans/에 남고, /lit-recap과 다음 세션이 다시 읽습니다. /review-work는 scope, tests, package, security, surface 다섯 레인에서 pass, fail, blocked 판정을 돌려줍니다. 아래 띠에는 같은 경로가 두 호스트에서 어떤 훅을 거치는지 나옵니다. OpenCode 1은 chat.message, command.execute.before, experimental.chat.system.transform, tool.execute.before/after를, OpenCode 2는 세션 훅 prompt, context, compaction과 도구 훅 execute.before/after, 권한 훅 evaluate를 씁니다." /></picture></p>
 

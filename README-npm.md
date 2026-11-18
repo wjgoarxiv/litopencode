@@ -29,7 +29,7 @@ Add `--dry-run` to see what would change before anything is written, or `--yes` 
 lit Build a to-do list in one index.html with no dependencies; check adding and completing items, then leave results and next steps.
 ```
 
-You get an `index.html` to try, and next time `/lit-recap` shows where you left off.
+You get an `index.html` to try, and next time `/lit-adhd` shows what changed and the one thing to do next.
 
 ## What you get
 
@@ -37,7 +37,9 @@ You get an `index.html` to try, and next time `/lit-recap` shows where you left 
 | --- | --- |
 | `lit` or `/lit` | Plan, build, verify and recap a task, with a note at each step. |
 | `lit-plan` → `/start-work` → `/review-work` | Plan, approve, build and review. The planner cannot edit files. |
-| `handoff` · `/lit-recap` | Leave a continuation file for the next session, and read back what is done and what is next. |
+| `handoff` · `/lit-adhd` | Leave a continuation file for the next session, and come back to a short card: what changed, the one thing to do, what to type. `lit adhd recap` reads back each session. |
+| `/ultra-brainstorm` | Ask a hundred or more cheap idea lanes at once, after one question about the count and the cost. |
+| `lit team <goal>` | This session splits the goal, runs a small team of subagents (or worktrees, or herdr panes) and returns one report. |
 | `/litresearch` | Research in rounds with a source for each claim. |
 | `lit` + report or slides | Points you to the deck and document skills, which moved to the separate wjgoarxiv-skills collection. |
 | `/lit-humanizer` | Rewrite stiff English or Korean prose and keep the facts. |

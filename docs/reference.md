@@ -194,11 +194,13 @@ for an approved plan; `/review-work` checks the `DoneClaim` through a five-lane 
 | `/review-work` | Plan review after `lit-plan` or work review after `lit-loop` or `/start-work`, picked from what exists; `/review-work plan` or `/review-work work` forces one. |
 | `/litgoal` | Set and keep the finish line: one goal with checkable criteria on durable state. `lit-loop` and `/start-work` run toward it. |
 | `/lit-brainstorm` | Open a question into options, narrow them to a short list, and hand the pick to `deep-interview` or `lit-plan`. Chat: `lit brainstorm`, `lit brainstorming`, `lit ideation`, `lit ideate`, `lit idea`, `lit ideas`. It never builds. |
+| `/ultra-brainstorm` | Brainstorm at a scale one context cannot hold. It asks once how many cheap idea lanes to launch (100, 300 or a number), with a cost line, then fans them out through OpenCode's `task` tool to `lit-ideator` (helper route, lowest effort, no tools, at most five ideas each), folds them with one reducer per 30 lanes and scores the clusters with one judge. Notes go to `.litopencode/brainstorm/<slug>/`. Without the `task` tool it says BLOCKED. It never builds. Chat: `ultra-brainstorm …`, `lit ultra-brainstorm …`. |
+| `/lit-team` | Run a small team from this session. Type `lit team <goal>`; the session splits the goal and picks how the members run: task-tool subagents for two to six separate slices, batches of task calls for many similar items, git worktrees when slices edit the same files, herdr panes only when `HERDR_ENV=1` and `herdr` is on PATH. It writes one TASK/DELIVERABLE/SCOPE/VERIFY brief per member with its own scratch folder under `.litopencode/team/<slug>/`, checks for stalled members, merges, re-runs every check on the merged tree and answers with one report. No member commits or pushes. A bundled `team.mjs` keeps the packet. |
 | `/lit-hijack` | Port the mechanism in someone else's published work into your own skill or system: capture with provenance, licence gate, gap, source-free spec, separate build, parity proof and report. A bundled `hijack.mjs` decides when each phase is done. Chat: `lit hijack`, `lit hijacking`, `lit 하이재킹`, `lit 하이잭`. |
-| `/lit-adhd`, `/lit-rewind` | Pick up where you left off: a read-only KPI board in six sections (do this now with the exact text to type, at a glance with four bucket counts and an overall bar, milestones, done lately, still to do, don't forget), written in the request's language with `--lang ko` or `en`. Reminders are action-shaped: a session waiting on you, lanes still working, uncommitted changes and unpushed commits, plans untouched for seven days, the `HANDOFF.md` next item. On request (`lit adhd detail`, `lit adhd 자세히`) the earlier brief follows the board: three opening lines (done so far, doing now, next), then earlier sessions with status, real progress or known facts, a roadmap and one recommended step. Finished plans and completed start-work runs count as done, a liveness record marks idle sessions, plans older than seven days stay out, and this worktree's `HANDOFF.md` `Next` item is the fallback step. A bundled `rewind.mjs` collects it. Chat: `lit adhd`, `lit rewind`; then `go` follows the armed step for 30 minutes. `lit approve` and `lit deny` settle a run's parked steps and are optional; `lit cancel` (or `lit 취소`) ends the run from any window. |
+| `/lit-adhd`, `/lit-rewind` | Pick up where you left off. By default a six-line verdict card: what changed since your last look, the one thing to do now with a short fingerprint, the exact text to type, why and what it costs to skip it, at most two more waiting items (a push or release only ever as a question), and which sessions were read. A fixed rule table picks the action, and only commits, finished runs and fully ticked plans count as done. When the records behind the last action move, the card says it is withdrawn. `lit adhd detail` shows the KPI board with the per-session cards, and `lit adhd recap [session]` shows each session's recap; that view replaced lit-recap. Korean by default, `--en` for English. A bundled `rewind.mjs` and `verdict.mjs` collect it. Chat: `lit adhd`, `lit rewind`; then `go` follows the armed step for 30 minutes. `lit approve` and `lit deny` settle a run's parked steps and are optional; `lit cancel` (or `lit 취소`) ends the run from any window. |
 | `/litresearch` or `/lit-research` | Run evidence-backed research with a sequential fallback. |
 | `/lit-handoff` | Create a resumable handoff; exact bare `handoff` also routes here. |
-| `/lit-recap` | Read a concise recap from local ledger and session context. |
+| `/lit-recap` | Moved into lit-adhd: opens its recap view and says so in one line. `lit recap` and `litrecap` do the same. |
 | `/lit-scientific-visualization` | Say where the figure skill went and give its OpenCode install line. |
 | `/lit-korean` | Review prose for natural phrasing without changing meaning. |
 | `/text-neutralization` | Review prose with the neutralization contract. |
@@ -325,13 +327,14 @@ flowchart LR
 - <code>lit-commit</code>
 - <code>lit-crucible</code>
 - <code>lit-brainstorm</code>
+- <code>ultra-brainstorm</code>
+- <code>lit-team</code>
 - <code>lit-hijack</code>
 - <code>lit-adhd</code>
 - <code>lit-init</code>
 - <code>lit-comprehend</code>
 - <code>lit-handoff</code>
 - <code>lit-plan</code>
-- <code>lit-recap</code>
 - <code>lit-scientific-visualization</code>
 - <code>lit-diagram-drawer</code>
 - <code>lit-schematic</code>

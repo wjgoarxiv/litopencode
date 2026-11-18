@@ -16,10 +16,12 @@ Add `lit` to a prompt, or type a slash command. These are the ones you'll use mo
 | `/review-work` | Review a plan after `lit-plan`, or the finished work after `lit-loop` or `/start-work`. It picks from what exists; `/review-work plan` or `/review-work work` forces one. |
 | `lit brainstorm …`, `lit ideation …`, `lit idea …` or `/lit-brainstorm` | Open an unsettled question into options, narrow them to a short list, and hand the pick to `deep-interview` or `lit-plan`. It never builds. |
 | `lit hijack …`, `lit hijacking …` or `/lit-hijack` | Port the mechanism in someone else's published work (posts, articles, repos, PDFs, transcripts) into your own skill or system. It captures sources with provenance, gates the licence, writes a source-free spec, builds apart from the sources and proves the result on the real surface. |
-| `lit adhd …`, `lit rewind …` or `/lit-adhd` | Pick up where you left off. A read-only KPI board of this worktree family: the one step to take now and exactly what to type, done, in-progress, waiting and left counts with an overall bar, milestones, what was done lately, what is left and what not to forget. `go` follows the step; `lit adhd detail` adds the per-session cards. |
+| `lit adhd …`, `lit rewind …` or `/lit-adhd` | Pick up where you left off. A six-line card: what changed since you last looked, the one thing to do now and the exact text to type, why, what else waits, and which sessions it read. `go` follows the step; `lit adhd detail` shows the KPI board and `lit adhd recap` each session's recap. |
+| `ultra-brainstorm …` or `/ultra-brainstorm` | Brainstorm with a hundred or more cheap idea lanes. It asks how many first, with a cost line, then shows a judged top list and lets you pick. It never builds. |
+| `lit team …` or `/lit-team` | Hand the session a goal and it runs a small team for you: it splits the work, briefs each member, checks on them, merges and re-checks, and gives you one report. Members never commit or push. |
 | `/litgoal` | Set and keep the finish line. `lit-loop` and `/start-work` run toward it. |
 | `handoff` or `/lit-handoff` | Leave resumable context: the current result and the next step, for another session. |
-| `/lit-recap` | Read a short recap from local state. |
+| `/lit-recap` | Moved into lit-adhd; it opens the recap view. |
 | `/litresearch` or `/lit-research` | Research with a source for each claim. Helpers work in parallel when OpenCode allows it, and one after another when it doesn't. |
 | `/lit-code`, `/debugging`, `/refactor` | Get coding, debugging, or refactoring guidance. |
 | `/lit-korean` | Improve Korean prose without changing its meaning. |
@@ -154,8 +156,8 @@ Each row shows what a skill produces, how to open it, and what you get.
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-recap.webp" width="240" alt="A read-only summary: done, in progress, blocked, where the evidence is, what comes next." /></td>
-<td><code>lit-recap</code><br /><sub><code>/lit-recap</code></sub></td>
-<td>A read-only summary: done, in progress, blocked, where the evidence is, what comes next.</td>
+<td><code>lit-adhd recap</code><br /><sub><code>/lit-recap</code></sub></td>
+<td>A read-only summary of each session: done, in progress, blocked, what comes next. It used to be lit-recap and is now a view of lit-adhd.</td>
 </tr>
 <tr>
 <td><img src="./assets/skills/lit-comprehend.webp" width="240" alt="An explainer page for agent-written work: intuition first, then the walkthrough, then a short quiz." /></td>
