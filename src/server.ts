@@ -1,4 +1,4 @@
-import { advisoryGoalCheck } from "./goal-pipeline.ts";
+import { advisoryGoalCheck, advisoryLoopGoalCheck } from "./goal-pipeline.ts";
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 import { fileURLToPath } from "node:url";
 import { createChatMessageActivationHook, showActivationToast } from "./activation.ts";
@@ -92,7 +92,8 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         if (eventInput.event.type === "session.idle") {
           await markLiveness(root, eventInput.event.properties.sessionID, "idle");
           // OpenCode 1 has no /goal: an armed goal is checked here, as an advisory, when the turn ends.
-          const line = advisoryGoalCheck(root, eventInput.event.properties.sessionID);
+          const line = advisoryGoalCheck(root, eventInput.event.properties.sessionID)
+            ?? await advisoryLoopGoalCheck(root, eventInput.event.properties.sessionID);
           if (line !== undefined) {
             try {
               await input?.client?.tui?.showToast({ body: { title: "LitOpenCode goal", message: line, variant: "info", duration: 10000 } });
@@ -133,6 +134,13 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           ignitionState.activate(sessionID, skillId);
         },
         extensionsNoticeRoot: defaultOpenCodeConfigRoot(),
+        onLoopGoalQuestion: (line) => {
+          try {
+            void input?.client?.tui?.showToast({ body: { title: "LitOpenCode goal", message: line, variant: "info", duration: 30000 } })?.catch(() => undefined);
+          } catch { // no-excuse-ok: catch -- a missing TUI must never block the activation.
+            // The question still reaches the model as context, and the consent stays recorded.
+          }
+        },
         takeCommandNotice: (sessionID) => {
           const notice = commandNotices.get(sessionID);
           commandNotices.delete(sessionID);

@@ -3,6 +3,10 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
+## Unreleased
+
+- A lit-loop or litwork run with no plan can now get a native `/goal` too. When the prompt names an objective and the project has a test command (`npm test`, `pytest`, `cargo test` or `go test ./...`), LitOpenCode itself shows `Set goal for this lit-loop: /goal <cond>? (yes / no)` as the loop first starts (a toast in the TUI), where the condition is that command exiting 0 with the objective done, so it never depends on the model asking. An exact `yes` on a later prompt arms the goal the way a plan's goal is armed and starts no start-work run; any other prompt drops the question. With no test command, the model asks through the `litwork` tool's new `goal-propose` action after a failing check. A check that already passes, cannot run or is not an allowlisted test command asks nothing. On OpenCode 2 the armed condition becomes the native `/goal`; OpenCode 1 checks it when each turn ends and says once when the check passes and the ledger is complete. Slash commands (`/lit-loop`, `/litwork`) do not ask the hook question yet; they use `goal-propose`.
+
 ## 1.0.47 - 2026-11-18
 
 - A `lit` prompt that asks for more than one kind of work now gets up to three skills at once. LitOpenCode names them on the line after the LIT IGNITED line, picks a companion only for what you asked (a chart, a diagram, a deck, a review, a risky design) and never adds a write-capable skill to a read-only route. A skill from the extras package is used only when it is installed; otherwise you get its one install line. `lit +viz +review …` picks the skills yourself.

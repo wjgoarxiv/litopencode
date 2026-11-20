@@ -82,9 +82,18 @@ Checkpoint as you go so progress is durable and incremental — never batch it t
 # OpenCode goal handoff
 
 OpenCode 2.2 and later has a native /goal. On such a host LitOpenCode sets, resumes and clears
-one for lit-loop, start-work and litwork by itself and prints a "LitOpenCode goal:" line for each
-change. Do not type /goal yourself, and never touch a goal the user made. OpenCode 1 and older
-OpenCode 2 hosts have none; the work then runs on the ledger alone (native-goal-unavailable).
+one for lit-loop, start-work and litwork by itself, after the user's yes, and prints a "LitOpenCode
+goal:" line for each change. Do not type /goal yourself, and never touch a goal the user made.
+OpenCode 1 and older OpenCode 2 hosts have none; the work then runs on the ledger alone
+(native-goal-unavailable) plus an advisory check when each turn ends.
+
+A lit-loop with no plan gets one goal question: "Set goal for this lit-loop: /goal <condition>?
+(yes / no)". When the project has a test command LitOpenCode shows it to the user itself as the
+loop starts, and a "Native goal:" note below says so; then do not ask it again. Otherwise, once one
+failing check proves the objective (after the RED step), call the litwork tool with action
+"goal-propose", check and objective, and end your reply with the line it returns. It prints
+"No goal set: <reason>" and records nothing when the check already passes, cannot run or is not an
+allowlisted test command. Only the user's exact "yes" on a later prompt arms it.
 The durable ledger under .litopencode/litgoal/lit-loop is the evidence record on every host:
 a goal counts as done only when OpenCode's verdict and the ledger both say so, so never
 report done while the ledger is open. If a request refers to a Codex-native goal,

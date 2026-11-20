@@ -205,8 +205,9 @@ export function createNativeGoal(options: { readonly projectRoot: string; readon
     await perform(sessionID, route, action, goal, work);
   }
 
-  /** An armed condition holds when every plan row is ticked and its check exits 0. */
-  function intentMet(plan: string, check: string): boolean {
+  /** An armed condition holds when every plan row is ticked and its check exits 0; a loop goal has no rows. */
+  function intentMet(plan: string | null, check: string): boolean {
+    if (plan === null) return runCheck(projectRoot, check, "", falsifyTimeoutMs).state === "pass";
     try {
       const text = fs.readFileSync(path.resolve(projectRoot, plan), "utf8");
       return planRows(text).open === 0 && runCheck(projectRoot, check, text, falsifyTimeoutMs).state === "pass";
@@ -251,8 +252,8 @@ export function createNativeGoal(options: { readonly projectRoot: string; readon
       return track(sessionID, () => step(sessionID, route, work));
     },
     /** The user said `yes` to the goal question: set the armed condition as the native goal. */
-    arm(sessionID: string): Promise<void> {
-      return track(sessionID, () => step(sessionID, "start-work", ""));
+    arm(sessionID: string, route: NativeGoalRoute = "start-work"): Promise<void> {
+      return track(sessionID, () => step(sessionID, route, ""));
     },
     /** `lit cancel` ended the run: clear the goal only if LitOpenCode owns it. */
     cancel(sessionID: string): Promise<void> {

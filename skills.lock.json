@@ -648,12 +648,12 @@
     },
     "litwork": {
       "skillMd": {
-        "bytes": 20903,
-        "sha256": "042da0a3acbb0c8eb3c008ba7a0d2691384f868be217e4669e1a915853b1e6c0"
+        "bytes": 21344,
+        "sha256": "00c647b93f24776d4d7b326d181c171165f7e5eb638f5a21004013810cea2d45"
       },
       "files": 1,
-      "bytes": 20903,
-      "sha256": "26c55f59d5aef0fe7248b198b79e7cd0021fe36c74f09e05d7af1a3ff284e032"
+      "bytes": 21344,
+      "sha256": "a3a2dda5db84721bb2f1c4dfaef5e2f79101c95d6f6202be9f8ede71209f8471"
     },
     "lsp": {
       "skillMd": {
@@ -801,12 +801,12 @@
     },
     "workflow-loop": {
       "skillMd": {
-        "bytes": 33073,
-        "sha256": "495f300bbcb9237ac85f56be5d37ba6e87455ea39e0970b903f6fd0554c62635"
+        "bytes": 34087,
+        "sha256": "508ac04db8f96d50fa23fb4dcbf34a8536716825e2be08f9c5c483aad33014b6"
       },
       "files": 1,
-      "bytes": 33073,
-      "sha256": "25b7c318009da213bd6938c938c52c740d048a51704e9d877fd40d77a1886405"
+      "bytes": 34087,
+      "sha256": "a02f3ed6db279a89bde3f1e2e7a9b92a32f0bb4523fd8bde1e47ff3c288674e0"
     }
   },
   "pack": [
@@ -991,6 +991,8 @@
     "dist/lit-mark.js",
     "dist/logger.d.ts",
     "dist/logger.js",
+    "dist/loop-goal.d.ts",
+    "dist/loop-goal.js",
     "dist/model-route-policy.d.ts",
     "dist/model-route-policy.js",
     "dist/moved-skills.d.ts",

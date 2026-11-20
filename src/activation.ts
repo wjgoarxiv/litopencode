@@ -24,6 +24,7 @@ import { queryKnowledge } from "./knowledge.ts";
 import { activationDiscipline } from "./activation-probe.ts";
 import { adhdSessionNote } from "./activation-workflow-prompts.ts";
 import { typedPromptReply } from "./adhd-next.ts";
+import { loopGoalContext, offerLoopGoal } from "./loop-goal.ts";
 import { decideReentry, recordActivation, type ActivationMemory } from "./activation-reentry.ts";
 import { startTypedWork, takeCancelNotice, typedStartArgument } from "./start-work-typed.ts";
 import { takePendingExtensionsNotice } from "./extensions-notice.ts";
@@ -131,6 +132,8 @@ export type ChatMessageActivationOptions = {
   readonly trustedInjectedSkill?: (sessionID: string) => string | undefined;
   /** Restores that skill after the root-turn reset; the command already showed its activation toast. */
   readonly onTrustedSkillResume?: (sessionID: string, skillId: string) => void | Promise<void>;
+  /** Shows the lit-loop goal question where the user sees it (a toast); the hook cannot rely on the model to ask it. */
+  readonly onLoopGoalQuestion?: (line: string) => void;
   /** The OpenCode config root where an install leaves its one-time extensions notice for the next session. */
   readonly extensionsNoticeRoot?: string;
   /** Consumes the notice a command hook wrote for this turn (OpenCode 1 drops the parts a command hook adds). */
@@ -357,6 +360,15 @@ export function createChatMessageActivationHook(
     ) {
       const recorded = await recordActivation({ memory: options.activationMemory, projectRoot, sessionID: input.sessionID, mode });
       if (recorded.line !== undefined) activationText = `${activationText}\n${recorded.line}`;
+    }
+
+    // A run route's first activation asks the goal question itself; the model is told it was shown.
+    if ((reentry.kind === "full" || reentry.kind === "continue") && triggerText !== undefined) {
+      const offered = await offerLoopGoal({ projectRoot, sessionID: input.sessionID, mode, text: triggerText, repeat: reentry.kind === "continue" });
+      if (offered !== undefined) {
+        options.onLoopGoalQuestion?.(offered.line);
+        activationText = `${activationText}\n${loopGoalContext(offered.line)}`;
+      }
     }
 
     output.parts.push({

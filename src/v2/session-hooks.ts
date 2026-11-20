@@ -8,6 +8,7 @@
 import { fileURLToPath } from "node:url";
 import { typedPromptReply } from "../adhd-next.ts";
 import { proposeGoal } from "../goal-pipeline.ts";
+import { loopGoalContext, offerLoopGoal } from "../loop-goal.ts";
 import { savedPlanStop } from "../commands.ts";
 import { formatSavedPlanNotice, parsePlanSaveArgument, persistApprovedPlan, PlanScopeError } from "../durable-plan.ts";
 import { createActivationMemory, decideReentry, recordActivation } from "../activation-reentry.ts";
@@ -250,7 +251,7 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     );
     if (typed !== undefined) {
       state.turn.push(typed.text);
-      if (typed.goalCondition !== undefined) void options.nativeGoal?.arm(event.sessionID);
+      if (typed.goalCondition !== undefined) void options.nativeGoal?.arm(event.sessionID, typed.goalRoute);
       if (typed.kind === "cancel") void options.nativeGoal?.cancel(event.sessionID);
       if (typed.kind === "cancel" && /cancelled the start-work run/u.test(typed.text)) {
         appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode", message: "start-work run cancelled", variant: "warning", duration: 8000 });
@@ -321,6 +322,12 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     });
     if (reentry.kind === "continue") {
       state.turn.push(reentry.text);
+      // A repeated lit asks again only when this session's earlier goal has closed.
+      const again = await offerLoopGoal({ projectRoot: options.projectRoot, sessionID: event.sessionID, mode, text: input, repeat: true });
+      if (again !== undefined) {
+        appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode goal", message: again.line, variant: "info", duration: 15000 });
+        state.turn.push(loopGoalContext(again.line));
+      }
       event.metadata = { ...(event.metadata ?? {}), litopencode: { mode: reentry.mode, trigger, source: "prompt", reentry: "continue" } };
       options.onActivation?.(event.sessionID, reentry.mode);
       return;
@@ -330,6 +337,14 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     if (reentry.kind !== "confirm" && mode !== "lit-handoff" && mode !== "lit-scientific-visualization") {
       const recorded = await recordActivation({ memory: activationMemory, projectRoot: options.projectRoot, sessionID: event.sessionID, mode });
       if (recorded.line !== undefined) activation = `${activation}\n${recorded.line}`;
+    }
+    // A run route's first activation asks the goal question itself, on the TUI notice row; the model is told it was shown.
+    if (reentry.kind === "full") {
+      const offered = await offerLoopGoal({ projectRoot: options.projectRoot, sessionID: event.sessionID, mode, text: input });
+      if (offered !== undefined) {
+        appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode goal", message: offered.line, variant: "info", duration: 15000 });
+        activation = `${activation}\n${loopGoalContext(offered.line)}`;
+      }
     }
     state.activation = activation;
     event.metadata = {

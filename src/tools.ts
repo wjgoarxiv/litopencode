@@ -6,6 +6,7 @@ import { actionFromArgs, deniedToolResultFromArgs, projectRootFromContext, summa
 import type { ToolDefinition, ToolResult } from "@opencode-ai/plugin";
 import { LifecycleConflictError, createBoundedAuthorityLifecycle } from "./bounded-authority.ts";
 import { createRuntimePaths } from "./state.ts";
+import { hasPendingConsent, proposeLoopGoal, readIntent, goalStatus } from "./goal-pipeline.ts";
 import { isLaneResult, isReviewLane, laneResults, reviewLanes } from "./tui/mission-looks.ts";
 import { loadConfig } from "./config.ts";
 import {
@@ -17,7 +18,7 @@ import {
 } from "./knowledge.ts";
 
 const litActions = ["activate", "status"] as const;
-const litworkActions = ["start", "status"] as const;
+const litworkActions = ["start", "status", "goal-propose"] as const;
 const startWorkActions = ["start", "status"] as const;
 const reviewWorkActions = ["review", "status", "lane"] as const;
 const wikifyActions = ["capture", "save", "review", "query", "status"] as const;
@@ -95,9 +96,11 @@ export const litTool = tool({
 }) as unknown as ToolDefinition;
 
 export const litworkTool = tool({
-  description: "Start or inspect a durable loop only when the user asks for persistent tracking or the task needs multi-turn resumption; do not call for bounded work.",
+  description: "Start or inspect a durable loop only when the user asks for persistent tracking or the task needs multi-turn resumption; do not call for bounded work. The goal-propose action turns one failing check into the lit-loop goal question.",
   args: {
-    action: actionSchema("LitOpenCode work action. Supported values: start, status.")
+    action: actionSchema("LitOpenCode work action. Supported values: start, status, goal-propose."),
+    check: actionSchema("goal-propose only: the failing test command that proves the objective, for example `npm test`."),
+    objective: actionSchema("goal-propose only: the objective the loop should finish, in one line.")
   },
   async execute(args, context): Promise<ToolResult> {
     const denied = deniedToolResultFromArgs(args, "litwork", litworkActions);
@@ -120,6 +123,20 @@ export const litworkTool = tool({
             command: "litwork",
             action
           }
+        };
+      }
+      case "goal-propose": {
+        const root = projectRootFromContext(context);
+        const check = typeof args.check === "string" ? args.check : "";
+        const objective = typeof args.objective === "string" ? args.objective : "";
+        const open = readIntent(root, context.sessionID) !== undefined || hasPendingConsent(root);
+        const asked = open
+          ? { line: goalStatus.skipped("a goal or a goal question is already open") }
+          : proposeLoopGoal({ projectRoot: root, check, objective, sessionID: context.sessionID });
+        return {
+          title: "LitOpenCode lit-loop goal question",
+          output: asked.line,
+          metadata: { command: "litwork", action, asked: "consent" in asked }
         };
       }
       case "status": {

@@ -1,4 +1,4 @@
-import { answerConsent, consentAnswer, liveConsent, updateIntent } from "./goal-pipeline.ts";
+import { answerConsent, consentAnswer, dropLoopConsent, liveConsent, updateIntent } from "./goal-pipeline.ts";
 import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -174,6 +174,8 @@ export type TypedPromptReply = {
   readonly continued: boolean;
   /** Set when the user's `yes` armed a goal condition; OpenCode 2 sets it as its native `/goal`. */
   readonly goalCondition?: string;
+  /** Set when that goal belongs to a lit-loop run rather than a start-work plan. */
+  readonly goalRoute?: "lit-loop";
 };
 
 /**
@@ -192,8 +194,29 @@ export async function typedPromptReply(
 ): Promise<TypedPromptReply | undefined> {
   // The plan-approval answer. `yes` starts the plan's start-work run through the same typed start path as
   // `go` and `start-work <plan>` (same grants), then arms the goal; a refused start arms nothing.
-  const asked = consentAnswer(text) === undefined ? undefined : liveConsent(projectRoot, sessionID);
-  if (asked !== undefined) {
+  const live = liveConsent(projectRoot, sessionID);
+  if (live?.kind === "loop") {
+    // The lit-loop goal question: `yes` arms its goal and starts nothing; `no` and any other prompt drop it.
+    const consent = answerConsent(projectRoot, sessionID, text, goalHost === "advisory");
+    if (consent === undefined) dropLoopConsent(projectRoot, sessionID);
+    else {
+      const mode = memory?.active(sessionID) === "lit-task" ? "lit-task" : "lit-loop";
+      const first = consent.answer === "no"
+        ? `The user answered no to the lit-loop goal question, so no goal is set. Make the first line of your reply exactly \`${consent.line}\`, then go on with the lit-loop work.`
+        : consent.intent === undefined
+          ? `The goal could not be armed. Make the first line of your reply exactly \`${consent.line}\`, then go on with the lit-loop work.`
+          : `The user approved the lit-loop goal with yes. Make the first line of your reply exactly \`${consent.line}\`, then go on with the lit-loop work. Do not run /goal yourself.`;
+      return {
+        text: first,
+        mode,
+        kind: "goal",
+        continued: true,
+        ...(consent.intent === undefined || goalHost !== "native" ? {} : { goalCondition: consent.intent.condition, goalRoute: "lit-loop" as const })
+      };
+    }
+  }
+  const asked = consentAnswer(text) === undefined || live?.kind === "loop" ? undefined : live;
+  if (asked !== undefined && asked.plan !== null) {
     const start = consentAnswer(text) === "yes"
       ? await startTypedWork({ projectRoot, sessionID, plan: asked.plan, ...(boundedAuthority === undefined ? {} : { options: boundedAuthority }) })
       : undefined;
