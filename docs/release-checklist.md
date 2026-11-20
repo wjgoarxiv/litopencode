@@ -6,7 +6,7 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
-## 1.0.47 Release Scope
+## 1.0.48 Release Scope
 
 - `lit <prompt>` plans up to three skills at once; `ultra-brainstorm` fans out 100 or more cheap idea lanes behind one launch question with a measured cost range; `lit-team` makes the session the orchestrator; one exact `yes` at plan save starts the start-work run and sets the goal (native `/goal` on OpenCode 2, an advisory check on OpenCode 1); `lit adhd` answers with a Korean verdict card and absorbs `lit-recap` (the old words still open the recap view). Windows host detection and the browser-drive probe find commands whatever the PATH key's case.
 
