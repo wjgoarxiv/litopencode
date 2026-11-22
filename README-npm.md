@@ -1,13 +1,13 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: seven armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: seven armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up." /></picture></p>
 
 # LitOpenCode
 
 **LitOpenCode is an add-on for OpenCode. It makes the agent check its own work before it says "done", and leaves a note so the next session starts where this one stopped.**
 
 <p align="center">
-<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/docs/assets/readme/badge-version.svg" alt="1.0.48" /></a>
+<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/docs/assets/readme/badge-version.svg" alt="1.0.49" /></a>
 <a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://img.shields.io/npm/dm/@litfamily/litopencode?label=downloads&color=D7F75B" alt="npm downloads per month" /></a>
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
+<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub stars" /></a>
 </p>
 
@@ -87,9 +87,9 @@ npm uninstall -g @litfamily/litopencode
 ## More
 
 - [Guide on GitHub](https://github.com/wjgoarxiv/litopencode/blob/main/docs/guide.md): install options, automatic handoff, troubleshooting and removal.
-- [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/docs/reference.md)
-- [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/CHANGELOG.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/docs/privacy.md)
-- [LitFamily hub](https://github.com/wjgoarxiv/litfamily) · [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/LICENSE) · [Trademark policy](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/TRADEMARK.md) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/docs/assets/readme/JetBrainsMono-OFL.txt)
+- [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/docs/reference.md)
+- [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/CHANGELOG.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/docs/privacy.md)
+- [LitFamily hub](https://github.com/wjgoarxiv/litfamily) · [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/LICENSE) · [Trademark policy](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/TRADEMARK.md) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.49/docs/assets/readme/JetBrainsMono-OFL.txt)
 
 <details>
 <summary>Copy ASCII logo</summary>

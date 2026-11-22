@@ -3,6 +3,10 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
+## 1.0.49 - 2026-11-22
+
+- `ultra-brainstorm` idea lanes return their ideas again. `lit-ideator` ran with one step, and OpenCode adds a "maximum steps reached" instruction to an agent's last step that overrides the brief and asks for a status summary, so every lane answered with that summary instead of its JSON. The agent now has three steps; with every tool off it still ends after its first reply.
+
 ## 1.0.48 - 2026-11-21
 
 - A lit-loop or litwork run with no plan can now get a native `/goal` too. When the prompt names an objective and the project has a test command (`npm test`, `pytest`, `cargo test` or `go test ./...`), LitOpenCode itself shows `Set goal for this lit-loop: /goal <cond>? (yes / no)` as the loop first starts (a toast in the TUI), where the condition is that command exiting 0 with the objective done, so it never depends on the model asking. An exact `yes` on a later prompt arms the goal the way a plan's goal is armed and starts no start-work run; any other prompt drops the question. With no test command, the model asks through the `litwork` tool's new `goal-propose` action after a failing check. A check that already passes, cannot run or is not an allowlisted test command asks nothing. On OpenCode 2 the armed condition becomes the native `/goal`; OpenCode 1 checks it when each turn ends and says once when the check passes and the ledger is complete. Slash commands (`/lit-loop`, `/litwork`) do not ask the hook question yet; they use `goal-propose`.
