@@ -215,9 +215,12 @@ test("README motion resources have exact approved bytes and are reachable from b
 test("README places one cover, then the title, one-sentence pitch, quick start and a first task", async () => {
   for (const file of readmes) {
     const content = await text(file);
-    const intro = content.indexOf(isEnglish(file)
-      ? "**LitOpenCode is a workflow plugin for OpenCode. Add `lit` to a prompt and the work gets planned, built, checked and written down, so the next session knows where you stopped.**"
-      : "**LitOpenCode는 OpenCode용 워크플로 플러그인입니다. 프롬프트에 `lit`만 붙이면 계획하고, 만들고, 확인하고, 기록까지 남겨서 다음 세션이 어디서 멈췄는지 바로 압니다.**");
+    const intro = content.indexOf({
+      "README.md": "**LitOpenCode is an add-on for OpenCode. It makes the agent check its own work before it says \"done\", and leaves a note so the next session starts where this one stopped.**",
+      "README-Ko-KR.md": "**LitOpenCode는 OpenCode에 붙여 쓰는 추가 기능입니다. 에이전트가 \"다 됐어요\"라고 말하기 전에 자기 작업을 직접 확인하게 하고, 다음 세션이 이번 세션이 멈춘 곳에서 바로 시작하도록 기록을 남깁니다.**",
+      "README-npm.md": "**LitOpenCode is a workflow plugin for OpenCode. Add `lit` to a prompt and the work gets planned, built, checked and written down, so the next session knows where you stopped.**",
+      "README-npm-Ko-KR.md": "**LitOpenCode는 OpenCode용 워크플로 플러그인입니다. 프롬프트에 `lit`만 붙이면 계획하고, 만들고, 확인하고, 기록까지 남겨서 다음 세션이 어디서 멈췄는지 바로 압니다.**"
+    }[file]);
     const quickStart = content.indexOf(isEnglish(file) ? "## Quick start" : "## 빠르게 시작하기");
     const install = content.indexOf("npm exec --package @litfamily/litopencode@latest -- litopencode install\n", quickStart);
     const firstTask = content.indexOf(String.fromCharCode(96).repeat(3) + "text\nlit ");

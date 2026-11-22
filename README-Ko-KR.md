@@ -2,7 +2,7 @@
 
 # LitOpenCode
 
-**LitOpenCode는 OpenCode용 워크플로 플러그인입니다. 프롬프트에 `lit`만 붙이면 계획하고, 만들고, 확인하고, 기록까지 남겨서 다음 세션이 어디서 멈췄는지 바로 압니다.**
+**LitOpenCode는 OpenCode에 붙여 쓰는 추가 기능입니다. 에이전트가 "다 됐어요"라고 말하기 전에 자기 작업을 직접 확인하게 하고, 다음 세션이 이번 세션이 멈춘 곳에서 바로 시작하도록 기록을 남깁니다.**
 
 <p align="center">
 <a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.48" /></a>
@@ -11,25 +11,30 @@
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub 스타" /></a>
 </p>
 
+OpenCode에 기능 하나를 부탁하면 코드를 쓰고 끝났다고 말합니다. 그런데 다음 날 보니 테스트는 한 번도 돌지 않았습니다. 새 세션을 열면 프로젝트 설명을 처음부터 다시 해야 합니다. LitOpenCode가 있으면 같은 요청에 `lit`만 붙이면 됩니다. 에이전트는 코드를 먼저 읽고, 고치고, 그 부분을 다루는 테스트를 돌린 다음, 무엇을 확인했고 무엇은 확인하지 못했는지 알려 줍니다. 오래 걸릴 일이면 `lit loop`라고 쓰세요. 이 작업에서 "끝났다"가 무슨 뜻인지 확인 항목으로 `.litopencode/litgoal/`에 먼저 적고, 항목이 모두 통과할 때까지 이어 갑니다. 작업을 멈출 때 `handoff`라고 치면 에이전트가 `HANDOFF.md`에 기록을 남기고, 다음 세션은 그 기록을 읽고 이어서 합니다.
+
 <p align="center">
 <a href="./docs/guide-Ko-KR.md"><img src="./docs/assets/readme/lucide-book-open.svg" width="16" alt="" /> 사용 안내</a> &nbsp; <a href="./docs/screens-Ko-KR.md"><img src="./docs/assets/readme/lucide-play.svg" width="16" alt="" /> 화면</a> &nbsp; <a href="./docs/skills-Ko-KR.md">스킬</a> &nbsp; <a href="./LICENSE"><img src="./docs/assets/readme/lucide-shield-check.svg" width="16" alt="" /> MIT</a> &nbsp; <a href="./README.md">English</a>
 </p>
 
 <p align="center"><img src="./docs/assets/demo.webp" width="960" alt="LIT 마크와 함께 LitOpenCode, The lit workflow for OpenCode라고 적힌 타이틀이 나옵니다. 이어서 작은 프로젝트 ~/greet에서 OpenCode가 열리고, 단계마다 번호 붙은 이름표가 지금 일어나는 일을 짚어 줍니다. 1, “lit”으로 시작: OpenCode에 &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot;를 입력합니다. 2, LitOpenCode가 켜짐: LIT 마크와 &quot;🔥 LIT IGNITED · lit-task 🔥&quot;가 적힌 알림이 뜹니다. 3, 지도에 WORK가 켜짐: 아래쪽 LIT 상태 카드에 🔥 LIT · lit-task가 뜨고, 워크플로 지도 interview – plan – WORK – review – done에서 interview와 plan은 건너뛴 단계로 표시되고 WORK에 불이 들어옵니다. 그 아래에 lit-task 스킬 칩이 붙습니다. 4, 테스트와 함께 고침: test/greet.test.js에 node greet.js --shout Ada를 실행해 HELLO, ADA!를 기대하는 테스트가 추가됩니다. 5, 지금 도는 작업이 보임: npm test가 도는 동안 카드의 지도 옆에 bash · 0:00이 붙습니다. 6, 테스트가 정말 통과함: 테스트 결과에 ok 1이 찍히고, node greet.js --shout Ada가 HELLO, ADA!를 출력합니다. 7, 카드가 가라앉음: 요약에 Done, Added a test, npm test passes가 적히고, 카드는 ○ IDLE로 바뀌어 켜진 단계 없이 lit-task 칩만 회색으로 남습니다. 영상은 LitOpenCode 마크와 설치 명령으로 끝납니다." /></p> <!-- demo-gif -->
 
-> [!TIP]
-> 명령 한 줄로 설치하고 OpenCode를 다시 시작한 뒤 프롬프트에 `lit`을 붙이세요. 설치 명령과 첫 작업은 [빠르게 시작하기](#빠르게-시작하기)에 있습니다.
+## 두 가지 사용법
 
-OpenCode 2.2는 세션 하나에 목표를 둘 수 있지만, 무엇을 정했고 확인했고 남겼는지는 다음 세션으로 넘겨 주지 않습니다. 그래서 대화가 압축되거나 터미널을 닫으면 그 내용을 다시 맞춰 봐야 합니다. LitOpenCode는 `lit` 작업마다 같은 순서(정리, 계획, 구현, 확인, 다음 할 일 기록)를 밟고, 그 기록을 프로젝트 안 `.litopencode/litgoal/`에 남겨 다음 세션이 읽게 합니다.
+**간단하게.** 설치한 뒤 OpenCode를 다시 시작하면 `lit-loop` 에이전트로 열립니다. 다른 에이전트가 떠 있으면 Tab으로 바꾸면 됩니다. 평소처럼 요청을 쓰고 앞이나 끝에 `lit`을 붙이세요. 예: `src/dates.js의 날짜 파싱 버그 고쳐줘 lit`. `🔥 LIT IGNITED` 알림이 뜨고, 에이전트가 버그를 고치고 테스트를 돌린 뒤 확인한 내용을 알려 줍니다. `lit-plan` 에이전트에서는 같은 문장을 계획 요청으로 받으니, 무언가를 만들 때는 `lit-loop`에 두세요.
 
-```text
-저녁:  lit add a --shout flag that prints the greeting in capitals, with a test
-       → 테스트와 함께 플래그가 추가되고, 작업 내용이 .litopencode/litgoal/에 남습니다
-아침:  /lit-adhd
-       → 밤사이 바뀐 것, 지금 할 일 하나, 그대로 입력할 말을 알려 줍니다
-```
+**본격적으로.** 큰 작업은 한 단계씩 나아갑니다. 각 단계의 결과를 다음 단계가 이어받고, 필요 없는 단계는 건너뛰면 됩니다.
 
-기능 하나, 계획을 세운 리팩터링, 며칠 이어 가는 조사, 메모로 만드는 보고서나 발표자료처럼 여러 번에 걸쳐 하는 일에 어울립니다. 모델 실행, 권한 확인, 모델 제공자 로그인은 여전히 OpenCode가 맡고, 다른 LitFamily 제품은 필요 없습니다.
+| 단계 | 입력 | 하는 일 |
+| --- | --- | --- |
+| 1. 넓게 보기 | `/lit-brainstorm <질문>` | 선택지를 많이 낸 뒤 점수를 매겨 몇 개로 추립니다 |
+| 2. 구체화 | `/deep-interview <아이디어>` | 저장소를 먼저 읽고, 코드로는 답이 안 나오는 것만 목표가 분명해질 때까지 묻습니다 |
+| 3. 계획 | `/lit-crucible <접근법>` 또는 `/lit-plan <작업>` | crucible은 접근법의 약점을 먼저 찌르고 살아남은 내용을 lit-plan에 넘깁니다. lit-plan은 확인 목록을 쓰고 승인을 기다립니다 |
+| 4. 실행 | 계획을 승인한 뒤 `/start-work`, 또는 `/lit-loop <작업>` | 테스트와 확인을 거치며 한 조각씩 진행합니다 |
+| 5. 검토 | `/review-work` | 다섯 갈래로 살펴보고 가장 심각한 문제부터 알려 줍니다 |
+| 6. 넘겨주기 | `handoff` | 결정한 것과 다음 할 일을 `HANDOFF.md`에 남깁니다 |
+
+설치는 명령 한 줄, `npm exec --package @litfamily/litopencode@latest -- litopencode install`이면 됩니다. 그다음 OpenCode를 다시 시작하세요. 처음 써 보는 전체 과정은 [빠르게 시작하기](#빠르게-시작하기)에 있습니다.
 
 | 하고 싶은 일 | 바로 가기 |
 | --- | --- |
@@ -106,11 +111,6 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 | `/litresearch` | 여러 차례에 걸쳐 조사하고, 주장마다 출처와 아직 불확실한 점을 함께 남깁니다 |
 | `/lit-humanizer` | 딱딱한 영어나 한국어 문장을 다시 씁니다. 사실관계와 글쓴이의 목소리, 꼭 필요한 한정 표현은 그대로 둡니다 |
 | `/rules` | 저장소 규칙을 세션마다 한 번, 파일을 고칠 때 다시 읽어 옵니다 |
-
-```text
-설정 화면에 다크 모드 토글을 추가하고 기존 테스트가 계속 통과하게 해줘 lit
-lit research 쓰기가 많은 로컬 앱에서 가장 중요한 SQLite 설정은 무엇일까?
-```
 
 이 밖에도 디버깅, 리팩터링, 코드 정리, 커밋, 언어 서버, 화면 작업, 브라우저 자동화, 프로젝트 위키가 있습니다. 모든 스킬의 결과 그림은 [스킬 갤러리](./docs/skills-Ko-KR.md)에서 볼 수 있습니다.
 

@@ -2,7 +2,7 @@
 
 # LitOpenCode
 
-**LitOpenCode is a workflow plugin for OpenCode. Add `lit` to a prompt and the work gets planned, built, checked and written down, so the next session knows where you stopped.**
+**LitOpenCode is an add-on for OpenCode. It makes the agent check its own work before it says "done", and leaves a note so the next session starts where this one stopped.**
 
 <p align="center">
 <a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="./docs/assets/readme/badge-version.svg" alt="1.0.48" /></a>
@@ -11,25 +11,30 @@
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub stars" /></a>
 </p>
 
+You ask OpenCode for a feature. It writes the code and says it is finished, and a day later you find the tests never ran. You open a new session and explain the whole project again. With LitOpenCode you add `lit` to the same request. The agent reads the code first, makes the change, runs the tests that cover it, and ends by telling you what it checked and what it could not. For a longer job, write `lit loop`: it first writes down what "finished" means as checks in `.litopencode/litgoal/` and keeps going until they pass. When you stop, type `handoff`. The agent saves a note in `HANDOFF.md`, and the next session reads it and carries on.
+
 <p align="center">
 <a href="./docs/guide.md"><img src="./docs/assets/readme/lucide-book-open.svg" width="16" alt="" /> Guide</a> &nbsp; <a href="./docs/screens.md"><img src="./docs/assets/readme/lucide-play.svg" width="16" alt="" /> Screens</a> &nbsp; <a href="./docs/skills.md">Skills</a> &nbsp; <a href="./LICENSE"><img src="./docs/assets/readme/lucide-shield-check.svg" width="16" alt="" /> MIT</a> &nbsp; <a href="./README-Ko-KR.md">한국어</a>
 </p>
 
 <p align="center"><img src="./docs/assets/demo.webp" width="960" alt="A title card with the LIT mark reads LitOpenCode, The lit workflow for OpenCode. Then OpenCode opens in a small project, ~/greet, and a numbered label names each step as it happens. 1, Start with “lit”: the prompt &quot;lit add a --shout flag that prints the greeting in capitals, with a test&quot; is typed into OpenCode. 2, LitOpenCode lights up: a toast with the LIT mark reads &quot;🔥 LIT IGNITED · lit-task 🔥&quot;. 3, The map lights WORK: the LIT status card at the bottom reads 🔥 LIT · lit-task, and its workflow map interview – plan – WORK – review – done marks interview and plan as skipped and lights WORK, with a lit-task skill chip below. 4, The fix comes with a test: test/greet.test.js gains a test that runs node greet.js --shout Ada and expects HELLO, ADA!. 5, It shows what runs now: while npm test runs, the card adds bash · 0:00 beside the map. 6, The tests really pass: the test run reports ok 1 and node greet.js --shout Ada prints HELLO, ADA!. 7, The card settles: the summary says Done, Added a test and npm test passes, and the card switches to ○ IDLE with no step lit and lit-task in grey. The film ends on the LitOpenCode mark and the install command." /></p> <!-- demo-gif -->
 
-> [!TIP]
-> Install with one command, restart OpenCode, then add `lit` to a prompt. [Quick start](#quick-start) has the command and a first task.
+## Two ways to use it
 
-OpenCode 2.2 can hold a goal for one session, but nothing carries what you decided, checked and left open into the next. After compaction or a closed terminal, you piece it together again. LitOpenCode runs each `lit` task through the same steps (frame, plan, build, check, write down the next step) and keeps notes in `.litopencode/litgoal/`, where the next session reads them.
+**The easy way.** Restart OpenCode after you install. It opens on the `lit-loop` agent, and Tab switches agents if another one is showing. Write your request as usual and put `lit` at the start or the end, for example `fix the date parsing bug in src/dates.js lit`. A toast reads `🔥 LIT IGNITED`, then the agent fixes the bug, runs the tests and tells you what it checked. The `lit-plan` agent treats the same line as a planning request, so stay on `lit-loop` for building.
 
-```text
-Evening:  lit add a --shout flag that prints the greeting in capitals, with a test
-          → the flag lands with its test, and the run is written to .litopencode/litgoal/
-Morning:  /lit-adhd
-          → what changed overnight, the one thing to do now, and what to type
-```
+**The full workflow.** For a bigger job, go one step at a time. Each step hands its result to the next, and you can skip any step you do not need.
 
-It suits work that spans several sittings: a feature, a planned refactor, research you come back to, or a report or deck built from your notes. OpenCode still runs the model, asks for permission and keeps your provider login, and LitOpenCode needs no other LitFamily product.
+| Step | Type | What happens |
+| --- | --- | --- |
+| 1. Explore | `/lit-brainstorm <question>` | Many options, scored and cut to a short list |
+| 2. Clarify | `/deep-interview <idea>` | The agent reads the repository, then asks what the code cannot answer until the goal is clear |
+| 3. Plan | `/lit-crucible <approach>` or `/lit-plan <task>` | Crucible attacks the approach first and hands what survives to lit-plan; lit-plan writes a checklist and waits for your yes |
+| 4. Build | `/start-work` once you approve the plan, or `/lit-loop <task>` | The work goes one slice at a time, with tests and checks |
+| 5. Review | `/review-work` | Five angles on the change, worst findings first |
+| 6. Hand off | `handoff` | Decisions and the next step, saved to `HANDOFF.md` |
+
+Install with one line, `npm exec --package @litfamily/litopencode@latest -- litopencode install`, then restart OpenCode. [Quick start](#quick-start) has the full first run.
 
 | I want to… | Go to |
 | --- | --- |
@@ -106,11 +111,6 @@ Each route leaves a note you can read later, so a task can stop and resume acros
 | `/litresearch` | Works in rounds and keeps a source next to each claim, along with what is still uncertain |
 | `/lit-humanizer` | Rewrites stiff English or Korean prose, keeping the facts, the writer's voice and the qualifiers that matter |
 | `/rules` | Loads the repository rules, once per session and again for files you edit |
-
-```text
-Add a dark-mode toggle to the settings page and keep the existing tests passing lit
-lit research Which SQLite settings matter most for a write-heavy local app?
-```
 
 There is more: debugging, refactoring, code cleanup, commits, language servers, interface work, browser automation and a project wiki. The [skills gallery](./docs/skills.md) shows every skill with a picture of what it makes.
 
