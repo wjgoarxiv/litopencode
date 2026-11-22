@@ -1,6 +1,7 @@
 import { activationBanner } from "./activation-probe.ts";
 import { adhdViewForPrompt } from "./activation-routing.ts";
 import { renamedSkillId, skillRenameNote } from "./skill-renames.ts";
+import { questionForModel, questionForScreen } from "./goal-guide.ts";
 import { proposeGoal } from "./goal-pipeline.ts";
 import type { Hooks } from "@opencode-ai/plugin";
 import {
@@ -688,14 +689,14 @@ export function createCommandActivationHook(
           // The saved plan becomes this session's next step, so a bare `go` starts it through the typed path.
           const goArmed = await writeNext(projectRoot, { kind: "plan", target: saved.relativePath, at: Date.now(), sessionID: input.sessionID })
             .then(() => true, () => false);
-          const asked = proposeGoal({ projectRoot, plan: saved.relativePath, planText: saved.text, sessionID: input.sessionID }).line;
-          options.onPlanQuestion?.(asked);
+          const asked = proposeGoal({ projectRoot, plan: saved.relativePath, planText: saved.text, sessionID: input.sessionID });
+          options.onPlanQuestion?.(questionForScreen(asked));
           output.parts.push({
             id: "prt_litopencode_start_work_plan_saved",
             sessionID: input.sessionID,
             messageID: "msg_litopencode_start_work_plan_saved",
             type: "text",
-            text: `${formatSavedPlanNotice(saved, replayed, goArmed)}\n${savedPlanStop}\n${asked}`,
+            text: `${formatSavedPlanNotice(saved, replayed, goArmed)}\n${savedPlanStop}\n${questionForModel(asked)}`,
             synthetic: true,
             metadata: {
               litopencode: {

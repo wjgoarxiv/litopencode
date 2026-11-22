@@ -16,6 +16,7 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { answerChoices, type GoalQuestionKind } from "./goal-guide.ts";
 import { ledgerGoalDone } from "./native-goal-ledger.ts";
 import { containsSecret } from "./secret-shapes.ts";
 
@@ -27,10 +28,10 @@ export const goalStallChecks = 12;
 
 /** The fixed status lines. The hooks print these and nothing else. */
 export const goalStatus = Object.freeze({
-  asked: (condition: string) => `Approve plan, start work and set goal: /goal ${condition}? (yes / edit / no)`,
-  askedNoGoal: (reason: string) => `Approve plan and start work? (yes / no)\nNo goal set: ${reason}`,
+  asked: (condition: string) => `Approve plan, start work and set goal: /goal ${condition}? ${answerChoices("plan-goal")}`,
+  askedNoGoal: (reason: string) => `Approve plan and start work? ${answerChoices("plan-start")}\nNo goal set: ${reason}`,
   startRefused: (reason: string) => `Work not started and no goal set: ${reason}`,
-  loopAsked: (condition: string) => `Set goal for this lit-loop: /goal ${condition}? (yes / no)`,
+  loopAsked: (condition: string) => `Set goal for this lit-loop: /goal ${condition}? ${answerChoices("loop")}`,
   skipped: (reason: string) => `No goal set: ${reason}`,
   armed: (id: string) => `LitOpenCode goal armed [lit:${id}]; OpenCode 2 sets it as /goal now.`,
   advisory: (id: string) => `LitOpenCode goal armed [lit:${id}] as advisory: this OpenCode has no /goal, so LitOpenCode checks the condition when each turn ends.`,
@@ -234,7 +235,7 @@ export function proposeGoal(input: {
   readonly now?: number;
   readonly timeoutMs?: number;
   readonly run?: CheckRunner;
-}): { readonly line: string; readonly consent?: GoalConsent } {
+}): { readonly line: string; readonly kind?: GoalQuestionKind; readonly consent?: GoalConsent } {
   const built = buildGoal(input);
   const consent: GoalConsent = {
     schema: "litopencode.goal-consent/v1",
@@ -252,7 +253,9 @@ export function proposeGoal(input: {
   } catch { // no-excuse-ok: catch -- an unwritable state folder means no question, never a failed save.
     return { line: goalStatus.skipped(".litopencode/goal could not be written") };
   }
-  return { line: built.ok ? goalStatus.asked(built.condition) : goalStatus.askedNoGoal(built.reason), consent };
+  return built.ok
+    ? { line: goalStatus.asked(built.condition), kind: "plan-goal", consent }
+    : { line: goalStatus.askedNoGoal(built.reason), kind: "plan-start", consent };
 }
 
 function consentHash(condition: string, plan: string | null): string {
@@ -273,7 +276,7 @@ export function proposeLoopGoal(input: {
   readonly timeoutMs?: number;
   readonly run?: CheckRunner;
   readonly falsifyNow?: boolean;
-}): { readonly line: string; readonly consent?: GoalConsent } {
+}): { readonly line: string; readonly kind?: GoalQuestionKind; readonly consent?: GoalConsent } {
   const objective = normalizeLoopObjective(input.objective);
   const check = input.check.trim();
   if (objective === "") return { line: goalStatus.skipped("name what the loop should finish") };
@@ -302,7 +305,7 @@ export function proposeLoopGoal(input: {
   } catch { // no-excuse-ok: catch -- an unwritable state folder means no question.
     return { line: goalStatus.skipped(".litopencode/goal could not be written") };
   }
-  return { line: goalStatus.loopAsked(built.condition), consent };
+  return { line: goalStatus.loopAsked(built.condition), kind: "loop", consent };
 }
 
 /** A goal question is open for any session: fresh, so a stale file never blocks a new one. */

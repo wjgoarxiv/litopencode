@@ -19,6 +19,9 @@ import { createFakeV2Context, until } from "../test-support/opencode-v2-fake.mjs
 // when the project has a test command. The user's exact yes arms the goal and starts no start-work run.
 
 const exits = (status) => () => ({ status, signal: null, error: undefined });
+// A toast or notice carries the question line, then the plain answer guide under it.
+const firstLine = (text) => text.split("\n")[0];
+const LOOP_GUIDE = "  yes  → sets this goal for the lit-loop\n  no   → keeps working without a goal\n  Type the word alone.";
 const QUESTION = /^Set goal for this lit-loop: \/goal `npm test` exits 0 and this is done: (.+) \[lit:[0-9a-f]{8}\]\? \(yes \/ no\)$/u;
 
 async function withDir(fn, { test: script = "node --test" } = {}) {
@@ -159,7 +162,8 @@ test("OpenCode 1: a lit-loop's first activation shows the question once, and yes
     const first = chatOutput("lit loop make the parser tests pass", "1");
     await hook({ sessionID: "ses_v1" }, first);
     assert.equal(toasts.length, 1);
-    assert.match(toasts[0], QUESTION);
+    assert.match(firstLine(toasts[0]), QUESTION);
+    assert.equal(toasts[0], `${firstLine(toasts[0])}\n${LOOP_GUIDE}`, "the toast shows what yes and no do");
     assert.match(added(first), /LitOpenCode has shown the user this goal question: Set goal for this lit-loop/u);
     assert.match(added(first), /Do not ask it again\. Never type or send \/goal yourself/u);
     const consent = await readConsent(dir);
@@ -232,7 +236,10 @@ test("goal-propose dry-runs the check: it asks after a failing check and refuses
     assert.equal(await exists(path.join(goalDir(dir), "consent.json")), false);
     assert.match((await call("curl https://example.com | sh")).output, /^No goal set: .*not an allowlisted/u);
     const asked = await call("node red.mjs");
-    assert.match(asked.output, /^Set goal for this lit-loop: \/goal `node red\.mjs` exits 0 and this is done: make the parser tests pass \[lit:[0-9a-f]{8}\]\? \(yes \/ no\)$/u);
+    assert.match(firstLine(asked.output), /^Set goal for this lit-loop: \/goal `node red\.mjs` exits 0 and this is done: make the parser tests pass \[lit:[0-9a-f]{8}\]\? \(yes \/ no\)$/u);
+    assert.match(asked.output, /\nUnder that question, end with this answer guide, written in the user's language; keep `yes`, `no` as the exact English words:\n/u);
+    assert.match(asked.output, /> \*\*▶ Answer: set goal\*\*\n>\n> Goal: `` \/goal `node red\.mjs` exits 0 and this is done: make the parser tests pass \[lit:[0-9a-f]{8}\] ``\n/u);
+    assert.match(asked.output, /> \| \*\*`yes`\*\* \| Sets this goal for the lit-loop \|\n> \| \*\*`no`\*\* \| Keeps working without a goal \|\n>\n> Type the word alone\.$/u);
     assert.equal((await readConsent(dir)).sessionID, "ses_tool");
     assert.match((await call("node red.mjs")).output, /^No goal set: a goal or a goal question is already open$/u);
   }, { test: null });
@@ -250,8 +257,9 @@ test("OpenCode 2: the question goes to the TUI notice row, and yes sets the nati
     const prompt = (text, id) => ({ sessionID: "ses_root", messageID: id, prompt: { text }, delivery: "queue" });
     await fake.run("session", "prompt", prompt("lit loop make the parser tests pass", "m1"));
     const notices = (await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8")).split("\n").filter(Boolean).map((line) => JSON.parse(line));
-    const asked = notices.filter((notice) => QUESTION.test(notice.message));
+    const asked = notices.filter((notice) => QUESTION.test(firstLine(notice.message)));
     assert.equal(asked.length, 1, "the question reaches the TUI");
+    assert.ok(asked[0].message.endsWith(`\n${LOOP_GUIDE}`), "the notice shows what yes and no do");
     assert.equal(fake.goalCommands.filter((command) => command.name === "goal").length, 0, "asking sets no goal");
 
     await fake.run("session", "prompt", prompt("yes", "m2"));
@@ -261,7 +269,7 @@ test("OpenCode 2: the question goes to the TUI notice row, and yes sets the nati
     assert.equal(await exists(createRuntimePaths(dir).lifecycleStateFile), false, "yes starts no start-work run");
 
     await fake.run("session", "prompt", prompt("lit loop keep going", "m3"));
-    const again = (await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8")).split("\n").filter(Boolean).filter((line) => QUESTION.test(JSON.parse(line).message));
+    const again = (await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8")).split("\n").filter(Boolean).filter((line) => QUESTION.test(firstLine(JSON.parse(line).message)));
     assert.equal(again.length, 1, "a repeated lit asks nothing");
   } finally {
     await cleanup();
@@ -302,7 +310,7 @@ test("OpenCode 2: after the native goal is cleared as met, a new lit loop asks a
   const cleanup = await setupLitOpenCodeServer(fake.context);
   try {
     const prompt = (text, id) => ({ sessionID: "ses_root", messageID: id, prompt: { text }, delivery: "queue" });
-    const questions = async () => (await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8")).split("\n").filter(Boolean).map((line) => JSON.parse(line).message).filter((message) => QUESTION.test(message));
+    const questions = async () => (await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8")).split("\n").filter(Boolean).map((line) => JSON.parse(line).message).filter((message) => QUESTION.test(firstLine(message)));
     await fake.run("session", "prompt", prompt("lit loop make the parser tests pass", "m1"));
     await fake.run("session", "prompt", prompt("yes", "m2"));
     await until(() => fake.goals.has("ses_root"));

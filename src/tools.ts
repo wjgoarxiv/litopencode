@@ -6,6 +6,7 @@ import { actionFromArgs, deniedToolResultFromArgs, projectRootFromContext, summa
 import type { ToolDefinition, ToolResult } from "@opencode-ai/plugin";
 import { LifecycleConflictError, createBoundedAuthorityLifecycle } from "./bounded-authority.ts";
 import { createRuntimePaths } from "./state.ts";
+import { questionForModel } from "./goal-guide.ts";
 import { hasPendingConsent, proposeLoopGoal, readIntent, goalStatus } from "./goal-pipeline.ts";
 import { isLaneResult, isReviewLane, laneResults, reviewLanes } from "./tui/mission-looks.ts";
 import { loadConfig } from "./config.ts";
@@ -135,7 +136,7 @@ export const litworkTool = tool({
           : proposeLoopGoal({ projectRoot: root, check, objective, sessionID: context.sessionID });
         return {
           title: "LitOpenCode lit-loop goal question",
-          output: asked.line,
+          output: questionForModel(asked),
           metadata: { command: "litwork", action, asked: "consent" in asked }
         };
       }

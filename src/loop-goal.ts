@@ -5,6 +5,7 @@
 // detectable test command the model runs the `litwork` tool's `goal-propose` action after a failing check instead.
 import fs from "node:fs";
 import path from "node:path";
+import { questionForScreen } from "./goal-guide.ts";
 import { hasClosedIntent, hasPendingConsent, proposeLoopGoal, readIntent } from "./goal-pipeline.ts";
 import { nativeGoalOwnership } from "./native-goal-ledger.ts";
 import { withoutSkillHatch } from "./skill-plan.ts";
@@ -49,7 +50,7 @@ export async function offerLoopGoal(input: {
   readonly mode: string;
   readonly text: string;
   readonly repeat?: boolean;
-}): Promise<{ readonly line: string } | undefined> {
+}): Promise<{ readonly line: string; readonly screen: string } | undefined> {
   try {
     if (input.repeat === true && !hasClosedIntent(input.projectRoot, input.sessionID)) return undefined;
     const route = nativeGoalRoute(input.mode, input.text);
@@ -61,7 +62,7 @@ export async function offerLoopGoal(input: {
     if (readIntent(input.projectRoot, input.sessionID) !== undefined || hasPendingConsent(input.projectRoot)) return undefined;
     if ((await nativeGoalOwnership(input.projectRoot, input.sessionID)).goalID !== undefined) return undefined;
     const offer = proposeLoopGoal({ projectRoot: input.projectRoot, check, objective, sessionID: input.sessionID, falsifyNow: false });
-    return offer.consent === undefined ? undefined : { line: offer.line };
+    return offer.consent === undefined ? undefined : { line: offer.line, screen: questionForScreen(offer) };
   } catch { // no-excuse-ok: catch -- a failed goal offer must never block the activation; the run goes on without a goal.
     return undefined;
   }

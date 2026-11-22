@@ -576,12 +576,12 @@
     },
     "lit-plan": {
       "skillMd": {
-        "bytes": 33736,
-        "sha256": "52a17852219616f2eb1f7be86ac9dfb6af16a1642bb38b371db4e0f01675f08f"
+        "bytes": 34239,
+        "sha256": "34d7d41772c1f396fb713b13f12eda7b5358cbc77f86e3d0dad3358b981defc6"
       },
       "files": 2,
-      "bytes": 44717,
-      "sha256": "0663142b28136992ac015762b9915f40d7218fe9689e98ac6a80fcea46762ff2"
+      "bytes": 45220,
+      "sha256": "92f12a8aa3131bab420b693fa4b53e316f8994901fb7f633ed723ad2d0fdda11"
     },
     "lit-pptx": {
       "skillMd": {
@@ -801,12 +801,12 @@
     },
     "workflow-loop": {
       "skillMd": {
-        "bytes": 34087,
-        "sha256": "508ac04db8f96d50fa23fb4dcbf34a8536716825e2be08f9c5c483aad33014b6"
+        "bytes": 34331,
+        "sha256": "9fd2fdd343209e7abedc5a8845ba080d91a05a86a4f66d5082eec9d10a4ca151"
       },
       "files": 1,
-      "bytes": 34087,
-      "sha256": "a02f3ed6db279a89bde3f1e2e7a9b92a32f0bb4523fd8bde1e47ff3c288674e0"
+      "bytes": 34331,
+      "sha256": "6b9d894a22215e010ce31dee69d1212eaa309ed6171d4619eeb637aae1980f58"
     }
   },
   "pack": [
@@ -955,6 +955,8 @@
     "dist/extensions-notice.js",
     "dist/features.d.ts",
     "dist/features.js",
+    "dist/goal-guide.d.ts",
+    "dist/goal-guide.js",
     "dist/goal-pipeline.d.ts",
     "dist/goal-pipeline.js",
     "dist/hooks.d.ts",

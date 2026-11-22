@@ -7,6 +7,7 @@
 // reply) rides the latest user message instead, the channel it had on OpenCode 1.
 import { fileURLToPath } from "node:url";
 import { typedPromptReply } from "../adhd-next.ts";
+import { questionForModel, questionForScreen } from "../goal-guide.ts";
 import { proposeGoal } from "../goal-pipeline.ts";
 import { loopGoalContext, offerLoopGoal } from "../loop-goal.ts";
 import { savedPlanStop } from "../commands.ts";
@@ -179,11 +180,11 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     try {
       const saved = await persistApprovedPlan(options.projectRoot, request);
       const asked = proposeGoal({ projectRoot: options.projectRoot, plan: saved.relativePath, planText: saved.text, sessionID });
-      appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode", message: asked.line.split("\n")[0] ?? asked.line, variant: "info", duration: 15000 });
+      appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode", message: questionForScreen({ ...asked, line: asked.line.split("\n")[0] ?? asked.line }), variant: "info", duration: 15000 });
       return [
         formatSavedPlanNotice(saved, saved.replayed === true),
         savedPlanStop,
-        asked.line
+        questionForModel(asked)
       ].join("\n");
     } catch (error) {
       return error instanceof PlanScopeError
@@ -325,7 +326,7 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
       // A repeated lit asks again only when this session's earlier goal has closed.
       const again = await offerLoopGoal({ projectRoot: options.projectRoot, sessionID: event.sessionID, mode, text: input, repeat: true });
       if (again !== undefined) {
-        appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode goal", message: again.line, variant: "info", duration: 15000 });
+        appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode goal", message: again.screen, variant: "info", duration: 15000 });
         state.turn.push(loopGoalContext(again.line));
       }
       event.metadata = { ...(event.metadata ?? {}), litopencode: { mode: reentry.mode, trigger, source: "prompt", reentry: "continue" } };
@@ -342,7 +343,7 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     if (reentry.kind === "full") {
       const offered = await offerLoopGoal({ projectRoot: options.projectRoot, sessionID: event.sessionID, mode, text: input });
       if (offered !== undefined) {
-        appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode goal", message: offered.line, variant: "info", duration: 15000 });
+        appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode goal", message: offered.screen, variant: "info", duration: 15000 });
         activation = `${activation}\n${loopGoalContext(offered.line)}`;
       }
     }

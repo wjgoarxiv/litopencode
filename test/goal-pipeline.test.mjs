@@ -139,9 +139,12 @@ test("save-plan asks the goal question in its notice (OpenCode 1)", async () => 
     await createCommandActivationHook(dir, { onPlanQuestion: (line) => toasts.push(line) })({ command: "/start-work", sessionID: "ses_save", arguments: `save-plan ${JSON.stringify({ approved: true, slug: "parser", markdown: plan })}` }, output);
     const text = output.parts.at(-1).text;
     assert.equal(toasts.length, 1, "the question also goes to the TUI, which drops command-hook parts");
-    assert.ok(text.endsWith(toasts[0]));
+    const [question, ...guide] = toasts[0].split("\n");
+    assert.deepEqual(guide, ["  yes   → starts the work now and sets this goal", "  edit  → change the goal's check first", "  no    → nothing starts", "  Type the word alone."]);
     assert.match(text, /^Saved durable plan: /u, text);
-    assert.match(text, /\nApprove plan, start work and set goal: \/goal Every row in \.litopencode\/plans\/parser\.md is ticked and `bash scripts\/check\.sh` exits 0 \[lit:[0-9a-f]{8}\]\? \(yes \/ edit \/ no\)$/u);
+    assert.match(question, /^Approve plan, start work and set goal: \/goal Every row in \.litopencode\/plans\/parser\.md is ticked and `bash scripts\/check\.sh` exits 0 \[lit:[0-9a-f]{8}\]\? \(yes \/ edit \/ no\)$/u);
+    assert.ok(text.includes(`\n${question}\nUnder that question, end with this answer guide`), "the model gets the question, then the guide to show under it");
+    assert.match(text, /> \*\*▶ Answer: approve plan · start work · set goal\*\*\n>\n> Goal: `` \/goal Every row .+ ``\n>\n> \| Type \| What happens \|\n> \|---\|---\|\n> \| \*\*`yes`\*\* \| Starts the work now and sets this goal \|\n> \| \*\*`edit`\*\* \| Change the goal's check first \|\n> \| \*\*`no`\*\* \| Nothing starts \|\n>\n> Type the word alone\.$/u);
   });
 });
 

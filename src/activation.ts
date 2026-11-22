@@ -366,7 +366,7 @@ export function createChatMessageActivationHook(
     if ((reentry.kind === "full" || reentry.kind === "continue") && triggerText !== undefined) {
       const offered = await offerLoopGoal({ projectRoot, sessionID: input.sessionID, mode, text: triggerText, repeat: reentry.kind === "continue" });
       if (offered !== undefined) {
-        options.onLoopGoalQuestion?.(offered.line);
+        options.onLoopGoalQuestion?.(offered.screen);
         activationText = `${activationText}\n${loopGoalContext(offered.line)}`;
       }
     }
