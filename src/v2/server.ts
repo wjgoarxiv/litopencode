@@ -3,6 +3,7 @@
 // the returned cleanup releases what the plugin itself holds. There is no automatic self-update here:
 // OpenCode 2 updates plugins itself (`opencode plugin update` and its update policy).
 import path from "node:path";
+import { createBrainstormRun } from "../brainstorm-run.ts";
 import { loadConfig } from "../config.ts";
 import { createDeliverableHedgeGuard } from "../deliverable-hedge-guard.ts";
 import { createLogger } from "../logger.ts";
@@ -13,7 +14,8 @@ import { createV2Commands } from "./commands.ts";
 import { createV2Events } from "./events.ts";
 import { createNativeGoal } from "./native-goal-runtime.ts";
 import { createV2ToolHooks } from "./hooks.ts";
-import { createV2SessionHooks } from "./session-hooks.ts";
+import { appendNotice } from "./notices.ts";
+import { createV2SessionHooks, unwrapRunArgument } from "./session-hooks.ts";
 import { addLitTools, litToolsForProject } from "./tools.ts";
 
 export async function setupLitOpenCodeServer(context: ServerContextLike): Promise<() => Promise<void>> {
@@ -23,12 +25,21 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
   const getSession = createSessionLookupV2(context.session);
   const deliverableHedgeGuard = createDeliverableHedgeGuard({ projectRoot: context.location.directory.trim() || root });
   const agentPlan = planLitAgents(loaded.config);
+  const brainstormRun = createBrainstormRun({
+    dir: loaded.paths.brainstormRunsDir,
+    getSession,
+    send: async (sessionID, text) => {
+      await context.session.prompt({ sessionID, text });
+    },
+    notify: (message) => appendNotice(loaded.paths.noticesFile, { title: "LitOpenCode ultra-brainstorm", message, variant: "warning", duration: 10000 })
+  });
   const toolHooks = createV2ToolHooks({
     projectRoot: root,
     knowledgeCaptureEnabled: loaded.config.knowledge.capture,
     getSession,
     deliverableHedgeGuard,
-    baseDirectory: context.location.directory.trim() || root
+    baseDirectory: context.location.directory.trim() || root,
+    onToolDone: brainstormRun.toolDone
   });
 
   await context.model.transform(registerOpenAiProviderModels);
@@ -50,7 +61,11 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
     getSession,
     session: context.session,
     model: context.model,
-    onSessionDeleted: (sessionID) => sessionHooks.clear(sessionID)
+    onSessionDeleted: (sessionID) => sessionHooks.clear(sessionID),
+    onIdle: async (sessionID, interrupted) => {
+      if (interrupted) await brainstormRun.interrupt(sessionID);
+      await brainstormRun.idle(sessionID);
+    }
   });
   const nativeGoal = createNativeGoal({ projectRoot: root, host: { ...(context.rpc === undefined ? {} : { rpc: context.rpc }), session: context.session } });
   const sessionHooks = createV2SessionHooks({
@@ -66,7 +81,10 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
     nativeGoal,
     extensionsNoticeRoot: defaultOpenCodeConfigRoot()
   });
-  await context.session.hook("prompt", sessionHooks.prompt);
+  await context.session.hook("prompt", async (event) => {
+    await brainstormRun.userText(event.sessionID, unwrapRunArgument(event.prompt.text));
+    await sessionHooks.prompt(event);
+  });
   await context.session.hook("context", sessionHooks.context);
   await context.session.hook("compaction", sessionHooks.compaction);
   try {

@@ -2,6 +2,7 @@
 // task is subagent) and names a file argument `path`, so each call is shown to the guards under the
 // names they know. A throw in `execute.before` fails that one call; `execute.after` must never throw.
 import { createToolExecuteAfterHook, createToolExecuteBeforeHook } from "../hooks.ts";
+import type { BrainstormToolCall } from "../brainstorm-run.ts";
 import type { DeliverableHedgeGuardState } from "../deliverable-hedge-guard.ts";
 import type { SessionLookup } from "../session-lineage.ts";
 
@@ -55,6 +56,8 @@ export type V2ToolHookOptions = {
   readonly getSession: SessionLookup;
   readonly deliverableHedgeGuard: DeliverableHedgeGuardState;
   readonly baseDirectory?: string;
+  /** Sees every finished call, failed ones included, under its OpenCode 1 name. */
+  readonly onToolDone?: (call: BrainstormToolCall) => Promise<void>;
 };
 
 export function createV2ToolHooks(options: V2ToolHookOptions) {
@@ -84,6 +87,14 @@ export function createV2ToolHooks(options: V2ToolHookOptions) {
   }
 
   async function executeAfter(event: ToolAfterEvent): Promise<void> {
+    if (options.onToolDone !== undefined) {
+      const content = event.result?.content;
+      const output = typeof content === "string" ? content : (content ?? []).map((part) => part.text ?? "").join("\n");
+      try {
+        await options.onToolDone({ sessionID: event.sessionID, tool: v1ToolName(event.tool), args: v1Args(event.input).args, output });
+      } catch { // no-excuse-ok: catch -- OpenCode 2 treats a throw after a tool ran as a crash.
+      }
+    }
     if (event.status !== "completed" || event.result === undefined) return;
     const text = contentText(event.result.content);
     if (text === undefined) return;

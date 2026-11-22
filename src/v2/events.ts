@@ -101,6 +101,8 @@ export type V2EventOptions = {
   readonly session: EventSessionLike;
   readonly model: EventModelLike;
   readonly onSessionDeleted: (sessionID: string) => void;
+  /** Called when a root or child turn ends; `interrupted` when the user stopped it. */
+  readonly onIdle?: (sessionID: string, interrupted: boolean) => Promise<void>;
 };
 
 export function createV2Events(options: V2EventOptions) {
@@ -145,10 +147,11 @@ export function createV2Events(options: V2EventOptions) {
     }
   }
 
-  async function idle(sessionID: string): Promise<void> {
+  async function idle(sessionID: string, interrupted = false): Promise<void> {
     statuses.set(sessionID, { type: "idle" });
     await markLiveness(options.projectRoot, sessionID, "idle");
     await toHandoff("session.idle", { sessionID });
+    await options.onIdle?.(sessionID, interrupted);
   }
 
   async function handle(event: StreamEvent): Promise<void> {
@@ -201,8 +204,10 @@ export function createV2Events(options: V2EventOptions) {
         return;
       case "session.execution.succeeded":
       case "session.execution.failed":
-      case "session.execution.interrupted":
         await idle(sessionID);
+        return;
+      case "session.execution.interrupted":
+        await idle(sessionID, true);
         return;
       case "session.status":
         statuses.set(sessionID, data.status);

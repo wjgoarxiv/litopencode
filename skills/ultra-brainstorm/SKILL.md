@@ -64,15 +64,16 @@ Use the OpenCode vocabulary for this contract: `chat.message`, `command.execute.
 
 1. Pin the topic, the stated constraints and one sentence of success criteria. Ask nothing else yet.
 2. Ask the one launch question with the cost line (see "Launch question"). Never launch on silence or on an answer that is not a number or one of the offered choices. A plain `no` (also `stop`, `cancel`, `아니`, `아니요`, `취소`) ends the run at once with the one line `Ultra-brainstorm cancelled; nothing ran.` and no second question.
-3. On a number, run the three stages through the `task` tool: idea lanes on `lit-ideator`, reducers on `lit-explorer`, one judge on `lit-oracle`.
-4. Save `notes.md` and `result.json` under `.litopencode/brainstorm/<slug>/`.
-5. Show the sorted top list in reader mode and ask the user to pick, combine or widen. Hand off exactly as `lit-brainstorm` does, then stop.
+3. On a number, run the three stages through the `task` tool: idea lanes on `lit-ideator`, reducers on `lit-explorer`, one judge on `lit-oracle`. After every batch of ten lanes, append each lane to `lanes.jsonl`; as soon as a slice of 30 lanes is in, run its reducer and append its clusters to `clusters.jsonl` (see "Checkpoints").
+4. Run exactly the approved number of lanes. Repeated ideas are never a reason to stop, because the reducers merge them; only the user stops a run early. A context compaction is not a stop: re-read `lanes.jsonl` and `clusters.jsonl` and continue at the next lane.
+5. Save `notes.md` and `result.json` under `.litopencode/brainstorm/<slug>/`.
+6. Show the sorted top list in reader mode and ask the user to pick, combine or widen. Hand off exactly as `lit-brainstorm` does, then stop.
 
 ## #contract.outputs
 
 - Before anything runs: the launch question with the estimator's cost line, quoted unchanged.
 - After the run: the top list (at most ten rows, sorted by score), the recommendation, which ideas combine, and one question.
-- `.litopencode/brainstorm/<slug>/notes.md` and `result.json`, named once in the reply.
+- `.litopencode/brainstorm/<slug>/lanes.jsonl` and `clusters.jsonl` while the run goes, then `notes.md` and `result.json`, named once in the reply.
 - `PASS` when the user has a choice to make; `BLOCKED:` with the missing surface when the fan-out cannot start.
 
 ## #contract.output_channels
@@ -86,7 +87,7 @@ Reader mode is the default conversational projection: the top list and the quest
 
 ## #contract.evidence
 
-- `result.json` holds every raw idea, the clusters, the criteria and weights, the arithmetic, the top list and the counts the `task` tool actually returned.
+- `lanes.jsonl` holds one line per lane sent and `clusters.jsonl` one line per reducer; `result.json` holds every raw idea, the clusters, the criteria and weights, the arithmetic, the top list and the counts the `task` tool actually returned.
 - A count of lanes or ideas comes from the lanes that answered, never from the number that was planned.
 - Every delegated prompt starts with `TASK:` and carries `DELIVERABLE`, `SCOPE` and `VERIFY`.
 
@@ -97,6 +98,7 @@ Reader mode is the default conversational projection: the top list and the quest
 - Write only under `.litopencode/brainstorm/`.
 - Idea lanes use no tools. `lit-ideator` has every tool switched off; do not route idea lanes to another agent.
 - Above 900 lanes, stop and ask to split the run.
+- Run exactly the approved number of lanes. Never stop early because ideas repeat, because the rest "is not practical", or to ask whether to go on; only the user's cancel stops a run. After a compaction, re-read the run files and continue at the next lane.
 - A child session never starts its own fan-out: the `task` tool is off for subagents, and the lanes are depth one.
 
 ## #contract.anti_patterns
@@ -160,10 +162,22 @@ OpenCode runs subagents through the `task` tool, and several `task` calls in one
    ```
 
    A lane that returns no parseable array counts as failed; the run continues.
-2. **Reducers.** One reducer per 30 lanes, through `task` to `lit-explorer`, each given its slice of raw ideas as data and told to use no tools. Deliverable: clusters `{ name, members, merged_how, best_first_test }` with duplicates merged.
-3. **Judge.** One `task` call to `lit-oracle` with every cluster as data. It fixes three to five weighted criteria from the success sentence, scores each cluster with the arithmetic shown, runs a sensitivity check (swap the two heaviest weights and report what moves), sorts the top ten, writes a recommendation, and names which ideas combine.
+2. **Reducers, as you go.** One reducer per 30 lanes, through `task` to `lit-explorer`, each given its slice of raw ideas from `lanes.jsonl` as data and told to use no tools. Send a slice's reducer as soon as lanes `30k`..`30k+29` are in (the last slice may be shorter), not after the whole run. Deliverable: clusters `{ name, members, merged_how, best_first_test }` with duplicates merged.
+3. **Judge.** One `task` call to `lit-oracle` with every cluster read back from `clusters.jsonl` as data. It fixes three to five weighted criteria from the success sentence, scores each cluster with the arithmetic shown, runs a sensitivity check (swap the two heaviest weights and report what moves), sorts the top ten, writes a recommendation, and names which ideas combine.
 
 The subagents cannot call `task` themselves; LitOpenCode switches it off for every child session, so a run is exactly one level deep.
+
+## Checkpoints
+
+A run of hundreds of lanes does not fit in one context: each lane costs this session a few thousand tokens, so 500 lanes would need well over a million. The run therefore lives in files, and the context only carries the batch in flight.
+
+- After each batch of ten lanes, append one JSON line per lane to `.litopencode/brainstorm/<slug>/lanes.jsonl`: `{"lane":<i>,"lens":"<lens>","ideas":[...]}` with the lane's raw array, or `"ideas":null` for a failed lane.
+- After each reducer, append one line to `clusters.jsonl`: `{"slice":<k>,"lanes":[<first>,<last>],"clusters":[...]}`.
+- Once a slice is reduced, its raw ideas need not stay in your context. After a compaction the files are the source of truth: the next lane is the count of lines in `lanes.jsonl`.
+
+## Run guard
+
+The plugin keeps its own count of the run. When `estimate.mjs --answer` prints `launch`, it records the approved number; every finished `lit-ideator` task counts one lane. If the session goes idle with lanes still owed, the plugin sends one message beginning `LitOpenCode ultra-brainstorm guard:` with the lanes sent, the next lane and the approved number. Treat that message as authoritative: re-read the run files and continue from the lane it names. When every lane was sent and the judge has not run, the guard asks once to finish the reducers and the judge. Two idles in a row with no new lane pause it with one notice; the user resumes with `계속` or `continue`, and any other message ends the run. The guard only nudges the root session, never a child, and never asks for more than the approved number.
 
 ## Saving the run
 
@@ -190,7 +204,8 @@ After the pick, hand off as `lit-brainstorm` does: `deep-interview` when the pic
 ## Final checklist
 
 - [ ] The launch question and the cost line came before any lane.
-- [ ] Idea lanes ran on `lit-ideator`, with lens and seed per lane.
+- [ ] Idea lanes ran on `lit-ideator`, with lens and seed per lane, exactly as many as approved.
+- [ ] Every batch reached `lanes.jsonl`, every slice's clusters reached `clusters.jsonl`, and the judge read them.
 - [ ] Counts in the reply are the ones the run returned.
 - [ ] Only `.litopencode/brainstorm/<slug>/` was written.
 - [ ] The reply ends with one question and nothing was implemented.

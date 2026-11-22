@@ -6,6 +6,7 @@ import { createActivationMemory } from "./activation-reentry.ts";
 import { registerLitOpenCodeAgents } from "./agents.ts";
 import { createAutoHandoff } from "./auto-handoff-hooks.ts";
 import { createBoundedAuthorityEventHook } from "./bounded-authority-hooks.ts";
+import { createBrainstormRun } from "./brainstorm-run.ts";
 import { createCommandActivationHook } from "./commands.ts";
 import { loadConfig } from "./config.ts";
 import { createDeliverableHedgeGuard } from "./deliverable-hedge-guard.ts";
@@ -59,6 +60,41 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       config: loaded.config.autoHandoff,
       ...(getSession === undefined ? {} : { getSession })
     });
+    const brainstormRun = createBrainstormRun({
+      dir: loaded.paths.brainstormRunsDir,
+      getSession,
+      send: async (sessionID, text, route) => {
+        if (input?.client === undefined) return;
+        await input.client.session.promptAsync({
+          path: { id: sessionID },
+          query: { directory: root },
+          body: {
+            ...(route?.agent === undefined ? {} : { agent: route.agent }),
+            ...(route?.providerID === undefined || route.modelID === undefined ? {} : { model: { providerID: route.providerID, modelID: route.modelID } }),
+            parts: [{ type: "text", text }]
+          }
+        });
+      },
+      notify: (message) => {
+        try {
+          void input?.client?.tui?.showToast({ body: { title: "LitOpenCode ultra-brainstorm", message, variant: "warning", duration: 10000 } })?.catch(() => undefined);
+        } catch { // no-excuse-ok: catch -- a missing TUI must never stop the session; the run stays paused.
+        }
+      }
+    });
+    const withBrainstormToolCount = (hook: NonNullable<Hooks["tool.execute.after"]>): NonNullable<Hooks["tool.execute.after"]> => async (toolInput, toolOutput) => {
+      await brainstormRun.toolDone({ sessionID: toolInput.sessionID, tool: toolInput.tool, args: toolInput.args, output: typeof toolOutput.output === "string" ? toolOutput.output : "" });
+      await hook(toolInput, toolOutput);
+    };
+    // The run guard reads what the user typed, and the agent and model to continue on, before activation runs.
+    const withBrainstormUserText = (hook: NonNullable<Hooks["chat.message"]>): NonNullable<Hooks["chat.message"]> => async (messageInput, messageOutput) => {
+      const typed = messageOutput.parts.flatMap((part) => (part.type === "text" && part.synthetic !== true ? [part.text] : [])).join("\n");
+      await brainstormRun.userText(messageInput.sessionID, typed, {
+        ...(messageInput.agent === undefined ? {} : { agent: messageInput.agent }),
+        ...(messageInput.model === undefined ? {} : { providerID: messageInput.model.providerID, modelID: messageInput.model.modelID })
+      });
+      await hook(messageInput, messageOutput);
+    };
     // The host resolves a relative write or edit path against its launch directory, which can be a subfolder of the worktree.
     const deliverableHedgeGuard = createDeliverableHedgeGuard({ projectRoot: input?.directory?.trim() || root });
     const recordSkillActivation = async (sessionID: string, skillId: string, appendedLit = false): Promise<void> => {
@@ -91,6 +127,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       event: async (eventInput) => {
         if (eventInput.event.type === "session.idle") {
           await markLiveness(root, eventInput.event.properties.sessionID, "idle");
+          await brainstormRun.idle(eventInput.event.properties.sessionID);
           // OpenCode 1 has no /goal: an armed goal is checked here, as an advisory, when the turn ends.
           const line = advisoryGoalCheck(root, eventInput.event.properties.sessionID)
             ?? await advisoryLoopGoalCheck(root, eventInput.event.properties.sessionID);
@@ -107,11 +144,14 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           activationMemory.forget(eventInput.event.properties.info.id);
           trustedCommandActivations.delete(eventInput.event.properties.info.id);
         }
+        if (eventInput.event.type === "session.error" && eventInput.event.properties.error?.name === "MessageAbortedError" && eventInput.event.properties.sessionID !== undefined) {
+          await brainstormRun.interrupt(eventInput.event.properties.sessionID);
+        }
         await boundedAuthorityEvent(eventInput);
         await autoHandoff.event(eventInput);
       },
       tool: litOpenCodeTools,
-      "chat.message": createChatMessageActivationHook(root, {
+      "chat.message": withBrainstormUserText(createChatMessageActivationHook(root, {
         getSession,
         boundedAuthority: loaded.config.boundedAuthority,
         ...(input?.directory?.trim() ? { directory: input.directory.trim() } : {}),
@@ -146,7 +186,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           commandNotices.delete(sessionID);
           return notice;
         }
-      }),
+      })),
       "command.execute.before": async (commandInput, commandOutput) => {
         const priorLength = commandOutput.parts.length;
         await commandActivation(commandInput, commandOutput);
@@ -188,12 +228,12 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         enumerable: false
       },
       "tool.execute.after": {
-        value: createToolExecuteAfterHook({
+        value: withBrainstormToolCount(createToolExecuteAfterHook({
           projectRoot: root,
           knowledgeCaptureEnabled: loaded.config.knowledge.capture,
           deliverableHedgeGuard,
           onSkillActivation: recordSkillActivation
-        }),
+        })),
         enumerable: false
       }
     });

@@ -774,12 +774,12 @@
     },
     "ultra-brainstorm": {
       "skillMd": {
-        "bytes": 13916,
-        "sha256": "f28b46771f20dc9438699fd4445f97a9c38953ad077d8e6e9a47f96e5e46971a"
+        "bytes": 16697,
+        "sha256": "0fe8a300e182c25e62010fb7922e255a6ee2c3cf0677850f37dbd74df5b60f27"
       },
       "files": 3,
-      "bytes": 20566,
-      "sha256": "76268ec8542d03a1555a1c4be6cf48186b84a677ed322f785af5543d6675bfeb"
+      "bytes": 23347,
+      "sha256": "91263a3bb788a8d764400446f6f3a80bc41d88a4fe4efad3165eda3779e20c62"
     },
     "visual-qa": {
       "skillMd": {
@@ -861,6 +861,8 @@
     "dist/bounded-authority-hooks.js",
     "dist/bounded-authority.d.ts",
     "dist/bounded-authority.js",
+    "dist/brainstorm-run.d.ts",
+    "dist/brainstorm-run.js",
     "dist/cache-metrics.d.ts",
     "dist/cache-metrics.js",
     "dist/cli.d.ts",

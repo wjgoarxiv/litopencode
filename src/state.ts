@@ -26,6 +26,7 @@ export type RuntimePaths = {
   workflowStackDir: string;
   adhdDir: string;
   livenessDir: string;
+  brainstormRunsDir: string;
   opencodeConfigFile: string;
 };
 
@@ -73,6 +74,7 @@ export function createRuntimePaths(projectRoot: string): RuntimePaths {
     workflowStackDir: path.join(runtimeDir, "workflow-stack"),
     adhdDir: path.join(runtimeDir, "adhd"),
     livenessDir: path.join(runtimeDir, "liveness"),
+    brainstormRunsDir: path.join(runtimeDir, "brainstorm-runs"),
     opencodeConfigFile: path.join(root, "opencode.json")
   };
 }
