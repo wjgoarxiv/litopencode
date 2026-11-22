@@ -340,6 +340,9 @@ export const litOpenCodeSpecialistAgents = Object.freeze([
     prompt: litIdeatorPrompt,
     tools: Object.freeze([]),
     color: "#F59E0B",
-    maxSteps: 1
+    // Never 1: OpenCode adds a "maximum steps reached" prompt to the last step that overrides the brief
+    // and asks for a status summary, so a one-step lane never returned its JSON. With no tools the lane
+    // still ends after its first reply.
+    maxSteps: 3
   }
 ] satisfies readonly LitOpenCodeAgent[]);

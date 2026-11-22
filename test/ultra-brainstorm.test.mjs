@@ -8,6 +8,7 @@ import { test } from "node:test";
 import { detectChatActivationMode } from "../src/activation.ts";
 import { promptForChatActivationMode } from "../src/activation-routing.ts";
 import { registerLitOpenCodeAgents } from "../src/agents.ts";
+import { planLitAgents } from "../src/v2/agents.ts";
 import { createCommandActivationHook, findLitOpenCodeCommand } from "../src/commands.ts";
 import { expectedManagedSkillFiles, managedSkillDiscoveryDescription } from "../src/cli/managed-skill-assets.ts";
 import { defaultGlobalConfigFile, mergeConfigs } from "../src/config.ts";
@@ -66,6 +67,16 @@ test("lit-ideator runs the helper route at its lowest effort with every tool off
   const chosen = {};
   registerLitOpenCodeAgents(chosen, mergeConfigs(defaultGlobalConfigFile(), { agents: { "lit-ideator": { category: "research", variant: "low" } } }));
   assert.equal(chosen.agent["lit-ideator"].variant, "low", "the user's own variant wins");
+});
+
+test("lit-ideator answers on a step that is not the host's last step", () => {
+  // OpenCode 1 and 2 put a "MAXIMUM STEPS REACHED" prompt on an agent's last step that overrides every
+  // other instruction and asks for a status summary. With one step, the lane's only answer was that
+  // summary and never the JSON idea array. The lane has no tools, so it still ends after one reply.
+  const target = {};
+  registerLitOpenCodeAgents(target, defaultGlobalConfigFile());
+  assert.ok(target.agent["lit-ideator"].maxSteps >= 2, "OpenCode 1 maxSteps");
+  assert.ok(planLitAgents(defaultGlobalConfigFile()).agents.get("lit-ideator").steps >= 2, "OpenCode 2 steps");
 });
 
 test("the estimator prints the cost line, refuses bad counts and caps a run at 900", () => {
