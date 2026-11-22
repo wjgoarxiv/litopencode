@@ -3,6 +3,11 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
+## 1.0.50 - 2026-11-22
+
+- `ultra-brainstorm` now runs every lane you approved. A long run used to stop early once ideas started to repeat, or lose its place after a context compaction. The run now writes each batch of ten lanes to `lanes.jsonl` and each reducer's clusters to `clusters.jsonl` under `.litopencode/brainstorm/<slug>/`, reduces each slice of 30 lanes as soon as it is in, and picks up at the next lane after a compaction. The plugin also counts the lanes itself: if the session goes idle with lanes still owed, it sends one `LitOpenCode ultra-brainstorm guard:` message naming the next lane, and after two idles in a row with no new lane it pauses until you type `continue` (or `계속`).
+- The goal question now comes with a short answer guide. Under `Approve plan, start work and set goal: /goal <condition>? (yes / edit / no)`, and under the lit-loop `Set goal for this lit-loop` question, a small table says what each answer word (`yes`, `edit`, `no`; the lit-loop question has only `yes` and `no`) does, ending `Type the word alone.` The TUI toast shows the same guide as plain lines, and the model shows it in your language with the answer words kept in English.
+
 ## 1.0.49 - 2026-11-22
 
 - `ultra-brainstorm` idea lanes return their ideas again. `lit-ideator` ran with one step, and OpenCode adds a "maximum steps reached" instruction to an agent's last step that overrides the brief and asks for a status summary, so every lane answered with that summary instead of its JSON. The agent now has three steps; with every tool off it still ends after its first reply.

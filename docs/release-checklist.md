@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.50 Release Scope
+
+- `ultra-brainstorm` runs exactly the approved number of lanes, checkpoints lanes and clusters to `lanes.jsonl` and `clusters.jsonl`, and a plugin-side run guard nudges an idle session that still owes lanes; the goal question gains an answer guide for each answer word in the saved-plan notice, the lit-loop question and the TUI toast.
+
 ## 1.0.49 Release Scope
 
 - Hotfix: `lit-ideator` gets three steps instead of one, so `ultra-brainstorm` idea lanes return their JSON instead of the host's last-step summary.
