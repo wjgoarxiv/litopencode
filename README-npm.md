@@ -2,7 +2,7 @@
 
 # LitOpenCode
 
-**LitOpenCode is a workflow plugin for OpenCode. Add `lit` to a prompt and the work gets planned, built, checked and written down, so the next session knows where you stopped.**
+**LitOpenCode is an add-on for OpenCode. It makes the agent check its own work before it says "done", and leaves a note so the next session starts where this one stopped.**
 
 <p align="center">
 <a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.48/docs/assets/readme/badge-version.svg" alt="1.0.48" /></a>
@@ -11,9 +11,26 @@
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub stars" /></a>
 </p>
 
-LitOpenCode keeps the goal, the plan, what was checked and the next step in `.litopencode/litgoal/` inside your project, so a long task picks up the next day where it stopped. It is made for OpenCode work that spans more than one sitting: features over several sessions, planned refactors and research you return to.
+You ask OpenCode for a feature. It writes the code and says it is finished, and a day later you find the tests never ran. You open a new session and explain the whole project again. With LitOpenCode you add `lit` to the same request. The agent reads the code first, makes the change, runs the tests that cover it, and ends by telling you what it checked and what it could not. For a longer job, write `lit loop`: it first writes down what "finished" means as checks in `.litopencode/litgoal/` and keeps going until they pass. When you stop, type `handoff`. The agent saves a note in `HANDOFF.md`, and the next session reads it and carries on.
 
 **[Full guide, screens and skills gallery on GitHub →](https://github.com/wjgoarxiv/litopencode#readme)**
+
+## Two ways to use it
+
+**The easy way.** Restart OpenCode after you install. It opens on the `lit-loop` agent, and Tab switches agents if another one is showing. Write your request as usual and put `lit` at the start or the end, for example `fix the date parsing bug in src/dates.js lit`. A toast reads `🔥 LIT IGNITED`, then the agent fixes the bug, runs the tests and tells you what it checked. The `lit-plan` agent treats the same line as a planning request, so stay on `lit-loop` for building.
+
+**The full workflow.** For a bigger job, go one step at a time. Each step hands its result to the next, and you can skip any step you do not need.
+
+| Step | Type | What happens |
+| --- | --- | --- |
+| 1. Explore | `/lit-brainstorm <question>` | Many options, scored and cut to a short list |
+| 2. Clarify | `/deep-interview <idea>` | The agent reads the repository, then asks what the code cannot answer until the goal is clear |
+| 3. Plan | `/lit-crucible <approach>` or `/lit-plan <task>` | Crucible attacks the approach first and hands what survives to lit-plan; lit-plan writes a checklist and waits for your yes |
+| 4. Build | `/start-work` once you approve the plan, or `/lit-loop <task>` | The work goes one slice at a time, with tests and checks |
+| 5. Review | `/review-work` | Five angles on the change, worst findings first |
+| 6. Hand off | `handoff` | Decisions and the next step, saved to `HANDOFF.md` |
+
+Install with one line, `npm exec --package @litfamily/litopencode@latest -- litopencode install`, then restart OpenCode. [Quick start](#quick-start) has the full first run.
 
 ## Quick start
 
