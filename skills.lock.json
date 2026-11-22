@@ -774,12 +774,12 @@
     },
     "ultra-brainstorm": {
       "skillMd": {
-        "bytes": 13864,
-        "sha256": "c094b643cea1ee7cf4e094275eec1159dcebfe4eafb94f51589525f713d80c68"
+        "bytes": 13916,
+        "sha256": "f28b46771f20dc9438699fd4445f97a9c38953ad077d8e6e9a47f96e5e46971a"
       },
       "files": 3,
-      "bytes": 20514,
-      "sha256": "610c9da7ab8b39c3c0c4fa7bd2b945742af57ec3300ecd028381004cdf5217af"
+      "bytes": 20566,
+      "sha256": "76268ec8542d03a1555a1c4be6cf48186b84a677ed322f785af5543d6675bfeb"
     },
     "visual-qa": {
       "skillMd": {

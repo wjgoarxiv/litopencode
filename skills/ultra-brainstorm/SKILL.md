@@ -124,7 +124,7 @@ Use it when the solution space is wide and missing a direction is expensive: a p
 - Visible corpus: this file, `references/lenses.md` and `scripts/estimate.mjs`, installed together by the native installer.
 - Command surface: `/ultra-brainstorm <topic>`, installed as a command alias on OpenCode 1 and OpenCode 2.
 - Chat surface: `ultra-brainstorm <topic>` as the first word, or `lit ultra-brainstorm <topic>`. It is decided before the plain `lit brainstorm` route.
-- Agents: `lit-ideator` (helper route, lowest effort its model accepts, every tool off, one step), `lit-explorer` for reducers (helper route at its configured effort), `lit-oracle` for the judge (lead route). Set `agents.lit-ideator.variant` in `litopencode.json` to choose a different effort.
+- Agents: `lit-ideator` (helper route, lowest effort its model accepts, every tool off, three steps so its first reply is never the host's last step), `lit-explorer` for reducers (helper route at its configured effort), `lit-oracle` for the judge (lead route). Set `agents.lit-ideator.variant` in `litopencode.json` to choose a different effort.
 - State: `.litopencode/brainstorm/<slug>/`; local, never published.
 
 ## Launch question
