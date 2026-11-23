@@ -6,6 +6,7 @@ import { test } from "node:test";
 import { typedPromptReply } from "../src/adhd-next.ts";
 import { createActivationMemory } from "../src/activation-reentry.ts";
 import { createChatMessageActivationHook } from "../src/activation.ts";
+import { createCommandActivationHook, litOpenCodeCommands } from "../src/commands.ts";
 import {
   advisoryLoopGoalCheck, answerConsent, compileLoopCondition, goalDir, proposeLoopGoal, readIntent
 } from "../src/goal-pipeline.ts";
@@ -60,6 +61,17 @@ test("the objective is the text after lit, without the route word", () => {
   assert.equal(loopObjective("litwork finish the migration"), "finish the migration");
   assert.equal(loopObjective("lit +viz fix the parser in a loop"), "fix the parser in a loop");
   assert.equal(loopObjective("lit loop"), "");
+});
+
+test("a request that ends with the run word takes its objective from the words before it", () => {
+  assert.equal(loopObjective("fix the parser lit loop"), "fix the parser");
+  assert.equal(loopObjective("로그인 버튼 고쳐줘 lit loop"), "로그인 버튼 고쳐줘");
+  assert.equal(loopObjective("로그인 버튼 고쳐줘. 부탁해 litwork"), "로그인 버튼 고쳐줘. 부탁해");
+  assert.equal(loopObjective("finish the migration litwork"), "finish the migration");
+  assert.equal(loopObjective("lit"), "");
+  assert.equal(loopObjective("litwork"), "");
+  assert.equal(loopObjective("lit."), "");
+  assert.equal(loopObjective("로그인 버튼 고쳐줘 lit-loop"), "로그인 버튼 고쳐줘");
 });
 
 test("a loop condition is the check exiting 0 with the objective done", () => {
@@ -213,6 +225,55 @@ test("OpenCode 1: litwork asks too; a prompt with no objective, no test command,
   }, { test: null });
 });
 
+test("OpenCode 1: a request that ends with lit loop or litwork asks the goal question with the words before it", async () => {
+  for (const [text, objective] of [
+    ["make the parser tests pass lit loop", "make the parser tests pass"],
+    ["로그인 버튼 고쳐줘 lit loop", "로그인 버튼 고쳐줘"],
+    ["로그인 버튼 고쳐줘. 부탁해 litwork", "로그인 버튼 고쳐줘. 부탁해"],
+  ]) {
+    await withDir(async (dir) => {
+      const toasts = [];
+      await chatHook(dir, toasts)({ sessionID: "ses_v1" }, chatOutput(text, "1"));
+      assert.equal(toasts.length, 1, text);
+      assert.equal(QUESTION.exec(firstLine(toasts[0]))?.[1], objective, text);
+    });
+  }
+  await withDir(async (dir) => {
+    const toasts = [];
+    const hook = chatHook(dir, toasts);
+    for (const [index, text] of ["lit", "litwork", "lit continue", "what does litwork do?"].entries()) {
+      await hook({ sessionID: `ses_${index}` }, chatOutput(text, String(index)));
+    }
+    assert.deepEqual(toasts, [], "no objective, or no run, asks nothing");
+  });
+});
+
+test("OpenCode 1: plain lit at the start or the end, and lit-loop, ask the goal question with the task", async () => {
+  for (const [text, objective] of [
+    ["로그인 버튼 고쳐줘. 부탁해 lit", "로그인 버튼 고쳐줘. 부탁해"],
+    ["로그인 버튼 고쳐줘 lit", "로그인 버튼 고쳐줘"],
+    ["lit fix the parser", "fix the parser"],
+    ["fix the date parsing bug in src/dates.js lit", "fix the date parsing bug in src/dates.js"],
+    ["lit-loop 로그인 버튼 고쳐줘", "로그인 버튼 고쳐줘"],
+    ["로그인 버튼 고쳐줘 lit-loop", "로그인 버튼 고쳐줘"],
+  ]) {
+    await withDir(async (dir) => {
+      const toasts = [];
+      await chatHook(dir, toasts)({ sessionID: "ses_v1" }, chatOutput(text, "1"));
+      assert.equal(toasts.length, 1, text);
+      assert.equal(QUESTION.exec(firstLine(toasts[0]))?.[1], objective, text);
+    });
+  }
+  await withDir(async (dir) => {
+    const toasts = [];
+    const hook = chatHook(dir, toasts);
+    for (const [index, text] of ["lit", "lit continue", "lit resume", "lit.", "what does lit-loop do?", "fix the lit parser in src"].entries()) {
+      await hook({ sessionID: `ses_${index}` }, chatOutput(text, String(index)));
+    }
+    assert.deepEqual(toasts, [], "no task, a resume word or a mid-sentence mention asks nothing");
+  });
+});
+
 test("a goal already open for the session or a question already pending asks nothing", async () => {
   await withDir(async (dir) => {
     proposeLoopGoal({ projectRoot: dir, check: "npm test", objective: "first", sessionID: "ses_a", falsifyNow: false });
@@ -276,6 +337,98 @@ test("OpenCode 2: the question goes to the TUI notice row, and yes sets the nati
     if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
     else process.env.XDG_CONFIG_HOME = previous;
     await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("OpenCode 2: a request that ends with litwork asks the goal question with the words before it", async () => {
+  const dir = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-v2-loop-goal-tail-")));
+  await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ scripts: { test: "node --test" } }));
+  const previous = process.env.XDG_CONFIG_HOME;
+  process.env.XDG_CONFIG_HOME = path.join(dir, "xdg");
+  const fake = createFakeV2Context({ directory: dir, sessions: { ses_root: { id: "ses_root", agent: "lit-loop" } } });
+  const cleanup = await setupLitOpenCodeServer(fake.context);
+  try {
+    await fake.run("session", "prompt", { sessionID: "ses_root", messageID: "m1", prompt: { text: "로그인 버튼 고쳐줘 litwork" }, delivery: "queue" });
+    const notices = (await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8")).split("\n").filter(Boolean).map((line) => JSON.parse(line));
+    const asked = notices.map((notice) => QUESTION.exec(firstLine(notice.message))?.[1]).filter(Boolean);
+    assert.deepEqual(asked, ["로그인 버튼 고쳐줘"]);
+  } finally {
+    await cleanup();
+    if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previous;
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("OpenCode 1: /lit-loop and /litwork with a task ask the goal question with that task", async () => {
+  for (const [command, args, objective] of [["lit-loop", "로그인 버튼 고쳐줘", "로그인 버튼 고쳐줘"], ["litwork", "finish the migration", "finish the migration"]]) {
+    await withDir(async (dir) => {
+      const toasts = [];
+      const output = { parts: [] };
+      await createCommandActivationHook(dir, { onLoopGoalQuestion: (line) => toasts.push(line) })({ command, sessionID: "ses_v1", arguments: args }, output);
+      assert.equal(toasts.length, 1, command);
+      assert.equal(QUESTION.exec(firstLine(toasts[0]))?.[1], objective, command);
+      assert.ok(output.parts.some((part) => /LitOpenCode has shown the user this goal question/u.test(part.text)), command);
+      assert.equal((await readConsent(dir)).kind, "loop");
+    });
+  }
+  await withDir(async (dir) => {
+    const toasts = [];
+    const hook = createCommandActivationHook(dir, { onLoopGoalQuestion: (line) => toasts.push(line) });
+    for (const [index, [command, args]] of [["lit-loop", ""], ["litwork", "  "], ["review-work", "the last commit"], ["lit-plan", "the parser rewrite"]].entries()) {
+      await hook({ command, sessionID: `ses_${index}`, arguments: args }, { parts: [] });
+    }
+    assert.deepEqual(toasts, [], "no task, or not a run command, asks nothing");
+  });
+});
+
+test("OpenCode 2: /lit-loop and /litwork with a task ask the goal question, from the plugin command and the alias file", async () => {
+  const dir = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-v2-loop-goal-cmd-")));
+  await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ scripts: { test: "node --test" } }));
+  const previous = process.env.XDG_CONFIG_HOME;
+  process.env.XDG_CONFIG_HOME = path.join(dir, "xdg");
+  const fake = createFakeV2Context({ directory: dir, sessions: { ses_cmd: { id: "ses_cmd", agent: "lit-loop" }, ses_alias: { id: "ses_alias", agent: "lit-loop" } } });
+  const cleanup = await setupLitOpenCodeServer(fake.context);
+  try {
+    const command = fake.applyCommands().commands.find((entry) => entry.name === "lit-loop");
+    await command.execute({ sessionID: "ses_cmd", prompt: { text: "로그인 버튼 고쳐줘" }, delivery: "queue" });
+    const sent = fake.prompts.at(-1);
+    await fake.run("session", "prompt", { sessionID: "ses_cmd", messageID: "m1", prompt: { text: sent.text }, metadata: sent.metadata, delivery: "queue" });
+    const head = litOpenCodeCommands.find((entry) => entry.id === "litwork").activationText;
+    await fake.run("session", "prompt", { sessionID: "ses_alias", messageID: "m2", prompt: { text: `${head}\n\nfinish the migration` }, delivery: "queue" });
+    const notices = (await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8")).split("\n").filter(Boolean).map((line) => JSON.parse(line));
+    const asked = notices.map((notice) => QUESTION.exec(firstLine(notice.message))?.[1]).filter(Boolean);
+    assert.deepEqual(asked, ["로그인 버튼 고쳐줘"], "a pending question blocks a second one in the same project");
+    await fs.rm(path.join(goalDir(dir), "consent.json"));
+    await fake.run("session", "prompt", { sessionID: "ses_alias", messageID: "m3", prompt: { text: `${head}\n\nfinish the migration` }, delivery: "queue" });
+    const again = (await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8")).split("\n").filter(Boolean).map((line) => QUESTION.exec(firstLine(JSON.parse(line).message))?.[1]).filter(Boolean);
+    assert.deepEqual(again, ["로그인 버튼 고쳐줘", "finish the migration"]);
+  } finally {
+    await cleanup();
+    if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previous;
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("OpenCode 2: a request that ends with plain lit, or starts with lit-loop, asks the goal question", async () => {
+  for (const [text, objective] of [["로그인 버튼 고쳐줘. 부탁해 lit", "로그인 버튼 고쳐줘. 부탁해"], ["lit-loop 로그인 버튼 고쳐줘", "로그인 버튼 고쳐줘"]]) {
+    const dir = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-v2-loop-goal-plain-")));
+    await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ scripts: { test: "node --test" } }));
+    const previous = process.env.XDG_CONFIG_HOME;
+    process.env.XDG_CONFIG_HOME = path.join(dir, "xdg");
+    const fake = createFakeV2Context({ directory: dir, sessions: { ses_root: { id: "ses_root", agent: "lit-loop" } } });
+    const cleanup = await setupLitOpenCodeServer(fake.context);
+    try {
+      await fake.run("session", "prompt", { sessionID: "ses_root", messageID: "m1", prompt: { text }, delivery: "queue" });
+      const notices = (await fs.readFile(createRuntimePaths(dir).noticesFile, "utf8")).split("\n").filter(Boolean).map((line) => JSON.parse(line));
+      assert.deepEqual(notices.map((notice) => QUESTION.exec(firstLine(notice.message))?.[1]).filter(Boolean), [objective], text);
+    } finally {
+      await cleanup();
+      if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+      else process.env.XDG_CONFIG_HOME = previous;
+      await fs.rm(dir, { recursive: true, force: true });
+    }
   }
 });
 

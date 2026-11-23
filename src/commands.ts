@@ -60,6 +60,7 @@ import {
 } from "./durable-plan.ts";
 import { isWorkflowFamilyMode, workflowFamilyCommandDefinitions } from "./workflow-families.ts";
 import { recordNativeGoalUnavailable } from "./native-goal-ledger.ts";
+import { loopGoalContext, offerLoopGoal } from "./loop-goal.ts";
 import { nativeGoalRoute } from "./v2/native-goal.ts";
 import {
   captureKnowledgeEvent,
@@ -161,6 +162,8 @@ export type CommandActivationOptions = {
   readonly onSkillActivation?: (sessionID: string, skillId: string) => void | Promise<void>;
   /** Shows the plan-approval question where the user sees it: OpenCode 1 drops parts a command hook adds. */
   readonly onPlanQuestion?: (line: string) => void;
+  /** Shows the lit-loop goal question that `/lit-loop <task>` or `/litwork <task>` asks. */
+  readonly onLoopGoalQuestion?: (line: string) => void;
 };
 
 export { litActivationBanner, startWorkPromptInjection } from "./activation.ts";
@@ -836,6 +839,21 @@ export function createCommandActivationHook(
     await options.onSkillActivation?.(input.sessionID, command.id);
     const goalRoute = nativeGoalRoute(command.id, "");
     if (goalRoute !== undefined) await recordNativeGoalUnavailable(projectRoot, input.sessionID, goalRoute, "opencode-1");
+    // `/lit-loop <task>` and `/litwork <task>` ask the same goal question as a typed `lit loop <task>`.
+    if ((goalRoute === "lit-loop" || goalRoute === "litwork") && input.arguments.trim() !== "") {
+      const offered = await offerLoopGoal({ projectRoot, sessionID: input.sessionID, mode: command.id, text: `${command.id} ${input.arguments}` });
+      if (offered !== undefined) {
+        options.onLoopGoalQuestion?.(offered.screen);
+        output.parts.push({
+          id: `prt_litopencode_${command.id.replace(/-/g, "_")}_loop_goal`,
+          sessionID: input.sessionID,
+          messageID: `msg_litopencode_${command.id.replace(/-/g, "_")}_loop_goal`,
+          type: "text",
+          text: loopGoalContext(offered.line),
+          synthetic: true
+        });
+      }
+    }
 
     if (command.id === "lit-scientific-visualization") {
       options.onScientificVisualizationActivation?.(input.sessionID);

@@ -56,8 +56,10 @@ export function nativeGoalRoute(mode: string, text: string): NativeGoalRoute | u
   if (mode === "lit-loop" || mode === "start-work") return mode;
   if (mode === "litwork" || mode === "lit-work") return "litwork";
   if (mode !== "lit-task") return undefined;
-  const first = text.trim().replace(/^\//u, "").split(/\s+/u)[0]?.toLowerCase();
-  return first === "litwork" || first === "lit-work" ? "litwork" : undefined;
+  // The run word may open the request (`litwork fix it`) or close it (`fix it litwork`).
+  const words = text.trim().replace(/^\//u, "").split(/\s+/u).map((word) => word.toLowerCase());
+  const last = words[words.length - 1]?.replace(/[.,!?;:]+$/u, "");
+  return [words[0], last].some((word) => word === "litwork" || word === "lit-work") ? "litwork" : undefined;
 }
 
 export function decideNativeGoal(input: NativeGoalInput): NativeGoalAction {

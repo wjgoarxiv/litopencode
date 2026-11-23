@@ -19,7 +19,15 @@ test("routes: lit-loop, start-work and litwork qualify; chat modes map by mode a
   assert.equal(nativeGoalRoute("lit-work", ""), "litwork");
 });
 
-test("routes: bare lit and every read-only or planning route never qualify", () => {
+test("routes: a trailing litwork qualifies like a leading one; a mid-sentence mention does not", () => {
+  assert.equal(nativeGoalRoute("lit-task", "로그인 버튼 고쳐줘 litwork"), "litwork");
+  assert.equal(nativeGoalRoute("lit-task", "finish the migration lit-work."), "litwork");
+  assert.equal(nativeGoalRoute("lit-task", "what does litwork do?"), undefined);
+  assert.equal(nativeGoalRoute("lit-task", "로그인 버튼 고쳐줘 lit"), undefined);
+});
+
+// A plain `lit <task>` drives no native goal by itself; its goal question (loop-goal.ts) arms one only on yes.
+test("routes: bare lit and every read-only or planning route never drive a native goal", () => {
   assert.equal(nativeGoalRoute("lit-task", "lit fix the parser"), undefined);
   for (const mode of ["lit-plan", "lit-research", "review-work", "lit-recap", "lit-adhd", "lit-brainstorm", "litgoal", "lit-crucible", "lit-handoff", "lit-init", "lit-humanizer", "lit"]) {
     assert.equal(nativeGoalRoute(mode, `${mode} something`), undefined, mode);

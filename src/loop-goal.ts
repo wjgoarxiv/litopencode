@@ -1,4 +1,4 @@
-// The goal question for a lit-loop or litwork run that has no plan. On the run's first activation, when the
+// The goal question for a lit-loop, litwork or plain `lit <task>` run that has no plan. On the run's first activation, when the
 // prompt names an objective and the project has a test command, LitOpenCode records one `kind: "loop"` consent
 // and hands the question to a user-visible surface (a TUI toast); it never waits on a test run. The user's exact
 // `yes` on a later prompt arms the goal (goal-pipeline.ts answerConsent), and starts no start-work run. With no
@@ -26,12 +26,26 @@ export function detectCheck(projectRoot: string): string | undefined {
   return undefined;
 }
 
-/** What the prompt asks for: the text after `lit` / `litwork`, without the route word that selected the run. */
+/**
+ * What the prompt asks for: the text after `lit` / `litwork`, without the route word that selected the run.
+ * A request that ends with the word (`fix the parser lit loop`) has nothing after it, so the words before it are
+ * the objective; a bare `lit` or `litwork` stays empty.
+ */
 export function loopObjective(prompt: string): string {
   const raw = withoutSkillHatch(prompt).replace(/```[\s\S]*?```/gu, " ");
   const match = /(?:^|[^\w])lit(?:work)?(?![\w])\s*([\s\S]*)$/iu.exec(raw);
-  return (match?.[1] ?? raw).replace(/^\s*(?:-loop|-work|loop|work|goal|plan|workflow)(?![\w-])\s*/iu, "").trim();
+  const after = (match?.[1] ?? raw).replace(/^\s*(?:-loop|-work|loop|work|goal|plan|workflow)(?![\w-])\s*/iu, "").trim();
+  const objective = !/[\p{L}\p{N}]/u.test(after) && match !== null ? raw.slice(0, match.index).trim() : after;
+  return /[\p{L}\p{N}]/u.test(objective) ? objective : "";
 }
+
+/** A plain `lit` that opens or closes the request (`lit fix it`, `fix it lit`), not one inside the sentence. */
+function litAtEdge(prompt: string): boolean {
+  const words = withoutSkillHatch(prompt).trim().split(/\s+/u).map((word) => word.toLowerCase().replace(/[.,!?;:]+$/u, ""));
+  return words[0] === "lit" || words[words.length - 1] === "lit";
+}
+
+const resumeOnly = /^(?:continue|resume)$/iu;
 
 /** The model-context line that says the question was shown, so the model never asks it a second time. */
 export function loopGoalContext(line: string): string {
@@ -54,9 +68,11 @@ export async function offerLoopGoal(input: {
   try {
     if (input.repeat === true && !hasClosedIntent(input.projectRoot, input.sessionID)) return undefined;
     const route = nativeGoalRoute(input.mode, input.text);
-    if (route !== "lit-loop" && route !== "litwork") return undefined;
+    // A plain `lit <task>` or `<task> lit` keeps its lit-task route and asks the same question.
+    const plainLit = route === undefined && input.mode === "lit-task" && litAtEdge(input.text);
+    if (route !== "lit-loop" && route !== "litwork" && !plainLit) return undefined;
     const objective = loopObjective(input.text);
-    if (objective === "") return undefined;
+    if (objective === "" || resumeOnly.test(objective)) return undefined;
     const check = detectCheck(input.projectRoot);
     if (check === undefined) return undefined;
     if (readIntent(input.projectRoot, input.sessionID) !== undefined || hasPendingConsent(input.projectRoot)) return undefined;

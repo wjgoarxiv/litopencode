@@ -117,6 +117,13 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
         } catch { // no-excuse-ok: catch -- a missing TUI must never block the plan save.
           // The question still rides the saved-plan notice.
         }
+      },
+      onLoopGoalQuestion: (line) => {
+        try {
+          void input?.client?.tui?.showToast({ body: { title: "LitOpenCode goal", message: line, variant: "info", duration: 30000 } })?.catch(() => undefined);
+        } catch { // no-excuse-ok: catch -- a missing TUI must never block the command.
+          // The consent stays recorded, so the user's yes still arms the goal.
+        }
       }
     });
 

@@ -457,9 +457,20 @@ function containsLitSlashCommandMention(text: string): boolean {
   return mentions.some((mention) => litSlashCommands.includes(mention.trim().slice(1) as (typeof litSlashCommands)[number]));
 }
 
+/**
+ * A hyphenated `lit-loop` that opens or closes the request (`lit-loop fix it`, `fix it lit-loop`) is the run
+ * word, so it is spelled `lit loop` for routing. A mention inside the sentence, a question ending (`?`) and the
+ * `/lit-loop` slash command keep their own routes.
+ */
+function spellEdgeLitLoop(text: string): string {
+  return text
+    .replace(/^(\s*)lit-loop(?![\w-])/iu, "$1lit loop")
+    .replace(/(?<![\w./-])lit-loop([.!]*\s*)$/iu, "lit loop$1");
+}
+
 export function detectChatActivationMode(input: string, agent?: string): ChatActivationMode | undefined {
   // A `lit +viz +ui …` plan names skills, not the task: the cascade routes the text without those names.
-  const text = withoutSkillHatch(input);
+  const text = spellEdgeLitLoop(withoutSkillHatch(input));
   if (text.trim().toLowerCase() === "handoff") return "lit-handoff";
   if (text.trim().toLowerCase() === "lit-scientific-visualization") return "lit-scientific-visualization";
   const raw = rawTriggerText(text);

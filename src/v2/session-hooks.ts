@@ -169,6 +169,19 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
   }
 
   /**
+   * `/lit-loop <task>` and `/litwork <task>` ask the same goal question as a typed `lit loop <task>`: on the TUI
+   * notice row, with the model-context line returned for this turn. A command with no task asks nothing.
+   */
+  async function offerCommandLoopGoal(sessionID: string, command: string, work: string): Promise<string | undefined> {
+    const route = nativeGoalRoute(command, "");
+    if ((route !== "lit-loop" && route !== "litwork") || work.trim() === "") return undefined;
+    const offered = await offerLoopGoal({ projectRoot: options.projectRoot, sessionID, mode: route, text: `${route} ${work}` });
+    if (offered === undefined) return undefined;
+    appendNotice(createRuntimePaths(options.projectRoot).noticesFile, { title: "LitOpenCode goal", message: offered.screen, variant: "info", duration: 15000 });
+    return loopGoalContext(offered.line);
+  }
+
+  /**
    * `/start-work save-plan <JSON>` on OpenCode 2: saves the approved plan and asks the one approval question
    * (start work and set goal). The question goes to the TUI notice row and, for a one-shot run that has no
    * TUI, into this turn with the instruction to end the reply with it and start nothing.
@@ -209,6 +222,8 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
         const saved = await savePlan(event.sessionID, mark.work);
         if (saved !== undefined) state.user.push(saved);
       }
+      const asked = await offerCommandLoopGoal(event.sessionID, mark.command, mark.work);
+      if (asked !== undefined) state.turn.push(asked);
       return;
     }
     const session = await lookup(event.sessionID);
@@ -282,7 +297,11 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
         return;
       }
     }
-    if (alias !== undefined) startNativeGoal(event.sessionID, alias.route, alias.work);
+    if (alias !== undefined) {
+      startNativeGoal(event.sessionID, alias.route, alias.work);
+      const asked = await offerCommandLoopGoal(event.sessionID, alias.route, alias.work);
+      if (asked !== undefined) state.turn.push(asked);
+    }
 
     const mode = detectChatActivationMode(input, session.agent);
     if (mode === undefined) return;

@@ -533,6 +533,29 @@ test("routes natural lit keywords to the matching prompt injection", async () =>
   });
 });
 
+test("a trailing run word routes the same as a leading one", () => {
+  for (const [leading, trailing] of [
+    ["lit loop 로그인 버튼 고쳐줘", "로그인 버튼 고쳐줘 lit loop"],
+    ["litwork 로그인 버튼 고쳐줘", "로그인 버튼 고쳐줘 litwork"],
+    ["lit 로그인 버튼 고쳐줘", "로그인 버튼 고쳐줘 lit"],
+    ["lit-loop 로그인 버튼 고쳐줘", "로그인 버튼 고쳐줘 lit-loop"],
+  ]) {
+    assert.equal(detectChatActivationMode(trailing), detectChatActivationMode(leading), trailing);
+  }
+  assert.equal(detectChatActivationMode("로그인 버튼 고쳐줘 lit loop"), "lit-loop");
+  assert.equal(detectChatActivationMode("로그인 버튼 고쳐줘 litwork"), "lit-task");
+  assert.equal(detectChatActivationMode("what does lit-loop do?"), undefined);
+});
+
+test("a hyphenated lit-loop as the first or last word routes like lit loop; a mention or a question does not", () => {
+  for (const text of ["lit-loop 로그인 버튼 고쳐줘", "로그인 버튼 고쳐줘 lit-loop", "fix the parser lit-loop.", "LIT-LOOP fix the parser", "lit-loop"]) {
+    assert.equal(detectChatActivationMode(text), "lit-loop", text);
+  }
+  for (const text of ["what does lit-loop do?", "how do I use lit-loop?", "the lit-loop agent is slow, check why", "/lit-loop fix the parser"]) {
+    assert.equal(detectChatActivationMode(text), detectChatActivationMode(text.replace(/lit-loop/iu, "xyz")), text);
+  }
+});
+
 test("keeps trailing bare lit in research prose on the lit-loop prompt", async () => {
   assert.equal(detectChatActivationMode("Please make an in-depth research regarding this. Lit"), "lit-loop");
 
