@@ -24,6 +24,7 @@ import {
   shine,
   stageFlash,
   statusSegments,
+  synthwavePill,
   truncateCells,
   type LastMission,
   type Line,
@@ -155,8 +156,8 @@ function phaseLabel(view: MissionView, frame: MotionFrame, palette: MissionPalet
   return { text: `● ${stepName(view.phase, view).toUpperCase()}`, fg: palette.info, bold: true };
 }
 
-function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string, rest: boolean, mark?: Line): Line {
-  const brand: Segment[] = [{ text: "🔥 ", fg: palette.text }, { text: "LIT", fg: shine(palette.secondary, palette, 0.5, shimmerAt(frame), 0.6), bold: true }];
+function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string, rest: boolean, mark?: Line, pill = false): Line {
+  const brand: Segment[] = pill ? synthwavePill() : [{ text: "🔥 ", fg: palette.text }, { text: "LIT", fg: shine(palette.secondary, palette, 0.5, shimmerAt(frame), 0.6), bold: true }];
   const name = view.active ? view.discipline : "ready";
   const right: Line = mark ?? [phaseLabel(view, frame, palette, rest)];
   const withName = (room: number): Segment[] => [...brand, { text: " · ", fg: palette.muted }, { text: truncateCells(name, room), fg: view.active ? palette.text : palette.muted }];
@@ -375,7 +376,7 @@ export function statusCard(input: CardInputs, palette: MissionPalette, width: nu
   const inner = width - 4;
   const row = (content: Line): Line => (inner < 0 ? fitLine([], width, palette) : [{ text: "│ ", fg: border }, ...fitLine(content, inner, palette), { text: " │", fg: border }]);
   const mark = turn !== undefined ? turnMark(palette, turn.glow) : rainbow !== undefined ? rewindMark(rainbow) : lanes !== undefined ? reviewMark(lanes, palette) : undefined;
-  const ruledTop = topLine(view, frame, palette, width, border, rest, mark);
+  const ruledTop = topLine(view, frame, palette, width, border, rest, mark, palette.synthwave === true && rainbow === undefined);
   const top = lanes === undefined ? ruledTop : laneRule(ruledTop, lanes, palette);
   const threadRows = input.threads === undefined ? [] : threadLines(input.threads, palette, Math.max(0, inner), {
     now: frame.now ?? 0,

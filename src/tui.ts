@@ -9,7 +9,7 @@ import { useTerminalDimensions } from "@opentui/solid";
 import { jsx } from "@opentui/solid/jsx-runtime";
 import { buildMissionView, lastMission, leadingNotice, missionNotices, type MissionNotice, type MissionView } from "./tui/mission-model.ts";
 import { idleMotion, motionTiming, planMotion, sampleMotion, type MotionState } from "./tui/mission-motion.ts";
-import { chipBudget, chipLine, homeLine, missionPanel, paletteFromTheme, panelWidth, type Line, type MissionPalette } from "./tui/mission-text.ts";
+import { chipBudget, chipLine, homeLine, missionPanel, paletteFromTheme, panelWidth, synthwaveBadgeAllowed, type Line, type MissionPalette } from "./tui/mission-text.ts";
 import { adhdNudgeText, adhdSuggestDue, createLedgerReader, createWorkReader, earlierWorkWindowMs, hasEarlierWork, messageTimes, missionProjectRoot, wayBackDue, readCardInput, readLatestResearchRun, readMissionInput, readThreadSources, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
 import { chipShimmer, idleChipMotion, planChipMotion, type ChipMotion } from "./tui/mission-skills.ts";
 import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "./tui/mission-band.ts";
@@ -89,7 +89,11 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   }
 
   const state = (): MissionStateSource => api.state as unknown as MissionStateSource;
-  const palette = (): MissionPalette => paletteFromTheme(api.theme.current as unknown as Record<string, unknown>, api.theme.mode());
+  const palette = (): MissionPalette => {
+    const mode = api.theme.mode();
+    const base = paletteFromTheme(api.theme.current as unknown as Record<string, unknown>, mode);
+    return synthwaveBadgeAllowed(process.env, mode) ? { ...base, synthwave: true } : base;
+  };
 
   // OpenCode keeps the sidebar choice in its KV store under "sidebar" ("auto" or "hide"); a child
   // session never shows the sidebar. Before the store is ready the setting is unknown.

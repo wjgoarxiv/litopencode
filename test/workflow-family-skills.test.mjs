@@ -440,7 +440,9 @@ test("evaluator deadlines reject non-finite seconds as typed CLI input errors", 
       const optionTerminator = seconds.startsWith("-") ? ["--"] : [];
       const result = spawnSync("python3", [helper, ...optionTerminator, seconds, "--", "python3", "-c", "raise SystemExit(0)"], {
         cwd: process.cwd(),
-        encoding: "utf8"
+        encoding: "utf8",
+        // Recent Python argparse colours its errors when the runner under a TTY exports FORCE_COLOR.
+        env: { ...process.env, PYTHON_COLORS: "0" }
       });
       assert.equal(result.status, 2, result.stderr);
       assert.match(result.stderr, /error: seconds must be finite and greater than zero/iu);

@@ -3,6 +3,7 @@
 // renders as spans. Every frame of motion is drawn from a MotionFrame, so all of it is testable here.
 import { ease, mixHex, rowEntryStart, seg, slideIn, motionTiming, type MotionFrame } from "./mission-motion.ts";
 import { currentStepIndex, missionRowKeys, missionStatus, stepName, type MissionStep, type MissionView, type StepState } from "./mission-model.ts";
+import { synthwaveChrome } from "../synthwave-mark.ts";
 
 export type Segment = { readonly text: string; readonly fg: string; readonly bg?: string; readonly bold?: boolean };
 export type Line = readonly Segment[];
@@ -30,6 +31,8 @@ export type MissionPalette = {
   readonly fillWarn: string;
   /** Text drawn on a filled pill. */
   readonly onFill: string;
+  /** Draw the Synthwave LIT badge pill: set only for a dark theme on a truecolor terminal with colour on. */
+  readonly synthwave?: boolean;
 };
 
 /**
@@ -360,6 +363,25 @@ function brandPill(palette: MissionPalette, sweep: number): Segment[] {
   });
 }
 
+/** Cells of the Synthwave badge pill ` 🔥 LIT `. */
+export const synthwavePillWidth = 8;
+const synthwaveInk = "#0b0e14";
+
+/**
+ * The Synthwave badge pill ` 🔥 LIT `: bold dark ink on a gradient from the LitOpenCode chrome's second
+ * stop to its fifth. Callers draw it only when `palette.synthwave` is set and keep their old look otherwise.
+ */
+export function synthwavePill(): Segment[] {
+  const chars = [" ", "🔥", " ", "L", "I", "T", " "];
+  return chars.map((char, index) => ({ text: char, fg: synthwaveInk, bg: mixHex(synthwaveChrome[1], synthwaveChrome[4], index / (chars.length - 1)), bold: true }));
+}
+
+/** The badge shows on a dark theme when the terminal declares truecolor and NO_COLOR is unset. */
+export function synthwaveBadgeAllowed(env: Readonly<Record<string, string | undefined>>, mode: "dark" | "light"): boolean {
+  if (mode !== "dark" || env.NO_COLOR !== undefined) return false;
+  return /^(truecolor|24bit)$/iu.test(env.COLORTERM ?? "") || /direct/iu.test(env.TERM ?? "");
+}
+
 export type ChipTier = "full" | "medium" | "tight";
 
 export type ChipGroup = readonly Segment[];
@@ -674,7 +696,9 @@ export function missionPanel(view: MissionView, frame: MotionFrame, palette: Mis
   const keys = missionRowKeys(view);
   const rows = new Map<string, Line>();
 
-  rows.set("h1", [...logoLine(0, palette, sweep), { text: "  ", fg: palette.muted }, { text: truncateCells(view.discipline, width - logoWidth - 2), fg: palette.muted }]);
+  // With the Synthwave badge the pill sits between the tiny LIT and the discipline, inside the 32-cell row.
+  const badge = palette.synthwave === true ? [{ text: " ", fg: palette.muted }, ...synthwavePill(), { text: " ", fg: palette.muted }] : [{ text: "  ", fg: palette.muted }];
+  rows.set("h1", [...logoLine(0, palette, sweep), ...badge, { text: truncateCells(view.discipline, width - logoWidth - lineWidth(badge)), fg: palette.muted }]);
   const status = statusSegments(view, frame, palette);
   const statusStart = logoWidth + 2 + status.offset;
   rows.set("h2", [...logoLine(1, palette, sweep), { text: " ".repeat(Math.max(0, statusStart - logoWidth)), fg: palette.muted }, ...status.segments]);

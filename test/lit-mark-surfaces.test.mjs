@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { banner, micro, standard, lockup } from "../src/lit-mark.ts";
+import { micro, standard } from "../src/lit-mark.ts";
+import { synthwaveRows } from "../src/synthwave-mark.ts";
 import { ignitionMark, createIgnitionState } from "../src/ignition.ts";
 import { renderLitOpenCodeWordmark, renderInstallTuiLogo, renderInstallTuiStage, shouldRenderInstallTui } from "../src/cli/install-tui.ts";
 import { withMarkTerminal } from "../test-support/lit-mark-fixture.mjs";
@@ -8,12 +9,13 @@ import { withMarkTerminal } from "../test-support/lit-mark-fixture.mjs";
 const utf8 = { LANG: "en_US.UTF-8", TERM: "xterm-256color" };
 const stripAnsi = (text) => text.replace(/\u001b\[[0-9;]*m/gu, "");
 
-test("installer wordmark uses B with the native name and version", () => {
+test("installer wordmark is the Synthwave mark with the native name and version", () => {
   withMarkTerminal(() => {
     const wordmark = renderLitOpenCodeWordmark("@litfamily/litopencode@9.8.7");
-    assert.equal(stripAnsi(wordmark), lockup("litopencode v9.8.7", banner).join("\n"));
-    for (const rgb of ["255;99;55", "215;247;91", "242;239;223"]) assert.ok(wordmark.includes(`\u001b[38;2;${rgb}m`));
-    assert.equal(renderLitOpenCodeWordmark("@litfamily/litopencode@9.8.7", false), stripAnsi(wordmark));
+    assert.equal(wordmark, synthwaveRows({ cols: 80, depth: "truecolor", footer: "litopencode v9.8.7" }).join("\n"));
+    for (const rgb of ["255;255;255", "51;17;68"]) assert.ok(wordmark.includes(`48;2;${rgb}m`));
+    assert.ok(wordmark.includes("\u001b[38;2;139;233;253mL"), "tagline gradient starts at the first tagline stop");
+    assert.equal(renderLitOpenCodeWordmark("@litfamily/litopencode@9.8.7", false), synthwaveRows({ cols: 80, depth: "none", footer: "litopencode v9.8.7" }).join("\n"));
     const logo = renderInstallTuiLogo("@litfamily/litopencode@9.8.7");
     assert.ok(logo.includes(wordmark));
     assert.match(logo, /writes begin at 03 \/ 05/u);

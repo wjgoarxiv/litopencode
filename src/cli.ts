@@ -231,7 +231,7 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
   // Doctor's stdout is JSON even without --json; keep its interactive mark on stderr.
   if (argv[0] === "doctor" && !argv.some((arg) => arg === "--json" || arg === "--help" || arg === "-h") && process.stderr.isTTY === true && process.env.CI === undefined) {
     const metadata = await readPackageMetadata();
-    process.stderr.write(`${renderLitOpenCodeWordmark(metadata.name + "@" + metadata.version)}\n`);
+    process.stderr.write(`${renderLitOpenCodeWordmark(metadata.name + "@" + metadata.version, true, process.stderr)}\n`);
   }
   if (result.stdout) process.stdout.write(`${result.stdout}\n`);
   if (result.stderr) process.stderr.write(`${result.stderr}\n`);

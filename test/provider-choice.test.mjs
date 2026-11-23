@@ -1,5 +1,5 @@
 import { withMarkTerminal } from "../test-support/lit-mark-fixture.mjs";
-import { banner, lockup } from "../src/lit-mark.ts";
+import { synthwaveRows } from "../src/synthwave-mark.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
@@ -283,8 +283,8 @@ test("install banner renders the family frame with product, version and stage fr
   const output = withMarkTerminal(() => installTui.renderInstallTuiLogo("litopencode@0.2.1"), { color: false });
   const rule = "  " + "━".repeat(46);
   assert.equal(output.split("\n").filter((line) => line === rule).length, 2);
-  const expectedWordmark = lockup("litopencode v0.2.1", banner).join("\n");
-  assert.ok(output.includes(expectedWordmark), "canonical LIT mark and product lockup missing");
+  const expectedWordmark = synthwaveRows({ cols: 80, depth: "none", footer: "litopencode v0.2.1" }).join("\n");
+  assert.ok(output.includes(expectedWordmark), "Synthwave LIT mark and product line missing");
   assert.doesNotMatch(output, /🔥  l  i  t  opencode/u);
   for (const line of expectedWordmark.split("\n")) assert.ok(Array.from(line).length <= 80, line);
   assert.match(output, /\n  ╭─ INSTALL\n(  │ 0[1-5] · [^\n]+\n){5}  ╰─ /u);

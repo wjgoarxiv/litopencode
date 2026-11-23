@@ -36,7 +36,7 @@ import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "../tui
 import { activeSkillLook, turnGlow, waitingOnYou } from "../tui/mission-looks.ts";
 import { rainbowActive, rainbowAllowed, rainbowAt, rainbowShows, rainbowTickMs } from "../tui/mission-rainbow.ts";
 import { threadLineCount, threadsOf } from "../tui/mission-threads.ts";
-import { homeLine, missionPanel, paletteFromTheme, panelWidth, type Line, type MissionPalette } from "../tui/mission-text.ts";
+import { homeLine, missionPanel, paletteFromTheme, panelWidth, synthwaveBadgeAllowed, type Line, type MissionPalette } from "../tui/mission-text.ts";
 import { createRuntimePaths } from "../state.ts";
 import { footerBudget, footerStatus, sidebarCells } from "./tui-footer.ts";
 import { createNoticeTail } from "./notices.ts";
@@ -191,7 +191,10 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     }
   }
 
-  const palette = (): MissionPalette => paletteFromV2Theme(context.theme, context.themeMode);
+  const palette = (): MissionPalette => {
+    const base = paletteFromV2Theme(context.theme, context.themeMode);
+    return synthwaveBadgeAllowed(process.env, context.themeMode) ? { ...base, synthwave: true } : base;
+  };
 
   function span(segment: Line[number]): unknown {
     return ui.jsx("span", {

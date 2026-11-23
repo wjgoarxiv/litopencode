@@ -14,11 +14,11 @@ const cases = [
   { name: "--yes with empty CI", env: { CI: "" }, args: ["--yes"], ansi: false },
   { name: "--yes with empty NO_COLOR", env: { NO_COLOR: "" }, args: ["--yes"], ansi: false },
   { name: "automatic CI without --yes", env: { CI: "" }, args: [], ansi: false },
-  { name: "non-TTY install preserves style without prompting", env: {}, args: [], ansi: false, tty: false },
+  { name: "non-TTY install preserves style without prompting", env: {}, args: [], ansi: false, tty: false, plain: true },
   { name: "--yes with dumb terminal", env: { TERM: "dumb" }, args: ["--yes"], ansi: false, plain: true },
   { name: "--yes with non-UTF-8 locale", env: { LC_ALL: "C" }, args: ["--yes"], ansi: false, plain: true },
-  { name: "--yes retains truecolor", env: {}, args: ["--yes"], ansi: true, color: /\u001b\[38;2;255;99;55m/u },
-  { name: "interactive 256-color explicit style", env: { COLORTERM: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["3"], style: "eli5", ansi: true, color: /\u001b\[38;5;203m/u },
+  { name: "--yes retains truecolor", env: {}, args: ["--yes"], ansi: true, color: /\u001b\[48;2;255;255;255m/u },
+  { name: "interactive 256-color explicit style", env: { COLORTERM: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["3"], style: "eli5", ansi: true, color: /\u001b\[48;5;231m/u },
   { name: "interactive NO_COLOR explicit style", env: { NO_COLOR: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["4"], style: "eli5-ko", ansi: false },
   { name: "explicit CI permission prompt remains plain", env: { CI: "" }, args: ["--permission-prompt"], answers: ["0"], ansi: false }
 ];
@@ -81,7 +81,7 @@ test("packed CLI installs obey terminal and prompt policy on a real TTY", {
         assert.equal(receipt.output.includes("\u001b"), scenario.ansi, receipt.output);
         if (scenario.color) assert.match(receipt.output, scenario.color);
         if (scenario.plain) {
-          assert.match(receipt.output, /(?:^|\n)LIT\r?\n/u);
+          assert.match(receipt.output, /(?:^|\n)LIT · opencode\r?\n/u);
           assert.doesNotMatch(receipt.output, blockGlyphs);
         } else {
           assert.match(receipt.output, blockGlyphs);

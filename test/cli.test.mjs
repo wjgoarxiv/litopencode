@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
-import { banner } from "../src/lit-mark.ts";
+import { MONO_ROWS } from "../src/synthwave-data.ts";
 import { test } from "node:test";
 import { runCli } from "../test-support/cli-fixture.ts";
 
 test("help flag prints usage", () => {
-  const result = runCli(["--help"], { env: { ...process.env, LC_ALL: "en_US.UTF-8", TERM: "xterm-256color" } });
+  const result = runCli(["--help"], { env: { ...process.env, LC_ALL: "en_US.UTF-8", TERM: "xterm-256color", COLUMNS: "80" } });
 
   assert.equal(result.status, 0, result.stderr);
-  assert.ok(result.stdout.startsWith(banner[0].padEnd(50) + "\n"));
+  // Piped stdout: only the plain line and the version line, never rows of art.
+  assert.match(result.stdout, /^LIT · opencode\nlitopencode v\d+\.\d+\.\d+\n/u);
+  assert.doesNotMatch(result.stdout, /[█▀▄░]|\u001b/u);
   assert.doesNotMatch(result.stdout, /🔥  l  i  t  opencode/u);
   assert.match(result.stdout, /litopencode/);
   assert.match(result.stdout, /npm exec --package @litfamily\/litopencode -- litopencode install/);
@@ -27,11 +29,11 @@ test("help flag prints usage", () => {
   assert.match(result.stdout, /\/start-work init\|resume\|cancel\|complete\|status/);
 });
 
-test("help uses a plain LIT wordmark for non-UTF-8 and dumb terminals", () => {
+test("help uses the plain LIT · opencode line for non-UTF-8 and dumb terminals", () => {
   for (const locale of [{ LC_ALL: "C", TERM: "xterm" }, { LC_ALL: "en_US.UTF-8", TERM: "dumb" }]) {
     const result = runCli(["--help"], { env: { ...process.env, ...locale } });
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /^LIT\nlitopencode v/u);
+    assert.match(result.stdout, /^LIT · opencode\nlitopencode v/u);
     assert.doesNotMatch(result.stdout, /[█▓▐▌]|\u001b/u);
   }
 });
@@ -45,13 +47,15 @@ test("interactive doctor help renders one help mark and no doctor stderr mark", 
       Object.defineProperty(process.stderr, 'isTTY', { value: true });
       await main(${JSON.stringify(["doctor", flag])});
     `;
-    const env = { ...process.env, LC_ALL: "en_US.UTF-8", TERM: "xterm-256color", NO_COLOR: "1", NO_UPDATE_NOTIFIER: "1", LITOPENCODE_NO_AUTO_UPDATE: "1" };
+    const env = { ...process.env, LC_ALL: "en_US.UTF-8", TERM: "xterm-256color", COLUMNS: "80", NO_COLOR: "1", NO_UPDATE_NOTIFIER: "1", LITOPENCODE_NO_AUTO_UPDATE: "1" };
     delete env.CI;
     // The node test runner sets FORCE_COLOR under a TTY; with NO_COLOR it makes node warn on stderr.
     delete env.FORCE_COLOR;
     const result = spawnSync(process.execPath, ["--input-type=module", "-e", script], { encoding: "utf8", env });
     assert.equal(result.status, 0, result.stderr);
-    assert.ok(result.stdout.startsWith(banner[0].padEnd(50) + "\n"));
+    // stdout is faked as a TTY here, so NO_COLOR still draws the mono scene.
+    assert.ok(result.stdout.startsWith(MONO_ROWS["B-L"][0] + "\n"));
+    assert.match(result.stdout, /\n {31}LIT · opencode\n +litopencode v/u);
     assert.equal(result.stderr, "");
   }
 });

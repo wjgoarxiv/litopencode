@@ -1,5 +1,6 @@
 import type { InstallProgress, InstallStageLabel } from "./types.ts";
-import { banner, colorize, lockup, markColorMode, supportsMarkGlyphs } from "../lit-mark.ts";
+import { markColorMode } from "../lit-mark.ts";
+import { terminalSynthwave } from "../synthwave-mark.ts";
 
 const reset = "\u001b[0m";
 const bold = "\u001b[1m";
@@ -119,10 +120,14 @@ function productVersion(packageLabel: string): string {
   return at > 0 ? packageLabel.slice(at + 1) : packageLabel;
 }
 
-export function renderLitOpenCodeWordmark(packageLabel: string, colorEnabled = true): string {
+/**
+ * The Synthwave mark sized to the terminal, its tagline, then the product and version centred under it.
+ * `stream` is where the mark is written, so its width decides the size (doctor writes it to stderr), and a
+ * stream that is not a TTY gets only the plain `LIT · opencode` line and the version line.
+ */
+export function renderLitOpenCodeWordmark(packageLabel: string, colorEnabled = true, stream: { readonly columns?: number; readonly isTTY?: boolean } = process.stdout): string {
   const product = "litopencode v" + productVersion(packageLabel);
-  if (!supportsMarkGlyphs()) return "LIT\n" + product;
-  return colorize(lockup(product, banner), { mode: colorEnabled ? markColorMode() : "none" }).join("\n");
+  return terminalSynthwave({ colour: colorEnabled, stream, footer: product }).join("\n");
 }
 
 export function renderInstallTuiLogo(packageLabel: string): string {

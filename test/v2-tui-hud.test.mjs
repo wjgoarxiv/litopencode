@@ -119,7 +119,7 @@ test("the card shows on every session, lit or not, and nowhere else", async () =
   const cleanup = await setupLitOpenCodeTui(fake.context, runtime());
   assert.equal(band(fake, undefined), "", "the home route has no session, so no card");
   const text = band(fake, "ses_plain");
-  assert.match(text, /🔥 LIT · ready/u);
+  assert.match(text, /🔥 LIT +· ready/u);
   assert.match(text, /○ IDLE/u);
   assert.match(text, /add lit to a prompt to start/u);
   await cleanup();
@@ -130,12 +130,40 @@ test("a lit turn's card names the discipline, its skill chip, the branch and the
   const fake = fakeTui({ messages });
   const cleanup = await setupLitOpenCodeTui(fake.context, runtime());
   const text = band(fake, "ses_lit");
-  assert.match(text, /🔥 LIT · lit-task/u);
+  assert.match(text, /🔥 LIT +· lit-task/u);
   assert.match(text, /○ IDLE/u);
   assert.match(text, /skills\s+lit-task/u);
   assert.match(text, /ctx 8%/u, "42,000 of a 500,000-token window");
   assert.match(text, /⎇ main/u);
   await cleanup();
+});
+
+test("the card's LIT becomes the Synthwave badge pill only on a dark theme in a truecolor terminal", async () => {
+  const keys = ["COLORTERM", "TERM", "NO_COLOR"];
+  const prior = new Map(keys.map((key) => [key, process.env[key]]));
+  const top = async (env, mode = "dark") => {
+    for (const key of keys) delete process.env[key];
+    Object.assign(process.env, env);
+    const fake = fakeTui({ messages: { ses_plain: [user("m1", "hello")] } });
+    fake.context.themeMode = mode;
+    const cleanup = await setupLitOpenCodeTui(fake.context, runtime());
+    try {
+      return band(fake, "ses_plain").split("\n")[0];
+    } finally {
+      await cleanup();
+    }
+  };
+  try {
+    assert.match(await top({ COLORTERM: "truecolor", TERM: "xterm-256color" }), /^╭─ {2}🔥 LIT {2}· ready /u, "pill cells pad the brand");
+    assert.match(await top({ TERM: "xterm-256color" }), /^╭─ 🔥 LIT · ready /u, "256 colours keep the old brand");
+    assert.match(await top({ COLORTERM: "truecolor", TERM: "xterm-256color" }, "light"), /^╭─ 🔥 LIT · ready /u, "light theme keeps the old brand");
+    assert.match(await top({ COLORTERM: "truecolor", TERM: "xterm-256color", NO_COLOR: "1" }), /^╭─ 🔥 LIT · ready /u, "NO_COLOR keeps the old brand");
+  } finally {
+    for (const [key, value] of prior) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });
 
 test("a running turn lights the work phase and the live step, and a skill tool call adds its chip", async () => {

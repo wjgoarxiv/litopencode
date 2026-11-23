@@ -1,5 +1,6 @@
 import { withMarkTerminal } from "../test-support/lit-mark-fixture.mjs";
-import { banner, lockup } from "../src/lit-mark.ts";
+import { MONO_ROWS } from "../src/synthwave-data.ts";
+import { synthwaveRows } from "../src/synthwave-mark.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -260,14 +261,14 @@ test("installer stages wrap real work and verification blocks a false ready rece
   });
 });
 
-test("install TUI logo uses LitOpenCode brand colors and polished lockup", async () => {
+test("install TUI logo draws the Synthwave mark in LitOpenCode chrome with its tagline", async () => {
   const output = withMarkTerminal(() => installTui.renderInstallTuiLogo("litopencode@0.1.11"));
-  assert.match(output, /\u001b\[38;2;255;99;55m/);
-  assert.match(output, /\u001b\[38;2;215;247;91m/u);
-  assert.match(output, /\u001b\[38;2;242;239;223m/u);
+  assert.ok(output.includes(synthwaveRows({ cols: 80, depth: "truecolor" }).join("\n")));
+  assert.match(output, /\u001b\[48;2;255;255;255m/u);
+  assert.match(output, /\u001b\[38;2;139;233;253mL/u);
   assert.match(output, /━{46}/);
   const visible = stripAnsi(output);
-  assert.ok(visible.includes(banner[0]));
+  assert.match(visible, /LIT · opencode/u);
   assert.match(visible, /litopencode v0\.1\.11/u);
   assert.doesNotMatch(visible, /🔥  l  i  t  opencode/u);
   assert.match(output, /╭─ INSTALL/);
@@ -279,7 +280,8 @@ test("install TUI respects NO_COLOR without losing its information hierarchy", (
   const output = withMarkTerminal(() => installTui.renderInstallTuiLogo("litopencode@0.1.45"), { color: false });
 
   assert.doesNotMatch(output, /\u001b\[/);
-  assert.ok(output.includes(lockup("litopencode v0.1.45", banner).join("\n")));
+  assert.ok(output.includes(synthwaveRows({ cols: 80, depth: "none", footer: "litopencode v0.1.45" }).join("\n")));
+  assert.ok(output.includes(MONO_ROWS["B-L"].join("\n")));
   assert.match(output, /v0\.1\.45/);
   assert.match(output, /litopencode@0\.1\.45/);
 });
