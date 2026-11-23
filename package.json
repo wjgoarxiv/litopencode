@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "@opencode-ai/plugin": "^1.19.5",
-    "@opencode/plugin": "2.2.5",
+    "@opencode/plugin": "2.3.2",
     "@types/node": "^26.6.6",
     "picomatch": "^4.0.5",
     "typescript": "^7.0.2"
