@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { describeUncoveredScopePaths, uncoveredScopePaths } from "./plan-scope-roots.ts";
+import { lockHolder, lockIsStale } from "./state-lock.ts";
 
 /** The plan reaches a folder outside the project that no `Scope roots:` line names; the message says what to add. */
 export class PlanScopeError extends Error {
@@ -61,6 +62,21 @@ function hasErrorCode(error: unknown, code: string): boolean {
   return error instanceof Error && "code" in error && error.code === code;
 }
 
+const planStaleLockMs = 30_000;
+
+/** The recorded holder's pid, or undefined when the owner record is missing or unreadable. */
+async function readPlanLockOwnerPid(ownerPath: string): Promise<number | undefined> {
+  const stat = await fs.lstat(ownerPath).catch(() => undefined);
+  if (stat === undefined) return undefined;
+  if (stat.isSymbolicLink() || !stat.isFile()) throw new Error("unsafe plan persistence lock owner");
+  try {
+    const owner: unknown = JSON.parse(await fs.readFile(ownerPath, "utf8"));
+    return isRecord(owner) && Number.isSafeInteger(owner.pid) && (owner.pid as number) > 0 ? owner.pid as number : undefined;
+  } catch { // no-excuse-ok: catch -- an unreadable owner record counts as no owner record; age decides.
+    return undefined;
+  }
+}
+
 async function acquirePlanLock(lockPath: string): Promise<() => Promise<void>> {
   const token = randomUUID();
   while (true) {
@@ -77,7 +93,19 @@ async function acquirePlanLock(lockPath: string): Promise<() => Promise<void>> {
         throw lockError;
       }
       if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error("unsafe plan persistence lock");
-      throw new Error("plan persistence lock is held");
+      const ageMs = Date.now() - stat.mtimeMs;
+      const pid = await readPlanLockOwnerPid(path.join(lockPath, PLAN_LOCK_OWNER));
+      if (lockIsStale(ageMs, planStaleLockMs, pid)) {
+        const abandoned = `${lockPath}.abandoned-${randomUUID()}`;
+        try {
+          await fs.rename(lockPath, abandoned);
+        } catch (renameError) {
+          if (!hasErrorCode(renameError, "ENOENT")) throw renameError;
+        }
+        await fs.rm(abandoned, { recursive: true, force: true });
+        continue;
+      }
+      throw new Error(`plan persistence lock is held. ${lockPath} ${lockHolder(pid, ageMs)}`);
     }
   }
 

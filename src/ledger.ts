@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createRuntimePaths, type RuntimePaths } from "./state.ts";
+import { lockCeilingMs, lockHolder, lockIsStale, processIsAlive } from "./state-lock.ts";
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonObject = {
@@ -601,15 +602,6 @@ function evidenceMutationPaths(projectRoot: string): {
   };
 }
 
-function processIsAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    return !hasErrorCode(error, "ESRCH");
-  }
-}
-
 async function readEvidenceLockOwner(ownerFile: string): Promise<{ token: string; pid: number } | undefined> {
   const stat = await fs.lstat(ownerFile).catch((error: unknown) => {
     if (hasErrorCode(error, "ENOENT")) return undefined;
@@ -719,11 +711,32 @@ async function restoreMovedEvidenceRecoveryClaim(movedFile: string, claimFile: s
   await fs.rm(movedFile, { force: true });
 }
 
+/**
+ * A recovery claim may be retired when its writer is dead, when it is unreadable past the stale window (the
+ * writer died mid-write), or when it is older than the ceiling (its pid was reused).
+ */
+function recoveryClaimIsStale(owner: { readonly pid: number } | undefined, ageMs: number): boolean {
+  if (owner === undefined) return ageMs > evidenceStaleLockMs;
+  return !processIsAlive(owner.pid) || ageMs > lockCeilingMs;
+}
+
+function sameRecoveryClaim(
+  left: { readonly token: string; readonly pid: number } | undefined,
+  right: { readonly token: string; readonly pid: number } | undefined
+): boolean {
+  return left === undefined ? right === undefined : sameEvidenceLockOwner(left, right);
+}
+
 async function tryRetireDeadEvidenceRecoveryClaim(claimFile: string): Promise<boolean> {
+  const stat = await fs.lstat(claimFile).catch((error: unknown) => {
+    if (hasErrorCode(error, "ENOENT")) return undefined;
+    throw error;
+  });
+  if (stat === undefined) return true;
   const observed = await readEvidenceLockOwner(claimFile);
-  if (observed === undefined || processIsAlive(observed.pid)) return false;
+  if (!recoveryClaimIsStale(observed, Date.now() - stat.mtimeMs)) return false;
   const current = await readEvidenceLockOwner(claimFile);
-  if (!sameEvidenceLockOwner(observed, current) || current === undefined || processIsAlive(current.pid)) return false;
+  if (!sameRecoveryClaim(observed, current)) return false;
 
   const movedFile = `${claimFile}.abandoned-${randomUUID()}`;
   try {
@@ -732,8 +745,9 @@ async function tryRetireDeadEvidenceRecoveryClaim(claimFile: string): Promise<bo
     if (hasErrorCode(error, "ENOENT")) return true;
     throw error;
   }
+  const movedStat = await fs.lstat(movedFile);
   const moved = await readEvidenceLockOwner(movedFile);
-  if (sameEvidenceLockOwner(observed, moved) && moved !== undefined && !processIsAlive(moved.pid)) {
+  if (movedStat.ino === stat.ino && sameRecoveryClaim(observed, moved) && recoveryClaimIsStale(moved, Date.now() - movedStat.mtimeMs)) {
     await fs.rm(movedFile, { force: true });
     return true;
   }
@@ -759,7 +773,17 @@ async function removeOwnedEvidenceRecoveryClaim(claimFile: string, token: string
   await restoreMovedEvidenceRecoveryClaim(movedFile, claimFile);
 }
 
-async function tryRecoverEvidenceTransitionLock(projectRoot: string): Promise<boolean> {
+/**
+ * Whether a transition owner may be replaced: no owner record or a dead owner at once, an unreadable owner past
+ * the stale window, and any owner past the ceiling.
+ */
+function transitionOwnerIsStale(owner: TransitionOwnerSnapshot, ageMs: number): boolean {
+  if (owner.status === "ownerless") return true;
+  if (owner.status === "valid" && !processIsAlive(owner.pid)) return true;
+  return lockIsStale(ageMs, evidenceStaleLockMs, owner.status === "valid" ? owner.pid : undefined);
+}
+
+async function tryRecoverEvidenceTransitionLock(projectRoot: string, lockAgeMs: number): Promise<boolean> {
   const { transitionLockDir, transitionOwnerFile, transitionRecoveryFile } = evidenceMutationPaths(projectRoot);
   const claimToken = randomUUID();
   try {
@@ -779,11 +803,10 @@ async function tryRecoverEvidenceTransitionLock(projectRoot: string): Promise<bo
   let renamed = false;
   try {
     const observed = await readTransitionOwnerSnapshot(transitionOwnerFile);
-    if (observed.status === "invalid") return false;
-    if (observed.status === "valid" && processIsAlive(observed.pid)) return false;
+    if (!transitionOwnerIsStale(observed, lockAgeMs)) return false;
     const current = await readTransitionOwnerSnapshot(transitionOwnerFile);
     if (!sameTransitionOwner(observed, current)) return false;
-    if (current.status === "valid" && processIsAlive(current.pid)) return false;
+    if (!transitionOwnerIsStale(current, lockAgeMs)) return false;
     if ((await readEvidenceLockOwner(transitionRecoveryFile))?.token !== claimToken) return false;
 
     const abandoned = `${transitionLockDir}.abandoned-${randomUUID()}`;
@@ -839,11 +862,15 @@ async function withEvidenceTransitionLock<T>(projectRoot: string, operation: (to
       observedGeneration = generation;
       lastProgressAt = Date.now();
     }
-    if (owner.status === "ownerless" || (owner.status === "valid" && !processIsAlive(owner.pid))) {
-      if (await tryRecoverEvidenceTransitionLock(projectRoot)) continue;
+    const ageMs = Date.now() - stat.mtimeMs;
+    if (transitionOwnerIsStale(owner, ageMs)) {
+      if (await tryRecoverEvidenceTransitionLock(projectRoot, ageMs)) continue;
     }
-    // Never age-evict this mutex: its owner may be paused immediately before replacing a stale lock.
-    if (Date.now() - lastProgressAt >= evidenceLockTimeoutMs) throw new LedgerIoError("Evidence ledger transition lock timed out.");
+    // A live owner is age-evicted only past the ceiling: it may be paused just before replacing a stale lock,
+    // but no transition takes ten minutes, so past that its pid has been reused.
+    if (Date.now() - lastProgressAt >= evidenceLockTimeoutMs) {
+      throw new LedgerIoError(`Evidence ledger transition lock timed out. ${transitionLockDir} ${lockHolder(owner.status === "valid" ? owner.pid : undefined, ageMs)}`);
+    }
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
   try {
@@ -866,8 +893,13 @@ async function inspectEvidenceLock(lockDir: string, ownerFile: string): Promise<
   const owner = await readEvidenceLockOwner(ownerFile);
   const ownerGeneration = owner === undefined ? "ownerless" : `${owner.token}:${owner.pid}`;
   const generation = `${stat.dev}:${stat.ino}:${ownerGeneration}`;
-  if (Date.now() - stat.mtimeMs <= evidenceStaleLockMs) return { needsTransition: false, generation };
-  return { needsTransition: owner === undefined || !processIsAlive(owner.pid), generation };
+  return { needsTransition: lockIsStale(Date.now() - stat.mtimeMs, evidenceStaleLockMs, owner?.pid), generation };
+}
+
+async function evidenceLockTimeout(lockDir: string, ownerFile: string): Promise<LedgerIoError> {
+  const stat = await fs.lstat(lockDir).catch(() => undefined);
+  const owner = await readEvidenceLockOwner(ownerFile).catch(() => undefined);
+  return new LedgerIoError(`Evidence ledger lock timed out. ${lockDir} ${lockHolder(owner?.pid, stat === undefined ? 0 : Date.now() - stat.mtimeMs)}`);
 }
 
 async function acquireEvidenceLedgerLock(projectRoot: string, token: string): Promise<void> {
@@ -881,7 +913,7 @@ async function acquireEvidenceLedgerLock(projectRoot: string, token: string): Pr
       lastProgressAt = Date.now();
     }
     if (!inspection.needsTransition) {
-      if (Date.now() - lastProgressAt >= evidenceLockTimeoutMs) throw new LedgerIoError("Evidence ledger lock timed out.");
+      if (Date.now() - lastProgressAt >= evidenceLockTimeoutMs) throw await evidenceLockTimeout(lockDir, ownerFile);
       await new Promise((resolve) => setTimeout(resolve, 10));
       continue;
     }
@@ -893,9 +925,8 @@ async function acquireEvidenceLedgerLock(projectRoot: string, token: string): Pr
       });
       if (stat === undefined) return false;
       if (stat.isSymbolicLink() || !stat.isDirectory()) throw new LedgerIoError("Evidence ledger lock path is unsafe.");
-      if (Date.now() - stat.mtimeMs <= evidenceStaleLockMs) return false;
       const owner = await readEvidenceLockOwner(ownerFile);
-      if (owner !== undefined && processIsAlive(owner.pid)) return false;
+      if (!lockIsStale(Date.now() - stat.mtimeMs, evidenceStaleLockMs, owner?.pid)) return false;
       if ((await readEvidenceLockOwner(transitionOwnerFile))?.token !== transitionToken) return false;
 
       const abandoned = `${lockDir}.abandoned-${randomUUID()}`;
@@ -910,7 +941,7 @@ async function acquireEvidenceLedgerLock(projectRoot: string, token: string): Pr
     });
     lastProgressAt = Date.now();
     if (acquired) return;
-    if (Date.now() - lastProgressAt >= evidenceLockTimeoutMs) throw new LedgerIoError("Evidence ledger lock timed out.");
+    if (Date.now() - lastProgressAt >= evidenceLockTimeoutMs) throw await evidenceLockTimeout(lockDir, ownerFile);
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
 }

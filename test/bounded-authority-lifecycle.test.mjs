@@ -272,7 +272,7 @@ test("an old lock owned by a live process times out without replacement", async 
     const lifecycle = createBoundedAuthorityLifecycle(dir, { staleLockMs: 1_000, lockTimeoutMs: 100 });
     await assert.rejects(lifecycle.read(), (error) => {
       assert.ok(error instanceof LifecycleConflictError);
-      assert.equal(error.message, "Lifecycle lock timed out.");
+      assert.match(error.message, /^Lifecycle lock timed out\. .*\.work-schema-3\.lock \(held by pid \d+, age \d+s\)$/u);
       return true;
     });
     assert.deepEqual(JSON.parse(await fs.readFile(path.join(paths.lifecycleLockDir, "owner.json"), "utf8")), owner);

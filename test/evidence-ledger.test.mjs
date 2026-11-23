@@ -483,7 +483,8 @@ test("stale recovery cannot age-evict or remove a newer paused live recovery-cla
 
       await fs.rm(recoveryFile);
       await fs.writeFile(recoveryFile, JSON.stringify(liveClaim));
-      const old = new Date(Date.now() - 3_600_000);
+      // Old, but inside the ceiling: a live claim is age-evicted only past ten minutes.
+      const old = new Date(Date.now() - 300_000);
       await fs.utimes(recoveryFile, old, old);
       await fs.utimes(transitionDir, old, old);
       resumeRecoveryRetire.resolve();
@@ -527,7 +528,7 @@ test("two transition-recovery contenders serialize and retain both writes", asyn
   });
 });
 
-test("a paused live transition owner is never age-evicted and remains after timeout", async () => {
+test("a paused live transition owner inside the ceiling is not age-evicted and remains after timeout", async () => {
   await withProject(async (dir) => {
     await seedGoal(dir);
     const paths = createRuntimePaths(dir);
@@ -535,7 +536,7 @@ test("a paused live transition owner is never age-evicted and remains after time
     const ownerFile = path.join(transitionDir, "owner.json");
     await fs.mkdir(transitionDir);
     await fs.writeFile(ownerFile, JSON.stringify({ token: "paused-live", pid: process.pid }));
-    const old = new Date(Date.now() - 3_600_000);
+    const old = new Date(Date.now() - 300_000);
     await fs.utimes(transitionDir, old, old);
 
     await assert.rejects(

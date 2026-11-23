@@ -437,7 +437,7 @@ test("an interrupted staging file does not block the next approved save", async 
   });
 });
 
-test("an abandoned plan lock blocks fail-closed until it is manually removed", async () => {
+test("a fresh ownerless plan lock blocks fail-closed until it is removed or goes stale", async () => {
   await withTempDir(async (dir) => {
     const plans = path.join(dir, ".litopencode", "plans");
     const lockPath = path.join(plans, "stale.md.lock");

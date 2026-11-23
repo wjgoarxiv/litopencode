@@ -1540,11 +1540,12 @@ test("a cooperative lock parent release between metadata checks retries lock obs
   });
 });
 
-test("malformed lock owner JSON is fatal and keeps the lock", async () => {
+// An unreadable owner record inside the stale window keeps the lock; past it the lock is reclaimed
+// (test/state-lock-recovery.test.mjs).
+test("malformed lock owner JSON on a fresh lock waits and keeps the lock", async () => {
   await withTempDir("litopencode-wikify-malformed-owner-", async (root) => {
     const ownerText = "{not-json\n";
     const { paths, ownerPath } = await createContendedLock(root, ownerText);
-    await fs.utimes(paths.lockDirectory, new Date(0), new Date(0));
 
     await assert.rejects(
       captureKnowledgeEvent(root, event({ text: "Malformed owner JSON must not remove a lock or capture a record." }), { surface: "tool.wikify" }),
@@ -1556,11 +1557,10 @@ test("malformed lock owner JSON is fatal and keeps the lock", async () => {
   });
 });
 
-test("invalid lock owner fields are fatal and keep the lock", async () => {
+test("invalid lock owner fields on a fresh lock wait and keep the lock", async () => {
   await withTempDir("litopencode-wikify-invalid-owner-", async (root) => {
     const ownerText = JSON.stringify({ pid: "not-a-pid", nonce: "invalid-owner" });
     const { paths, ownerPath } = await createContendedLock(root, ownerText);
-    await fs.utimes(paths.lockDirectory, new Date(0), new Date(0));
 
     await assert.rejects(
       captureKnowledgeEvent(root, event({ text: "Invalid owner fields must not become a stale lock." }), { surface: "tool.wikify" }),
@@ -1576,7 +1576,9 @@ test("raw ENOENT at initial owner observation is fatal and keeps the lock", asyn
   await withTempDir("litopencode-wikify-owner-initial-enoent-", async (root) => {
     const ownerText = JSON.stringify({ pid: process.pid, nonce: "initial-enoent-owner" });
     const { paths, ownerPath } = await createContendedLock(root, ownerText);
-    await fs.utimes(paths.lockDirectory, new Date(0), new Date(0));
+    // Past the stale window but inside the ceiling: only the live owner keeps this lock.
+    const pastStale = new Date(Date.now() - 60_000);
+    await fs.utimes(paths.lockDirectory, pastStale, pastStale);
     const originalLstat = fs.lstat;
     let injected = false;
     fs.lstat = async (...args) => {

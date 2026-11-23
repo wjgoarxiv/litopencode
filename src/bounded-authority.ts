@@ -5,6 +5,7 @@ import path from "node:path";
 import { classifyRunPath, defaultRunPathContext } from "./run-paths.ts";
 import { recordRunEnd, runOutcome } from "./shown-record.ts";
 import { createRuntimePaths, type RuntimePaths } from "./state.ts";
+import { lockHolder, lockIsStale } from "./state-lock.ts";
 
 export const boundedAuthoritySchemaVersion = 3 as const;
 
@@ -733,15 +734,6 @@ export function createBoundedAuthorityLifecycle(
     }
   }
 
-  function processIsAlive(pid: number): boolean {
-    try {
-      process.kill(pid, 0);
-      return true;
-    } catch (error) {
-      return !hasErrorCode(error, "ESRCH");
-    }
-  }
-
   async function removeOwnedLock(token: string): Promise<void> {
     const owner = await readLockOwner().catch((error: unknown) => {
       if (hasErrorCode(error, "ENOENT")) return undefined;
@@ -780,9 +772,10 @@ export function createBoundedAuthorityLifecycle(
         });
         if (stat === undefined) continue;
         if (stat.isSymbolicLink() || !stat.isDirectory()) throw new LifecycleSafetyError("Lifecycle lock path is unsafe.");
-        if (Date.now() - stat.mtimeMs > options.staleLockMs) {
+        const ageMs = Date.now() - stat.mtimeMs;
+        if (ageMs > options.staleLockMs) {
           const owner = await readLockOwner();
-          if (owner === undefined || !processIsAlive(owner.pid)) {
+          if (lockIsStale(ageMs, options.staleLockMs, owner?.pid)) {
             const abandoned = `${paths.lifecycleLockDir}.abandoned-${randomUUID()}`;
             try {
               await fs.rename(paths.lifecycleLockDir, abandoned);
@@ -794,7 +787,10 @@ export function createBoundedAuthorityLifecycle(
             }
           }
         }
-        if (Date.now() - started >= options.lockTimeoutMs) throw new LifecycleConflictError("Lifecycle lock timed out.");
+        if (Date.now() - started >= options.lockTimeoutMs) {
+          const owner = await readLockOwner().catch(() => undefined);
+          throw new LifecycleConflictError(`Lifecycle lock timed out. ${paths.lifecycleLockDir} ${lockHolder(owner?.pid, ageMs)}`);
+        }
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
     }

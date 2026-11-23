@@ -1049,6 +1049,8 @@
     "dist/stable-identity.js",
     "dist/start-work-typed.d.ts",
     "dist/start-work-typed.js",
+    "dist/state-lock.d.ts",
+    "dist/state-lock.js",
     "dist/state.d.ts",
     "dist/state.js",
     "dist/strict-json.d.ts",

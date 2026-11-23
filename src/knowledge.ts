@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { decodeStrictUtf8, parseStrictJson } from "./strict-json.ts";
 import { containsSecret } from "./secret-shapes.ts";
+import { lockHolder, lockIsStale } from "./state-lock.ts";
 import { sameStableDirectoryIdentity, sameStableStatIdentity, stableStatIdentity } from "./stable-identity.ts";
 
 export const knowledgeKinds = ["fact", "decision", "failure", "risk", "rule", "checkpoint"] as const;
@@ -124,6 +125,7 @@ const maximumTextBytes = 320;
 const maximumTextWords = 56;
 const maximumEvidenceBytes = 192;
 const maximumAuthorityBytes = 8 * 1024 * 1024;
+const knowledgeStaleLockMs = 30_000;
 const maximumStructuredStringScanCharacters = 512;
 const safeIdentifier = /^[a-z0-9][a-z0-9._/-]{0,63}$/u;
 const evidenceReference = /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9._@+/-]+(?:(?::\d+(?:-\d+)?)|(?:#[A-Za-z0-9._-]+))?$/u;
@@ -821,6 +823,7 @@ async function acquireLock(paths: KnowledgePaths): Promise<{
 }> {
   const currentPaths = await ensureKnowledgeDirectory(paths);
   const nonce = randomUUID();
+  let lastHolder: { readonly pid: number | undefined; readonly ageMs: number } = { pid: undefined, ageMs: 0 };
   for (let attempt = 0; attempt < 80; attempt += 1) {
     try {
       const lockParent = await pinParent(currentPaths.lockDirectory, currentPaths);
@@ -855,10 +858,21 @@ async function acquireLock(paths: KnowledgePaths): Promise<{
       if (lockStat.isSymbolicLink() || !lockStat.isDirectory()) {
         throw new KnowledgeStoreError(`Unsafe knowledge lock at ${paths.lockDirectory}.`);
       }
+      const ageMs = Date.now() - lockStat.mtimeMs;
       try {
         const ownerPath = path.join(currentPaths.lockDirectory, "owner.json");
-        const owner = parseLockOwner(JSON.parse((await readRegularFileIfPresent(ownerPath, currentPaths, { allowMissing: false })).text), ownerPath);
-        if (!(await processExists(owner.pid))) {
+        // An owner record that was never written reads as empty: an ownerless lock, judged by its age below. A
+        // second read keeps one transient miss from making a live owner look absent.
+        let ownerText = (await readRegularFileIfPresent(ownerPath, currentPaths)).text;
+        if (ownerText === "") ownerText = (await readRegularFileIfPresent(ownerPath, currentPaths)).text;
+        let pid: number | undefined;
+        try {
+          pid = ownerText === "" ? undefined : parseLockOwner(JSON.parse(ownerText), ownerPath).pid;
+        } catch { // no-excuse-ok: catch -- an unreadable owner record counts as no owner record; age decides.
+          pid = undefined;
+        }
+        lastHolder = { pid, ageMs };
+        if ((pid !== undefined && !(await processExists(pid))) || lockIsStale(ageMs, knowledgeStaleLockMs, pid)) {
           const staleParent = await pinParent(currentPaths.lockDirectory, currentPaths);
           await assertParentStable(staleParent, currentPaths);
           await fs.rm(currentPaths.lockDirectory, { recursive: true, force: true });
@@ -897,7 +911,7 @@ async function acquireLock(paths: KnowledgePaths): Promise<{
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
   }
-  throw new KnowledgeStoreError("Knowledge mutation lock timed out.");
+  throw new KnowledgeStoreError(`Knowledge mutation lock timed out. ${paths.lockDirectory} ${lockHolder(lastHolder.pid, lastHolder.ageMs)}`);
 }
 
 async function appendRecord(
