@@ -68,7 +68,7 @@ const readmeCdn = `https://cdn.jsdelivr.net/npm/${packageId}/`;
 // The on-screen pictures, the status card, the How it works and Extensions diagrams, showcase and automatic handoff pictures and the promo film are shown by the GitHub pages only and stay out of the package.
 const githubOnlyReadmeMedia = /^docs\/assets\/readme\/(?:(?:install-(?:output|question)|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|status-card-(?:idle|working|recent)\.webp|(?:core-extensions|lit-route|two-hosts)\.(?:en|ko)\.(?:dark|light)\.png|lit-plant\.(?:en|ko)(?:\.dark)?\.png|lit-plant-loop\.(?:en|ko)(?:\.dark)?\.webp|showcase-(?:adhd-brief|deck|ui|pid)\.webp|auto-handoff-(?:settings|compact|doctor)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
 // The landing README's demo film is GitHub-only as well.
-const githubOnlyDemoFilm = "docs/assets/demo.webp";
+const githubOnlyDemoFilms = new Set(["docs/assets/demo.webp", "docs/assets/demo-ko.webp"]);
 // The GitHub docs pages hold what moved off the landing README; their images resolve relative to docs/.
 const githubDocPages = ["docs/guide.md", "docs/guide-Ko-KR.md", "docs/skills.md", "docs/skills-Ko-KR.md", "docs/screens.md", "docs/screens-Ko-KR.md", "docs/brand.md", "docs/brand-Ko-KR.md"];
 const readmeImagePaths = [...new Set(["README.md", "README-Ko-KR.md", "README-npm.md", "README-npm-Ko-KR.md", ...githubDocPages].flatMap((file) =>
@@ -76,7 +76,7 @@ const readmeImagePaths = [...new Set(["README.md", "README-Ko-KR.md", "README-np
     .map((match) => match[1])
     .filter((target) => target.startsWith(readmeCdn) || target.startsWith("./"))
     .map((target) => target.startsWith("./") ? path.posix.join(path.posix.dirname(file), target.slice(2)) : target.slice(readmeCdn.length))
-    .filter((imagePath) => !githubOnlyReadmeMedia.test(imagePath) && imagePath !== githubOnlyDemoFilm)
+    .filter((imagePath) => !githubOnlyReadmeMedia.test(imagePath) && !githubOnlyDemoFilms.has(imagePath))
 ))];
 // Both hosts load `./server` and `./tui` from dist/host, and OpenCode 2 runs the code under dist/v2.
 const requiredHostEntryPaths = ["dist/host/server.js", "dist/host/tui.js", "dist/v2/server.js", "dist/v2/tui.js"];

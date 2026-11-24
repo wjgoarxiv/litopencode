@@ -9,7 +9,7 @@ const GITHUB_ONLY_README_MEDIA = /^docs\/assets\/readme\/(?:(?:install-(?:output
 // The landing README links these GitHub pages for what moved off it (guide, skills gallery, screens,
 // artwork). They load images by paths relative to docs/, and they stay out of the package with the social preview.
 const GITHUB_DOC_PAGES = ["docs/guide.md", "docs/guide-Ko-KR.md", "docs/skills.md", "docs/skills-Ko-KR.md", "docs/screens.md", "docs/screens-Ko-KR.md", "docs/brand.md", "docs/brand-Ko-KR.md"];
-const GITHUB_ONLY_DOCS = /^docs\/(?:(?:guide|skills|screens|brand)(?:-Ko-KR)?\.md|assets\/(?:social-preview\.png|demo\.(?:gif|webp)))$/u;
+const GITHUB_ONLY_DOCS = /^docs\/(?:(?:guide|skills|screens|brand)(?:-Ko-KR)?\.md|assets\/(?:social-preview\.png|demo(?:-ko)?\.(?:gif|webp)))$/u;
 
 const FORBIDDEN_PATH_RULES = [
   { label: "original prompt provenance", pattern: /^INITIAL_PROMPT\.md$/u },

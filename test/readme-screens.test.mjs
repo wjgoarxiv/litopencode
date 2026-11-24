@@ -60,20 +60,25 @@ test("the on-screen pictures quote text the product prints", async () => {
       }
     }
   }
-  // The recorded session routed the small task to lit-task; its toast label comes from the product.
+  // The film's session routes the small task to lit-task; its toast label comes from the product.
   const demoToast = activationToast("lit-task").message.split("\n").at(-1);
   assert.equal(demoToast, "🔥 LIT IGNITED · lit-task 🔥");
-  const film = await fs.readFile("docs/assets/demo.webp");
-  assert.equal(film.subarray(0, 4).toString("ascii"), "RIFF", "demo.webp is a RIFF container");
-  assert.equal(film.subarray(8, 12).toString("ascii"), "WEBP", "demo.webp is a WebP");
-  assert.ok(film.length <= 8 * 1024 * 1024, `demo.webp is ${film.length} bytes, over 8 MiB`);
+  // The Korean page plays its own copy of the film, with Korean lines.
+  const films = { "README.md": "demo.webp", "README-Ko-KR.md": "demo-ko.webp" };
+  for (const name of Object.values(films)) {
+    const film = await fs.readFile(`docs/assets/${name}`);
+    assert.equal(film.subarray(0, 4).toString("ascii"), "RIFF", `${name} is a RIFF container`);
+    assert.equal(film.subarray(8, 12).toString("ascii"), "WEBP", `${name} is a WebP`);
+    assert.ok(film.includes(Buffer.from("ANIM")), `${name} is animated`);
+    assert.ok(film.length <= 8 * 1024 * 1024, `${name} is ${film.length} bytes, over 8 MiB`);
+    assert.ok((await fs.readFile(".npmignore", "utf8")).split("\n").includes(`docs/assets/${name}`), `${name} stays out of the npm package`);
+  }
   await assert.rejects(fs.access("docs/assets/demo.gif"), { code: "ENOENT" }, "the old demo GIF is gone");
-  assert.ok((await fs.readFile(".npmignore", "utf8")).split("\n").includes("docs/assets/demo.webp"), "demo.webp stays out of the npm package");
   for (const file of githubReadmes) {
     const content = await fs.readFile(file, "utf8");
     const line = content.split("\n").find((row) => row.includes("<!-- demo-gif -->"));
     assert.ok(line, `${file} marks its demo slot`);
-    const tag = line.match(/<img src="\.\/docs\/assets\/demo\.webp" width="960" alt="([^"]{80,})" \/>/u);
+    const tag = line.match(new RegExp(`<img src="\\./docs/assets/${films[file]}" width="960" alt="([^"]{80,})" />`, "u"));
     assert.ok(tag, `${file}: the demo slot shows the session film with a full alt text`);
     for (const text of [demoToast, "lit add a --shout flag that prints the greeting in capitals, with a test", "HELLO, ADA!"]) {
       assert.ok(tag[1].includes(text), `${file}: demo alt names "${text}"`);

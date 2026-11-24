@@ -5,6 +5,7 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- The README demo is a new silent loop of one request with the LIT card, its toast, the todo-driven bar, two lanes and the completion moment, with a Korean copy for the Korean page; the OpenCode screen around the card is redrawn.
 - The installer asks its questions as cards: provider, model, effort, the route to look over, permissions, output style and the LitFamily block. The default is marked and highlighted, arrow keys and Enter choose, `y` or `n` answers a yes/no, and each answered card folds to one line. The install steps and a closing summary are cards too, and warnings stay on screen.
 - A provider with many models gets a scrolling list that filters as you type, and `Type provider/model` is checked inside its card.
 - The questions, their order, their defaults and what is stored are unchanged. `--yes`, CI, pipes, `TERM=dumb`, windows under 40 columns or 16 rows, and runs with a `LITOPENCODE_*_PROMPT` variable keep the numbered prompts and the same output. `NO_COLOR` on a terminal now draws the cards without colour, so it moves the cursor; `TERM=dumb` avoids that.
