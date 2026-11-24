@@ -5,6 +5,12 @@
 /** The hard ceiling: a lock older than this is stale even when its recorded pid is alive. */
 export const lockCeilingMs = 10 * 60_000;
 
+/**
+ * A lock folder with no owner record yet may belong to a creator that has not written it: it is judged only
+ * once it is this old, whatever stale window the caller passed.
+ */
+export const ownerlessGraceMs = 5_000;
+
 /** Whether the process still exists. EPERM means it exists under another user. */
 export function processIsAlive(pid: number): boolean {
   try {
@@ -17,13 +23,14 @@ export function processIsAlive(pid: number): boolean {
 
 /**
  * Whether a lock `ageMs` old may be taken over. `pid` is its recorded holder, or undefined when there is no
- * readable owner record. Inside the stale window a lock always waits; past it, one with no owner or a dead
- * owner is stale; past the ceiling every lock is.
+ * readable owner record. Inside the stale window a lock always waits (an ownerless one also through the
+ * grace); past it, one with no owner or a dead owner is stale; past the ceiling every lock is.
  */
 export function lockIsStale(ageMs: number, staleMs: number, pid: number | undefined): boolean {
   if (ageMs > lockCeilingMs) return true;
+  if (pid === undefined) return ageMs > Math.max(staleMs, ownerlessGraceMs);
   if (ageMs <= staleMs) return false;
-  return pid === undefined || !processIsAlive(pid);
+  return !processIsAlive(pid);
 }
 
 /** `(held by pid 123, age 42s)` or `(no owner record, age 42s)`, for a timeout message. */

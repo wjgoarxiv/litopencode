@@ -760,6 +760,8 @@ export function createBoundedAuthorityLifecycle(
             { encoding: "utf8", flag: "wx", mode: 0o600 }
           );
         } catch (error) {
+          // A contender moved the new folder aside before the owner record landed: try again.
+          if (hasErrorCode(error, "ENOENT")) continue;
           await fs.rmdir(paths.lifecycleLockDir).catch(() => undefined);
           throw error;
         }

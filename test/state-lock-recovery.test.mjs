@@ -75,6 +75,41 @@ test("lifecycle: a lock older than the ceiling is reclaimed even when its pid is
   });
 });
 
+test("lifecycle: an ownerless lock a second or two old is never taken, even with the smallest stale window", async () => {
+  await withProject(async (dir) => {
+    const lifecycle = createBoundedAuthorityLifecycle(dir, { staleLockMs: 1_000, lockTimeoutMs: 200 });
+    await lifecycle.init(initRequest);
+    const lockDir = await plantLifecycleLock(dir, undefined, 2 / 60);
+    await assert.rejects(lifecycle.read(), /Lifecycle lock timed out\./u);
+    assert.equal(await gone(lockDir), false, "its creator may still be writing the owner record");
+    await age(lockDir, 6 / 60);
+    assert.equal((await lifecycle.read()).revision, 1, "past the grace an ownerless lock is reclaimed");
+  });
+});
+
+test("lifecycle: a creator whose new lock folder was moved aside before it wrote the owner record tries again", async () => {
+  await withProject(async (dir) => {
+    const lifecycle = createBoundedAuthorityLifecycle(dir, { lockTimeoutMs: 500 });
+    await lifecycle.init(initRequest);
+    const lockDir = createRuntimePaths(dir).lifecycleLockDir;
+    const original = fs.writeFile;
+    let movedAside = false;
+    fs.writeFile = async (target, ...rest) => {
+      if (!movedAside && String(target) === path.join(lockDir, "owner.json")) {
+        movedAside = true;
+        await fs.rm(lockDir, { recursive: true, force: true });
+      }
+      return original(target, ...rest);
+    };
+    try {
+      assert.equal((await lifecycle.read()).revision, 1);
+    } finally {
+      fs.writeFile = original;
+    }
+    assert.equal(movedAside, true);
+  });
+});
+
 test("lit cancel goes through a lock whose recorded pid was reused", async () => {
   await withProject(async (dir) => {
     await createBoundedAuthorityLifecycle(dir).init(initRequest);
