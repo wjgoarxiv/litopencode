@@ -60,6 +60,8 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 
 계획 끝에 테스트 명령 하나를 적은 `## Done when` 칸을 두면, 승인한 계획을 저장할 때 LitOpenCode가 그것을 목표 조건 하나로 바꾸고 지금은 아직 참이 아닌지 확인한 뒤 한 번만 묻습니다: `Approve plan, start work and set goal: /goal <condition>? (yes / edit / no)`. 질문 아래 짧은 안내에 `yes`, `edit`, `no`가 각각 무엇을 하는지 나옵니다. 그 단어만 입력하면 됩니다. 정확히 `yes`라고 답하면 그 계획의 작업을 시작하면서 목표도 함께 잡습니다. 작업을 시작할 수 없으면 목표도 잡지 않고 이유를 알려 줍니다. OpenCode 2에서는 기본 `/goal`이 되고, 목표 기능이 없는 OpenCode 1에서는 턴이 끝날 때마다 같은 확인을 돌려 다 됐을 때 알려 줍니다. `lit cancel`은 LitOpenCode가 잡은 목표만 지우고, 직접 잡은 목표는 건드리지 않습니다.
 
+계획 없이 보낸 lit-loop나 `litwork` 요청에는 더 가벼운 질문이 나옵니다. 프로젝트에 테스트 명령(`npm test`, `pytest`, `cargo test`, `go test ./...`)이 있으면 작업이 시작될 때 `Set goal for this lit-loop: /goal <condition>? (yes / no)`를 보여 주는데, 여기 담긴 목표는 요청에서 활성화 단어를 뺀 나머지입니다. 활성화 단어는 요청 앞에 와도 되고 끝에 와도 됩니다. `lit 로그인 버튼 고쳐줘`와 `로그인 버튼 고쳐줘 lit` 모두 `로그인 버튼 고쳐줘`를 목표로 제안합니다. 끝에 붙인 `lit-loop`나 `litwork`도 앞에 붙인 것과 같게 동작하고, `/lit-loop <작업>`과 `/litwork <작업>`도 같은 질문을 합니다. `lit`만 보내거나 `lit continue`, `lit resume`을 보내면 아무것도 묻지 않습니다.
+
 `/lit`도 같은 워크플로를 시작합니다. 규모가 큰 일은 계획부터 세우는 편이 좋습니다. `lit-plan`을 골라 계획을 읽고 승인한 뒤 `/start-work`로 실행하고, `/review-work`로 마무리합니다. planner는 계획만 세웁니다. 명시적인 사용자 승인을 기다리고, 파일을 고치거나 셸 명령을 실행할 방법이 없습니다. 승인하고 나면 `lit-implement`가 계획을 실제로 수행합니다.
 
 진행 상황과 확인한 결과까지, 기록은 모두 프로젝트의 `.litopencode/litgoal/`에 쌓입니다. OpenCode에는 세션을 넘어 목표를 보관할 곳이 따로 없어서, 다음 세션은 이 폴더를 보고 어디까지 했는지 압니다. 작업 지침만 담긴 스킬도 있는데, 문서에 나온 경로로 그 스킬을 부르면 지침이 작업에 적용됩니다.
@@ -100,6 +102,8 @@ OpenCode가 스스로 압축하는 지점보다 낮은 퍼센트를 고르세요
 
 단계 표시는 작업 흐름 전체를 담은 지도입니다. 인터뷰로 시작한 요청은 `interview › plan › work › review › done`을 따라가고, 지금 단계는 개수와 함께 밝게 켜집니다. 예를 들어 `/start-work`가 저장된 계획을 처리하는 동안에는 `WORK 3/7`처럼 보입니다. lit-loop 목표는 기준과 반복 횟수를 세고, litresearch 실행은 `decompose`에서 `wave`를 거쳐 `synthesis`까지 자기 단계를 따릅니다. 입력창 옆 칩은 지금 단계 앞뒤를, 사이드바는 같은 지도를 위에서 아래로 그리며 다음 단계로 넘어갈 때 선이 차오릅니다. 도구가 도는 동안에는 `⠹ bash · 0:48`처럼 도구 이름과 걸린 시간이 함께 보입니다.
 
+설치 프로그램, `doctor`, `--help`는 신스웨이브 LIT 마크로 시작합니다. 어두운 테마에 트루컬러 터미널(`COLORTERM=truecolor`이고 `NO_COLOR`가 없을 때)이면 카드 제목에 같은 색의 그라데이션 ` 🔥 LIT ` 배지가 붙고, 그 밖의 환경에서는 원래 제목을 씁니다. 마크는 폭이 24칸 이상이고 UTF-8을 쓰는 터미널에서 그려집니다. 색을 끄면 한 가지 색으로 그려지고, 파이프나 CI 로그, UTF-8을 쓰지 않는 터미널에는 `LIT · opencode` 한 줄만 나옵니다.
+
 ## 안전과 업데이트
 
 planner는 계획만 세웁니다. `lit-plan`은 `edit`, `bash`, `task` 권한이 모두 거부되어 있어서 파일을 고치거나, 명령을 실행하거나, 다른 에이전트에게 일을 넘길 수 없습니다. 나머지 작업의 권한은 `balanced`나 `yolo` 모드를 직접 골라 넓힐 수 있습니다. 그래도 planner는 읽기 전용으로 남고, 보조 에이전트가 또 다른 보조 에이전트를 부를 수도 없습니다.
@@ -127,6 +131,15 @@ npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 더 자세한 내용은 [설치와 모델 설정 안내](./reference-Ko-KR.md#설치)에 있습니다.
 
 스킬 폴더 구성 때문에 헷갈리는 경우가 두 가지 있는데, `install`과 `doctor`가 둘 다 알려 줍니다. 첫째는 스킬 폴더 `<root>/skills`가 다른 곳을 가리키는 심볼릭 링크인 경우입니다. 설치는 링크를 따라가 그 위치에 LitOpenCode 스킬 폴더를 만들기 때문에, 그곳이 git 저장소 안이면 경고를 함께 보여 줍니다. 둘째는 OpenCode가 함께 읽는 다른 폴더, 예를 들어 `~/.agents/skills`, `~/.claude/skills`, 프로젝트 스킬 폴더에 같은 이름의 스킬이 있는 경우입니다. 이때는 OpenCode가 LitOpenCode 대신 그쪽 스킬을 불러올 수 있습니다. 자세한 내용은 [심볼릭 링크된 native 스킬 루트와 다른 위치의 같은 이름 스킬](./reference-Ko-KR.md#심볼릭-링크된-native-스킬-루트와-다른-위치의-같은-이름-스킬)을 보세요.
+
+프로세스가 중간에 죽으면 LitOpenCode의 잠금 폴더가 남을 수 있습니다. 대부분은 손댈 필요가 없습니다. 주인 기록이 없거나 주인 프로세스가 죽은 채로 30초가 지나면 다음에 쓰려는 쪽이 잠금을 넘겨받고, 10분이 지나면 주인이 누구든 넘겨받습니다. 상태를 고치는 데 그렇게 오래 걸리는 일은 없고, pid는 다른 프로세스 번호로 다시 쓰일 수 있기 때문입니다. 잠금 폴더는 다음과 같습니다.
+
+- `.litopencode/litgoal/lit-loop/.work-schema-3.lock`: start-work 실행. `lit cancel`도 이 잠금을 씁니다
+- `.litopencode/litgoal/lit-loop/.evidence-ledger.lock`, `.evidence-ledger-transition.lock`: 증거 원장
+- `.litopencode/knowledge/.claims.lock`: 프로젝트 위키
+- `.litopencode/plans/` 안 저장된 계획 옆의 `<이름>.md.lock`
+
+그래도 막히면 오류에 잠금 경로와 쥔 쪽이 `(held by pid 4123, age 42s)`나 `(no owner record, age 3s)`처럼 나옵니다. 그 프로젝트의 OpenCode 세션을 모두 닫고 오류에 나온 폴더를 지운 뒤 다시 시도하세요.
 
 ## 제거
 

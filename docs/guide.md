@@ -60,6 +60,8 @@ When a `lit` prompt asks for more than one kind of work, say a plan that also ne
 
 A plan can end with a `## Done when` block naming one test command. When the approved plan is saved, LitOpenCode turns that into one goal condition, checks it is not already true, and asks once: `Approve plan, start work and set goal: /goal <condition>? (yes / edit / no)`. A short guide under the question says what `yes`, `edit` and `no` each do; type the word alone. An exact `yes` starts the work on that plan and sets the goal together; if the work cannot start, no goal is set and you are told why. On OpenCode 2 the goal becomes the native `/goal`; OpenCode 1 has no goal, so LitOpenCode runs the same check when each turn ends and tells you when it is met. `lit cancel` clears a goal LitOpenCode set and leaves yours alone.
 
+A lit-loop or `litwork` request with no plan gets a lighter question. When the project has a test command (`npm test`, `pytest`, `cargo test` or `go test ./...`), LitOpenCode shows `Set goal for this lit-loop: /goal <condition>? (yes / no)` as the work starts, and the goal in it is your request without the activation word. That word can open or close the request: `lit fix the login redirect` and `fix the login redirect lit` both offer `fix the login redirect`. A closing `lit-loop` or `litwork` works like an opening one, and `/lit-loop <task>` and `/litwork <task>` ask too. A bare `lit`, `lit continue` or `lit resume` asks nothing.
+
 `/lit` starts the same workflow. Bigger jobs are worth planning first. Pick `lit-plan`, read the plan and approve it, run `/start-work`, and finish with `/review-work`. The planner only plans: it waits for explicit user confirmation and has no way to edit files or run shell commands. Once you approve, `lit-implement` carries the plan out.
 
 Everything it records, from progress to the checks it ran, goes into `.litopencode/litgoal/` in your project. OpenCode itself has no place to keep a goal between sessions, so this folder is how the next session knows where you were. Some skills are written guidance only; they come into play when one of their listed routes picks them.
@@ -100,6 +102,8 @@ The [README](../README.md#the-lit-card) shows the card in its three states. Each
 
 The track is a map of the whole workflow. A request that starts with an interview walks through `interview › plan › work › review › done`, and the step you are on is lit with its count, such as `WORK 3/7` while `/start-work` works through a saved plan. A lit-loop goal counts its criteria and loop turns instead, and a litresearch run follows its own steps from `decompose` through each `wave` to `synthesis`. The chip beside the prompt shows the same map around the current step, the sidebar draws it top to bottom with a line that fills as you move forward, and while a tool runs its name and elapsed time sit beside it, like `⠹ bash · 0:48`.
 
+The installer, `doctor` and `--help` open with the synthwave LIT mark. On a dark theme in a truecolor terminal (`COLORTERM=truecolor` and no `NO_COLOR`) the card's title carries the same chrome as a gradient ` 🔥 LIT ` pill, and anywhere else it keeps its usual title. The mark itself needs a terminal of at least 24 columns with UTF-8; with colour off it is drawn in one tone, and a pipe, a CI log or a terminal without UTF-8 gets the plain line `LIT · opencode`.
+
 ## Safety and updates
 
 The planner can only plan. `lit-plan` has its `edit`, `bash` and `task` permissions denied, so it can't change files, run commands or hand work to another agent. You can loosen permissions for the rest of the work by choosing the `balanced` or `yolo` mode on purpose. Even then the planner stays read-only, and a helper agent can't start helpers of its own.
@@ -127,6 +131,15 @@ npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 The [installation and model reference](./reference.md#install) goes deeper.
 
 Two skills-folder setups can surprise you, and install and `doctor` point out both. The first is a skills folder, `<root>/skills`, that is a symlink to somewhere else. Install follows the link and writes LitOpenCode's skill folders wherever it points, so you get a warning when that place is inside a git repository. The second is a skill with the same name in another folder OpenCode reads, such as `~/.agents/skills`, `~/.claude/skills` or a project skills folder. OpenCode may load that copy instead of LitOpenCode's. See [symlinked native skills root and shadow copies](./reference.md#symlinked-native-skills-root-and-shadow-copies).
+
+A crashed process can leave one of LitOpenCode's lock folders behind. You rarely need to act on it. The next writer takes the lock over once it has had no owner record or a dead owner for 30 seconds, or after 10 minutes whatever its owner, because no state update takes that long and a pid can come back as another process. The lock folders are:
+
+- `.litopencode/litgoal/lit-loop/.work-schema-3.lock` for the start-work run, which `lit cancel` also takes
+- `.litopencode/litgoal/lit-loop/.evidence-ledger.lock` and `.evidence-ledger-transition.lock` for the evidence ledger
+- `.litopencode/knowledge/.claims.lock` for the project wiki
+- `<name>.md.lock` beside a saved plan in `.litopencode/plans/`
+
+When one still blocks, the error names its path and holder, such as `(held by pid 4123, age 42s)` or `(no owner record, age 3s)`. Close the OpenCode sessions in that project, delete the named folder and try again.
 
 ## Uninstall
 

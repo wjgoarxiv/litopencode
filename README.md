@@ -21,7 +21,7 @@ You ask OpenCode for a feature. It writes the code and says it is finished, and 
 
 ## Two ways to use it
 
-**The easy way.** Restart OpenCode after you install. It opens on the `lit-loop` agent, and Tab switches agents if another one is showing. Write your request as usual and put `lit` at the start or the end, for example `fix the date parsing bug in src/dates.js lit`. A toast reads `🔥 LIT IGNITED`, then the agent fixes the bug, runs the tests and tells you what it checked. The `lit-plan` agent treats the same line as a planning request, so stay on `lit-loop` for building.
+**The easy way.** Restart OpenCode after you install. It opens on the `lit-loop` agent, and Tab switches agents if another one is showing. Write your request as usual and put `lit` at the start or the end, for example `fix the date parsing bug in src/dates.js lit`. A toast reads `🔥 LIT IGNITED`, then the agent fixes the bug, runs the tests and tells you what it checked. Ending with `lit` works the same as starting with it. When the project has a test command, LitOpenCode asks one goal question and takes the words before `lit` as the goal, so `fix the login redirect lit` offers the goal `fix the login redirect`; answer `yes` to set it. `lit loop`, `lit-loop` and `litwork` work at either end as well, and `/lit-loop <task>` and `/litwork <task>` ask the same question. The `lit-plan` agent treats the same line as a planning request, so stay on `lit-loop` for building.
 
 **The full workflow.** For a bigger job, go one step at a time. Each step hands its result to the next, and you can skip any step you do not need.
 
@@ -184,7 +184,7 @@ The card is on by default, and the LitOpenCode entry in OpenCode's `tui.json` ta
 | `{ "band": { "card": true } }` | Adds a second card underneath with the goal, the next task and any warnings |
 | `{ "notify": true }` | Sends a desktop notification and a sound when the mission finishes |
 
-`notify` stays off until you add it, and works only once OpenCode's own `"attention": { "enabled": true }` is on as well. The [guide](./docs/guide.md#the-lit-card) explains how the map and the skill chips count, and the [reference](./docs/reference.md#tui-mission-panel) explains every part of the card.
+`notify` stays off until you add it, and works only once OpenCode's own `"attention": { "enabled": true }` is on as well. The [guide](./docs/guide.md#the-lit-card) explains how the map and the skill chips count, and the [reference](./docs/reference.md#tui-mission-panel) explains every part of the card. The installer, `litopencode doctor` and `litopencode --help` open with the synthwave LIT mark, and on a dark theme in a truecolor terminal the card's title carries the same chrome as a small gradient ` 🔥 LIT ` pill. Where the art would not show well, you get something plainer: with colour off the mark is drawn in one tone, and a pipe, a narrow window or a terminal without UTF-8 prints the single line `LIT · opencode`. When the pill can't be drawn, the card keeps its usual title.
 
 ## Goals on OpenCode 2
 
@@ -238,7 +238,7 @@ If you think in process flow sheets, here is the loop drawn as one. Requests ent
 
 ## Check, update and remove
 
-When something looks off, or right after installing, `litopencode doctor` tells you whether the plugin and skills are wired up. It only reads and changes nothing.
+When something looks off, or right after installing, `litopencode doctor` tells you whether the plugin and skills are wired up. It only reads and changes nothing. LitOpenCode guards its run state with small lock folders under `.litopencode/`. If a process crashes while it holds one, the next writer takes the lock over by itself once the lock has had no owner record or a dead owner for 30 seconds, or has been held for more than 10 minutes. `lit cancel` gets through such a lock too. If a lock still blocks you, the error names the lock folder and its holder (a pid and an age, or `no owner record`). Close the OpenCode sessions in that project, delete that folder and try again; the [guide](./docs/guide.md#troubleshooting) lists every lock.
 
 ```sh
 npm exec --package @litfamily/litopencode@latest -- litopencode doctor

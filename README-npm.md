@@ -17,7 +17,7 @@ You ask OpenCode for a feature. It writes the code and says it is finished, and 
 
 ## Two ways to use it
 
-**The easy way.** Restart OpenCode after you install. It opens on the `lit-loop` agent, and Tab switches agents if another one is showing. Write your request as usual and put `lit` at the start or the end, for example `fix the date parsing bug in src/dates.js lit`. A toast reads `🔥 LIT IGNITED`, then the agent fixes the bug, runs the tests and tells you what it checked. The `lit-plan` agent treats the same line as a planning request, so stay on `lit-loop` for building.
+**The easy way.** Restart OpenCode after you install. It opens on the `lit-loop` agent, and Tab switches agents if another one is showing. Write your request as usual and put `lit` at the start or the end, for example `fix the date parsing bug in src/dates.js lit`. A toast reads `🔥 LIT IGNITED`, then the agent fixes the bug, runs the tests and tells you what it checked. Ending with `lit` works the same as starting with it. When the project has a test command, LitOpenCode asks one goal question and takes the words before `lit` as the goal, so `fix the login redirect lit` offers the goal `fix the login redirect`; answer `yes` to set it. `lit loop`, `lit-loop` and `litwork` work at either end as well, and `/lit-loop <task>` and `/litwork <task>` ask the same question. The `lit-plan` agent treats the same line as a planning request, so stay on `lit-loop` for building.
 
 **The full workflow.** For a bigger job, go one step at a time. Each step hands its result to the next, and you can skip any step you do not need.
 
