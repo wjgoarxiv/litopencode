@@ -36,6 +36,7 @@ import { readJsonObjectIfPresent, readPackageMetadata, readTextIfPresent } from 
 import { renderInstallReport, wrapReceiptLine } from "./install-report.ts";
 import { renderLitOpenCodeWordmark } from "./install-tui.ts";
 import { promptModelSelection, promptOutputStyle, promptPermissionMode } from "./model-routing.ts";
+import { listHostModels, type HostModelList } from "./host-models.ts";
 import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } from "./native-skills.ts";
 import { extensionsNoticeLines, previousVersionLeftovers, shownNoticesName, writePendingExtensionsNotice } from "../extensions-notice.ts";
@@ -86,6 +87,19 @@ function defaultOpenCodeRoot(): string {
 
 function shouldUseOpenCodeInstaller(root: string): boolean {
   return path.resolve(root) === path.resolve(defaultOpenCodeRoot());
+}
+
+// The host command runs only for the real OpenCode root, and only once a custom route or the model
+// menu needs the list; a custom root (tests, sandboxes) reads its own config files only.
+function memoizedHostModels(root: string): () => HostModelList {
+  let cached: HostModelList | undefined;
+  return () => {
+    if (cached !== undefined) return cached;
+    const askHost = shouldUseOpenCodeInstaller(root);
+    if (askHost) process.stdout.write("Reading the models OpenCode can run (opencode models)...\n");
+    cached = listHostModels({ root, ...(askHost ? { command: "opencode" } : {}) });
+    return cached;
+  };
 }
 
 function openCodeConfigCandidates(root: string): readonly string[] {
@@ -344,7 +358,8 @@ export async function install(
     dryRun,
     classification,
     litOpenCodeConfigFileForOpenCodeRoot(root),
-    currentModel
+    currentModel,
+    memoizedHostModels(root)
   );
   const selectedPermission = await promptPermissionMode(permissionMode, permissionPrompt, dryRun);
   const selectedOutputStyle = await promptOutputStyle(existingOutputStyle, outputStylePrompt, dryRun);

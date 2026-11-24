@@ -4,18 +4,19 @@ import path from "node:path";
 import { test } from "node:test";
 import { runCli, withTempDir } from "../test-support/cli-fixture.ts";
 
-test("explicit flags reject every model route outside the offered provider menus", async () => {
+// Other providers are checked against OpenCode's own model list; see any-provider-model.test.mjs.
+test("explicit flags reject OpenAI and xAI models outside the offered rows", async () => {
   await withTempDir(async (dir) => {
     const rejected = [
       ["--provider", "openai", "--model", "gpt-5.5"],
-      ["--provider", "anthropic", "--model", "gpt-5.6-luna"],
-      ["--model", "custom-provider/custom-model"]
+      ["--model", "xai/grok-0.1"],
+      ["--model", "bad provider/custom-model"]
     ];
 
     for (const args of rejected) {
       const result = runCli(["install", "--root", dir, ...args]);
       assert.equal(result.status, 2, args.join(" "));
-      assert.match(result.stderr, /is not offered|provider must be one of/i);
+      assert.match(result.stderr, /is not offered|needs provider\/model/i);
     }
     await assert.rejects(fs.stat(path.join(dir, "litopencode.json")), { code: "ENOENT" });
   });

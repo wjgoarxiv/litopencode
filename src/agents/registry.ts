@@ -247,6 +247,26 @@ function routeLeadAgent(
   return lead === undefined ? authoredOverride : withRetiredEffortsReplaced({ ...authoredOverride, ...lead });
 }
 
+const userModelKeys = ["model", "variant", "reasoningEffort"] as const;
+
+// A model the user set for a LitOpenCode agent in opencode.json is more specific than a category
+// route, so it stays; only a route written for that agent in litopencode.json replaces it.
+function withUserModel(
+  generated: OpenCodeAgentConfig,
+  existing: unknown,
+  litRouteAuthored: boolean
+): OpenCodeAgentConfig {
+  if (litRouteAuthored || typeof existing !== "object" || existing === null) return generated;
+  const user = existing as Record<string, unknown>;
+  if (typeof user.model !== "string" || user.model.length === 0) return generated;
+  const next: Record<string, unknown> = { ...generated };
+  for (const key of userModelKeys) {
+    delete next[key];
+    if (user[key] !== undefined) next[key] = user[key];
+  }
+  return next as OpenCodeAgentConfig;
+}
+
 function applySpecialLeadRoute(
   agentTarget: NonNullable<AgentConfigTarget["agent"]>,
   agentId: string
@@ -382,7 +402,11 @@ export function registerLitOpenCodeAgents(
     const override = agent.id === "lit-loop"
       ? routeLeadAgent(litConfig, authoredOverride)
       : agent.id === "lit-ideator" ? lowestEffortRoute(litConfig, authoredOverride) : authoredOverride;
-    const agentConfig = toOpenCodeAgentConfig(agent, override);
+    const agentConfig = withUserModel(
+      toOpenCodeAgentConfig(agent, override),
+      agentTarget[agent.id],
+      hasAuthoredRouteFields(litConfig.agents[agent.id])
+    );
     const entry =
       primaryTaskAllow && agent.mode === "primary" && agent.id !== "lit-plan"
         ? {

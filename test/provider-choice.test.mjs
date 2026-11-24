@@ -107,7 +107,7 @@ test("an unknown model id or forbidden pair is refused before any write", async 
       const rejected = [
         [["--provider", "xai", "--model", "grok-99"], /grok-99/u],
         [["--provider", "openai", "--model", "gpt-5.5"], /gpt-5\.5/u],
-        [["--provider", "anthropic", "--model", "claude"], /anthropic/u],
+        [["--model", "anthropic"], /provider\/model/u],
         [["--provider", "openai", "--model", "gpt-6-astra", "--effort", "none"], /gpt-6-astra.*none/iu],
         [["--provider", "openai", "--model", "gpt-6-astra", "--effort", "ultra"], /--effort must be one of none, low, medium, high, xhigh, max/u],
         [["--provider", "openai", "--model", "gpt-6-astra-fast"], /gpt-6-astra-fast|not offered/iu],
@@ -131,7 +131,7 @@ test("interactive chooser asks provider, lead, helper provider, helper in contra
       const result = runCli(["install", "--root", dir, "--model-prompt"], { env, input: "1\n0\n\n\n\n" });
       assert.equal(result.status, 0, result.stderr);
       const out = result.stdout;
-      assert.match(out, /Choose the provider for LitOpenCode agents\.\n\s+0\. OpenAI GPT-6 family \/ GPT-5\.6 previous generation\s+\(openai\)\n\s+1\. xAI Grok\s+\(xai\)\nSelect 0-1 \[0\]:/u);
+      assert.match(out, /Choose the provider for LitOpenCode agents\.\n\s+0\. OpenAI GPT-6 family \/ GPT-5\.6 previous generation\s+\(openai\)\n\s+1\. xAI Grok\s+\(xai\)\n\s+2\. Type provider\/model\s+— any model OpenCode can run\nSelect 0-2 \[0\]:/u);
       assert.match(out, /Choose the LEAD model \(plans and reviews\)\./u);
       assert.match(out, /0\. grok-4\.6\s+· xhigh/u);
       assert.match(out, /1\. grok-4\.5\s+· high/u);
@@ -140,7 +140,7 @@ test("interactive chooser asks provider, lead, helper provider, helper in contra
       assert.ok(out.indexOf("Choose the provider for LitOpenCode agents.") < out.indexOf("Choose the LEAD model"));
       assert.ok(out.indexOf("Choose the LEAD model") < out.indexOf("Choose the provider for HELPER agents"));
       assert.ok(out.indexOf("Choose the provider for HELPER agents") < out.indexOf("Choose the HELPER model"));
-      assert.match(out, /Choose the provider for HELPER agents[^\n]*\n[\s\S]*?Select 0-1 \[1\]:/u);
+      assert.match(out, /Choose the provider for HELPER agents[^\n]*\n[\s\S]*?Select 0-2 \[1\]:/u);
       assert.match(out, /╭─ MODEL ROUTE\n│ Provider\s+xai\n│ Lead\s+grok-4\.6 · xhigh\n│ Helpers\s+grok-4\.6 · xhigh\n│ Writes\s+\S*litopencode\.json\s+\(managed keys only\)\n│ Warning\s+XAI_API_KEY is not set[^\n]*\n╰─ Enter to continue · Ctrl-C to abort \(nothing written yet\)/u);
       const routes = await readRoutes(dir);
       for (const id of categories) {

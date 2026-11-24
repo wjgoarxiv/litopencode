@@ -85,8 +85,20 @@ const installCategories = ["planning", "execution", "review", "research"] as con
 const installEfforts: readonly InstallModelEffort[] = installModelEfforts;
 
 function existingInstallRoute(value: unknown): InstallModelRoute | undefined {
-  if (!isRecord(value) || typeof value.provider !== "string" || !isModelProvider(value.provider)) return undefined;
-  if (typeof value.model !== "string" || value.model.includes("/") || value.reasoningEffort !== undefined) return undefined;
+  if (!isRecord(value) || typeof value.provider !== "string") return undefined;
+  if (typeof value.model !== "string" || value.reasoningEffort !== undefined) return undefined;
+  if (!isModelProvider(value.provider)) {
+    // A provider the user set up in OpenCode: its model and any effort are the user's own. A model id
+    // with its own slash is stored qualified as `provider/model`.
+    const qualified = value.provider + "/";
+    if (value.model.includes("/") && !value.model.startsWith(qualified)) return undefined;
+    const model = value.model.startsWith(qualified) ? value.model.slice(qualified.length) : value.model;
+    if (model.length === 0) return undefined;
+    if (value.variant === undefined) return { provider: value.provider, model };
+    if (typeof value.variant !== "string" || !installEfforts.includes(value.variant as InstallModelEffort)) return undefined;
+    return { provider: value.provider, model, effort: value.variant as InstallModelEffort };
+  }
+  if (value.model.includes("/")) return undefined;
   const model = value.provider === "openai" ? stripFastSuffix(value.model) : value.model;
   const row = modelMenuRows(value.provider).find((candidate) => candidate.model === model);
   if (row === undefined) return undefined;

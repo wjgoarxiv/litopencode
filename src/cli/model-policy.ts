@@ -161,10 +161,14 @@ export function selectedLitConfig(
     const current = isRecord(categories[id]) ? categories[id] : {};
     const category = { ...current };
     delete category.reasoningEffort;
+    // A route without an effort (a custom model) must not inherit the previous model's effort.
+    if (route.effort === undefined) delete category.variant;
     categories[id] = {
       ...category,
       provider: route.provider,
-      model: route.model,
+      // A model id with its own slash (`openrouter` + `anthropic/claude-x`) is written fully qualified,
+      // because a slash in `model` means "already provider/model" to every reader of this file.
+      model: route.model.includes("/") ? route.provider + "/" + route.model : route.model,
       ...(route.effort === undefined ? {} : { variant: route.effort })
     };
   }

@@ -207,6 +207,13 @@ export function stripFastSuffix(model: string): string {
       : model;
 }
 
+const customProviderPattern = /^[A-Za-z0-9][\w.@:+-]*$/u;
+
+/** A route to a provider other than the OpenAI and xAI rows: any provider the user set up in OpenCode. */
+export function isCustomRoute(route: InstallModelRoute): boolean {
+  return !isModelProvider(route.provider);
+}
+
 export function resolveModelRoute(
   provider: string,
   model: string,
@@ -214,7 +221,11 @@ export function resolveModelRoute(
   optionName: string
 ): InstallModelRoute {
   if (!isModelProvider(provider)) {
-    throw new Error(optionName + " provider must be one of " + providerMenu.map((row) => row.provider).join(", ") + " (got " + provider + ")");
+    // Checked against the host's own model list once the install root is known.
+    if (!customProviderPattern.test(provider) || model.length === 0 || /\s/u.test(model)) {
+      throw new Error(optionName + " needs provider/model, for example openai/" + defaultOpenAiRoutes.lead.model + " or my-gateway/deepseek-chat (got " + provider + "/" + model + ")");
+    }
+    return { provider, model, ...(effort === undefined ? {} : { effort }) };
   }
   const rows = modelMenuRows(provider);
   const row = rows.find((candidate) => candidate.model === (provider === "openai" ? stripFastSuffix(model) : model));

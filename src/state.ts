@@ -1,3 +1,4 @@
+import os from "node:os";
 import path from "node:path";
 
 export type RuntimePaths = {
@@ -35,7 +36,8 @@ export const runtimeDirectoryName = ".litopencode";
 export function defaultOpenCodeConfigRoot(): string {
   const configHome = process.env.XDG_CONFIG_HOME;
   if (configHome && configHome.length > 0) return path.join(configHome, "opencode");
-  return path.join(process.env.HOME ?? "", ".config", "opencode");
+  const home = process.env.HOME;
+  return path.join(home !== undefined && home.length > 0 ? home : os.homedir(), ".config", "opencode");
 }
 
 export function litOpenCodeConfigFileForOpenCodeRoot(root: string = defaultOpenCodeConfigRoot()): string {

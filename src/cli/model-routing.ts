@@ -4,7 +4,9 @@ import path from "node:path";
 import readline from "node:readline/promises";
 import { markColorMode } from "../lit-mark.ts";
 import { isRecord } from "./json.ts";
+import { closeModelMatches, hostModelKey, modelListing, providersOf, splitModelId, type HostModelList } from "./host-models.ts";
 import {
+  isCustomRoute,
   isModelProvider,
   modelMenuRows,
   providerCredentialEnv,
@@ -159,15 +161,84 @@ function menuLabel(row: ModelMenuRow): string {
   return row.model.padEnd(13, " ") + " · " + row.effort.padEnd(6, " ");
 }
 
-async function chooseProvider(reader: PromptReader, title: string, defaultProvider: ModelProvider): Promise<ModelProvider> {
-  const defaultIndex = Math.max(0, providerMenu.findIndex((row) => row.provider === defaultProvider));
+type ProviderChoice =
+  | { readonly kind: "menu"; readonly provider: ModelProvider }
+  | { readonly kind: "custom"; readonly provider: string }
+  | { readonly kind: "typed" };
+
+const typedRouteLabel = "Type provider/model";
+
+// OpenAI and xAI first, then every other provider OpenCode knows (custom ones included), then a free entry.
+async function chooseProvider(
+  reader: PromptReader,
+  title: string,
+  defaultProvider: string,
+  hostModels: HostModelList
+): Promise<ProviderChoice> {
+  const custom = providersOf(hostModels.models).filter((provider) => !isModelProvider(provider));
+  // The current custom provider stays offered (and the default) even when OpenCode's list could not be read.
+  if (!isModelProvider(defaultProvider) && !custom.includes(defaultProvider)) custom.push(defaultProvider);
+  const choices: ProviderChoice[] = [
+    ...providerMenu.map((row): ProviderChoice => ({ kind: "menu", provider: row.provider })),
+    ...custom.map((provider): ProviderChoice => ({ kind: "custom", provider })),
+    { kind: "typed" }
+  ];
+  const labels = choices.map((choice) => {
+    if (choice.kind === "typed") return { label: typedRouteLabel, hint: "any model OpenCode can run" };
+    if (choice.kind === "custom") {
+      const count = hostModels.models.filter((model) => model.provider === choice.provider).length;
+      return { label: choice.provider.padEnd(35, " ") + " (" + String(count) + (count === 1 ? " model)" : " models)"), hint: "" };
+    }
+    const row = providerMenu.find((candidate) => candidate.provider === choice.provider);
+    return { label: (row?.label ?? choice.provider).padEnd(35, " ") + " (" + choice.provider + ")", hint: "" };
+  });
+  const defaultIndex = Math.max(0, choices.findIndex((choice) => choice.kind !== "typed" && choice.provider === defaultProvider));
+  return choices[await chooseIndex(reader, title, labels, defaultIndex)];
+}
+
+async function chooseCustomRoute(
+  reader: PromptReader,
+  title: string,
+  role: string,
+  provider: string,
+  hostModels: HostModelList,
+  preferred: InstallModelRoute | undefined
+): Promise<InstallModelRoute> {
+  const listed = hostModels.models.filter((model) => model.provider === provider);
+  const keepPreferred = preferred !== undefined && preferred.provider === provider && !listed.some((model) => model.model === preferred.model);
+  const models = keepPreferred ? [...listed, { provider, model: preferred.model }] : listed;
+  if (models.length === 0) return typeRoute(reader, role, hostModels);
+  const preferredIndex = preferred === undefined ? -1 : models.findIndex((model) => model.model === preferred.model && preferred.provider === provider);
   const index = await chooseIndex(
     reader,
     title,
-    providerMenu.map((row) => ({ label: row.label.padEnd(35, " ") + " (" + row.provider + ")", hint: "" })),
-    defaultIndex
+    models.map((model) => ({ label: model.model, hint: "" })),
+    Math.max(0, preferredIndex)
   );
-  return providerMenu[index].provider;
+  return { provider, model: models[index].model };
+}
+
+async function typeRoute(reader: PromptReader, role: string, hostModels: HostModelList): Promise<InstallModelRoute> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const answer = await askLine(reader, "Type the " + role + " model as provider/model (for example my-gateway/deepseek-chat): ");
+    const wanted = splitModelId(answer);
+    if (wanted === undefined) {
+      process.stdout.write("Use provider/model, with the provider name OpenCode shows.\n");
+      continue;
+    }
+    const knownRow = isModelProvider(wanted.provider)
+      ? modelMenuRows(wanted.provider).find((row) => row.model === (wanted.provider === "openai" ? stripFastSuffix(wanted.model) : wanted.model))
+      : undefined;
+    if (knownRow !== undefined) return { provider: wanted.provider, model: wanted.model, effort: knownRow.effort };
+    if (!isModelProvider(wanted.provider) && modelListing(wanted, hostModels) !== "unlisted") return wanted;
+    const matches = isModelProvider(wanted.provider)
+      ? modelMenuRows(wanted.provider).map((row) => row.provider + "/" + row.model)
+      : closeModelMatches(wanted, hostModels.models);
+    process.stdout.write(
+      "OpenCode does not list " + hostModelKey(wanted) + "." + (matches.length > 0 ? " Known: " + matches.join(", ") : "") + "\n"
+    );
+  }
+  throw new Error("No usable " + role + " model was typed; nothing was written.");
 }
 
 // After a model, the role's effort: every effort the host offers for that model, the
@@ -208,6 +279,20 @@ async function chooseRoute(
   return same ? { ...preferred, effort } : { provider: row.provider, model: row.model, effort };
 }
 
+async function pickRoute(
+  reader: PromptReader,
+  title: string,
+  role: string,
+  choice: ProviderChoice,
+  defaultIndex: number,
+  preferred: InstallModelRoute | undefined,
+  hostModels: HostModelList
+): Promise<InstallModelRoute> {
+  if (choice.kind === "menu") return chooseRoute(reader, title, role, choice.provider, defaultIndex, preferred);
+  if (choice.kind === "custom") return chooseCustomRoute(reader, title, role, choice.provider, hostModels, preferred);
+  return typeRoute(reader, role, hostModels);
+}
+
 function recommendedHelperIndex(provider: ModelProvider): number {
   return Math.max(0, modelMenuRows(provider).findIndex((row) => row.hint.includes("recommended helper")));
 }
@@ -233,11 +318,38 @@ function routeLabel(route: InstallModelRoute): string {
   return route.model + " · " + (route.effort ?? "default");
 }
 
-export function renderModelRouteCard(selection: InstallModelSelection, configPath: string): string {
+/**
+ * A custom route must name a model OpenCode lists. Throws with the close matches when the host list is
+ * known and lacks it; returns a note per route that could not be checked.
+ */
+export function checkCustomRoutes(selection: InstallModelSelection, hostModels: () => HostModelList): readonly string[] {
+  const routes = [selection, ...(selection.helper === undefined ? [] : [selection.helper])].filter(isCustomRoute);
+  if (routes.length === 0) return [];
+  const list = hostModels();
+  const notes: string[] = [];
+  for (const route of routes) {
+    const key = hostModelKey(route);
+    const listing = modelListing(route, list);
+    if (listing === "unchecked") {
+      notes.push("│ Note       OpenCode's model list could not be read, so " + key + " was not checked");
+      continue;
+    }
+    if (listing === "listed") continue;
+    const matches = closeModelMatches(route, list.models);
+    throw new Error(
+      "OpenCode does not list the model " + key + "; nothing was written." +
+        (matches.length > 0 ? " Known " + route.provider + " models: " + matches.join(", ") + "." : " Add the provider to OpenCode first; `opencode models` shows what it can run.")
+    );
+  }
+  return [...new Set(notes)];
+}
+
+export function renderModelRouteCard(selection: InstallModelSelection, configPath: string, notes: readonly string[] = []): string {
   const helper = selection.helper ?? selection;
   const providers = helper.provider === selection.provider ? selection.provider : selection.provider + " / " + helper.provider;
+  // Custom providers keep their key in OpenCode's own provider config, so only the menu providers are checked.
   const warnings = [...new Set([selection.provider, helper.provider])]
-    .filter((provider) => !hasProviderCredential(provider))
+    .filter((provider) => isModelProvider(provider) && !hasProviderCredential(provider))
     .map((provider) => {
       const envName = providerCredentialEnv(provider) ?? provider.toUpperCase() + "_API_KEY";
       return "│ Warning    " + envName + " is not set and OpenCode has no stored " + provider + " credential; the route is written anyway";
@@ -250,6 +362,7 @@ export function renderModelRouteCard(selection: InstallModelSelection, configPat
     "│ Helpers    " + routeLabel(helper),
     "│ Writes     " + configPath + "  (managed keys only)",
     ...warnings,
+    ...notes,
     "╰─ Enter to continue · Ctrl-C to abort (nothing written yet)"
   ].join("\n") + "\n";
 }
@@ -260,10 +373,14 @@ export async function promptModelSelection(
   dryRun: boolean,
   classification: ModelConfigClassification,
   configPath: string,
-  currentSelection: InstallModelSelection | undefined = undefined
+  currentSelection: InstallModelSelection | undefined = undefined,
+  hostModels: () => HostModelList = () => ({ models: [], known: false })
 ): Promise<InstallModelSelection | undefined> {
   if (!shouldPromptForModel(mode, selection, dryRun, classification, currentSelection)) {
-    if (selection !== undefined && !dryRun) process.stdout.write(renderModelRouteCard(selection, configPath));
+    if (selection !== undefined) {
+      const notes = checkCustomRoutes(selection, hostModels);
+      if (!dryRun) process.stdout.write(renderModelRouteCard(selection, configPath, notes));
+    }
     return selection;
   }
 
@@ -275,35 +392,32 @@ export async function promptModelSelection(
     } else if (classification.class !== "fresh") {
       process.stdout.write("\nExisting route (" + classification.class + ") will be rewritten in managed keys only.\n");
     }
+    const models = hostModels();
     const leadProvider = await chooseProvider(
       reader,
       "Choose the provider for LitOpenCode agents.",
-      preferredSelection !== undefined && isModelProvider(preferredSelection.provider) ? preferredSelection.provider : "openai"
+      preferredSelection?.provider ?? "openai",
+      models
     );
-    const lead = await chooseRoute(
-      reader,
-      "Choose the LEAD model (plans and reviews).",
-      "LEAD",
-      leadProvider,
-      0,
-      preferredSelection
-    );
+    const lead = await pickRoute(reader, "Choose the LEAD model (plans and reviews).", "LEAD", leadProvider, 0, preferredSelection, models);
     const preferredHelper = preferredSelection?.helper;
     const helperProvider = await chooseProvider(
       reader,
       "Choose the provider for HELPER agents (workers, explorers, librarians).",
-      preferredHelper !== undefined && isModelProvider(preferredHelper.provider) ? preferredHelper.provider : leadProvider
+      preferredHelper?.provider ?? lead.provider,
+      models
     );
-    const helper = await chooseRoute(
+    const helper = await pickRoute(
       reader,
       "Choose the HELPER model (spawned and delegated agents).",
       "HELPER",
       helperProvider,
-      recommendedHelperIndex(helperProvider),
-      preferredHelper
+      helperProvider.kind === "menu" ? recommendedHelperIndex(helperProvider.provider) : 0,
+      preferredHelper,
+      models
     );
     const chosen: InstallModelSelection = { ...lead, helper };
-    process.stdout.write(renderModelRouteCard(chosen, configPath));
+    process.stdout.write(renderModelRouteCard(chosen, configPath, checkCustomRoutes(chosen, () => models)));
     await askLine(reader, "");
     return chosen;
   } finally {
