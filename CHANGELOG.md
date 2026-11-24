@@ -3,6 +3,12 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
+## 1.0.53 - 2026-11-24
+
+- The installer's model menu lists every provider OpenCode knows, including one you added yourself in `opencode.json` (OpenCode 1 `provider` or OpenCode 2 `providers`), plus a "Type provider/model" entry. `--model my-gateway/deepseek-chat` works the same way. A custom model gets no effort step, and an id OpenCode does not list is refused with the close matches.
+- New `/lit-model` in chat: it lists the models by number and saves your pick as the lead and helper model in `litopencode.json`, so every new terminal starts with it after OpenCode restarts.
+- A model you set for a LitOpenCode agent in `opencode.json` is no longer replaced by the category route.
+
 ## 1.0.52 - 2026-11-24
 
 - A start-work lock folder that has no owner record yet is left alone for at least 5 seconds, so a process that has just created it can finish writing its owner record. A creator whose new folder was moved aside before that tries again.

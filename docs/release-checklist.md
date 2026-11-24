@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.53 Release Scope
+
+- Any provider/model OpenCode knows in the installer menu and `--model`, custom OpenAI-compatible providers included; the in-chat `/lit-model` command and `lit-model` tool that save the pick to `litopencode.json`; a model set for a LitOpenCode agent in `opencode.json` is kept.
+
 ## 1.0.52 Release Scope
 
 - A 5 s grace before an ownerless start-work lock is judged stale, plus a retry for a creator whose new lock folder was moved aside; README and guide text for the synthwave mark, a trailing `lit` with its goal question, and lock recovery.
