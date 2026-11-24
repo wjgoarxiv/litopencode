@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.51 Release Scope
+
+- The synthwave LIT mark on install, doctor and help with a gradient pill on the TUI panel; the goal question for a request that ends with `lit`, for plain `lit <task>`, and for `/lit-loop <task>` and `/litwork <task>`; a first-or-last hyphenated `lit-loop` routes like `lit loop`; state locks left by a crashed holder (no owner record, dead owner, unreadable claim, reused pid past ten minutes) are reclaimed, so `lit cancel` gets through.
+
 ## 1.0.50 Release Scope
 
 - `ultra-brainstorm` runs exactly the approved number of lanes, checkpoints lanes and clusters to `lanes.jsonl` and `clusters.jsonl`, and a plugin-side run guard nudges an idle session that still owes lanes; the goal question gains an answer guide for each answer word in the saved-plan notice, the lit-loop question and the TUI toast.

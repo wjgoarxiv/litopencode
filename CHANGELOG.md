@@ -3,6 +3,13 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
+## 1.0.51 - 2026-11-24
+
+- The install, `doctor` and `--help` output now opens with the synthwave LIT mark, and the TUI panel shows a gradient LIT pill.
+- The goal question now also comes when the request ends with the activation word, as in `fix the date parser lit` or `… 부탁해 lit`: the words before it become the goal. Plain `lit <task>` and `<task> lit` ask it now (bare `lit`, `lit continue`, `lit resume` and `lit.` still ask nothing), and so do `/lit-loop <task>` and `/litwork <task>` on both hosts. The 1.0.48 notes that bare `lit` and slash commands do not ask are out of date.
+- A hyphenated `lit-loop` as the first or last word of a request now routes like `lit loop`. A mention inside a sentence or a question such as `what does lit-loop do?` still routes nowhere.
+- A state lock left by a process that crashed no longer blocks for good. The start-work, evidence-ledger, knowledge and plan-save locks take over a lock with no owner record, a dead owner, or an unreadable claim after 30 seconds, and any lock older than ten minutes even when its pid now belongs to another process. `lit cancel` gets through such a lock instead of repeating "send lit cancel again", and a lock timeout now names the lock path and its holder.
+
 ## 1.0.50 - 2026-11-22
 
 - `ultra-brainstorm` now runs every lane you approved. A long run used to stop early once ideas started to repeat, or lose its place after a context compaction. The run now writes each batch of ten lanes to `lanes.jsonl` and each reducer's clusters to `clusters.jsonl` under `.litopencode/brainstorm/<slug>/`, reduces each slice of 30 lanes as soon as it is in, and picks up at the next lane after a compaction. The plugin also counts the lanes itself: if the session goes idle with lanes still owed, it sends one `LitOpenCode ultra-brainstorm guard:` message naming the next lane, and after two idles in a row with no new lane it pauses until you type `continue` (or `계속`).
