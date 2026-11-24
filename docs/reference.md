@@ -630,7 +630,7 @@ What it draws:
     a herdr pane is named `<skill> · <pane>`, and an ended session or another session's completed
     start-work run shows `done` for one minute and then leaves;
   - while `lit-adhd` (alias `lit-rewind`) runs, the border, the LIT word and the gauges cycle through
-    the colour wheel at one fixed lightness, four small colour steps a second with no flashing. It
+    the colour wheel at one fixed lightness, four small colour steps a second (three while the sunset moves) with no flashing. It
     is off under `motion: false` and `NO_COLOR`. An idle session in a workspace with earlier work
     says `lit adhd to pick up where you left off`, and the first fresh session there raises one
     toast with the same words (OpenCode 1 and 2).
@@ -646,6 +646,20 @@ What it draws:
     `blocked`); a failed lane turns the error colour and an unreported one stays dim. When a goal reaches
     done the completion sparks play once and the card settles; a routine turn never replays them. A
     published release has no signal on the card, so it raises no burst;
+  - on a dark theme with a truecolor terminal (`COLORTERM=truecolor` or `24bit`) and `NO_COLOR` unset, a
+    sunset sits behind the words (`src/tui/mission-sunset.ts`): a half-sunk sun, stars, a shooting star every
+    9 s and a sea of `~ - .` on the last row over the skills or the lanes. It is drawn only in the blank end of
+    the last three rows, three cells past the last word, so no word, row or width changes. The sun stands at one
+    place and is as tall as the free rows let it be: three rows beside lanes, two on the four-row card, one when
+    the track is full, and none on a narrow card, behind a long last row or during the completion moment. The
+    border runs from pink through violet to the accent with sunset light on the rule under the sun, the LIT pill
+    from orange to pink and the running stage from violet to the accent; a warning, a finished goal, the amber
+    look, the review lanes and the rewind look keep their own border. The sea moves six times a second while the
+    session's turn runs and the glow of the sun, the stars and the rule three times, in blocks of four cells, so few
+    cells change. With no turn running, the amber and rewind looks move it four times a second. It runs on the band's one timer, which
+    reads no session state, and stands still with no timer at rest and under `motion: false`. Other terminals and light
+    themes keep the plain card. In Windows Terminal (`WT_SESSION`) and the VS Code terminal
+    (`TERM_PROGRAM=vscode`), which draw the glyphs themselves, the card's gauges get round ends in the same cells;
 
   A subagent session shows its parent's card with `· in lane`; the home screen has no band. When the
   card is narrow each row drops its own low-priority parts: the track drops the live step and
@@ -710,9 +724,10 @@ Motion runs on a short frame timer only while a transition plays and stops after
 and pills slide in with ease-out-back, 160 ms each and 60 ms apart; the bar fills in 300 ms; a
 warning row slides in over 220 ms and colours cross-fade in 140 ms; the light sweep takes 400 ms.
 When the map moves forward, the connectors between the old and new stage fill top to bottom 60 ms
-apart and the running pill flashes once; nothing loops. The live step changes in place without a
-slide-in, and while a tool runs its elapsed time ticks once a second; with no tool running there is
-no timer at all. While a lit session is open the panel re-reads the goal ledger, the bounded work
+apart and the running pill flashes once. Only the card's sunset, its looks and a working lane's pulse loop, and
+only while they have something to show. The live step changes in place without a
+slide-in, and while a tool runs its elapsed time ticks once a second; a session at rest has no timer
+for either. While a lit session is open the panel re-reads the goal ledger, the bounded work
 record and the research folder every two seconds; an idle session does not.
 
 The LIT parts wear the LIT colours in every theme: the `🔥 LIT` pill runs from pink (`#ff2d95`) to

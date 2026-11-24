@@ -8,6 +8,7 @@ import { buildMissionView } from "../src/tui/mission-model.ts";
 import { restingFrameFor } from "../src/tui/mission-motion.ts";
 import { paletteFromTheme } from "../src/tui/mission-text.ts";
 import { statusCard } from "../src/tui/mission-band.ts";
+import { threadsOf } from "../src/tui/mission-threads.ts";
 import { autoHandoffDirective, autoHandoffMarker, createAutoHandoffSettings } from "../src/auto-handoff.ts";
 import { compactReminder } from "../src/auto-handoff-hooks.ts";
 import os from "node:os";
@@ -120,8 +121,8 @@ test("on-screen captions say whether a picture is a capture or a sample", async 
 });
 
 test("the README status card pictures show what the shipped card draws, and stay out of the package", async () => {
-  // The pictures are the shipped card code drawn at 100 columns (a 98-cell card) with OpenCode's
-  // opencode dark theme, from the states below; they must carry every string the alt text names.
+  // The pictures are the shipped card code drawn at 130 columns (a 128-cell card) with OpenCode's
+  // opencode dark theme and the sunset (working at t = 3.4 s), from the states below; they must carry every string the alt text names.
   const now = Date.parse("2026-10-13T08:05:00.000Z");
   const criterion = (id, scenario, status) => ({ id, scenario, qaChannel: "", testRef: "", status, evidence: [] });
   const ledger = { version: 1, activeGoalId: "G1", goals: [{ id: "G1", sessionId: "ses_demo", objective: "Add a --lang es option that prints Hola", title: "Spanish greeting", status: "active", createdAt: "2026-10-13T08:04:30.000Z", updatedAt: "2026-10-13T08:04:40.000Z", criteria: [criterion("C1", "node greet.js --lang es prints Hola, world!", "pass"), criterion("C2", "the default greeting is unchanged", "pending"), criterion("C3", "npm test passes with a Spanish test", "pending")], checkpoints: [{ id: "k1", at: "2026-10-13T08:04:41.000Z", summary: "C1 green" }], steering: [], reviewBlockers: [] }] };
@@ -129,12 +130,13 @@ test("the README status card pictures show what the shipped card draws, and stay
   const working = buildMissionView({ marks, todos: [], ledger, sessionStatus: "busy", live: { tool: "bash", start: now - 9_000 }, now, agent: "lit-loop" });
   const after = buildMissionView({ marks, todos: [], ledger, sessionStatus: "idle", now, agent: "lit-loop" });
   const idle = buildMissionView({ marks: [], todos: [], ledger: undefined, now });
-  const draw = (view, chips, contextPercent, busy) => statusCard({ view, frame: restingFrameFor(view, now), chips, ...(busy === undefined ? {} : { busy }), figures: { contextPercent, branch: "main", inLane: false } }, paletteFromTheme(undefined), 98)
+  const lanes = (status) => threadsOf([["explore", 15_000], ["test-writer", 12_000]].map(([name, age]) => ({ kind: "task", name, status, startedAt: now - age, ...(status === "done" ? { doneAt: now - 3_000 } : {}) })), now);
+  const draw = (view, chips, contextPercent, busy, threads, scene = {}) => statusCard({ view, frame: restingFrameFor(view, now), chips, scene, ...(threads === undefined ? {} : { threads }), ...(busy === undefined ? {} : { busy }), figures: { contextPercent, branch: "main", inLane: false } }, { ...paletteFromTheme(undefined), synthwave: true }, 128)
     .map((row) => row.map((segment) => segment.text).join("").replace(/[╭╰]─|─[╮╯]|─{2,}/gu, " ").replace(/[│╭╮╰╯]/gu, " ").replace(/ +/gu, " "));
   const cards = {
     idle: { rows: draw(idle, [], 4), strings: ["🔥 LIT · ready", "○ IDLE", "interview ─ plan ─ work ─ review ─ done", "add lit to a prompt to start", "skills none yet", "ctx 4% · ⎇ main"] },
-    working: { rows: draw(working, [{ name: "lit-loop", current: true }], 4, true), strings: ["🔥 LIT · lit-loop", "● CRITERION", "interview – ━ plan – ━ CRITERION 1/3 ─ review ─ done", "bash · 0:09", "skills lit-loop", "ctx 4% · ⟳ 0m · ⎇ main"] },
-    recent: { rows: draw(after, [{ name: "lit-loop", current: false }], 6, false), strings: ["🔥 LIT · lit-loop", "○ IDLE", "interview – ━ plan – ━ criterion ─ review ─ done", "▸ C2 the default greeting", "ctx 6% · ⟳ 0m · ⎇ main"] }
+    working: { rows: draw(working, [{ name: "lit-loop", current: true }], 4, true, lanes("working"), { t: 3.4 }), strings: ["🔥 LIT · lit-loop", "● CRITERION", "interview – ━ plan – ━ CRITERION 1/3 ─ review ─ done", "bash · 0:09", "skills lit-loop", "2 lanes in parallel", "explore", "test-writer", "ctx 4% · ⟳ 0m · ⎇ main"] },
+    recent: { rows: draw(after, [{ name: "lit-loop", current: false }], 6, false, lanes("done")), strings: ["🔥 LIT · lit-loop", "○ IDLE", "interview – ━ plan – ━ criterion ─ review ─ done", "▸ C2 the default greeting is unchanged", "explore", "test-writer", "ctx 6% · ⟳ 0m · ⎇ main"] }
   };
   const ignore = await fs.readFile(".npmignore", "utf8");
   for (const [state, { rows, strings }] of Object.entries(cards)) {

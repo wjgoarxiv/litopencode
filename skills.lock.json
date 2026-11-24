@@ -1087,6 +1087,8 @@
     "dist/tui/mission-source-v2.js",
     "dist/tui/mission-source.d.ts",
     "dist/tui/mission-source.js",
+    "dist/tui/mission-sunset.d.ts",
+    "dist/tui/mission-sunset.js",
     "dist/tui/mission-text.d.ts",
     "dist/tui/mission-text.js",
     "dist/tui/mission-threads.d.ts",

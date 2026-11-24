@@ -35,8 +35,9 @@ import { chipShimmer, idleChipMotion, planChipMotion, type ChipMotion } from "..
 import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "../tui/mission-band.ts";
 import { activeSkillLook, turnGlow, waitingOnYou } from "../tui/mission-looks.ts";
 import { rainbowActive, rainbowAllowed, rainbowAt, rainbowShows, rainbowTickMs } from "../tui/mission-rainbow.ts";
+import { roundGauges, sceneTickMs, type Scene } from "../tui/mission-sunset.ts";
 import { threadLineCount, threadsOf } from "../tui/mission-threads.ts";
-import { homeLine, missionPanel, paletteFromTheme, panelWidth, synthwaveBadgeAllowed, type Line, type MissionPalette } from "../tui/mission-text.ts";
+import { homeLine, missionPanel, paletteFromTheme, panelWidth, synthwaveBadgeAllowed, type LastMission, type Line, type MissionPalette } from "../tui/mission-text.ts";
 import { createRuntimePaths } from "../state.ts";
 import { footerBudget, footerStatus, sidebarCells } from "./tui-footer.ts";
 import { createNoticeTail } from "./notices.ts";
@@ -99,7 +100,7 @@ const limitsPollMs = 60_000;
 const goProviderID = "opencode-go";
 const noticeBurst = 3;
 
-type Entry = { view: MissionView; card: CardInput; motion: MotionState; chipMotion: ChipMotion; reserve: number; rainbowSeen?: number; lastPromptAt?: number; waiting: boolean };
+type Entry = { view: MissionView; card: CardInput; motion: MotionState; chipMotion: ChipMotion; reserve: number; rainbowSeen?: number; lastPromptAt?: number; waiting: boolean; last?: LastMission; go: boolean };
 
 async function hostRuntime(): Promise<TuiRuntime> {
   const [jsxRuntime, solid, opentui] = await Promise.all([import("@opentui/solid/jsx-runtime"), import("solid-js"), import("@opentui/solid")]);
@@ -159,6 +160,8 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
   let disposed = false;
   const [revision, setRevision] = ui.createSignal(0);
   const [clock, setClock] = ui.createSignal(Date.now());
+  // Only a band whose scene moves reads this one, so its ticks redraw nothing else.
+  const [sceneClock, setSceneClock] = ui.createSignal(Date.now());
   // The version this start loaded; an install newer than it shows `restart to <v>` and one toast.
   const [restartTo, setRestartTo] = ui.createSignal<string | undefined>(undefined);
   let frameTimer: ReturnType<typeof setInterval> | undefined;
@@ -166,6 +169,8 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
   let pollTimer: ReturnType<typeof setInterval> | undefined;
   let liveTimer: ReturnType<typeof setInterval> | undefined;
   let bandTimer: ReturnType<typeof setInterval> | undefined;
+  let bandEvery: number | undefined;
+  let steppedAt = 0;
   let restartTimer: ReturnType<typeof setInterval> | undefined;
 
   const readUsage = context.client?.usage?.limits;
@@ -230,17 +235,37 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     return entry.card.threads?.some((row) => row.status === "working" && row.done === undefined) === true;
   }
 
+  // The sunset moves while a turn runs, and with the amber breath and the rewind look; the rest of the time it
+  // holds still.
+  function sceneMoves(entry: Entry, now: number): boolean {
+    return colorAllowed && (entry.card.busy || entry.waiting || rainbowOn(entry, now));
+  }
+
+  function sceneFor(entry: Entry, now: number, colors: MissionPalette): Scene | undefined {
+    if (colors.synthwave !== true) return undefined;
+    return { rounded: roundGauges(process.env), ...(sceneMoves(entry, now) ? { t: sceneClock() / 1000 } : {}) };
+  }
+
+  // One timer for the band: the scene's tick while a turn runs, the slower one for the other looks, none at rest.
   function syncBandTimer(): void {
     if (disposed) return;
-    const needed = [...sessions.values()].some(bandStepping);
-    if (needed && bandTimer === undefined) bandTimer = setInterval(() => {
-      setClock(Date.now());
+    const entries = [...sessions.values()];
+    const scene = band.enabled && colorAllowed && synthwaveBadgeAllowed(process.env, context.themeMode) && entries.some((entry) => entry.card.busy);
+    const every = scene ? sceneTickMs : entries.some(bandStepping) ? rainbowTickMs : undefined;
+    if (every === bandEvery) return;
+    if (bandTimer !== undefined) clearInterval(bandTimer);
+    bandEvery = every;
+    bandTimer = every === undefined ? undefined : setInterval(() => {
+      const now = Date.now();
+      setSceneClock(now);
+      // The other looks keep a slower pace (every second scene tick), and get one last tick as they end.
+      const stepping = [...sessions.values()].some(bandStepping);
+      if (stepping ? now - steppedAt >= rainbowTickMs - sceneTickMs / 4 : steppedAt > 0) {
+        steppedAt = stepping ? now : 0;
+        setClock(now);
+      }
       syncBandTimer();
-    }, rainbowTickMs);
-    if (!needed && bandTimer !== undefined) {
-      clearInterval(bandTimer);
-      bandTimer = undefined;
-    }
+    }, every);
   }
 
   function anyMoving(now: number): boolean {
@@ -320,7 +345,8 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     const source = state();
     const work = readWork(root, sessionID);
     const research = readLatestResearchRun(root);
-    const view = buildMissionView(readMissionInput(source, sessionID, readLedger(root), now, {
+    const ledger = readLedger(root);
+    const view = buildMissionView(readMissionInput(source, sessionID, ledger, now, {
       ...(work === undefined ? {} : { work }),
       ...(research === undefined ? {} : { research })
     }));
@@ -334,7 +360,9 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     const viewChanged = entry === undefined || JSON.stringify(entry.view) !== JSON.stringify(view);
     const rainbowSeen = rainbowActive(view, card.chips, card.busy) ? now : entry?.rainbowSeen;
     const waiting = waitingOnYou(view, card.busy, { asked: card.asked === true, userSpokeLast: card.userSpokeLast === true, blockedReply: card.blockedReply === true, boundary: work?.boundary === true });
-    const changed = entry === undefined || viewChanged || entry.lastPromptAt !== times.lastPromptAt || JSON.stringify(entry.card) !== JSON.stringify(card) || entry.rainbowSeen !== rainbowSeen || entry.waiting !== waiting;
+    const last = view.active ? undefined : lastMission(ledger);
+    const go = goSession(sessionID);
+    const changed = entry === undefined || viewChanged || entry.go !== go || JSON.stringify(entry.last) !== JSON.stringify(last) || entry.lastPromptAt !== times.lastPromptAt || JSON.stringify(entry.card) !== JSON.stringify(card) || entry.rainbowSeen !== rainbowSeen || entry.waiting !== waiting;
     const lanesChanged = entry !== undefined && JSON.stringify(entry.card.threads) !== JSON.stringify(card.threads);
     const notices = entry !== undefined && (viewChanged || lanesChanged)
       ? [...missionNotices(entry.view, view), ...v2StageNotices(entry.view, view, entry.card.threads ?? [], card.threads ?? [])]
@@ -350,7 +378,9 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
         reserve: holdRows(entry?.reserve ?? 0, threadLineCount(threads), card.busy),
         ...(rainbowSeen === undefined ? {} : { rainbowSeen }),
         ...(times.lastPromptAt === undefined ? {} : { lastPromptAt: times.lastPromptAt }),
-        waiting
+        waiting,
+        go,
+        ...(last === undefined ? {} : { last })
       }
     };
   }
@@ -456,7 +486,7 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     if (current === undefined) return undefined;
     const colors = palette();
     const cells = columns - 2;
-    const last = current.view.active ? undefined : lastMission(readLedger(root));
+    const scene = sceneFor(current, current.now, colors);
     const shimmer = chipShimmer(current.chipMotion, current.now);
     const lines = statusCard({
       view: current.view,
@@ -475,10 +505,11 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
         contextPercent: current.card.contextPercent,
         ...(current.card.branch === undefined ? {} : { branch: current.card.branch }),
         inLane,
-        ...(goSession(sessionID) && limits.windows().length > 0 ? { limits: limits.windows() } : {}),
+        ...(current.go && limits.windows().length > 0 ? { limits: limits.windows() } : {}),
         ...(restartTo() === undefined ? {} : { restartTo: restartTo() })
       },
-      ...(last === undefined ? {} : { last })
+      ...(current.last === undefined ? {} : { last: current.last }),
+      ...(scene === undefined ? {} : { scene })
     }, colors, cells);
     const rows: unknown[] = lines.map(line);
     const detail = band.card ? bandCard(current.view, current.frame, colors, cells) : undefined;

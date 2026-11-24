@@ -5,7 +5,7 @@
 //
 // A gauge needs a real total. Without one a row says what is known in words (how long it has run, which
 // step it is on) and, while it is working, plays a small pulse; it never shows a question mark.
-import { cellWidth, lineWidth, truncateCells, type Line, type MissionPalette, type Segment } from "./mission-text.ts";
+import { cellWidth, gaugeTrack, lineWidth, roundGauge, truncateCells, type Line, type MissionPalette, type Segment } from "./mission-text.ts";
 
 export type ThreadStatus = "working" | "paused" | "done" | "failed" | "idle";
 
@@ -134,7 +134,13 @@ function rowLine(row: ThreadRow, index: number, last: boolean, palette: MissionP
   const gaugeColor = options.gaugeColor?.(index) ?? palette.accent;
   const real = threadGauge(row.done, row.total, 8);
   const trailing = (room: number): Segment[] => {
-    if (real !== "" && cellWidth(real) <= room) return [{ text: real, fg: gaugeColor }];
+    if (real !== "" && cellWidth(real) <= room) {
+      if (palette.roundGauges !== true) return [{ text: real, fg: gaugeColor }];
+      const bar = real.slice(0, real.indexOf("]") + 1);
+      const full = bar.split("▉").length - 1;
+      // The brackets' cells become the round ends.
+      return [...roundGauge([...bar].map((_, cell) => ((full > 0 && cell <= full) || full === bar.length - 2 ? gaugeColor : gaugeTrack))), { text: real.slice(bar.length), fg: gaugeColor }];
+    }
     const facts = truncateCells(row.facts, Math.max(0, room - (row.status === "working" ? 6 : 0)));
     const pulse: Segment[] = row.status === "working" ? [{ text: ` ${pulseText(options.now, options.motion)}`, fg: gaugeColor }] : [];
     return [{ text: facts, fg: palette.muted }, ...pulse];

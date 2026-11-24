@@ -33,6 +33,10 @@ export type MissionPalette = {
   readonly onFill: string;
   /** Draw the Synthwave LIT badge pill: set only for a dark theme on a truecolor terminal with colour on. */
   readonly synthwave?: boolean;
+  /** The running stage's pill runs from this colour to its fill; set only on the card while its scene shows. */
+  readonly fillFrom?: string;
+  /** Gauges get round ends (U+E0B6, U+E0B4) on a smooth track; set only where the terminal draws them. */
+  readonly roundGauges?: boolean;
 };
 
 /**
@@ -213,6 +217,15 @@ export function shimmerAt(frame: MotionFrame): number {
   return -0.2 + 1.4 * seg(t, motionTiming.shimmerAt, motionTiming.shimmer);
 }
 
+/** The empty part of a round-ended gauge. */
+export const gaugeTrack = "#2a2340";
+
+/** A gauge from its cell colours, as many cells wide: a round cap at each end and filled cells between. */
+export function roundGauge(colors: readonly string[]): Segment[] {
+  const last = colors.length - 1;
+  return colors.map((color, index) => (index === 0 ? { text: "\ue0b6", fg: color } : index === last ? { text: "\ue0b4", fg: color } : { text: " ", fg: color, bg: color }));
+}
+
 const eighths = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"];
 
 /**
@@ -233,6 +246,9 @@ export function progressBar(ratio: number, cells: number, palette: MissionPalett
     const position = cells <= 1 ? 0 : index / (cells - 1);
     return shine(gradientAt(stops, position), palette, position, sweep, 0.18);
   };
+  if (palette.roundGauges === true) {
+    return roundGauge(Array.from({ length: cells }, (_, index) => (index < full ? color(index) : index === full ? mixHex(gaugeTrack, color(index), partial / 8) : gaugeTrack)));
+  }
   const segments: Segment[] = [];
   let used = Math.min(full, cells);
   for (let index = 0; index < used; index += 1) segments.push({ text: "█", fg: color(index) });
@@ -323,7 +339,10 @@ export function crumb(view: MissionView, index: number, frame: MotionFrame, pale
   const style = pillStyle(state, palette, frame.warn);
   const label = ` ${name.toUpperCase()}${state === "warn" ? " ⚑" : ""} `;
   const chars = [...label];
-  const pill: Segment[] = flash < 0
+  const from = state === "now" && style.bg === palette.fill ? palette.fillFrom : undefined;
+  const pill: Segment[] = from !== undefined
+    ? chars.map((char, position) => ({ text: char, fg: style.fg, bg: shine(mixHex(from, palette.fill, position / (chars.length - 1)), palette, position / (chars.length - 1), flash, 0.3), bold: true }))
+    : flash < 0
     ? [{ text: label, fg: style.fg, ...(style.bg === undefined ? {} : { bg: style.bg }), bold: style.bold }]
     : chars.map((char, position) => ({ text: char, fg: style.fg, bg: shine(style.bg ?? palette.fill, palette, position / (chars.length - 1), flash, 0.3), bold: true }));
   if (!counted) return pill;
@@ -369,11 +388,12 @@ const synthwaveInk = "#0b0e14";
 
 /**
  * The Synthwave badge pill ` 🔥 LIT `: bold dark ink on a gradient from the LitOpenCode chrome's second
- * stop to its fifth. Callers draw it only when `palette.synthwave` is set and keep their old look otherwise.
+ * stop to its fifth, or on other `stops` lifted toward white. Callers draw it only when `palette.synthwave`
+ * is set and keep their old look otherwise.
  */
-export function synthwavePill(): Segment[] {
+export function synthwavePill(stops: readonly string[] = [synthwaveChrome[1], synthwaveChrome[4]], lift = 0): Segment[] {
   const chars = [" ", "🔥", " ", "L", "I", "T", " "];
-  return chars.map((char, index) => ({ text: char, fg: synthwaveInk, bg: mixHex(synthwaveChrome[1], synthwaveChrome[4], index / (chars.length - 1)), bold: true }));
+  return chars.map((char, index) => ({ text: char, fg: synthwaveInk, bg: mixHex(gradientAt(stops, index / (chars.length - 1)), "#ffffff", lift), bold: true }));
 }
 
 /** The badge shows on a dark theme when the terminal declares truecolor and NO_COLOR is unset. */

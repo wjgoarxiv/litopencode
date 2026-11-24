@@ -9,12 +9,13 @@ import { useTerminalDimensions } from "@opentui/solid";
 import { jsx } from "@opentui/solid/jsx-runtime";
 import { buildMissionView, lastMission, leadingNotice, missionNotices, type MissionNotice, type MissionView } from "./tui/mission-model.ts";
 import { idleMotion, motionTiming, planMotion, sampleMotion, type MotionState } from "./tui/mission-motion.ts";
-import { chipBudget, chipLine, homeLine, missionPanel, paletteFromTheme, panelWidth, synthwaveBadgeAllowed, type Line, type MissionPalette } from "./tui/mission-text.ts";
+import { chipBudget, chipLine, homeLine, missionPanel, paletteFromTheme, panelWidth, synthwaveBadgeAllowed, type LastMission, type Line, type MissionPalette } from "./tui/mission-text.ts";
 import { adhdNudgeText, adhdSuggestDue, createLedgerReader, createWorkReader, earlierWorkWindowMs, hasEarlierWork, messageTimes, missionProjectRoot, wayBackDue, readCardInput, readLatestResearchRun, readMissionInput, readThreadSources, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
 import { chipShimmer, idleChipMotion, planChipMotion, type ChipMotion } from "./tui/mission-skills.ts";
 import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "./tui/mission-band.ts";
 import { activeSkillLook, turnGlow, waitingOnYou } from "./tui/mission-looks.ts";
 import { rainbowActive, rainbowAllowed, rainbowAt, rainbowShows, rainbowTickMs } from "./tui/mission-rainbow.ts";
+import { roundGauges, sceneTickMs, type Scene } from "./tui/mission-sunset.ts";
 import { threadLineCount, threadsOf } from "./tui/mission-threads.ts";
 import { readPackageMetadata } from "./cli/json.ts";
 import { readInstalledVersions, restartVersion } from "./restart-notice.ts";
@@ -42,7 +43,7 @@ const refreshEvents = [
   "question.rejected"
 ] as const;
 
-type SessionEntry = { view: MissionView; card: CardInput; motion: MotionState; chipMotion: ChipMotion; reserve: number; rainbowSeen?: number; lastPromptAt?: number; waiting: boolean };
+type SessionEntry = { view: MissionView; card: CardInput; motion: MotionState; chipMotion: ChipMotion; reserve: number; rainbowSeen?: number; lastPromptAt?: number; waiting: boolean; last?: LastMission };
 
 function spanFor(segment: Line[number]): unknown {
   return jsx("span", {
@@ -65,11 +66,15 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   const tracked: string[] = [];
   const [revision, setRevision] = createSignal(0);
   const [clock, setClock] = createSignal(Date.now());
+  // Only a band whose scene moves reads this one, so its ticks redraw nothing else.
+  const [sceneClock, setSceneClock] = createSignal(Date.now());
   let frameTimer: ReturnType<typeof setInterval> | undefined;
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
   let pollTimer: ReturnType<typeof setInterval> | undefined;
   let liveTimer: ReturnType<typeof setInterval> | undefined;
   let bandTimer: ReturnType<typeof setInterval> | undefined;
+  let bandEvery: number | undefined;
+  let steppedAt = 0;
   const suggested = new Set<string>();
   const suggestedDays = new Map<string, string>();
   const colorAllowed = rainbowAllowed(motionEnabled, process.env.NO_COLOR);
@@ -120,16 +125,36 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     return entry.card.threads?.some((row) => row.status === "working" && row.done === undefined) === true;
   }
 
+  // The sunset moves while a turn runs, and with the amber breath and the rewind look; the rest of the time it
+  // holds still.
+  function sceneMoves(entry: SessionEntry, now: number): boolean {
+    return colorAllowed && (entry.card.busy || entry.waiting || rainbowOn(entry, now));
+  }
+
+  function sceneFor(entry: SessionEntry, now: number, colors: MissionPalette): Scene | undefined {
+    if (colors.synthwave !== true) return undefined;
+    return { rounded: roundGauges(process.env), ...(sceneMoves(entry, now) ? { t: sceneClock() / 1000 } : {}) };
+  }
+
+  // One timer for the band: the scene's tick while a turn runs, the slower one for the other looks, none at rest.
   function syncBandTimer(): void {
-    const needed = [...sessions.values()].some(bandStepping);
-    if (needed && bandTimer === undefined) bandTimer = setInterval(() => {
-      setClock(Date.now());
+    const entries = [...sessions.values()];
+    const scene = band.enabled && colorAllowed && synthwaveBadgeAllowed(process.env, api.theme.mode()) && entries.some((entry) => entry.card.busy);
+    const every = scene ? sceneTickMs : entries.some(bandStepping) ? rainbowTickMs : undefined;
+    if (every === bandEvery) return;
+    if (bandTimer !== undefined) clearInterval(bandTimer);
+    bandEvery = every;
+    bandTimer = every === undefined ? undefined : setInterval(() => {
+      const now = Date.now();
+      setSceneClock(now);
+      // The other looks keep a slower pace (every second scene tick), and get one last tick as they end.
+      const stepping = [...sessions.values()].some(bandStepping);
+      if (stepping ? now - steppedAt >= rainbowTickMs - sceneTickMs / 4 : steppedAt > 0) {
+        steppedAt = stepping ? now : 0;
+        setClock(now);
+      }
       syncBandTimer();
-    }, rainbowTickMs);
-    if (!needed && bandTimer !== undefined) {
-      clearInterval(bandTimer);
-      bandTimer = undefined;
-    }
+    }, every);
   }
 
   function anyMoving(now: number): boolean {
@@ -209,7 +234,8 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
     const rainbowSeen = rainbowActive(next, card.chips, card.busy) ? now : entry?.rainbowSeen;
     const waiting = waitingOnYou(next, card.busy, { asked: card.asked === true, userSpokeLast: card.userSpokeLast === true, blockedReply: card.blockedReply === true, boundary: work?.boundary === true });
     const promptMoved = entry?.lastPromptAt !== times.lastPromptAt;
-    if (!viewChanged && !promptMoved && JSON.stringify(entry.card) === JSON.stringify(card) && entry.rainbowSeen === rainbowSeen && entry.waiting === waiting) return;
+    const last = next.active ? undefined : lastMission(ledger);
+    if (!viewChanged && !promptMoved && JSON.stringify(entry.last) === JSON.stringify(last) && JSON.stringify(entry.card) === JSON.stringify(card) && entry.rainbowSeen === rainbowSeen && entry.waiting === waiting) return;
     if (entry !== undefined && viewChanged) {
       const notices = missionNotices(entry.view, next);
       const notice = leadingNotice(notices);
@@ -225,7 +251,8 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
       reserve: holdRows(entry?.reserve ?? 0, threadLineCount(threads), card.busy),
       ...(rainbowSeen === undefined ? {} : { rainbowSeen }),
       ...(times.lastPromptAt === undefined ? {} : { lastPromptAt: times.lastPromptAt }),
-      waiting
+      waiting,
+      ...(last === undefined ? {} : { last })
     });
     setClock(now);
     setRevision(revision() + 1);
@@ -413,7 +440,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
                 if (snapshot === undefined) return null;
                 const colors = palette();
                 const width = dimensions().width - 2;
-                const last = snapshot.view.active ? undefined : lastMission(readLedger(missionProjectRoot(state().path)));
+                const scene = sceneFor(snapshot, snapshot.now, colors);
                 const shimmer = chipShimmer(snapshot.chipMotion, snapshot.now);
                 const lines = statusCard({
                   view: snapshot.view,
@@ -434,7 +461,8 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
                     inLane: snapshot.inLane,
                     ...(restartTo() === undefined ? {} : { restartTo: restartTo() })
                   },
-                  ...(last === undefined ? {} : { last })
+                  ...(snapshot.last === undefined ? {} : { last: snapshot.last }),
+                  ...(scene === undefined ? {} : { scene })
                 }, colors, width);
                 const rows: unknown[] = lines.map(lineElement);
                 const card = band.card ? bandCard(snapshot.view, snapshot.frame, colors, width) : undefined;

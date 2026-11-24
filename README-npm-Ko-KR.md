@@ -63,6 +63,8 @@ lit 외부 의존성 없이 index.html 하나로 할 일 목록을 만들고, �
 | `lit` + 보고서·발표자료 | 별도 모음인 wjgoarxiv-skills로 옮긴 문서·발표자료 스킬을 안내합니다. |
 | `/lit-humanizer` | 딱딱한 영어나 한국어 문장을 사실은 그대로 두고 다시 씁니다. |
 
+OpenCode 화면 맨 아래에는 작업 단계, 진행률, 지금 도는 도구를 보여 주는 작은 LIT 카드가 붙습니다. 어두운 테마에 트루컬러 터미널이면 카드에 노을이 깔리고, 바다는 에이전트가 일하는 동안 흐르다가 차례가 끝나면 멈춥니다.
+
 스킬마다 만들어 내는 결과의 그림은 [GitHub의 스킬 갤러리](https://github.com/wjgoarxiv/litopencode/blob/main/docs/skills-Ko-KR.md)에서 볼 수 있습니다.
 
 ## 확장 스킬

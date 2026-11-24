@@ -8,6 +8,7 @@ import { contextWarnPercent, currentStepIndex, missionStatus, stepName, type Mis
 import { laneColor, reviewLanes, reviewMark, turnColor, turnMark, type LaneReports } from "./mission-looks.ts";
 import { isRainbowSkill, rainbowColor, rainbowPill, rainbowText, rewindMark, type Rainbow } from "./mission-rainbow.ts";
 import type { ChipShimmer, SkillChip } from "./mission-skills.ts";
+import { neonAt, neonRow, paintSky, sceneBreath, stageFrom, sunsetBrand, type Scene } from "./mission-sunset.ts";
 import { threadLines, type ThreadRow } from "./mission-threads.ts";
 import {
   cellWidth,
@@ -156,8 +157,8 @@ function phaseLabel(view: MissionView, frame: MotionFrame, palette: MissionPalet
   return { text: `● ${stepName(view.phase, view).toUpperCase()}`, fg: palette.info, bold: true };
 }
 
-function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string, rest: boolean, mark?: Line, pill = false): Line {
-  const brand: Segment[] = pill ? synthwavePill() : [{ text: "🔥 ", fg: palette.text }, { text: "LIT", fg: shine(palette.secondary, palette, 0.5, shimmerAt(frame), 0.6), bold: true }];
+function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette, width: number, border: string, rest: boolean, mark?: Line, pill?: Line): Line {
+  const brand: Segment[] = pill !== undefined ? [...pill] : [{ text: "🔥 ", fg: palette.text }, { text: "LIT", fg: shine(palette.secondary, palette, 0.5, shimmerAt(frame), 0.6), bold: true }];
   const name = view.active ? view.discipline : "ready";
   const right: Line = mark ?? [phaseLabel(view, frame, palette, rest)];
   const withName = (room: number): Segment[] => [...brand, { text: " · ", fg: palette.muted }, { text: truncateCells(name, room), fg: view.active ? palette.text : palette.muted }];
@@ -339,6 +340,8 @@ export type CardInputs = {
   readonly turn?: { readonly glow: number };
   /** Present while review-work runs: the lanes reported so far, each a stretch of the top border. */
   readonly lanes?: LaneReports;
+  /** Present on a dark truecolor terminal: the sunset behind the words, moving while it carries a clock. */
+  readonly scene?: Scene;
 };
 
 /** The longest run of rule in the top border, split into the five review lanes, each in its lane's colour. */
@@ -372,35 +375,56 @@ export function statusCard(input: CardInputs, palette: MissionPalette, width: nu
   const rainbow = turn === undefined ? input.rainbow : undefined;
   const lanes = turn === undefined && rainbow === undefined ? input.lanes : undefined;
   const border = turn !== undefined ? turnColor(palette, turn.glow) : rainbow === undefined ? borderColor(view, frame, palette, rest) : rainbowColor(rainbow.hue);
-  const trackPalette: MissionPalette = rainbow === undefined ? palette : { ...palette, primary: rainbowColor(rainbow.hue + 40), accent: rainbowColor(rainbow.hue + 160) };
-  const inner = width - 4;
-  const row = (content: Line): Line => (inner < 0 ? fitLine([], width, palette) : [{ text: "│ ", fg: border }, ...fitLine(content, inner, palette), { text: " │", fg: border }]);
+  // The scene gives way to the completion moment; a warning, a finished goal and the looks keep their own border.
+  const scene = frame.celebrate === undefined ? input.scene : undefined;
+  const plain = turn === undefined && rainbow === undefined && lanes === undefined;
+  const neon = scene !== undefined && plain && !view.complete && view.warnings.length === 0 && frame.warn === 0;
+  const dim = plain && input.busy !== true;
+  const trackPalette: MissionPalette = {
+    ...palette,
+    ...(rainbow === undefined ? {} : { primary: rainbowColor(rainbow.hue + 40), accent: rainbowColor(rainbow.hue + 160) }),
+    ...(scene !== undefined && plain ? { fillFrom: mixHex(palette.fill, stageFrom, 0.75) } : {}),
+    ...(scene?.rounded === true ? { roundGauges: true } : {})
+  };
+  const inner = Math.max(0, width - 4);
   const mark = turn !== undefined ? turnMark(palette, turn.glow) : rainbow !== undefined ? rewindMark(rainbow) : lanes !== undefined ? reviewMark(lanes, palette) : undefined;
-  const ruledTop = topLine(view, frame, palette, width, border, rest, mark, palette.synthwave === true && rainbow === undefined);
+  const badge = palette.synthwave === true && rainbow === undefined;
+  const pill = !badge ? undefined : scene === undefined ? synthwavePill() : synthwavePill(sunsetBrand, 0.22 * sceneBreath(scene.t));
+  const ruledTop = topLine(view, frame, palette, width, border, rest, mark, pill);
   const top = lanes === undefined ? ruledTop : laneRule(ruledTop, lanes, palette);
-  const threadRows = input.threads === undefined ? [] : threadLines(input.threads, palette, Math.max(0, inner), {
+  const threadRows = input.threads === undefined ? [] : threadLines(input.threads, trackPalette, inner, {
     now: frame.now ?? 0,
     motion: input.motion ?? true,
     ...(rainbow === undefined ? {} : { gaugeColor: (index: number) => rainbowColor(rainbow.hue + 60 + index * 50) })
   });
   while (threadRows.length < (input.reserve ?? 0)) threadRows.push([]);
-  const track = trackRow(view, frame, trackPalette, Math.max(0, inner), input.last, input.earlier === true);
+  const track = trackRow(view, frame, trackPalette, inner, input.last, input.earlier === true);
   const bottom = bottomLine(view, input.figures, palette, width, border);
-  if (rainbow === undefined) return [top, row(track), row(skillRow(input.chips, input.shimmer, palette, Math.max(0, inner))), ...threadRows.map(row), bottom];
   // The rewind look reaches every pill cell by cell: LIT, the running phase, the lit-adhd chip; the phase
   // labels and the context figure turn on the card's own ground.
   const names = view.steps.map((step) => stepName(step.id, view).toLowerCase());
   const label = (text: string): number => names.findIndex((name) => text.trim().toLowerCase().startsWith(name));
+  const turned: Line = rainbow === undefined ? track : track.flatMap((segment) => {
+    if (segment.bg !== undefined && segment.bold === true && /\S/u.test(segment.text)) return rainbowPill(segment.text, rainbow, 160);
+    const at = segment.bg === undefined ? label(segment.text) : -1;
+    return at >= 0 ? [{ ...segment, fg: rainbowColor(rainbow.hue + 200 + at * 50), bold: true }] : [segment];
+  });
+  const body = [turned, skillRow(input.chips, input.shimmer, palette, inner, rainbow), ...threadRows].map((line) => fitLine(line, inner, palette));
+  const sky = scene === undefined ? undefined : paintSky(body.slice(-3), inner, {
+    dim,
+    ...(scene.t === undefined ? {} : { t: scene.t }),
+    ...(turn === undefined ? {} : { turn: true }),
+    ...(rainbow === undefined ? {} : { rainbow: (position: number) => rainbowColor(rainbow.hue + position * 360) })
+  });
+  const rows: readonly Line[] = sky === undefined ? body : [...body.slice(0, -3), ...sky.rows];
+  const light = { width, accent: palette.accent, dim, sun: sky?.sun ?? 0, ...(scene?.t === undefined ? {} : { t: scene.t }) };
+  const edge = (line: Line, water: boolean): Line => (neon ? neonRow(line, border, water, light) : line);
+  const [left, right] = neon ? [neonAt(0, false, light), neonAt(width - 1, false, light)] : [border, border];
+  const row = (content: Line): Line => (width < 4 ? fitLine([], width, palette) : [{ text: "│ ", fg: left }, ...content, { text: " │", fg: right }]);
   return [
-    top.flatMap((segment) => (segment.text === "LIT" ? rainbowPill("LIT", rainbow, 90) : [segment])),
-    row(track.flatMap((segment) => {
-      if (segment.bg !== undefined && segment.bold === true && /\S/u.test(segment.text)) return rainbowPill(segment.text, rainbow, 160);
-      const at = segment.bg === undefined ? label(segment.text) : -1;
-      return at >= 0 ? [{ ...segment, fg: rainbowColor(rainbow.hue + 200 + at * 50), bold: true }] : [segment];
-    })),
-    row(skillRow(input.chips, input.shimmer, palette, Math.max(0, inner), rainbow)),
-    ...threadRows.map(row),
-    bottom.flatMap((segment) => (segment.text.startsWith("ctx ") ? rainbowText(segment.text, rainbow, 120) : [segment]))
+    edge(rainbow === undefined ? top : top.flatMap((segment) => (segment.text === "LIT" ? rainbowPill("LIT", rainbow, 90) : [segment])), false),
+    ...rows.map(row),
+    edge(rainbow === undefined ? bottom : bottom.flatMap((segment) => (segment.text.startsWith("ctx ") ? rainbowText(segment.text, rainbow, 120) : [segment])), true)
   ];
 }
 
