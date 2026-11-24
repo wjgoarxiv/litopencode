@@ -53,7 +53,7 @@ You need Node.js with npm, and [OpenCode](https://opencode.ai) with a model prov
 npm exec --package @litfamily/litopencode@latest -- litopencode install
 ```
 
-The installer asks which models to use and how much freedom the agents get. Permissions start at `safe`, where OpenCode asks you before acting. On the OpenAI provider, a fresh install plans and reviews with GPT-6 Astra and builds with GPT-6 Luna; you can choose others.
+The installer asks which models to use and how much freedom the agents get. Permissions start at `safe`, where OpenCode asks you before acting. On the OpenAI provider, a fresh install plans and reviews with GPT-6 Astra and builds with GPT-6 Luna; you can choose others. The model menu is not limited to OpenAI and xAI. It lists every provider OpenCode knows, including one you added yourself in `opencode.json`, such as a company gateway or a local server that speaks the OpenAI API. Set the provider up in OpenCode first (`opencode models` should show it), then run the installer and pick it by number, or type its `provider/model` id. Later, type `/lit-model` in a chat: it shows the same numbered list, and `/lit-model 7` makes model 7 the lead and the helper (`/lit-model lead 7` or `/lit-model helper 7` changes one). The pick is saved in `litopencode.json`, so every new terminal starts with it after you restart OpenCode. From a script, `--model my-gateway/deepseek-chat` does the same, and the installer refuses an id OpenCode does not list.
 
 OpenCode reads one global `AGENTS.md` at the start of every session. The installer offers a short marked block there that says what `lit` means and that nothing is pushed or published without your yes; it asks once.
 

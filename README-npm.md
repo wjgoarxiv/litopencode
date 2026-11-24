@@ -48,6 +48,8 @@ lit Build a to-do list in one index.html with no dependencies; check adding and 
 
 You get an `index.html` to try, and next time `/lit-adhd` shows what changed and the one thing to do next.
 
+The installer's model menu lists every provider OpenCode knows, including one you added yourself in `opencode.json`. Later, `/lit-model` in a chat shows the same numbered list and saves your pick for every new session.
+
 ## What you get
 
 | You enter | What happens |
