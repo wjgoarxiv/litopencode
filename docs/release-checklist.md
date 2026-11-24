@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.54 Release Scope
+
+- The sunset scene on the LIT card for OpenCode 1 and 2: truecolor and a dark theme only, drawn in the blank end of the rows, moving while a turn runs and still at rest, `"motion": false` keeps it still; round gauge ends in Windows Terminal and VS Code; redrawn README card pictures.
+
 ## 1.0.53 Release Scope
 
 - Any provider/model OpenCode knows in the installer menu and `--model`, custom OpenAI-compatible providers included; the in-chat `/lit-model` command and `lit-model` tool that save the pick to `litopencode.json`; a model set for a LitOpenCode agent in `opencode.json` is kept.

@@ -3,6 +3,13 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
+## 1.0.54 - 2026-11-25
+
+- The LIT card wears a synthwave sunset on a dark theme in a truecolor terminal, on OpenCode 1 and 2. Its border glows from pink through violet to cyan, the LIT pill runs from orange to pink, and in the blank end of the rows a sun sinks into a sea under stars. The scene moves six times a second while a turn runs, then dims and stops. It is drawn only where no word is, so the card keeps its four rows, its words and its widths; the sun is three, two or one row tall by the free space, and a narrow card has none.
+- `"motion": false` keeps the sunset still. `NO_COLOR`, a light theme or a terminal without truecolor keeps the plain card.
+- In Windows Terminal and the VS Code terminal the card's gauges get round ends.
+- The README pictures of the card are redrawn with the sunset, and the guide and reference explain it in both languages.
+
 ## 1.0.53 - 2026-11-24
 
 - The installer's model menu lists every provider OpenCode knows, including one you added yourself in `opencode.json` (OpenCode 1 `provider` or OpenCode 2 `providers`), plus a "Type provider/model" entry. `--model my-gateway/deepseek-chat` works the same way. A custom model gets no effort step, and an id OpenCode does not list is refused with the close matches.
