@@ -522,7 +522,7 @@ test("fresh packed consumer install exposes host-safe tool schemas", async () =>
     ], { cwd: consumer });
 
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /^host-safe:lit,litwork,review-work,start-work,wikify:plan-deny:depth-one:subagent-discoverable:reader-contract:structured-preserved:text-complete-clean:schema3-event:wikify-five-surfaces\s*$/);
+    assert.match(result.stdout, /^host-safe:lit,lit-model,litwork,review-work,start-work,wikify:plan-deny:depth-one:subagent-discoverable:reader-contract:structured-preserved:text-complete-clean:schema3-event:wikify-five-surfaces\s*$/);
   });
 });
 

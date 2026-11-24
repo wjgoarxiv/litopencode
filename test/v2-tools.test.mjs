@@ -9,7 +9,7 @@ import { createFakeV2Context } from "../test-support/opencode-v2-fake.mjs";
 
 // OpenCode 2 takes tools as { name, description, input (JSON Schema), execute(input, context) } and its
 // tool context carries no directory, so the project comes from the plugin's location.
-const toolIds = ["lit", "litwork", "start-work", "review-work", "wikify"];
+const toolIds = ["lit", "litwork", "start-work", "review-work", "wikify", "lit-model"];
 
 async function withTools(fn) {
   const dir = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "litopencode-v2-tools-")));
@@ -29,7 +29,7 @@ async function withTools(fn) {
 
 const toolContext = { sessionID: "ses_v2", agent: "lit-loop", messageID: "msg_v2", id: "call_1", signal: new AbortController().signal, progress: async () => undefined };
 
-test("the five LitOpenCode tools are added with closed JSON Schema inputs", async () => {
+test("the six LitOpenCode tools are added with closed JSON Schema inputs", async () => {
   await withTools(async (_dir, tools) => {
     assert.deepEqual([...tools.keys()].sort(), [...toolIds].sort());
     for (const id of toolIds) {
@@ -38,7 +38,7 @@ test("the five LitOpenCode tools are added with closed JSON Schema inputs", asyn
       assert.match(tool.description, /\S/u);
       assert.equal(tool.input.type, "object", id);
       assert.equal(tool.input.additionalProperties, false, id);
-      assert.equal(tool.input.properties.action.type, "string", id);
+      assert.equal(tool.input.properties[id === "lit-model" ? "choice" : "action"].type, "string", id);
       assert.equal(typeof tool.execute, "function", id);
     }
   });

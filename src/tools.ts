@@ -10,6 +10,7 @@ import { questionForModel } from "./goal-guide.ts";
 import { hasPendingConsent, proposeLoopGoal, readIntent, goalStatus } from "./goal-pipeline.ts";
 import { isLaneResult, isReviewLane, laneResults, reviewLanes } from "./tui/mission-looks.ts";
 import { loadConfig } from "./config.ts";
+import { runModelPick } from "./model-pick.ts";
 import {
   captureKnowledgeEvent,
   inspectKnowledge,
@@ -425,8 +426,25 @@ export const wikifyTool = tool({
   }
 }) as unknown as ToolDefinition;
 
+export const litModelTool = tool({
+  description: "List the models LitOpenCode can use, or save the user's pick as the lead and helper model. Call it only for /lit-model or when the user asks to change the LitOpenCode model; pass their words after /lit-model as choice.",
+  args: {
+    choice: tool.schema.string().describe("Empty to list. A list number or provider/model sets both roles; prefix lead or helper to set one role.").optional()
+  },
+  async execute(args): Promise<ToolResult> {
+    const choice = typeof args.choice === "string" ? args.choice : "";
+    const result = await runModelPick({ choice });
+    return {
+      title: result.changed ? "LitOpenCode model saved" : "LitOpenCode models",
+      output: result.text,
+      metadata: { command: "lit-model", changed: result.changed }
+    };
+  }
+}) as unknown as ToolDefinition;
+
 export const litOpenCodeTools = Object.freeze({
   lit: litTool,
+  "lit-model": litModelTool,
   litwork: litworkTool,
   "start-work": startWorkTool,
   "review-work": reviewWorkTool,

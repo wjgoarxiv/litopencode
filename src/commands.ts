@@ -1,4 +1,4 @@
-import { activationBanner } from "./activation-probe.ts";
+import { activationBanner, activationProbeInstruction } from "./activation-probe.ts";
 import { adhdViewForPrompt } from "./activation-routing.ts";
 import { renamedSkillId, skillRenameNote } from "./skill-renames.ts";
 import { questionForModel, questionForScreen } from "./goal-guide.ts";
@@ -129,7 +129,8 @@ export type LitOpenCodeCommandId =
   | "wikify-ingest"
   | "wikify-query"
   | "wikify-save"
-  | "wikify-lint";
+  | "wikify-lint"
+  | "lit-model";
 
 export type LitOpenCodeCommand = {
   readonly id: LitOpenCodeCommandId;
@@ -167,6 +168,14 @@ export type CommandActivationOptions = {
 };
 
 export { litActivationBanner, startWorkPromptInjection } from "./activation.ts";
+
+const litModelPromptInjection = `${activationBanner("lit-model")}
+<lit-model-mode>
+${activationProbeInstruction("lit-model")}
+
+Call the \`lit-model\` tool once. Set \`choice\` to the user's words after /lit-model, exactly as typed; leave it empty when there are none.
+Show the tool's output to the user as it is, then stop. Do not edit config files yourself, and do not pick a model for the user.
+</lit-model-mode>`;
 
 /**
  * The four loop commands share one prompt, and an installed alias file hands the host exactly that text,
@@ -480,6 +489,15 @@ export const litOpenCodeCommands = Object.freeze([
     description: "Revise reader-facing prose across languages and formats while preserving meaning, evidence, citations, useful qualifiers, and author voice.",
     banner: activationBanner("lit-humanizer"),
     activationText: litHumanizerPromptInjection
+  },
+  {
+    id: "lit-model",
+    slash: "/lit-model",
+    title: "LitOpenCode Lit Model",
+    description: "Choose the lead and helper models from every model OpenCode can run, providers you added included; the pick is saved for every new session.",
+    banner: activationBanner("lit-model"),
+    activationText: litModelPromptInjection,
+    readOnly: true
   }
 ] satisfies readonly LitOpenCodeCommand[]);
 
