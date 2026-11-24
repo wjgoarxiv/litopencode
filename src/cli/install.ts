@@ -34,15 +34,17 @@ import {
 } from "./install-config.ts";
 import { readJsonObjectIfPresent, readPackageMetadata, readTextIfPresent } from "./json.ts";
 import { renderInstallReport, wrapReceiptLine } from "./install-report.ts";
+import { homePath, type CardSection } from "./install-cards.ts";
 import { renderLitOpenCodeWordmark } from "./install-tui.ts";
-import { promptModelSelection, promptOutputStyle, promptPermissionMode } from "./model-routing.ts";
+import { asksOutputStyle, promptModelSelection, promptOutputStyle, promptPermissionMode, shouldPromptForModel, shouldPromptForPermissions } from "./model-routing.ts";
 import { listHostModels, type HostModelList } from "./host-models.ts";
 import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } from "./native-skills.ts";
 import { extensionsNoticeLines, previousVersionLeftovers, shownNoticesName, writePendingExtensionsNotice } from "../extensions-notice.ts";
 import { noticeHash, noticeShown, recordNotice } from "../shown-record.ts";
 import { inspectExtensions } from "./extensions.ts";
-import { installAgentFile, planAgentFile } from "./agent-file-command.ts";
+import { globalAgentFilePath } from "./agent-file.ts";
+import { askAgentFileCard, installAgentFile, planAgentFile, shouldAskAgentFile } from "./agent-file-command.ts";
 import { applyPluginMutation, describePluginMutation, isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { applyCliJsonCleanup, applyTuiWrites, backupTuiFiles, inspectTuiPlugin, planCliJsonCleanup, planTuiInstall, skippedTuiPlan } from "./tui-config.ts";
 import { confirmUnplacedOpenCode, detectOpenCodeHosts, targetsV1, targetsV2, type HostChoice, type HostDetection } from "./host-detect.ts";
@@ -91,12 +93,12 @@ function shouldUseOpenCodeInstaller(root: string): boolean {
 
 // The host command runs only for the real OpenCode root, and only once a custom route or the model
 // menu needs the list; a custom root (tests, sandboxes) reads its own config files only.
-function memoizedHostModels(root: string): () => HostModelList {
+function memoizedHostModels(root: string, quiet = false): () => HostModelList {
   let cached: HostModelList | undefined;
   return () => {
     if (cached !== undefined) return cached;
     const askHost = shouldUseOpenCodeInstaller(root);
-    if (askHost) process.stdout.write("Reading the models OpenCode can run (opencode models)...\n");
+    if (askHost && !quiet) process.stdout.write("Reading the models OpenCode can run (opencode models)...\n");
     cached = listHostModels({ root, ...(askHost ? { command: "opencode" } : {}) });
     return cached;
   };
@@ -333,6 +335,52 @@ async function verifyInstalledSurfaces(
   if (failures.length > 0) throw new Error("Install verification failed: " + failures.join("; "));
 }
 
+const permissionNames: Readonly<Record<InstallPermissionMode, string>> = {
+  safe: "safe: agents ask before they act",
+  balanced: "balanced: routine work runs, dangerous shell commands ask",
+  yolo: "YOLO: bash, edit, task, webfetch and external folders run without asking; lit-plan stays deny-only"
+};
+
+/** What the closing card says: the installed parts, the choices made, and what to do next. */
+function summarySections(report: InstallReport, target: OpenCodeInstallTarget, agentFile: string, kept: string | undefined): readonly CardSection[] {
+  const { model, permissionMode, outputStyle } = report.litopencodeConfig;
+  const route = (entry: { readonly provider?: string; readonly model?: string; readonly effort?: string }): string =>
+    `${entry.provider ?? ""}/${entry.model ?? ""}${entry.effort === undefined ? "" : " · " + entry.effort}`;
+  const link = report.nativeSkills.link;
+  const usesTuiFile = report.host === undefined || targetsV1(report.host.mode);
+  const agentStatus = agentFile.replace(/^AGENT_FILE: /u, "");
+  return [
+    {
+      head: "Installed",
+      fields: [
+        { label: "Plugin", value: `${target.label} in ${homePath(report.path)}` },
+        { label: "Commands", value: `${String(report.commandAliases.write.length)} managed, ${String(report.commandAliases.preserve.length)} preserved` },
+        { label: "Skills", value: `${String(report.nativeSkills.write.length)} managed, ${String(report.nativeSkills.preserve.length)} preserved` },
+        ...(link === undefined ? [] : [{
+          label: "Skills link",
+          value: `${homePath(link.path)} -> ${homePath(link.target)}` + (link.gitRepositoryRoot === undefined ? "" : `; that folder is inside the git repository ${homePath(link.gitRepositoryRoot)}, so the managed skills appear there`),
+          mark: link.gitRepositoryRoot === undefined ? "note" as const : "warn" as const
+        }]),
+        ...(kept === undefined ? [] : [{ label: "Your files", value: kept, mark: "warn" as const }]),
+        ...(usesTuiFile ? [{ label: "TUI panel", value: homePath(report.tui.path) }] : []),
+        { label: "AGENTS.md", value: agentStatus.replace(os.homedir() + path.sep, "~" + path.sep), mark: /^(?:refused|skipped)/u.test(agentStatus) ? "warn" : agentStatus.startsWith("off") ? "note" : "done" }
+      ]
+    },
+    {
+      head: "Settings",
+      fields: [
+        ...(model.provider === undefined || model.model === undefined
+          ? [{ label: "Models", value: "as they were (change them: litopencode install --model-prompt, or /lit-model in a chat)" }]
+          : [{ label: "Lead", value: route(model) }, { label: "Helpers", value: route(model.helper ?? model) }]),
+        { label: "Permissions", value: permissionNames[permissionMode.mode] },
+        { label: "Reply style", value: outputStyle.style === "off" ? "none" : outputStyle.style },
+        { label: "Stored in", value: homePath(report.litopencodeConfig.path) }
+      ]
+    },
+    { head: "Next", fields: [{ label: "Start", value: "Restart OpenCode, press Tab, choose lit-loop" }] }
+  ];
+}
+
 export async function install(
   root: string,
   dryRun: boolean,
@@ -346,12 +394,27 @@ export async function install(
   host: HostChoice = "auto",
   agentFileChoice: { readonly assumeYes: boolean; readonly skip: boolean } = { assumeYes: false, skip: false }
 ): Promise<CliResult> {
+  const metadata = await readPackageMetadata();
+  const cards = dryRun ? undefined : progress?.cards;
+  const agentFileInput = { root, version: metadata.version, ...agentFileChoice };
+  cards?.write(renderLitOpenCodeWordmark(pluginSpec(metadata)) + "\n\n");
+  cards?.quietLine(`Installs into ${homePath(path.resolve(root))}. OpenCode is set up only after your answers.`);
+  cards?.write("\n");
   const retiredNotice = await migrateRetiredEfforts(root, dryRun);
-  if (retiredNotice !== undefined) process.stdout.write(retiredNotice + "\n");
+  if (retiredNotice !== undefined) {
+    if (cards === undefined) process.stdout.write(retiredNotice + "\n");
+    else cards.warn(retiredNotice);
+  }
   await assertExistingModelRoutesSafe(root);
   const classification = await readInstallModelClassification(root);
   const currentModel = await readInstallModelSelection(root);
   const existingOutputStyle = await readExistingOutputStyle(root);
+  cards?.expect([
+    shouldPromptForModel(modelPrompt, modelSelection, dryRun, classification, currentModel),
+    shouldPromptForPermissions(permissionPrompt, permissionMode, dryRun),
+    asksOutputStyle(outputStylePrompt, dryRun),
+    (await planAgentFile(agentFileInput)).action === "ask" && shouldAskAgentFile(process.env)
+  ].filter(Boolean).length);
   const selectedModel = await promptModelSelection(
     modelSelection,
     modelPrompt,
@@ -359,13 +422,13 @@ export async function install(
     classification,
     litOpenCodeConfigFileForOpenCodeRoot(root),
     currentModel,
-    memoizedHostModels(root)
+    memoizedHostModels(root, cards !== undefined),
+    cards
   );
-  const selectedPermission = await promptPermissionMode(permissionMode, permissionPrompt, dryRun);
-  const selectedOutputStyle = await promptOutputStyle(existingOutputStyle, outputStylePrompt, dryRun);
+  const selectedPermission = await promptPermissionMode(permissionMode, permissionPrompt, dryRun, cards);
+  const selectedOutputStyle = await promptOutputStyle(existingOutputStyle, outputStylePrompt, dryRun, cards);
   const selectedPermissionMode = selectedPermission.mode;
   const selectedPermissionExplicit = permissionModeExplicit || selectedPermission.explicit;
-  const metadata = await readPackageMetadata();
   const activeProgress = dryRun ? undefined : progress;
   if (activeProgress !== undefined) {
     await activeProgress.start(pluginSpec(metadata));
@@ -455,7 +518,6 @@ export async function install(
   }
   const { configFile, before, mutation, litopencodeConfig, commandAliases, nativeSkills, hostLimits, routes, tui, cliJson } = inspected;
   const v2PluginsChanged = resolved.forV2 && withoutV2PluginEntries(before) !== before;
-  const agentFileInput = { root, version: metadata.version, ...agentFileChoice };
   const report: InstallReport = {
     dryRun,
     path: configFile,
@@ -582,7 +644,15 @@ export async function install(
         "They are in:"
       ) + `\n  ${skillBackup.directory}\n`;
   // The block is the last step: it asks a question, and a refusal here never undoes a finished install.
-  const agentFileLine = wrapReceiptLine(await installAgentFile(agentFileInput));
+  const agentFileStatus = await installAgentFile(agentFileInput, process.env, cards === undefined ? undefined : () => askAgentFileCard(cards, globalAgentFilePath(root)));
+  if (cards !== undefined) {
+    const kept = skillBackup.directory === undefined
+      ? undefined
+      : `kept ${skillBackup.files.length} ${skillBackup.files.length === 1 ? "file" : "files"} you added or changed in skill folders LitOpenCode replaced, in ${homePath(skillBackup.directory)}`;
+    cards.panel(`LitOpenCode ${metadata.version} is ready`, summarySections(report, resolved.target, agentFileStatus, kept));
+    return { exitCode: 0, ...(noticeSeen ? {} : { stdout: notice }) };
+  }
+  const agentFileLine = wrapReceiptLine(agentFileStatus);
   const tail = backupLines + "\n" + (noticeSeen ? "" : notice + "\n\n") + agentFileLine;
 
   return {

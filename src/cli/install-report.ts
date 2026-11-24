@@ -56,7 +56,7 @@ function splitLongWord(word: string, width: number): readonly string[] {
   return chunks;
 }
 
-function wrapValue(value: string, width: number): readonly string[] {
+export function wrapValue(value: string, width: number): readonly string[] {
   const words = value.trim().split(/\s+/u).flatMap((word) => splitLongWord(word, width));
   const wrapped: string[] = [];
   let current = "";

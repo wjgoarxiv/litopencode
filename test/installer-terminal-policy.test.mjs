@@ -7,8 +7,10 @@ import { test } from "node:test";
 const repo = path.resolve(import.meta.dirname, "..");
 const python = spawnSync("python3", ["-c", "import pty, termios"], { encoding: "utf8" });
 const blockGlyphs = /[█▓▀▄▌▐▖▗▘▝▙▛▜▟▚▞]/u;
-// The two interactive cases opt out of the LitFamily block question (--no-agent-file): this harness answers
-// only the numbered "Select" prompts, and the block question has its own tests in agent-file.test.mjs.
+// The interactive cases opt out of the LitFamily block question (--no-agent-file); it has its own tests in
+// agent-file.test.mjs. A terminal that can draw cards is answered with keys, the others by the numbered prompt.
+const styleCard = (key) => [["Output style[\\s\\S]*Ctrl\\+C stop", `${key}\r`]];
+const escapes = /\u001b\[[0-9;]*m/u;
 const cases = [
   { name: "fresh --yes with empty CI", env: { CI: "" }, args: ["--yes"], ansi: false, fresh: true, style: "off" },
   { name: "--yes with empty CI", env: { CI: "" }, args: ["--yes"], ansi: false },
@@ -18,8 +20,11 @@ const cases = [
   { name: "--yes with dumb terminal", env: { TERM: "dumb" }, args: ["--yes"], ansi: false, plain: true },
   { name: "--yes with non-UTF-8 locale", env: { LC_ALL: "C" }, args: ["--yes"], ansi: false, plain: true },
   { name: "--yes retains truecolor", env: {}, args: ["--yes"], ansi: true, color: /\u001b\[48;2;255;255;255m/u },
-  { name: "interactive 256-color explicit style", env: { COLORTERM: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["3"], style: "eli5", ansi: true, color: /\u001b\[48;5;231m/u },
-  { name: "interactive NO_COLOR explicit style", env: { NO_COLOR: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["4"], style: "eli5-ko", ansi: false },
+  { name: "interactive 256-color explicit style", env: { COLORTERM: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], steps: styleCard(3), style: "eli5", ansi: true, color: /\u001b\[48;5;231m/u },
+  { name: "interactive NO_COLOR explicit style", env: { NO_COLOR: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], steps: styleCard(4), style: "eli5-ko", ansi: "cards" },
+  { name: "interactive dumb terminal keeps the numbered prompt", env: { TERM: "dumb" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["4"], style: "eli5-ko", ansi: false, plain: true },
+  { name: "a short window keeps the numbered prompt", env: {}, rows: 15, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["3"], style: "eli5", ansi: true },
+  { name: "a prompt hook keeps the numbered prompt", env: { LITOPENCODE_AGENT_FILE_PROMPT: "0" }, args: ["--no-model-prompt", "--no-permission-prompt"], answers: ["3"], style: "eli5", ansi: true },
   { name: "explicit CI permission prompt remains plain", env: { CI: "" }, args: ["--permission-prompt"], answers: ["0"], ansi: false }
 ];
 
@@ -59,7 +64,7 @@ test("packed CLI installs obey terminal and prompt policy on a real TTY", {
         const run = scenario.tty === false
           ? spawnSync(argv[0], argv.slice(1), { cwd: profile, env, input: "", encoding: "utf8", timeout: 30_000 })
           : spawnSync("python3", [path.join(repo, "test-support", "installed-tty.py")], {
-            input: JSON.stringify({ argv, cwd: profile, env, answers: scenario.answers }),
+            input: JSON.stringify({ argv, cwd: profile, env, answers: scenario.answers, steps: scenario.steps, rows: scenario.rows }),
             encoding: "utf8", timeout: 35_000, maxBuffer: 4 * 1024 * 1024
           });
         assert.equal(run.status, 0, run.stderr);
@@ -78,7 +83,13 @@ test("packed CLI installs obey terminal and prompt policy on a real TTY", {
         assert.equal(installed.outputStyle ?? "off", scenario.style ?? "asd-ste100-ko");
         assert.match(skill, /lit-code/u);
         if (!scenario.answers) assert.doesNotMatch(receipt.output, /Choose an output style|Select \d+-\d+/u);
-        assert.equal(receipt.output.includes("\u001b"), scenario.ansi, receipt.output);
+        if (scenario.steps) {
+          assert.equal(receipt.stepsSent, scenario.steps.length, receipt.output);
+          assert.match(receipt.output.replace(/\u001b\[[0-9;]*m/gu, ""), /LIT 1\/1[\s\S]*is ready/u);
+          assert.ok(receipt.output.lastIndexOf("\u001b[?25h") > receipt.output.lastIndexOf("\u001b[?25l"), "the cursor is back");
+        }
+        if (scenario.ansi === "cards") assert.doesNotMatch(receipt.output, escapes, "cards without colour");
+        else assert.equal(receipt.output.includes("\u001b"), scenario.ansi, receipt.output);
         if (scenario.color) assert.match(receipt.output, scenario.color);
         if (scenario.plain) {
           assert.match(receipt.output, /(?:^|\n)LIT · opencode\r?\n/u);

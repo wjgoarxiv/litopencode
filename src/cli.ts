@@ -4,7 +4,7 @@ import { doctor } from "./cli/doctor.ts";
 import { runAgentFileCommand } from "./cli/agent-file-command.ts";
 import { runExtensionsCommand } from "./cli/extensions.ts";
 import { install } from "./cli/install.ts";
-import { createInstallTui, renderLitOpenCodeWordmark, shouldRenderInstallTui } from "./cli/install-tui.ts";
+import { createCardInstallTui, createInstallTui, renderLitOpenCodeWordmark, shouldDrawInstallCards, shouldRenderInstallTui } from "./cli/install-tui.ts";
 import type { CliResult, InstallProgress, ParsedArgs } from "./cli/types.ts";
 import { runUpdateNotifier } from "./cli/update-notifier.ts";
 import { autoUpdateDiagnostic, canContinueAfterAutoUpdate, runInteractiveAutoUpdate } from "./cli/auto-update.ts";
@@ -222,7 +222,8 @@ function shouldPrintCommandWordmark(argv: readonly string[]): boolean {
 }
 
 export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<void> {
-  const result = await runCli(argv, { installProgress: shouldRenderInstallTui(argv) ? createInstallTui() : undefined });
+  const installProgress = shouldDrawInstallCards(argv) ? createCardInstallTui() : shouldRenderInstallTui(argv) ? createInstallTui() : undefined;
+  const result = await runCli(argv, { installProgress });
   if (shouldPrintCommandWordmark(argv)) {
     const metadata = await readPackageMetadata();
     const colorEnabled = process.stdout.isTTY === true && process.env.CI === undefined && process.env.NO_COLOR === undefined;

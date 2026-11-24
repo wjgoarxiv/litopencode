@@ -1,4 +1,5 @@
 import type { OpenCodeHostCapabilities } from "./host-capabilities.ts";
+import type { InstallCards } from "./install-cards.ts";
 import type { TuiInstallReport } from "./tui-config.ts";
 
 export type CliResult = {
@@ -95,6 +96,8 @@ export type InstallPermissionChoice = {
 };
 
 export type InstallProgress = {
+  /** The question cards, when this run draws them instead of the plain prompts and stage lines. */
+  readonly cards?: InstallCards;
   start(packageLabel: string): Promise<void>;
   run<T>(label: InstallStageLabel, task: () => Promise<T>): Promise<T>;
   complete(): Promise<void>;

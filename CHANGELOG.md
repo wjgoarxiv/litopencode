@@ -3,6 +3,12 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
+## Unreleased
+
+- The installer asks its questions as cards: provider, model, effort, the route to look over, permissions, output style and the LitFamily block. The default is marked and highlighted, arrow keys and Enter choose, `y` or `n` answers a yes/no, and each answered card folds to one line. The install steps and a closing summary are cards too, and warnings stay on screen.
+- A provider with many models gets a scrolling list that filters as you type, and `Type provider/model` is checked inside its card.
+- The questions, their order, their defaults and what is stored are unchanged. `--yes`, CI, pipes, `TERM=dumb`, windows under 40 columns or 16 rows, and runs with a `LITOPENCODE_*_PROMPT` variable keep the numbered prompts and the same output. `NO_COLOR` on a terminal now draws the cards without colour, so it moves the cursor; `TERM=dumb` avoids that.
+
 ## 1.0.54 - 2026-11-25
 
 - The LIT card wears a synthwave sunset on a dark theme in a truecolor terminal, on OpenCode 1 and 2. Its border glows from pink through violet to cyan, the LIT pill runs from orange to pink, and in the blank end of the rows a sun sinks into a sea under stars. The scene moves six times a second while a turn runs, then dims and stops. It is drawn only where no word is, so the card keeps its four rows, its words and its widths; the sun is three, two or one row tall by the free space, and a narrow card has none.

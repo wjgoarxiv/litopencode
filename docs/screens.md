@@ -6,9 +6,15 @@ This page shows what LitOpenCode prints and draws, so a healthy install looks fa
 
 ## What you will see on screen
 
-Here is what LitOpenCode prints. Four pictures follow, and each is labelled as a capture or a sample. Every picture comes in a dark and a light version with the same text; your browser shows the one that matches its theme.
+Here is what LitOpenCode prints. Five pictures follow, and each is labelled as a capture or a sample. Every picture comes in a dark and a light version with the same text; your browser shows the one that matches its theme.
 
-**The installer.** `litopencode install` lists five numbered steps, ticks each one off as it finishes, and ends with a green box. The box says the install is ready and what to do next: restart OpenCode, press Tab and choose lit-loop.
+**The installer's questions.** Run `litopencode install` in a terminal and each question is a card. A long model list scrolls inside the card, and typing a few letters narrows it. Answered questions fold to one line above.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/readme/install-question-dark.webp" /><img src="./assets/readme/install-question-light.webp" width="694" alt="Terminal window showing litopencode install. Five answered questions are folded to one line each with a green check mark. Below them a card tagged LIT 1/4 and titled Helper model says: Spawned and delegated agents run on this model; Enter takes the highlighted row. Its Filter line reads coder 1 and counts 28 of 260. Twelve model names follow with the third one highlighted, above the key hints: up and down move, Enter choose, Esc clear filter, Ctrl+C stop." /></picture></p>
+
+*Captured from the real `litopencode install` in an isolated shell. The provider and its models are invented for the picture.*
+
+**The finished install.** With `--yes`, `litopencode install` asks nothing. It lists five numbered steps, ticks each one off as it finishes, and ends with a green box. The box says the install is ready and what to do next: restart OpenCode, press Tab and choose lit-loop. Installing with the question cards shows the same five steps and the same next action in cards.
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/readme/install-output-dark.webp" /><img src="./assets/readme/install-output-light.webp" width="694" alt="Terminal window showing litopencode install --yes. A list of five numbered steps (01 Resolve, 02 Read, 03 Write, 04 Register, 05 Verify) is followed by each step ticked off, then a green box titled INSTALL READY that reads: Plugin, routes, commands, and skills are ready. Next Restart OpenCode · press Tab · choose lit-loop." /></picture></p>
 

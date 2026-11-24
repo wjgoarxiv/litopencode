@@ -15,6 +15,7 @@ import {
   type AgentFileMode,
   type AgentFileResult
 } from "./agent-file.ts";
+import type { InstallCards } from "./install-cards.ts";
 import { createPromptReader } from "./model-routing.ts";
 import type { CliResult, ParsedArgs } from "./types.ts";
 
@@ -22,7 +23,7 @@ const QUESTION = "Add the short LitFamily block to OpenCode's global AGENTS.md? 
 const SHADOW_HINT =
   "OpenCode reads ~/.claude/CLAUDE.md while this file is missing, and a new AGENTS.md would hide it; create the file yourself first, or set OPENCODE_DISABLE_CLAUDE_CODE_PROMPT=1";
 
-function shouldAsk(env: NodeJS.ProcessEnv): boolean {
+export function shouldAskAgentFile(env: NodeJS.ProcessEnv): boolean {
   if (env.LITOPENCODE_AGENT_FILE_PROMPT === "1") return true;
   if (env.LITOPENCODE_AGENT_FILE_PROMPT === "0") return false;
   return process.stdin.isTTY === true && process.stdout.isTTY === true && env.CI === undefined;
@@ -35,6 +36,18 @@ async function askYes(): Promise<boolean> {
   } finally {
     reader.close();
   }
+}
+
+/** The same question as a card. */
+export function askAgentFileCard(cards: InstallCards, filePath: string): Promise<boolean> {
+  cards.next();
+  return cards.confirm({
+    title: "LitFamily block",
+    note: `Adds the short LitFamily block to OpenCode's global ${path.basename(filePath)}. Your own text stays as it is; No leaves the file alone and is remembered.`,
+    initial: true,
+    yes: "add",
+    no: "off"
+  });
 }
 
 const note = (status: string, filePath: string, hint: string): string => `AGENT_FILE: ${status} ${filePath} (${hint})`;
@@ -84,7 +97,7 @@ export async function installAgentFile(input: InstallInput, env: NodeJS.ProcessE
     case "skipped-claude-fallback":
       return note("skipped-claude-fallback", plan.path, SHADOW_HINT);
     case "ask":
-      if (!shouldAsk(env)) return note("skipped", plan.path, "add the LitFamily block: litopencode agent-file on");
+      if (!shouldAskAgentFile(env)) return note("skipped", plan.path, "add the LitFamily block: litopencode agent-file on");
       if (await ask()) return write();
       await writeAgentFileMode(input.root, "off");
       return note("off", plan.path, "turn on later: litopencode agent-file on");

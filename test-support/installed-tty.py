@@ -15,7 +15,11 @@ import time
 
 request = json.load(sys.stdin)
 master, slave = pty.openpty()
-fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 120, 0, 0))
+fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", request.get("rows", 40), request.get("cols", 120), 0, 0))
+# A card run lists [text to wait for, keys to send]; each wait starts after the text the last one matched.
+steps = [[re.compile(wait.encode()), keys.encode()] for wait, keys in request.get("steps", [])]
+steps_at = 0
+steps_sent = 0
 child = None
 output = bytearray()
 answers = []
@@ -23,9 +27,9 @@ timed_out = False
 try:
     child = subprocess.Popen(request["argv"], cwd=request["cwd"], env=request["env"],
                              stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
-    os.close(slave)
-    slave = None
-    deadline = time.monotonic() + 25
+    # This end stays open until the child is gone and everything is read: a reader that falls behind must not
+    # lose the child's last lines when the child closes its own.
+    deadline = time.monotonic() + (90 if "steps" in request else 25)
     while True:
         if time.monotonic() >= deadline:
             timed_out = True
@@ -43,7 +47,15 @@ try:
         if not chunk:
             break
         output.extend(chunk)
-        prompts = re.findall(rb"Select \d+-\d+ \[\d+\]: ", output)
+        while steps:
+            found = steps[0][0].search(output, steps_at)
+            if found is None:
+                break
+            steps_at = found.end()
+            time.sleep(0.1)
+            os.write(master, steps.pop(0)[1])
+            steps_sent += 1
+        prompts = [] if "steps" in request else re.findall(rb"Select \d+-\d+ \[\d+\]: ", output)
         while len(answers) < len(prompts):
             if len(answers) >= 8:
                 raise RuntimeError("installer exceeded the bounded prompt budget")
@@ -61,5 +73,5 @@ finally:
         os.close(slave)
 
 json.dump({"exit": child.returncode, "output": output.decode("utf-8", errors="replace"),
-           "answers": answers, "timedOut": timed_out, "childReaped": child.poll() is not None,
+           "answers": answers, "stepsSent": steps_sent, "timedOut": timed_out, "childReaped": child.poll() is not None,
            "ptyClosed": True}, sys.stdout)

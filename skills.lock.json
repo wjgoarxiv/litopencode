@@ -893,6 +893,8 @@
     "dist/cli/host-limits.js",
     "dist/cli/host-models.d.ts",
     "dist/cli/host-models.js",
+    "dist/cli/install-cards.d.ts",
+    "dist/cli/install-cards.js",
     "dist/cli/install-config.d.ts",
     "dist/cli/install-config.js",
     "dist/cli/install-report.d.ts",

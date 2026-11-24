@@ -15,7 +15,7 @@ npm exec --package "$LIT_PACKAGE" -- litopencode install
 
 Restart OpenCode, press **Tab**, and pick **lit-loop**.
 
-Along the way the installer asks which models to use, how much freedom to give the agents, and how replies should look. Permissions start at `safe`, where OpenCode asks you before acting. Logins and API keys stay with the provider you already set up in OpenCode.
+Along the way the installer asks which models to use, how much freedom to give the agents, and how replies should look. Each question is a card: arrow keys move, Enter takes the highlighted row, `y` or `n` answers a yes/no at once, and in a long model list you type a few letters to narrow it down. Answered cards fold to one line. Permissions start at `safe`, where OpenCode asks you before acting. Logins and API keys stay with the provider you already set up in OpenCode.
 
 On the OpenAI provider, a fresh install plans and reviews with GPT-6 Astra (`gpt-6-astra`) at `xhigh`, and does the building and research with GPT-6 Luna (`gpt-6-luna`) at `max`. You can pick other supported models and effort levels during install.
 

@@ -136,9 +136,23 @@ An ordinary install or update preserves any already configured model. `--no-mode
 only.
 
 `install --yes` skips every picker and keeps the saved output style. CI and non-TTY
-installs skip automatic prompts; explicit prompt flags still work. `NO_COLOR` keeps
-interactive style selection available without color or cursor escapes. Dumb terminals
+installs skip automatic prompts; explicit prompt flags still work. Dumb terminals
 and non-UTF-8 locales use the plain `LIT` wordmark without ANSI decoration.
+
+In a terminal of at least 40 columns and 16 rows the questions are cards. The marked row or button is the
+default (or the saved choice, marked `current`) and Enter takes whatever is highlighted:
+
+| Question | Keys |
+|---|---|
+| A list of up to ten | Up and Down or `j` and `k` move, a digit jumps to that row |
+| A longer list, such as a provider with hundreds of models | Type to filter (every word must match), Up, Down, PgUp and PgDn move, Esc or Ctrl+U clears the filter |
+| Yes or no | `y` or `n` answers at once, Left, Right or Tab switches |
+| `Type provider/model` | Type the id; three tries, then the install stops and nothing is written |
+
+Each answered card folds to one line, and warnings stay on screen. Ctrl+C or Ctrl+D stops with exit 1; before the
+install steps start nothing is written apart from the `ultra` rewrite above. `NO_COLOR` draws the same cards without colour, a non-UTF-8 locale draws
+them in ASCII. Everything else gets the numbered prompts and the same output as before: pipes, CI, `--yes`,
+`TERM=dumb`, a terminal without raw mode, a smaller window, and any run with a `LITOPENCODE_*_PROMPT` variable set.
 
 The OpenCode config hook routes the lead categories and `lit-loop` to
 `openai/gpt-6-astra` with native `reasoningEffort` (fresh/reset default `xhigh`).

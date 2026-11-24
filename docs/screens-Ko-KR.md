@@ -6,9 +6,15 @@ LitOpenCode가 화면에 무엇을 출력하고 그리는지 모아 둔 페이�
 
 ## 설치 후 화면에서 보이는 것
 
-LitOpenCode가 화면에 무엇을 출력하는지 미리 볼 수 있도록 그림 네 장을 준비했습니다. 각 그림에는 실제 캡처인지 예시 화면인지 밝혀 두었습니다. 그림마다 다크와 라이트 버전이 있고 내용은 같으며, 브라우저 테마에 맞는 쪽이 보입니다.
+LitOpenCode가 화면에 무엇을 출력하는지 미리 볼 수 있도록 그림 다섯 장을 준비했습니다. 각 그림에는 실제 캡처인지 예시 화면인지 밝혀 두었습니다. 그림마다 다크와 라이트 버전이 있고 내용은 같으며, 브라우저 테마에 맞는 쪽이 보입니다.
 
-**설치.** `litopencode install`은 번호가 붙은 다섯 단계를 보여 주고, 끝난 단계마다 체크 표시를 붙인 뒤 초록색 상자로 마무리합니다. 상자에는 설치가 끝났다는 말과 다음에 할 일이 적혀 있습니다. OpenCode를 다시 시작하고 Tab을 눌러 lit-loop를 고르면 됩니다.
+**설치할 때 묻는 질문.** 터미널에서 `litopencode install`을 실행하면 질문이 카드로 하나씩 나옵니다. 긴 모델 목록은 카드 안에서 스크롤되고, 글자를 몇 개 입력하면 좁혀집니다. 답한 질문은 위에 한 줄로 접힙니다.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/readme/install-question-dark.webp" /><img src="./assets/readme/install-question-light.webp" width="694" alt="litopencode install을 실행한 터미널 창. 답한 질문 다섯 개가 초록색 체크 표시와 함께 한 줄씩 접혀 있다. 그 아래 LIT 1/4 표시와 Helper model 제목이 붙은 카드에 Spawned and delegated agents run on this model; Enter takes the highlighted row.라고 적혀 있다. Filter 줄에는 coder 1이 입력되어 있고 28 of 260으로 개수가 보인다. 모델 이름 열두 개 가운데 세 번째가 강조되어 있고, 맨 아래에 이동, 선택, 필터 지우기, 중단 키 안내가 있다." /></picture></p>
+
+*격리한 셸에서 실제 `litopencode install`을 실행해 캡처했습니다. 제공자와 모델 이름은 그림을 위해 지어낸 것입니다.*
+
+**설치 완료.** `--yes`를 붙인 `litopencode install`은 아무것도 묻지 않습니다. 번호가 붙은 다섯 단계를 보여 주고, 끝난 단계마다 체크 표시를 붙인 뒤 초록색 상자로 마무리합니다. 상자에는 설치가 끝났다는 말과 다음에 할 일이 적혀 있습니다. OpenCode를 다시 시작하고 Tab을 눌러 lit-loop를 고르면 됩니다. 질문 카드로 설치하면 같은 다섯 단계와 다음에 할 일이 카드로 나옵니다.
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/readme/install-output-dark.webp" /><img src="./assets/readme/install-output-light.webp" width="694" alt="litopencode install --yes를 실행한 터미널 창. 번호가 붙은 다섯 단계(01 Resolve, 02 Read, 03 Write, 04 Register, 05 Verify)의 목록 뒤에 단계마다 체크 표시가 붙은 줄이 이어지고, INSTALL READY라는 제목의 초록색 상자에 다음 문구가 적혀 있다. Plugin, routes, commands, and skills are ready. Next Restart OpenCode · press Tab · choose lit-loop" /></picture></p>
 

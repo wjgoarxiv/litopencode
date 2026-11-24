@@ -15,7 +15,7 @@ import os from "node:os";
 import path from "node:path";
 
 const assetRoot = "docs/assets/readme";
-// The four on-screen pictures moved off the landing README into the GitHub screens pages, which load
+// The on-screen pictures moved off the landing README into the GitHub screens pages, which load
 // them by paths relative to docs/. The landing README's demo slot shows a recorded session GIF.
 const pageAssetRoot = "assets/readme";
 const githubReadmes = ["README.md", "README-Ko-KR.md"];
@@ -36,6 +36,7 @@ const toastLabel = toast.message.split("\n").at(-1);
 const planner = toOpenCodeAgentConfig(litOpenCodeAgents.find((agent) => agent.id === "lit-plan")).permission;
 
 const screens = [
+  { name: "install-question", strings: ["Filter", "Spawned and delegated agents run on this model"], code: `${await fs.readFile("src/cli/model-routing.ts", "utf8")} ${await fs.readFile("src/cli/install-cards.ts", "utf8")}` },
   { name: "install-output", strings: ["INSTALL READY", "Plugin, routes, commands, and skills are ready.", "Restart OpenCode · press Tab · choose lit-loop"], code: receipt },
   { name: "doctor-output", strings: ["litopencode doctor", "ok", "plugin", "skills"], code: "litopencode doctor ok plugin skills" },
   { name: "ignition-toast", strings: [toast.title, toastLabel], code: `${toast.title} ${toastLabel}` },
@@ -105,7 +106,7 @@ test("on-screen captions say whether a picture is a capture or a sample", async 
     assert.ok(section.length > 0, `${file}: the on-screen section exists`);
     const captured = section.match(english ? /^\*Captured from the real/gmu : /^\*.*캡처했/gmu) ?? [];
     const samples = section.match(english ? /^\*Sample output/gmu : /^\*예시 화면입니다/gmu) ?? [];
-    assert.equal(captured.length, 3, `${file}: install, doctor and planner pictures are captures`);
+    assert.equal(captured.length, 4, `${file}: question, install, doctor and planner pictures are captures`);
     assert.equal(samples.length, 1, `${file}: the toast picture is a sample`);
   }
   for (const file of githubReadmes) {
@@ -116,7 +117,7 @@ test("on-screen captions say whether a picture is a capture or a sample", async 
   }
   for (const file of npmReadmes) {
     const content = await fs.readFile(file, "utf8");
-    assert.doesNotMatch(content, /(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)/u, `${file} does not embed the on-screen pictures`);
+    assert.doesNotMatch(content, /(?:install-question|install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)/u, `${file} does not embed the on-screen pictures`);
   }
 });
 

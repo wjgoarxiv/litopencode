@@ -1,3 +1,4 @@
+import { cardsTerminal, createInstallCards, type CardTerminal } from "./install-cards.ts";
 import type { InstallProgress, InstallStageLabel } from "./types.ts";
 import { markColorMode } from "../lit-mark.ts";
 import { terminalSynthwave } from "../synthwave-mark.ts";
@@ -207,6 +208,30 @@ export function createInstallTui(output: TextOutput = process.stdout): InstallPr
     async fail(message: string): Promise<void> {
       clearLine(output);
       output.write("  " + color("×", amber) + " " + message + "\n\n");
+    }
+  };
+}
+
+/** The cards replace the plain installer screens only for a person who is being asked; `--yes` asks nothing. */
+export function shouldDrawInstallCards(argv: readonly string[], terminal: CardTerminal = process): boolean {
+  return shouldRenderInstallTui(argv) && !argv.includes("--yes") && cardsTerminal(terminal);
+}
+
+export function createCardInstallTui(terminal: CardTerminal = process): InstallProgress {
+  const cards = createInstallCards(terminal);
+  return {
+    cards,
+    async start(): Promise<void> {
+      cards.startSteps("Installing", installStages.map((stage) => ({ name: stage.label, text: stage.purpose })));
+    },
+    async run<T>(label: InstallStageLabel, task: () => Promise<T>): Promise<T> {
+      return cards.runStep(findStage(label).index - 1, task);
+    },
+    async complete(): Promise<void> {
+      cards.finishSteps("Install steps", `${String(installStages.length)} of ${String(installStages.length)} checked`);
+    },
+    async fail(message: string): Promise<void> {
+      cards.fail(message);
     }
   };
 }

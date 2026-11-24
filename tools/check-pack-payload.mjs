@@ -5,7 +5,7 @@ import process from "node:process";
 import { readStableRegularFile } from "./stable-file-read.mjs";
 
 // Shown by the GitHub pages only; the npm cards never reference them, so they stay out of the package.
-const GITHUB_ONLY_README_MEDIA = /^docs\/assets\/readme\/(?:(?:install-output|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|status-card-(?:idle|working|recent)\.webp|(?:core-extensions|lit-route|two-hosts)\.(?:en|ko)\.(?:dark|light)\.png|lit-plant\.(?:en|ko)(?:\.dark)?\.png|lit-plant-loop\.(?:en|ko)(?:\.dark)?\.webp|showcase-(?:adhd-brief|deck|ui|pid)\.webp|auto-handoff-(?:settings|compact|doctor)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
+const GITHUB_ONLY_README_MEDIA = /^docs\/assets\/readme\/(?:(?:install-(?:output|question)|doctor-output|ignition-toast|planner-permissions)-(?:dark|light)\.webp|status-card-(?:idle|working|recent)\.webp|(?:core-extensions|lit-route|two-hosts)\.(?:en|ko)\.(?:dark|light)\.png|lit-plant\.(?:en|ko)(?:\.dark)?\.png|lit-plant-loop\.(?:en|ko)(?:\.dark)?\.webp|showcase-(?:adhd-brief|deck|ui|pid)\.webp|auto-handoff-(?:settings|compact|doctor)-(?:dark|light)\.webp|promo(?:-[^/]+)?\.[^/]+|promo-source(?:\/.*)?)$/u;
 // The landing README links these GitHub pages for what moved off it (guide, skills gallery, screens,
 // artwork). They load images by paths relative to docs/, and they stay out of the package with the social preview.
 const GITHUB_DOC_PAGES = ["docs/guide.md", "docs/guide-Ko-KR.md", "docs/skills.md", "docs/skills-Ko-KR.md", "docs/screens.md", "docs/screens-Ko-KR.md", "docs/brand.md", "docs/brand-Ko-KR.md"];
