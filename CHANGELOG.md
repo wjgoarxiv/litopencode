@@ -3,6 +3,11 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
+## 1.0.52 - 2026-11-24
+
+- A start-work lock folder that has no owner record yet is left alone for at least 5 seconds, so a process that has just created it can finish writing its owner record. A creator whose new folder was moved aside before that tries again.
+- The README and the guide now explain the synthwave LIT mark and its plain fallbacks, a request that ends with `lit` and the goal question it asks, and how a lock left by a crashed process is recovered, with the list of lock folders and what to do if one still blocks.
+
 ## 1.0.51 - 2026-11-24
 
 - The install, `doctor` and `--help` output now opens with the synthwave LIT mark, and the TUI panel shows a gradient LIT pill.

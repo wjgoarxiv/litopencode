@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.52 Release Scope
+
+- A 5 s grace before an ownerless start-work lock is judged stale, plus a retry for a creator whose new lock folder was moved aside; README and guide text for the synthwave mark, a trailing `lit` with its goal question, and lock recovery.
+
 ## 1.0.51 Release Scope
 
 - The synthwave LIT mark on install, doctor and help with a gradient pill on the TUI panel; the goal question for a request that ends with `lit`, for plain `lit <task>`, and for `/lit-loop <task>` and `/litwork <task>`; a first-or-last hyphenated `lit-loop` routes like `lit loop`; state locks left by a crashed holder (no owner record, dead owner, unreadable claim, reused pid past ten minutes) are reclaimed, so `lit cancel` gets through.
