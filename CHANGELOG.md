@@ -3,17 +3,14 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
-## Unreleased
+## 1.0.55 - 2026-11-25
 
 - The status card is rebuilt for a dark theme in a truecolor terminal, at 74 columns or wider. One frame carries the LIT pill, the discipline and the state; inside are the stage map, the task with its bar, the running job, the lanes and the skills; the context use and the plan limits sit on the bottom edge. The card grows while work runs, nine rows at most, and goes back to five or six at rest, so the prompt moves when work starts and stops. Other terminals and themes keep the four-row card.
 - Pills, bars and lane lines get round ends on the card, the sidebar panel, the prompt chip and the installer. They appear in Windows Terminal, VS Code, WezTerm, Ghostty and kitty, or where an icon font is installed; `LITOPENCODE_GLYPHS=round` forces them and `LITOPENCODE_GLYPHS=basic` turns them off.
 - The sun in the sunset stands three rows tall in every state when the window has 24 rows or more. A session at rest keeps a dim sun beside its last goal.
 - The installer's cards are redrawn: the LIT mark is centred and sized to the window, values line up in one column, buttons carry an outline, each question counts as a step (`LIT 3/10`), and a failed step adds an `INSTALL STOPPED` card with the stage, the reason and the next action. The closing card says the version is installed. Cards now appear from 12 rows instead of 16.
 - Pipes, CI, `--yes`, `TERM=dumb`, small windows and runs with a `LITOPENCODE_*_PROMPT` variable print the same bytes as before. The questions, their order, defaults and stored values are unchanged.
-
-## 1.0.55 - 2026-11-25
-
-- The README cover is a new loop: a terminal in the sunset look with the LIT band, a pixel LITFAMILY wordmark and a striped half-sunk sun, in place of the seven robot panels. The still for reduced motion is its first frame.
+- The README cover is a new loop: a terminal in the sunset look framed by the LIT card, a pixel LITFAMILY wordmark and a striped half-sunk sun, in place of the seven robot panels. The still for reduced motion is its first frame.
 - The README demo is a new silent loop of one request with the LIT card, its toast, the todo-driven bar, two lanes and the completion moment, with a Korean copy for the Korean page; the OpenCode screen around the card is redrawn.
 - The installer asks its questions as cards: provider, model, effort, the route to look over, permissions, output style and the LitFamily block. The default is marked and highlighted, arrow keys and Enter choose, `y` or `n` answers a yes/no, and each answered card folds to one line. The install steps and a closing summary are cards too, and warnings stay on screen.
 - A provider with many models gets a scrolling list that filters as you type, and `Type provider/model` is checked inside its card.
