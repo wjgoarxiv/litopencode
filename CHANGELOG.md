@@ -3,7 +3,7 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
-## Unreleased
+## 1.0.55 - 2026-11-25
 
 - The README cover is a new loop: a terminal in the sunset look with the LIT band, a pixel LITFAMILY wordmark and a striped half-sunk sun, in place of the seven robot panels. The still for reduced motion is its first frame.
 - The README demo is a new silent loop of one request with the LIT card, its toast, the todo-driven bar, two lanes and the completion moment, with a Korean copy for the Korean page; the OpenCode screen around the card is redrawn.

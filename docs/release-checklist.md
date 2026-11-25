@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.55 Release Scope
+
+- Installer questions as cards in a real terminal (provider, model with a filter-as-you-type list, effort, route review, permissions, output style, LitFamily block), with `--yes`, CI, pipes, `TERM=dumb` and small windows on the earlier plain output; a new README demo loop with a Korean copy and a new README cover loop with its still.
+
 ## 1.0.54 Release Scope
 
 - The sunset scene on the LIT card for OpenCode 1 and 2: truecolor and a dark theme only, drawn in the blank end of the rows, moving while a turn runs and still at rest, `"motion": false` keeps it still; round gauge ends in Windows Terminal and VS Code; redrawn README card pictures.
