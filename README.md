@@ -1,4 +1,4 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: a terminal in a sunset look. OpenCode's LIT band sits at the top with its track, live step and skills row, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/cover-motion-still.webp" /><img src="./docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: a terminal in a sunset look. LitOpenCode's round-cornered card frames the screen with its stage map, task gauge, skill pills, lanes and context gauge, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom." /></picture></p>
 
 # LitOpenCode
 

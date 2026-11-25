@@ -288,7 +288,7 @@ test("bilingual quick starts preserve executable package names and resolve the r
   const still = await fs.readFile("docs/assets/cover-motion-still.webp");
   assert.equal(still.subarray(0, 4).toString("ascii"), "RIFF");
   assert.equal(still.subarray(8, 12).toString("ascii"), "WEBP");
-  assert.equal(createHash("sha256").update(still).digest("hex"), "b1ff821108b738b441c147b43fd2d89c6b7ab2031f70e4ab4eb51eaf3d08b50d");
+  assert.equal(createHash("sha256").update(still).digest("hex"), "22169e03a2e1a83325270bdd48d085fae920b53a562094a8c40e25553118cd56");
   const npmAssets = "https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.55/docs/assets";
   const pages = [
     { file: "README.md", assets: "./docs/assets", english: true, github: true },
@@ -299,8 +299,8 @@ test("bilingual quick starts preserve executable package names and resolve the r
   for (const { file, assets, english, github } of pages) {
     const content = await readText(file);
     const alt = english
-      ? "LitFamily motion cover: a terminal in a sunset look. OpenCode's LIT band sits at the top with its track, live step and skills row, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom."
-      : "LitFamily 모션 커버: 노을빛 터미널 화면입니다. 위쪽에는 OpenCode의 LIT 띠가 단계 줄, 실시간 단계, 스킬 줄과 함께 있고, 가운데는 픽셀 글자 LITFAMILY와 줄무늬 해가 채우며, 일곱 제품 이름 줄에서 LITOPENCODE가 켜지고, 아래에서는 /lit-loop 프롬프트가 기다립니다.";
+      ? "LitFamily motion cover: a terminal in a sunset look. LitOpenCode's round-cornered card frames the screen with its stage map, task gauge, skill pills, lanes and context gauge, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom."
+      : "LitFamily 모션 커버: 노을빛 터미널 화면입니다. LitOpenCode의 모서리가 둥근 카드가 단계 지도, 작업 게이지, 스킬 알약, 레인, 컨텍스트 게이지와 함께 화면을 두르고, 가운데는 픽셀 글자 LITFAMILY와 줄무늬 해가 채우며, 일곱 제품 이름 줄에서 LITOPENCODE가 켜지고, 아래에서는 /lit-loop 프롬프트가 기다립니다.";
     assert.ok(content.includes('<source media="(prefers-reduced-motion: reduce)" srcset="' + assets + '/cover-motion-still.webp" />'), file);
     assert.ok(content.includes('<img src="' + assets + '/cover-motion.webp" width="100%" alt="' + alt + '" />'), file);
     assert.doesNotMatch(content, /docs\/assets\/cover\.webp/u, file + ": the motion cover replaces the separate static cover");

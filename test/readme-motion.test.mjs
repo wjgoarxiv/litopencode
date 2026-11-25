@@ -74,8 +74,8 @@ test("README motion keeps centered outlined ASCII and the exact copyable native 
     assert.ok(content.includes(STILL_COVER), file + ": motion still is the reduced-motion source");
     assert.match(content, /<picture><source media="\(prefers-reduced-motion: reduce\)" srcset="[^"]+cover-motion-still\.webp" \/><img src="[^"]+cover-motion\.webp" width="100%" alt="[^"]+" \/><\/picture><\/p>/u);
     const expectedAlt = isEnglish(file)
-      ? "LitFamily motion cover: a terminal in a sunset look. OpenCode's LIT band sits at the top with its track, live step and skills row, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom."
-      : "LitFamily 모션 커버: 노을빛 터미널 화면입니다. 위쪽에는 OpenCode의 LIT 띠가 단계 줄, 실시간 단계, 스킬 줄과 함께 있고, 가운데는 픽셀 글자 LITFAMILY와 줄무늬 해가 채우며, 일곱 제품 이름 줄에서 LITOPENCODE가 켜지고, 아래에서는 /lit-loop 프롬프트가 기다립니다.";
+      ? "LitFamily motion cover: a terminal in a sunset look. LitOpenCode's round-cornered card frames the screen with its stage map, task gauge, skill pills, lanes and context gauge, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom."
+      : "LitFamily 모션 커버: 노을빛 터미널 화면입니다. LitOpenCode의 모서리가 둥근 카드가 단계 지도, 작업 게이지, 스킬 알약, 레인, 컨텍스트 게이지와 함께 화면을 두르고, 가운데는 픽셀 글자 LITFAMILY와 줄무늬 해가 채우며, 일곱 제품 이름 줄에서 LITOPENCODE가 켜지고, 아래에서는 /lit-loop 프롬프트가 기다립니다.";
     assert.ok(content.includes('alt="' + expectedAlt + '"'), file + ": cover alt text is accurate and localized");
     assert.ok(content.includes('srcset="' + assets + '/cover-motion-still.webp"'), file);
     assert.ok(content.includes('src="' + assets + '/cover-motion.webp'), file);
@@ -159,7 +159,7 @@ test("README motion resources have exact approved bytes and are reachable from b
   assert.equal(digest(await fs.readFile("docs/assets/cover.webp")), "cd82a5abc42e6e7aff2b08184767372174ad644cad74e1681ab7784ee4a712b3");
   const motionCover = await fs.readFile("docs/assets/cover-motion.webp");
   assert.ok(motionCover.length <= 2_621_440, "motion cover must stay under 2.5 MiB");
-  assert.equal(digest(motionCover), "235248695d34099dcae3a62f2963eacd7d9c8964c745acbcc3268fd785fdf0fc");
+  assert.equal(digest(motionCover), "0d74a51235b741b46cbcc211ca424468aac6b796c02fdffa5cdd29663d8f49f7");
   for (const [name, expected] of Object.entries(motionPins)) {
     assert.equal(digest(await fs.readFile(`${assetRoot}/${name}`)), expected, name);
     for (const file of githubReadmes) assert.ok((await text(brandPages[file])).includes(`./assets/readme/${name}`), `${brandPages[file]} links ${name}`);
