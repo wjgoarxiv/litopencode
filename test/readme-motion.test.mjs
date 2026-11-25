@@ -70,12 +70,12 @@ test("README motion keeps centered outlined ASCII and the exact copyable native 
     const content = await text(file);
     const assets = assetPrefix(file);
     assert.ok(content.includes(COVER), file + ": repository cover must be present");
-    assert.ok(!content.includes(STATIC_COVER), file + ": the static robot cover is no longer a separate README image");
+    assert.ok(!content.includes(STATIC_COVER), file + ": the static cover is no longer a separate README image");
     assert.ok(content.includes(STILL_COVER), file + ": motion still is the reduced-motion source");
     assert.match(content, /<picture><source media="\(prefers-reduced-motion: reduce\)" srcset="[^"]+cover-motion-still\.webp" \/><img src="[^"]+cover-motion\.webp" width="100%" alt="[^"]+" \/><\/picture><\/p>/u);
     const expectedAlt = isEnglish(file)
-      ? "LitFamily motion cover: seven armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."
-      : "LitFamily 모션 커버: 일곱 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상";
+      ? "LitFamily motion cover: a terminal in a sunset look. OpenCode's LIT band sits at the top with its track, live step and skills row, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom."
+      : "LitFamily 모션 커버: 노을빛 터미널 화면입니다. 위쪽에는 OpenCode의 LIT 띠가 단계 줄, 실시간 단계, 스킬 줄과 함께 있고, 가운데는 픽셀 글자 LITFAMILY와 줄무늬 해가 채우며, 일곱 제품 이름 줄에서 LITOPENCODE가 켜지고, 아래에서는 /lit-loop 프롬프트가 기다립니다.";
     assert.ok(content.includes('alt="' + expectedAlt + '"'), file + ": cover alt text is accurate and localized");
     assert.ok(content.includes('srcset="' + assets + '/cover-motion-still.webp"'), file);
     assert.ok(content.includes('src="' + assets + '/cover-motion.webp'), file);
@@ -96,10 +96,10 @@ test("README motion keeps centered outlined ASCII and the exact copyable native 
       assert.ok(familyStart >= 0 && motionStart > familyStart, brandPages[file] + ": family art, then the Ignition film");
       assert.match(brand.slice(familyStart, motionStart), /!\[[^\]]+\]\(\.\/assets\/readme\/litfamily-machines\.png\)/u, brandPages[file] + ": shows the family illustration");
       const familyImages = [...brand.slice(familyStart, motionStart).matchAll(/!\[[^\]]+\]\(([^)]+cover\.webp)\)/gu)];
-      assert.equal(familyImages.length, 0, brandPages[file] + ": the robot cover does not repeat beside the family art");
-      assert.equal(brand.split("assets/cover.webp").length - 1, 0, brandPages[file] + ": the static robot cover image does not appear");
+      assert.equal(familyImages.length, 0, brandPages[file] + ": the cover does not repeat beside the family art");
+      assert.equal(brand.split("assets/cover.webp").length - 1, 0, brandPages[file] + ": the static cover image does not appear");
     }
-    assert.equal(content.split("docs/assets/cover.webp").length - 1, 0, file + ": the static robot cover image no longer appears");
+    assert.equal(content.split("docs/assets/cover.webp").length - 1, 0, file + ": the static cover image no longer appears");
     const copy = content.match(/<details>\n<summary>[^<]+<\/summary>\n\n```text\n([\s\S]*?)\n```\n\n<\/details>/u)?.[1];
     assert.equal(copy, rows.join("\n"), `${file} copyable ASCII changed`);
     assert.ok(content.includes(`${assets}/readme/JetBrainsMono-OFL.txt`), file + ": the ASCII font license is linked");
@@ -159,7 +159,7 @@ test("README motion resources have exact approved bytes and are reachable from b
   assert.equal(digest(await fs.readFile("docs/assets/cover.webp")), "cd82a5abc42e6e7aff2b08184767372174ad644cad74e1681ab7784ee4a712b3");
   const motionCover = await fs.readFile("docs/assets/cover-motion.webp");
   assert.ok(motionCover.length <= 2_621_440, "motion cover must stay under 2.5 MiB");
-  assert.equal(digest(motionCover), "9face3021a194db2d72c7f806a9751da5876c48e836cf3cd6b034d8100908b81");
+  assert.equal(digest(motionCover), "235248695d34099dcae3a62f2963eacd7d9c8964c745acbcc3268fd785fdf0fc");
   for (const [name, expected] of Object.entries(motionPins)) {
     assert.equal(digest(await fs.readFile(`${assetRoot}/${name}`)), expected, name);
     for (const file of githubReadmes) assert.ok((await text(brandPages[file])).includes(`./assets/readme/${name}`), `${brandPages[file]} links ${name}`);

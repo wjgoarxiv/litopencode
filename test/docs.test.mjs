@@ -288,7 +288,7 @@ test("bilingual quick starts preserve executable package names and resolve the r
   const still = await fs.readFile("docs/assets/cover-motion-still.webp");
   assert.equal(still.subarray(0, 4).toString("ascii"), "RIFF");
   assert.equal(still.subarray(8, 12).toString("ascii"), "WEBP");
-  assert.equal(createHash("sha256").update(still).digest("hex"), "af5b3e711df388fed870d6c2065832ac01e2ba41c3b1bb28ee2aef1464d06c37");
+  assert.equal(createHash("sha256").update(still).digest("hex"), "b1ff821108b738b441c147b43fd2d89c6b7ab2031f70e4ab4eb51eaf3d08b50d");
   const npmAssets = "https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.54/docs/assets";
   const pages = [
     { file: "README.md", assets: "./docs/assets", english: true, github: true },
@@ -299,11 +299,11 @@ test("bilingual quick starts preserve executable package names and resolve the r
   for (const { file, assets, english, github } of pages) {
     const content = await readText(file);
     const alt = english
-      ? "LitFamily motion cover: seven armored robots power on one by one, the LitOpenCode robot wakes with glowing eyes and a lit frame, then LITFAMILY and KEEP THE WORK LIT. light up."
-      : "LitFamily 모션 커버: 일곱 로봇 패널이 차례로 켜지고, LitOpenCode 로봇의 눈과 테두리가 빛난 뒤 LITFAMILY와 KEEP THE WORK LIT. 문구가 밝아지는 영상";
+      ? "LitFamily motion cover: a terminal in a sunset look. OpenCode's LIT band sits at the top with its track, live step and skills row, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom."
+      : "LitFamily 모션 커버: 노을빛 터미널 화면입니다. 위쪽에는 OpenCode의 LIT 띠가 단계 줄, 실시간 단계, 스킬 줄과 함께 있고, 가운데는 픽셀 글자 LITFAMILY와 줄무늬 해가 채우며, 일곱 제품 이름 줄에서 LITOPENCODE가 켜지고, 아래에서는 /lit-loop 프롬프트가 기다립니다.";
     assert.ok(content.includes('<source media="(prefers-reduced-motion: reduce)" srcset="' + assets + '/cover-motion-still.webp" />'), file);
     assert.ok(content.includes('<img src="' + assets + '/cover-motion.webp" width="100%" alt="' + alt + '" />'), file);
-    assert.doesNotMatch(content, /docs\/assets\/cover\.webp/u, file + ": the motion cover replaces the separate static robot cover");
+    assert.doesNotMatch(content, /docs\/assets\/cover\.webp/u, file + ": the motion cover replaces the separate static cover");
     assert.doesNotMatch(content, /View the static (?:family )?cover|정지 (?:패밀리 )?표지 보기/u);
     if (github) {
       // The family art moved off the landing page to the brand page, which the landing page links.
@@ -314,7 +314,7 @@ test("bilingual quick starts preserve executable package names and resolve the r
       const motionStart = brand.indexOf("## Ignition motion", familyStart);
       assert.ok(familyStart >= 0 && motionStart > familyStart, brandPage + ": family art, then the Ignition film");
       const familyImages = [...brand.slice(familyStart, motionStart).matchAll(/!\[[^\]]+\]\(([^)]+cover\.webp)\)/gu)];
-      assert.equal(familyImages.length, 0, brandPage + ": the robot cover does not repeat beside the family art");
+      assert.equal(familyImages.length, 0, brandPage + ": the cover does not repeat beside the family art");
     }
     assert.doesNotMatch(content, /raw\.githubusercontent/u);
     assert.match(content, /npm exec --package @litfamily\/litopencode@latest -- litopencode install/u);

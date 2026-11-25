@@ -6,7 +6,7 @@ The README now opens with one cover. The rest of the artwork that used to sit ar
 
 ## Cover
 
-The README cover is a looping WebP: seven armored robots power on in turn, and the LitOpenCode robot wakes. Readers who ask for reduced motion get [a still of the lit frame](./assets/cover-motion-still.webp). The editable, low-bandwidth vector version of the cover is [docs/assets/cover.svg](./assets/cover.svg). It stays in this repository and is not part of the npm package.
+The README cover is a looping WebP: a terminal in the sunset look with OpenCode's LIT band, a pixel LITFAMILY wordmark and a striped half-sunk sun. Readers who ask for reduced motion get [a still of its first frame](./assets/cover-motion-still.webp). The editable, low-bandwidth vector version of the cover is [docs/assets/cover.svg](./assets/cover.svg). It stays in this repository and is not part of the npm package.
 
 The 1280×640 [social preview](./assets/social-preview.png) is built from the same cover for link cards. It is also left out of the npm package.
 
