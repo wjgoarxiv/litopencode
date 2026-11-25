@@ -16,11 +16,13 @@ import {
   chipSparkWidth,
   crumb,
   fade,
+  gaugeTrack,
   lineWidth,
   linkColor,
   liveSegments,
   missionPanel,
   progressBar,
+  roundPills,
   shimmerAt,
   shine,
   stageFlash,
@@ -64,9 +66,9 @@ export function readNotifyOptions(options: unknown): NotifyOptions {
 }
 
 const minimumText = 12;
-const idleHint = "lit adhd to pick up where you left off";
+export const idleHint = "lit adhd to pick up where you left off";
 
-function elapsedText(minutes: number | undefined): string {
+export function elapsedText(minutes: number | undefined): string {
   const total = Math.max(0, minutes ?? 0);
   return total < 60 ? `${total}m` : `${Math.floor(total / 60)}h${String(total % 60).padStart(2, "0")}`;
 }
@@ -75,7 +77,7 @@ function elapsedText(minutes: number | undefined): string {
  * The text after the bar: a warning (⚑ and words) replaces the live step and the next task; a finished
  * mission shows COMPLETE. Otherwise the live step, then the next task when it still has room.
  */
-function trailing(view: MissionView, frame: MotionFrame, palette: MissionPalette, room: number): Segment[] {
+export function trailing(view: MissionView, frame: MotionFrame, palette: MissionPalette, room: number): Segment[] {
   if (view.complete) {
     // Before COMPLETE pops in, the slot stays empty rather than flashing the header's "● active".
     if (frame.celebrate !== undefined && frame.celebrate < motionTiming.popAt) return [];
@@ -96,7 +98,7 @@ function trailing(view: MissionView, frame: MotionFrame, palette: MissionPalette
 }
 
 /** Cuts or pads a line to exactly `width` cells, keeping wide glyphs whole. */
-function fitLine(line: Line, width: number, palette: MissionPalette): Segment[] {
+export function fitLine(line: Line, width: number, palette: MissionPalette): Segment[] {
   const out: Segment[] = [];
   let used = 0;
   for (const segment of line) {
@@ -124,7 +126,7 @@ function fitLine(line: Line, width: number, palette: MissionPalette): Segment[] 
 }
 
 /** A border row: corner, optional left label, rule, optional right label, corner; undefined when it does not fit. */
-function ruled(lead: string, left: Line, right: Line, tail: string, width: number, border: string): Segment[] | undefined {
+export function ruled(lead: string, left: Line, right: Line, tail: string, width: number, border: string): Segment[] | undefined {
   const space: Segment = { text: " ", fg: border };
   const l = left.length > 0 ? [space, ...left, space] : [];
   const r = right.length > 0 ? [space, ...right, space] : [];
@@ -137,11 +139,11 @@ function ruled(lead: string, left: Line, right: Line, tail: string, width: numbe
  * A lit session whose turn has ended rests: nothing is running, so the card stops showing a lit step.
  * A finished goal and an open warning still show, since they are news after the turn.
  */
-function resting(view: MissionView, busy: boolean | undefined): boolean {
+export function resting(view: MissionView, busy: boolean | undefined): boolean {
   return view.active && busy === false && !view.complete && view.warnings.length === 0;
 }
 
-function borderColor(view: MissionView, frame: MotionFrame, palette: MissionPalette, rest: boolean): string {
+export function borderColor(view: MissionView, frame: MotionFrame, palette: MissionPalette, rest: boolean): string {
   if (!view.active || rest) return palette.borderActive;
   const enter = frame.chipEnter ? ease.outCubic(seg(frame.t, 0, motionTiming.entry)) : 1;
   const done = view.complete ? (frame.celebrate === undefined ? 1 : ease.inOutCubic(seg(frame.celebrate, 0, motionTiming.crossfade))) : 0;
@@ -173,7 +175,7 @@ function topLine(view: MissionView, frame: MotionFrame, palette: MissionPalette,
   return fitLine([{ text: "╭" + "─".repeat(Math.max(0, width)), fg: border }], width, palette);
 }
 
-const limitWarnPercent = 90;
+export const limitWarnPercent = 90;
 
 /** The figures in the bottom border, most important first; the last ones go first when room runs out. */
 function figureParts(view: MissionView, figures: CardFigures, palette: MissionPalette): Segment[] {
@@ -203,7 +205,7 @@ function bottomLine(view: MissionView, figures: CardFigures, palette: MissionPal
 }
 
 /** The whole stage map as a breadcrumb, `plan ✓ ━ WORK 1/3 ─ review ─ done`, or only the running stage when tight. */
-function trackPills(view: MissionView, frame: MotionFrame, palette: MissionPalette, tight: boolean): Segment[] {
+export function trackPills(view: MissionView, frame: MotionFrame, palette: MissionPalette, tight: boolean): Segment[] {
   const alpha = (index: number): number => (frame.chipEnter ? ease.outCubic(seg(frame.t, index * motionTiming.stagger, motionTiming.entry)) : 1);
   const reached = currentStepIndex(view);
   const current = Math.min(view.steps.length - 1, Math.max(0, reached));
@@ -221,7 +223,7 @@ function trackPills(view: MissionView, frame: MotionFrame, palette: MissionPalet
 }
 
 /** The text after the track in an idle session: the project's last goal, or how to start. */
-function idleText(last: LastMission | undefined, palette: MissionPalette, room: number, earlier: boolean): Segment[] {
+export function idleText(last: LastMission | undefined, palette: MissionPalette, room: number, earlier: boolean): Segment[] {
   if (last === undefined || last.title === "") {
     return [{ text: "  ", fg: palette.muted }, { text: truncateCells(earlier ? idleHint : "add lit to a prompt to start", room - 2), fg: earlier ? palette.accent : palette.muted }];
   }
@@ -269,14 +271,16 @@ function trackRow(view: MissionView, frame: MotionFrame, palette: MissionPalette
   return fitLine(trackPills(view, frame, palette, true), width, palette);
 }
 
-function chipSegments(chip: SkillChip, shimmer: ChipShimmer | undefined, palette: MissionPalette, rainbow?: Rainbow): Segment[] {
+export function chipSegments(chip: SkillChip, shimmer: ChipShimmer | undefined, palette: MissionPalette, rainbow?: Rainbow): Segment[] {
   const text = ` ${chip.name} `;
   if (rainbow !== undefined && chip.current && isRainbowSkill(chip.name)) return rainbowPill(text, rainbow, 180);
-  if (!chip.current) return [{ text, fg: palette.muted, ...(palette.element === undefined ? {} : { bg: palette.element }) }];
+  const quiet = palette.fillFrom === undefined ? palette.element : gaugeTrack;
+  if (!chip.current) return [{ text, fg: palette.muted, ...(quiet === undefined ? {} : { bg: quiet }) }];
   const sweep = shimmer?.names.includes(chip.name) === true ? shimmer.sweep : -1;
-  if (sweep < 0) return [{ text, fg: palette.onFill, bg: palette.fill, bold: true }];
+  const from = palette.fillFrom ?? palette.fill;
+  if (sweep < 0 && from === palette.fill) return [{ text, fg: palette.onFill, bg: palette.fill, bold: true }];
   const chars = [...text];
-  return chars.map((char, index) => ({ text: char, fg: palette.onFill, bg: shine(palette.fill, palette, index / (chars.length - 1), sweep, 0.3), bold: true }));
+  return chars.map((char, index) => ({ text: char, fg: palette.onFill, bg: shine(mixHex(from, palette.fill, index / (chars.length - 1)), palette, index / (chars.length - 1), sweep, 0.3), bold: true }));
 }
 
 /**
@@ -330,6 +334,8 @@ export type CardInputs = {
   readonly threads?: readonly ThreadRow[];
   /** Rows to keep under the skill row while lanes are live, so the card never shrinks between repaints. */
   readonly reserve?: number;
+  /** Rows of the whole window; the card gives up a blank row in a short one. */
+  readonly rows?: number;
   /** False under reduced motion: pulses hold one steady frame. */
   readonly motion?: boolean;
   /** Present while lit-adhd or lit-rewind runs: the colour cycle for the border, the LIT word and the gauges. */
@@ -345,7 +351,7 @@ export type CardInputs = {
 };
 
 /** The longest run of rule in the top border, split into the five review lanes, each in its lane's colour. */
-function laneRule(top: Line, reports: LaneReports, palette: MissionPalette): Line {
+export function laneRule(top: Line, reports: LaneReports, palette: MissionPalette): Line {
   let at = -1;
   top.forEach((segment, index) => {
     if (/^─+$/u.test(segment.text) && (at < 0 || segment.text.length > (top[at]?.text.length ?? 0))) at = index;
@@ -383,13 +389,12 @@ export function statusCard(input: CardInputs, palette: MissionPalette, width: nu
   const trackPalette: MissionPalette = {
     ...palette,
     ...(rainbow === undefined ? {} : { primary: rainbowColor(rainbow.hue + 40), accent: rainbowColor(rainbow.hue + 160) }),
-    ...(scene !== undefined && plain ? { fillFrom: mixHex(palette.fill, stageFrom, 0.75) } : {}),
-    ...(scene?.rounded === true ? { roundGauges: true } : {})
+    ...(scene !== undefined && plain ? { fillFrom: mixHex(palette.fill, stageFrom, 0.75) } : {})
   };
   const inner = Math.max(0, width - 4);
   const mark = turn !== undefined ? turnMark(palette, turn.glow) : rainbow !== undefined ? rewindMark(rainbow) : lanes !== undefined ? reviewMark(lanes, palette) : undefined;
-  const badge = palette.synthwave === true && rainbow === undefined;
-  const pill = !badge ? undefined : scene === undefined ? synthwavePill() : synthwavePill(sunsetBrand, 0.22 * sceneBreath(scene.t));
+  const badge = palette.synthwave === true;
+  const pill = !badge ? undefined : rainbow !== undefined ? rainbowPill(" 🔥 LIT ", rainbow, 90) : scene === undefined ? synthwavePill() : synthwavePill(sunsetBrand, 0.22 * sceneBreath(scene.t));
   const ruledTop = topLine(view, frame, palette, width, border, rest, mark, pill);
   const top = lanes === undefined ? ruledTop : laneRule(ruledTop, lanes, palette);
   const threadRows = input.threads === undefined ? [] : threadLines(input.threads, trackPalette, inner, {
@@ -421,11 +426,12 @@ export function statusCard(input: CardInputs, palette: MissionPalette, width: nu
   const edge = (line: Line, water: boolean): Line => (neon ? neonRow(line, border, water, light) : line);
   const [left, right] = neon ? [neonAt(0, false, light), neonAt(width - 1, false, light)] : [border, border];
   const row = (content: Line): Line => (width < 4 ? fitLine([], width, palette) : [{ text: "│ ", fg: left }, ...content, { text: " │", fg: right }]);
-  return [
+  const card = [
     edge(rainbow === undefined ? top : top.flatMap((segment) => (segment.text === "LIT" ? rainbowPill("LIT", rainbow, 90) : [segment])), false),
     ...rows.map(row),
     edge(rainbow === undefined ? bottom : bottom.flatMap((segment) => (segment.text.startsWith("ctx ") ? rainbowText(segment.text, rainbow, 120) : [segment])), true)
   ];
+  return card.map((line) => [...roundPills(line, palette)]);
 }
 
 export type BandCard = { readonly title: string; readonly border: string; readonly rows: readonly Line[] };

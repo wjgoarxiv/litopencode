@@ -50,7 +50,6 @@ export async function promptOutputStyle(existing: string, promptMode: Permission
   if (!asksOutputStyle(promptMode, dryRun)) return existing;
 
   const defaultIndex = Math.max(0, outputStyleOptions.findIndex((opt) => opt.id === existing));
-  cards?.next();
   const reader = createPromptReader(cards);
   try {
     const index = await chooseIndex(reader, "Choose an output style for LitOpenCode responses.", outputStyleOptions, defaultIndex, {
@@ -148,6 +147,9 @@ async function chooseIndex(
   throw new Error("Invalid selection: " + answer);
 }
 
+/** The cards of a whole model choice: provider, model and effort for both roles, then the route. */
+export const modelChoiceCards = 7;
+
 export function shouldPromptForModel(
   mode: ModelPromptMode,
   selection: InstallModelSelection | undefined,
@@ -174,7 +176,6 @@ export async function promptPermissionMode(
 ): Promise<InstallPermissionChoice> {
   if (!shouldPromptForPermissions(mode, selected, dryRun)) return { mode: selected, explicit: selected !== "safe" };
 
-  cards?.next();
   const reader = createPromptReader(cards);
   try {
     const index = await chooseIndex(reader, "Choose LitOpenCode permission behavior.", permissionOptions, 0, {
@@ -358,6 +359,8 @@ async function pickRoute(
   preferred: InstallModelRoute | undefined,
   hostModels: HostModelList
 ): Promise<InstallModelRoute> {
+  // Only the menu's models have an effort to ask about.
+  if (choice.kind !== "menu") reader.cards?.skip(1);
   if (choice.kind === "menu") return chooseRoute(reader, title, role, choice.provider, defaultIndex, preferred);
   if (choice.kind === "custom") return chooseCustomRoute(reader, title, role, choice.provider, hostModels, preferred);
   return typeRoute(reader, role, hostModels);
@@ -471,7 +474,6 @@ export async function promptModelSelection(
   }
 
   const preferredSelection = mode === "auto" ? currentSelection : undefined;
-  cards?.next();
   const reader = createPromptReader(cards);
   try {
     const existing = classification.class === "managed_legacy"
@@ -520,7 +522,7 @@ export async function promptModelSelection(
     if (cards !== undefined) {
       await cards.proceed({
         title: "Model route",
-        note: "Nothing is written yet; Enter keeps this route and goes on.",
+        note: "Enter keeps this route and goes on; nothing is written before the install starts.",
         fields: modelRouteFields(chosen, homePath(configPath), notes),
         done: routeLabel(chosen) + (chosen.helper === undefined ? "" : " + " + routeLabel(chosen.helper))
       });

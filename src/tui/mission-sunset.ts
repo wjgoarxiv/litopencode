@@ -9,8 +9,6 @@ import { cellWidth, type Line, type Segment } from "./mission-text.ts";
 export type Scene = {
   /** Seconds on the scene's clock while the turn runs; absent while it holds still. */
   readonly t?: number;
-  /** The terminal draws U+E0B6 and U+E0B4 itself, so gauges may have round ends. */
-  readonly rounded?: boolean;
 };
 
 /** Slow enough for a terminal over a network, fast enough to drift smoothly. */
@@ -40,11 +38,6 @@ const amber: SkyColors = {
 export const sunsetBrand = ["#ffa033", "#ff6a55", "#ff3388"] as const;
 export const stageFrom = violet;
 const neonStops = ["#ff2d95", violet] as const;
-
-/** Round gauge ends only where the terminal is known to draw them without a patched font. */
-export function roundGauges(env: Readonly<Record<string, string | undefined>>): boolean {
-  return (env.WT_SESSION ?? "") !== "" || env.TERM_PROGRAM === "vscode";
-}
 
 // The terminal pays for every change of colour along a row, so light comes in blocks of four cells and in eight
 // steps: equal neighbours merge into one span and most cells keep their colour from one frame to the next.
@@ -135,11 +128,22 @@ function isFree(cell: Cell | undefined): boolean {
   return cell !== null && cell !== undefined && cell.text === " " && cell.bg === undefined;
 }
 
-/** Where a row's blank tail starts, three cells past its last word. */
-function tailStart(cells: readonly Cell[]): number {
-  let end = cells.length;
-  while (end > 0 && isFree(cells[end - 1])) end -= 1;
-  return end === 0 ? 0 : end + 3;
+// The cells of a row the scene may use, three clear of every word: its blank tail, and a gap between words that
+// is wide enough to read as sky.
+const skyGap = 24;
+function skyCells(cells: readonly Cell[]): boolean[] {
+  const sky = cells.map(() => false);
+  for (let from = 0; from < cells.length; ) {
+    if (!isFree(cells[from])) {
+      from += 1;
+      continue;
+    }
+    let to = from;
+    while (to < cells.length && isFree(cells[to])) to += 1;
+    if (to === cells.length || to - from >= skyGap) for (let x = from === 0 ? 0 : from + 3; x < (to === cells.length ? to : to - 3); x += 1) sky[x] = true;
+    from = to;
+  }
+  return sky;
 }
 
 // How high the sea stands `dx` cells from under the sun: waves travel outward, brightest on the sun's path.
@@ -185,13 +189,13 @@ export function paintSky(rows: readonly Line[], inner: number, options: SkyOptio
   const colors = options.turn === true ? amber : sunset;
   const shade = (hex: string): string => (options.dim ? step(hex, faint, 0.6) : hex);
   const grids = rows.map(toCells);
-  const tails = grids.map(tailStart);
+  const skies = grids.map(skyCells);
   const last = grids.length - 1;
-  const roomFor = (row: number): boolean => (tails[row] ?? Infinity) <= at - 2 && at + sunWidth + 2 <= inner;
+  const roomFor = (row: number): boolean => at + sunWidth + 2 <= inner && Array.from({ length: sunWidth + 4 }, (_, x) => skies[row]?.[at - 2 + x]).every((free) => free === true);
   let sun = 0;
   if (inner >= sunMinimum) while (sun < Math.min(3, grids.length) && roomFor(last - sun)) sun += 1;
   const put = (row: number, x: number, cell: Cell): void => {
-    if (x >= (tails[row] ?? Infinity) && x < inner) (grids[row] as Cell[])[x] = cell;
+    if (skies[row]?.[x] === true) (grids[row] as Cell[])[x] = cell;
   };
   if (sun > 0) {
     for (const [sky, dx] of stars) {
@@ -208,7 +212,7 @@ export function paintSky(rows: readonly Line[], inner: number, options: SkyOptio
   }
   if (last >= 0 && rainbow === undefined && (t !== undefined || sun > 0)) {
     const middle = at + sunWidth / 2;
-    for (let x = tails[last] ?? inner; x < inner; x += 1) {
+    for (let x = 0; x < inner; x += 1) {
       const wave = seaCell(x - middle, s, colors.sea);
       if (wave !== null) put(last, x, { ...wave, fg: shade(wave.fg) });
     }

@@ -8,6 +8,7 @@
 // from the lit mark the server writes into the user message metadata. It only reads state. OpenTUI and
 // Solid come from the host at run time; tests pass a stand-in runtime.
 import { activationDiscipline } from "../activation-probe.ts";
+import { roundGlyphs } from "../round-glyphs.ts";
 import { readPackageMetadata } from "../cli/json.ts";
 import { micro, supportsMarkGlyphs } from "../lit-mark.ts";
 import { readInstalledVersions, restartVersion } from "../restart-notice.ts";
@@ -32,10 +33,11 @@ import {
   type MissionStateSource
 } from "../tui/mission-source.ts";
 import { chipShimmer, idleChipMotion, planChipMotion, type ChipMotion } from "../tui/mission-skills.ts";
-import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "../tui/mission-band.ts";
+import { bandCard, readBandOptions, readNotifyOptions } from "../tui/mission-band.ts";
+import { missionCard } from "../tui/mission-card.ts";
 import { activeSkillLook, turnGlow, waitingOnYou } from "../tui/mission-looks.ts";
 import { rainbowActive, rainbowAllowed, rainbowAt, rainbowShows, rainbowTickMs } from "../tui/mission-rainbow.ts";
-import { roundGauges, sceneTickMs, type Scene } from "../tui/mission-sunset.ts";
+import { sceneTickMs, type Scene } from "../tui/mission-sunset.ts";
 import { threadLineCount, threadsOf } from "../tui/mission-threads.ts";
 import { homeLine, missionPanel, paletteFromTheme, panelWidth, synthwaveBadgeAllowed, type LastMission, type Line, type MissionPalette } from "../tui/mission-text.ts";
 import { createRuntimePaths } from "../state.ts";
@@ -198,7 +200,7 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
 
   const palette = (): MissionPalette => {
     const base = paletteFromV2Theme(context.theme, context.themeMode);
-    return synthwaveBadgeAllowed(process.env, context.themeMode) ? { ...base, synthwave: true } : base;
+    return synthwaveBadgeAllowed(process.env, context.themeMode) ? { ...base, synthwave: true, round: roundGlyphs() } : base;
   };
 
   function span(segment: Line[number]): unknown {
@@ -221,8 +223,12 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     return typeof parent === "string" && parent !== "" ? parent : undefined;
   }
 
+  function size(): { readonly width: number; readonly height?: number } {
+    return ui.useTerminalDimensions?.()() ?? { width: defaultWidth };
+  }
+
   function width(): number {
-    return ui.useTerminalDimensions?.()().width ?? defaultWidth;
+    return size().width;
   }
 
   function rainbowOn(entry: Entry, now: number): boolean {
@@ -243,7 +249,7 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
 
   function sceneFor(entry: Entry, now: number, colors: MissionPalette): Scene | undefined {
     if (colors.synthwave !== true) return undefined;
-    return { rounded: roundGauges(process.env), ...(sceneMoves(entry, now) ? { t: sceneClock() / 1000 } : {}) };
+    return sceneMoves(entry, now) ? { t: sceneClock() / 1000 } : {};
   }
 
   // One timer for the band: the scene's tick while a turn runs, the slower one for the other looks, none at rest.
@@ -481,20 +487,21 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     return entry === undefined ? undefined : { ...entry, frame: sampleMotion(entry.motion, now), now };
   }
 
-  function statusCardRows(sessionID: string, inLane: boolean, columns: number): readonly unknown[] | undefined {
+  function statusCardRows(sessionID: string, inLane: boolean, window: ReturnType<typeof size>): readonly unknown[] | undefined {
     const current = snapshot(sessionID);
     if (current === undefined) return undefined;
     const colors = palette();
-    const cells = columns - 2;
+    const cells = window.width - 2;
     const scene = sceneFor(current, current.now, colors);
     const shimmer = chipShimmer(current.chipMotion, current.now);
-    const lines = statusCard({
+    const lines = missionCard({
       view: current.view,
       frame: current.frame,
       chips: current.card.chips,
       busy: current.card.busy,
       motion: motionEnabled,
       reserve: current.reserve,
+      ...(window.height === undefined ? {} : { rows: window.height }),
       ...(current.card.threads === undefined ? {} : { threads: current.card.threads }),
       ...(current.card.earlier === true ? { earlier: true } : {}),
       ...(current.waiting ? { turn: { glow: turnGlow(current.now, colorAllowed) } } : {}),
@@ -613,7 +620,7 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
     releases.push(context.ui.slot({
       append: "app",
       render() {
-        const columns = width;
+        const dimensions = size;
         return () => {
           const route = context.ui.router?.current();
           const sessionID = route?.type === "session" ? route.sessionID : undefined;
@@ -621,7 +628,7 @@ export async function setupLitOpenCodeTui(context: TuiContextLike, runtime?: Tui
           const parent = parentOf(sessionID);
           const target = parent ?? sessionID;
           track(target);
-          const rows = statusCardRows(target, parent !== undefined, columns());
+          const rows = statusCardRows(target, parent !== undefined, dimensions());
           if (rows === undefined) return null;
           return ui.jsx("box", {
             flexDirection: "column",

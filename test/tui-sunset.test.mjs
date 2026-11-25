@@ -7,7 +7,7 @@ import { statusCard } from "../src/tui/mission-band.ts";
 import { buildMissionView } from "../src/tui/mission-model.ts";
 import { idleMotion, planMotion, restingFrameFor, sampleMotion } from "../src/tui/mission-motion.ts";
 import { rainbowAt, relativeLuminance } from "../src/tui/mission-rainbow.ts";
-import { paintSky, roundGauges, sceneTickMs, sunColumn, sunWidth } from "../src/tui/mission-sunset.ts";
+import { paintSky, sceneTickMs, sunColumn, sunWidth } from "../src/tui/mission-sunset.ts";
 import { cellWidth, lineWidth, paletteFromTheme, progressBar, synthwavePill } from "../src/tui/mission-text.ts";
 import { setupLitOpenCodeTui } from "../src/v2/tui.ts";
 
@@ -142,22 +142,19 @@ test("the brand pill runs orange to pink and the running stage violet to the acc
   }
 });
 
-test("gauges get round ends only where the terminal draws them, in the same cells", () => {
-  assert.equal(roundGauges({ WT_SESSION: "x" }), true);
-  assert.equal(roundGauges({ TERM_PROGRAM: "vscode" }), true);
-  for (const env of [{}, { WT_SESSION: "" }, { TERM_PROGRAM: "Apple_Terminal" }, { TERM_PROGRAM: "tmux" }]) assert.equal(roundGauges(env), false);
+test("gauges get round ends only where the caps are drawn, in the same cells", () => {
   for (const cellsWide of [2, 8, 16]) {
     for (let ratio = 0; ratio <= 1; ratio += 0.1) {
-      const bar = progressBar(ratio, cellsWide, { ...palette, roundGauges: true });
+      const bar = progressBar(ratio, cellsWide, { ...palette, round: true });
       assert.equal(lineWidth(bar), cellsWide);
-      assert.match(text(bar), /^ *$/u);
+      assert.match(text(bar), /^\ue0b6 *\ue0b4$/u);
     }
   }
   for (const width of [80, 120, 160]) {
-    const lines = draw(scenes.lanes, width, { t: 1, rounded: true });
-    assert.ok(lines.some((line) => / {8} 1\/3/u.test(text(line))), "a lane's brackets become its round ends");
+    const lines = draw(scenes.lanes, width, { t: 1 }, { ...palette, round: true });
+    assert.ok(lines.some((line) => /\ue0b6 {8}\ue0b4 1\/3/u.test(text(line))), "a lane's brackets become its round ends");
     for (const line of lines) assert.equal(lineWidth(line), width);
-    assert.ok(!draw(scenes.lanes, width, { t: 1 }).some((line) => /[]/u.test(text(line))));
+    assert.ok(!draw(scenes.lanes, width, { t: 1 }).some((line) => /[\ue0b4\ue0b6]/u.test(text(line))));
   }
 });
 
@@ -189,6 +186,7 @@ test("few cells change between two frames, so the terminal gets a light stream",
 });
 
 // The OpenCode 2 host, with a stand-in runtime and recorded intervals.
+process.env.LITOPENCODE_GLYPHS = "basic";
 async function host({ env = {}, status = "idle", options = {}, themeMode = "dark", motion = true }, run) {
   const saved = { COLORTERM: process.env.COLORTERM, NO_COLOR: process.env.NO_COLOR, TERM: process.env.TERM };
   const apply = (values) => { for (const [key, value] of Object.entries(values)) if (value === undefined) delete process.env[key]; else process.env[key] = value; };

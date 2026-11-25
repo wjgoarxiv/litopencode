@@ -127,6 +127,20 @@ export type ThreadDrawOptions = {
   readonly gaugeColor?: (index: number) => string;
 };
 
+/** A thin rail for work without a count: a light runs along it while it works, and it rests otherwise. */
+export function rail(row: ThreadRow, cells: number, options: { readonly now: number; readonly motion: boolean }, ink: string, palette: MissionPalette): Segment[] {
+  const light = row.status === "working" ? (options.motion ? Math.floor(options.now / 250) % (cells + 2) : 2) : -9;
+  const out: Segment[] = [];
+  for (let x = 0; x < cells; x += 1) {
+    const near = x === light || x === light - 1;
+    const fg = near || row.status === "done" ? ink : palette.borderSubtle;
+    const last = out[out.length - 1];
+    if (last !== undefined && last.fg === fg) out[out.length - 1] = { ...last, text: `${last.text}━` };
+    else out.push({ text: "━", fg });
+  }
+  return out;
+}
+
 function rowLine(row: ThreadRow, index: number, last: boolean, palette: MissionPalette, width: number, options: ThreadDrawOptions): Line {
   const branch: Segment = { text: last ? "└─ " : "├─ ", fg: palette.borderSubtle };
   const word: Segment = { text: statusWords[row.status].padEnd(statusWordCells), fg: statusColor(row.status, palette), bold: row.status === "working" };
@@ -135,14 +149,14 @@ function rowLine(row: ThreadRow, index: number, last: boolean, palette: MissionP
   const real = threadGauge(row.done, row.total, 8);
   const trailing = (room: number): Segment[] => {
     if (real !== "" && cellWidth(real) <= room) {
-      if (palette.roundGauges !== true) return [{ text: real, fg: gaugeColor }];
+      if (palette.round !== true) return [{ text: real, fg: gaugeColor }];
       const bar = real.slice(0, real.indexOf("]") + 1);
       const full = bar.split("▉").length - 1;
       // The brackets' cells become the round ends.
       return [...roundGauge([...bar].map((_, cell) => ((full > 0 && cell <= full) || full === bar.length - 2 ? gaugeColor : gaugeTrack))), { text: real.slice(bar.length), fg: gaugeColor }];
     }
     const facts = truncateCells(row.facts, Math.max(0, room - (row.status === "working" ? 6 : 0)));
-    const pulse: Segment[] = row.status === "working" ? [{ text: ` ${pulseText(options.now, options.motion)}`, fg: gaugeColor }] : [];
+    const pulse: Segment[] = row.status !== "working" ? [] : palette.round === true ? [{ text: " ", fg: gaugeColor }, ...rail(row, 5, options, gaugeColor, palette)] : [{ text: ` ${pulseText(options.now, options.motion)}`, fg: gaugeColor }];
     return [{ text: facts, fg: palette.muted }, ...pulse];
   };
   const fixed = lineWidth([branch, gap, word, gap]);

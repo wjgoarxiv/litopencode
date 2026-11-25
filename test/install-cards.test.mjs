@@ -1,55 +1,9 @@
 import assert from "node:assert/strict";
-import { EventEmitter } from "node:events";
-import { PassThrough } from "node:stream";
 import { test } from "node:test";
-import { cardsTerminal, createInstallCards } from "../src/cli/install-cards.ts";
+import { cardsTerminal } from "../src/cli/install-cards.ts";
+import { fakeTerminal, keys, pause, strip, utf8 } from "../test-support/card-terminal.mjs";
 import { cellWidth } from "../src/tui/mission-text.ts";
 
-const utf8 = { LANG: "en_US.UTF-8", TERM: "xterm-256color", COLORTERM: "truecolor" };
-const strip = (text) => text.replace(/\u001b\[[0-9;?]*[A-Za-z]/gu, "");
-const keys = { up: "\u001b[A", down: "\u001b[B", right: "\u001b[C", left: "\u001b[D", pageDown: "\u001b[6~", end: "\u001b[F", enter: "\r", tab: "\t", back: "\u007f", esc: "\u001b", ctrlC: "\u0003", ctrlD: "\u0004", ctrlU: "\u0015", ctrlZ: "\u001a" };
-const pause = (ms = 15) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** A terminal that keeps what is on screen: cursor up, erase below, erase line and plain rows are all the cards use. */
-function fakeTerminal({ cols = 100, rows = 40, env = utf8, depth = 24, now, resizes = false } = {}) {
-  const stdin = new PassThrough();
-  const raw = [];
-  Object.assign(stdin, { isTTY: true, setRawMode: (mode) => raw.push(mode) });
-  const stdout = new EventEmitter();
-  const screen = [""];
-  let at = 0;
-  let written = "";
-  Object.assign(stdout, {
-    isTTY: true, columns: cols, rows, getColorDepth: () => depth,
-    write(text) {
-      written += text;
-      for (const part of text.split(/(\u001b\[\d*A|\u001b\[J|\u001b\[K|\r|\n)/u)) {
-        const rise = /^\u001b\[(\d*)A$/u.exec(part);
-        if (rise) at -= Number(rise[1] || 1);
-        else if (part === "\u001b[J") screen.length = at;
-        else if (part === "\n") at += 1;
-        else if (part !== "" && part !== "\r" && part !== "\u001b[K") screen[at] = part;
-        // This screen does not re-wrap old rows as a real one may, so after a resize the cursor stops at the top.
-        if (resizes) at = Math.max(0, at);
-        assert.ok(at >= 0, "the cursor never leaves the top");
-        while (screen.length <= at) screen.push("");
-      }
-      return true;
-    }
-  });
-  const proc = Object.assign(new EventEmitter(), { pid: 4242, platform: "darwin", kills: [], kill(pid, signal) { this.kills.push([pid, signal]); return true; } });
-  const cards = createInstallCards({ stdin, stdout, env, animate: false, settleMs: 1, proc, ...(now === undefined ? {} : { now }) });
-  return {
-    cards, stdin, stdout, proc, raw,
-    written: () => written,
-    text: () => screen.map(strip).join("\n"),
-    lines: () => screen.map(strip),
-    async press(...presses) {
-      await pause();
-      for (const key of presses) { stdin.write(key); await pause(key === keys.esc ? 560 : 8); }
-    }
-  };
-}
 const models = (count) => Array.from({ length: count }, (_, index) => ({ label: `team-${String(index % 20).padStart(2, "0")}/coder-${String(100 + index)}b` }));
 const list = { title: "Permissions", note: "Sets how much the agents may do.", choices: [{ label: "Safe", detail: "Do not relax" }, { label: "Balanced", detail: "Routine work runs" }, { label: "YOLO", detail: "lit-plan remains deny-only" }], initial: 0 };
 const yesNo = { title: "LitFamily block", note: "Adds the block; No leaves the file alone.", initial: true, yes: "add", no: "off" };
@@ -65,7 +19,8 @@ test("cards need two TTYs, raw mode, room, and no CI, dumb terminal or prompt ho
   assert.equal(ok({ stdout: { ...stream, isTTY: undefined } }), false);
   for (const env of [{ CI: "" }, { CI: "1" }, { TERM: "dumb" }, { LITOPENCODE_AGENT_FILE_PROMPT: "0" }]) assert.equal(ok({ env: { ...utf8, ...env } }), false, JSON.stringify(env));
   assert.equal(ok({ stdout: { ...stream, columns: 39 } }), false);
-  assert.equal(ok({ stdout: { ...stream, rows: 15 } }), false);
+  assert.equal(ok({ stdout: { ...stream, rows: 11 } }), false);
+  assert.equal(ok({ stdout: { ...stream, rows: 12 } }), true);
   assert.equal(ok({ stdout: { isTTY: true } }), true, "an unknown size counts as 80 by 24");
 });
 
@@ -78,7 +33,7 @@ test("a short list: arrows, j and k wrap, a digit jumps without answering, Enter
     const answer = term.cards.choose(list);
     await term.press(...presses);
     assert.equal(await answer, want, JSON.stringify(presses));
-    assert.deepEqual(term.lines().filter((line) => line !== ""), [` ✓ Permissions             ${list.choices[want].label}`], "the card folds to one line");
+    assert.deepEqual(term.lines().filter((line) => line !== ""), [` ✓ Permissions          ${list.choices[want].label}`], "the card folds to one line");
   }
 });
 
@@ -237,7 +192,7 @@ test("the look-over card keeps its warnings after it folds, and prints facts tha
   const answer = term.cards.proceed({ title: "Model route", note: "Nothing is written yet.", fields, done: "gpt-6-astra · xhigh" });
   await term.press("x", keys.enter);
   await answer;
-  assert.deepEqual(term.lines().filter((line) => line !== ""), [" ✓ Model route             gpt-6-astra · xhigh", " ! OPENAI_API_KEY is not set; the route is written anyway"]);
+  assert.deepEqual(term.lines().filter((line) => line !== ""), [" ✓ Model route          gpt-6-astra · xhigh", " ! OPENAI_API_KEY is not set; the route is written anyway"]);
   const small = fakeTerminal({ cols: 40, rows: 16 });
   const many = [...fields, ...Array.from({ length: 6 }, (_, index) => ({ label: `Note ${index}`, value: "OpenCode's model list could not be read, so it was not checked", mark: "warn" }))];
   const printed = small.cards.proceed({ title: "Model route", note: "Nothing is written yet.", fields: many, done: "ok" });
@@ -255,7 +210,7 @@ test("steps spin, fold to one line when done, and stay in view with the failed o
   assert.equal(await term.cards.runStep(0, async () => { assert.match(term.text(), /⠋ Resolve package[\s\S]*· Verify install/u); return 7; }), 7);
   await term.cards.runStep(1, async () => {});
   term.cards.finishSteps("Install steps", "2 of 2 checked");
-  assert.deepEqual(term.lines().filter((line) => line !== ""), [" ✓ Install steps           2 of 2 checked"]);
+  assert.deepEqual(term.lines().filter((line) => line !== ""), [" ✓ Install steps        2 of 2 checked"]);
   assert.deepEqual(term.raw, [true, false]);
 
   const broken = fakeTerminal();
@@ -295,8 +250,8 @@ test("every card fits 40 to 120 columns and short windows, in every colour depth
     (cards) => cards.proceed({ title: "Model route", note: "Nothing is written yet.", fields: [{ label: "Writes", value: "/a/very/long/path/without/any/space/in/it/at/all/opencode/litopencode.json" }], done: long.label }),
     (cards) => cards.type({ title: "Lead model", note: "Type the model as provider/model.", example: "my-gateway/deepseek-chat", attempts: 3, exhausted: "no", read: () => ({ problem: "OpenCode does not list that model at all." }) })
   ];
-  for (const cols of [40, 60, 80, 120]) {
-    for (const rows of [16, 24, 50]) {
+  for (const cols of [40, 60, 80, 100, 120]) {
+    for (const rows of [12, 16, 24, 60]) {
       for (const env of [utf8, { LC_ALL: "C", TERM: "xterm" }]) {
         for (const make of makers) {
           const term = fakeTerminal({ cols, rows, env });
@@ -344,7 +299,7 @@ test("sixteen colours mark the row in reverse video, and a cut answer stays ASCI
   await term.press(keys.enter);
   assert.equal(await answer, 0);
   assert.match(term.written(), /\u001b\[1;7m[^\u001b]*gateway/u);
-  assert.match(term.text(), /ok Permissions {2}gateway\/a-model[^\n]*~$/mu);
+  assert.match(term.text(), /ok Permissions gateway\/a-model[^\n]*~$/mu);
   assert.doesNotMatch(term.text(), /[^\x20-\x7e\n]/u);
 });
 
@@ -373,13 +328,11 @@ test("a narrower window redraws the card at its new width", async () => {
 test("the tag counts the questions of this run", async () => {
   const term = fakeTerminal();
   term.cards.expect(2);
-  term.cards.next();
   const first = term.cards.choose(list);
   await pause();
   assert.match(term.text(), /LIT 1\/2/u);
   await term.press(keys.enter);
   await first;
-  term.cards.next();
   const second = term.cards.confirm(yesNo);
   await pause();
   assert.match(term.text(), /LIT 2\/2/u);

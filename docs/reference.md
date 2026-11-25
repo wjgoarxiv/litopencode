@@ -139,7 +139,7 @@ only.
 installs skip automatic prompts; explicit prompt flags still work. Dumb terminals
 and non-UTF-8 locales use the plain `LIT` wordmark without ANSI decoration.
 
-In a terminal of at least 40 columns and 16 rows the questions are cards. The marked row or button is the
+In a terminal of at least 40 columns and 12 rows the questions are cards. The marked row or button is the
 default (or the saved choice, marked `current`) and Enter takes whatever is highlighted:
 
 | Question | Keys |
@@ -148,6 +148,11 @@ default (or the saved choice, marked `current`) and Enter takes whatever is high
 | A longer list, such as a provider with hundreds of models | Type to filter (every word must match), Up, Down, PgUp and PgDn move, Esc or Ctrl+U clears the filter |
 | Yes or no | `y` or `n` answers at once, Left, Right or Tab switches |
 | `Type provider/model` | Type the id; three tries, then the install stops and nothing is written |
+
+The tag on each card counts the questions this run asks (`LIT 3/10`). In truecolor, on a dark background and in UTF-8 the
+pills, the highlighted row and the buttons end in round caps by the same rule as the status card
+(`LITOPENCODE_GLYPHS`, see below); otherwise they are square in the same cells. A failed step leaves the work card on
+screen and adds an `INSTALL STOPPED` card with the stage, the reason and the next action.
 
 Each answered card folds to one line, and warnings stay on screen. Ctrl+C or Ctrl+D stops with exit 1; before the
 install steps start nothing is written apart from the `ultra` rewrite above. `NO_COLOR` draws the same cards without colour, a non-UTF-8 locale draws
@@ -613,8 +618,23 @@ What it draws:
   running tool part's name and start time. Its input (commands, paths, arguments) is never read or
   shown. It appears only while the turn runs.
 - A band: a status card along the bottom of the screen (OpenCode's `app_bottom` slot), under the
-  session and the sidebar alike. It is on screen for the whole session, lit or not, and keeps the
-  same four rows idle or working, so the prompt never moves:
+  session and the sidebar alike. It is on screen for the whole session, lit or not. On a dark
+  theme in a truecolor terminal (no `NO_COLOR`), at 74 columns or wider, it is drawn in full
+  (`src/tui/mission-card.ts`); everywhere else it is the plain card, which keeps the same four rows idle or
+  working. The full card:
+  - top edge: the LIT pill, the discipline, and the state word with its mark after it (`WORK ●`, `IDLE ○`,
+    `COMPLETE ✓`, `REVIEW 2/5 ◇`, `YOUR TURN ◆`);
+  - row one: the stage map `interview – ━━ plan ✓ ━━ WORK ── review · ── done ·`, with the running lanes and the
+    elapsed time at the right edge;
+  - row two: `└` and the task count with its bar, the goal's criteria, the next item or the open warning, and the
+    live step at the right edge. At rest the next item moves to a row of its own; an idle session names the last goal;
+  - then the running job with its own bar, the fork `┬ 2 lanes in parallel` and up to three lanes (`+N more` after
+    that), the skill chips, and one blank row when the sun would otherwise be short and the window has 24 rows or more;
+  - bottom edge: the context use with a short bar, the plan limits where OpenCode reports them, and the branch. `restart to
+    <version>` comes first when an update waits.
+
+  It is five or six rows at rest and nine at most, and takes a taller form only while work runs. The plain card
+  keeps the rows below:
   - the top border carries `🔥 LIT · <discipline>` on the left and the phase on the right
     (`● WORK`, `⚑ review blocked`, `✓ COMPLETE`, or `○ IDLE` before any lit turn and whenever the
     session is not running a turn, read from OpenCode's own `session.status`; at rest no step is lit);
@@ -662,18 +682,23 @@ What it draws:
     published release has no signal on the card, so it raises no burst;
   - on a dark theme with a truecolor terminal (`COLORTERM=truecolor` or `24bit`) and `NO_COLOR` unset, a
     sunset sits behind the words (`src/tui/mission-sunset.ts`): a half-sunk sun, stars, a shooting star every
-    9 s and a sea of `~ - .` on the last row over the skills or the lanes. It is drawn only in the blank end of
-    the last three rows, three cells past the last word, so no word, row or width changes. The sun stands at one
-    place and is as tall as the free rows let it be: three rows beside lanes, two on the four-row card, one when
-    the track is full, and none on a narrow card, behind a long last row or during the completion moment. The
+    9 s and a sea of `~ - .` on the last row over the skills or the lanes. It is drawn only in blank cells of
+    the last three rows, three cells clear of every word, so no word, row or width changes. The sun stands at one
+    place, three rows tall in a window of 24 rows or more, and shorter only where words need its rows; it is absent
+    behind a long last row and during the completion moment. The
     border runs from pink through violet to the accent with sunset light on the rule under the sun, the LIT pill
     from orange to pink and the running stage from violet to the accent; a warning, a finished goal, the amber
     look, the review lanes and the rewind look keep their own border. The sea moves six times a second while the
     session's turn runs and the glow of the sun, the stars and the rule three times, in blocks of four cells, so few
     cells change. With no turn running, the amber and rewind looks move it four times a second. It runs on the band's one timer, which
-    reads no session state, and stands still with no timer at rest and under `motion: false`. Other terminals and light
-    themes keep the plain card. In Windows Terminal (`WT_SESSION`) and the VS Code terminal
-    (`TERM_PROGRAM=vscode`), which draw the glyphs themselves, the card's gauges get round ends in the same cells;
+    reads no session state, and stands still with no timer at rest and under `motion: false`. Other terminals, light
+    themes and windows under 74 columns keep the plain card;
+  - pills, gauges and the bar of a working lane end in round caps (U+E0B6, U+E0B4) in the same cells, on the card, the
+    sidebar panel, the prompt chip and the installer, where the terminal draws them: Windows Terminal (`WT_SESSION`), VS Code, WezTerm
+    and Ghostty (`TERM_PROGRAM`), kitty (`TERM=xterm-kitty` or `KITTY_WINDOW_ID`), or any other terminal, except over
+    SSH, on a machine with an icon font (a file named Nerd Font, found by name in the font folders; no font file is opened).
+    `LITOPENCODE_GLYPHS=round` (or `nerd`) forces the caps and `LITOPENCODE_GLYPHS=basic` forbids them. It is read once when
+    OpenCode starts;
 
   A subagent session shows its parent's card with `· in lane`; the home screen has no band. When the
   card is narrow each row drops its own low-priority parts: the track drops the live step and
@@ -738,7 +763,7 @@ Motion runs on a short frame timer only while a transition plays and stops after
 and pills slide in with ease-out-back, 160 ms each and 60 ms apart; the bar fills in 300 ms; a
 warning row slides in over 220 ms and colours cross-fade in 140 ms; the light sweep takes 400 ms.
 When the map moves forward, the connectors between the old and new stage fill top to bottom 60 ms
-apart and the running pill flashes once. Only the card's sunset, its looks and a working lane's pulse loop, and
+apart and the running pill flashes once. Only the card's sunset, its looks and a working lane's bar or pulse loop, and
 only while they have something to show. The live step changes in place without a
 slide-in, and while a tool runs its elapsed time ticks once a second; a session at rest has no timer
 for either. While a lit session is open the panel re-reads the goal ledger, the bounded work

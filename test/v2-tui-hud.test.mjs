@@ -10,6 +10,7 @@ import { v2StageNotices } from "../src/v2/tui-notices.ts";
 // The OpenCode 2 HUD, driven with a stand-in context and UI runtime. The slots are the ones OpenCode 2
 // publishes (@opencode/plugin SlotMap): the card goes in the app slot under the session, the stage chip next to
 // the ignition line in prompt.footer.status, the home line in home.footer, the panel in sidebar.content.
+process.env.LITOPENCODE_GLYPHS = "basic";
 function runtime(effects = [], columns = 120) {
   return {
     jsx: (type, props) => ({ type, props }),
@@ -120,7 +121,7 @@ test("the card shows on every session, lit or not, and nowhere else", async () =
   assert.equal(band(fake, undefined), "", "the home route has no session, so no card");
   const text = band(fake, "ses_plain");
   assert.match(text, /🔥 LIT +· ready/u);
-  assert.match(text, /○ IDLE/u);
+  assert.match(text, /○ IDLE|IDLE ○/u);
   assert.match(text, /add lit to a prompt to start/u);
   await cleanup();
 });
@@ -131,7 +132,7 @@ test("a lit turn's card names the discipline, its skill chip, the branch and the
   const cleanup = await setupLitOpenCodeTui(fake.context, runtime());
   const text = band(fake, "ses_lit");
   assert.match(text, /🔥 LIT +· lit-task/u);
-  assert.match(text, /○ IDLE/u);
+  assert.match(text, /○ IDLE|IDLE ○/u);
   assert.match(text, /skills\s+lit-task/u);
   assert.match(text, /ctx 8%/u, "42,000 of a 500,000-token window");
   assert.match(text, /⎇ main/u);
@@ -179,7 +180,7 @@ test("a running turn lights the work phase and the live step, and a skill tool c
   const fake = fakeTui({ messages, status: { ses_lit: "running" } });
   const cleanup = await setupLitOpenCodeTui(fake.context, runtime());
   const text = band(fake, "ses_lit");
-  assert.doesNotMatch(text, /○ IDLE/u);
+  assert.doesNotMatch(text, /IDLE/u);
   assert.match(text, /bash · 0:0\d/u);
   assert.match(text, /lit-plan/u);
   assert.match(text, /lit-loop/u);
@@ -260,7 +261,7 @@ test("the plan windows show on a Go session's card from the host's usage source,
   assert.doesNotMatch(band(fake, "ses_go"), /5h/u, "nothing before the first answer");
   await settle();
   assert.equal(calls, 1);
-  assert.match(band(fake, "ses_go"), /5h 42% · 1w 18% · ⟳/u);
+  assert.match(band(fake, "ses_go"), /5h 42% · 1w 18% · (?:⟳|⎇)/u);
   assert.doesNotMatch(band(fake, "ses_other"), /5h|1w/u, "another provider's session has no such allowance");
   await cleanup();
 });

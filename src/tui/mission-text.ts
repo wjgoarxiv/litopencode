@@ -35,8 +35,8 @@ export type MissionPalette = {
   readonly synthwave?: boolean;
   /** The running stage's pill runs from this colour to its fill; set only on the card while its scene shows. */
   readonly fillFrom?: string;
-  /** Gauges get round ends (U+E0B6, U+E0B4) on a smooth track; set only where the terminal draws them. */
-  readonly roundGauges?: boolean;
+  /** Pills and gauges get round ends (U+E0B6, U+E0B4): set only with the badge, where the caps are drawn. */
+  readonly round?: boolean;
 };
 
 /**
@@ -246,7 +246,7 @@ export function progressBar(ratio: number, cells: number, palette: MissionPalett
     const position = cells <= 1 ? 0 : index / (cells - 1);
     return shine(gradientAt(stops, position), palette, position, sweep, 0.18);
   };
-  if (palette.roundGauges === true) {
+  if (palette.round === true) {
     return roundGauge(Array.from({ length: cells }, (_, index) => (index < full ? color(index) : index === full ? mixHex(gaugeTrack, color(index), partial / 8) : gaugeTrack)));
   }
   const segments: Segment[] = [];
@@ -266,6 +266,7 @@ export function stageColor(index: number, count: number, palette: MissionPalette
 }
 
 function microBar(ratio: number, palette: MissionPalette, cells = 5): Segment[] {
+  if (palette.round === true) return gauge(ratio, cells, (position) => gradientAt([palette.primary, palette.secondary, palette.accent], position), palette);
   const filled = Math.max(0, Math.min(cells, Math.round(Math.max(0, Math.min(1, ratio)) * cells)));
   const segments: Segment[] = [];
   for (let index = 0; index < cells; index += 1) {
@@ -402,6 +403,43 @@ export function synthwaveBadgeAllowed(env: Readonly<Record<string, string | unde
   return /^(truecolor|24bit)$/iu.test(env.COLORTERM ?? "") || /direct/iu.test(env.TERM ?? "");
 }
 
+/**
+ * The pills of a finished row with round ends: each run of filled cells that holds a word and starts and ends with
+ * a blank gives those two blanks to the caps, so no row changes width. Without the caps the row stays square.
+ */
+export function roundPills(line: Line, palette: MissionPalette): Line {
+  if (palette.round !== true) return line;
+  const out: Segment[] = [];
+  for (let at = 0; at < line.length; ) {
+    let end = at;
+    while (end < line.length && line[end].bg !== undefined) end += 1;
+    const run = line.slice(at, end);
+    const first = run[0];
+    const last = run[run.length - 1];
+    if (first?.bg === undefined || last?.bg === undefined) {
+      out.push(line[at]);
+      at += 1;
+      continue;
+    }
+    at = end;
+    const words = run.map((segment) => segment.text).join("");
+    if (words.trim() === "" || !words.startsWith(" ") || !words.endsWith(" ") || words.length < 3) {
+      out.push(...run);
+      continue;
+    }
+    const inner = run.length === 1 ? [{ ...first, text: first.text.slice(1, -1) }] : [{ ...first, text: first.text.slice(1) }, ...run.slice(1, -1), { ...last, text: last.text.slice(0, -1) }];
+    out.push({ text: "\ue0b6", fg: first.bg }, ...inner.filter((segment) => segment.text !== ""), { text: "\ue0b4", fg: last.bg });
+  }
+  return out;
+}
+
+/** A gauge of `cells` filled cells: round-ended where the caps are drawn, square-ended otherwise. */
+export function gauge(ratio: number, cells: number, color: (position: number) => string, palette: MissionPalette): Segment[] {
+  const exact = Math.max(0, Math.min(1, ratio)) * cells;
+  const colors = Array.from({ length: cells }, (_, index) => mixHex(gaugeTrack, color(cells <= 1 ? 0 : index / (cells - 1)), Math.round(Math.max(0, Math.min(1, exact - index)) * 8) / 8));
+  return palette.round === true && cells > 1 ? roundGauge(colors) : colors.map((bg) => ({ text: " ", fg: bg, bg }));
+}
+
 export type ChipTier = "full" | "medium" | "tight";
 
 export type ChipGroup = readonly Segment[];
@@ -507,7 +545,7 @@ export function chipLine(view: MissionView, frame: MotionFrame, palette: Mission
     const alpha = frame.chipEnter ? ease.outCubic(seg(frame.t, start, motionTiming.entry)) : 1;
     for (const segment of group) out.push(fade(segment, alpha, palette));
   });
-  return out;
+  return [...roundPills(out, palette)];
 }
 
 // The tiny LIT, drawn as text so each column takes its own colour from the warning-primary-accent ramp.
@@ -763,7 +801,7 @@ export function missionPanel(view: MissionView, frame: MotionFrame, palette: Mis
   });
 
   let lines: Line[] = keys.map((key) => {
-    const row = rows.get(key) ?? [];
+    const row = roundPills(rows.get(key) ?? [], palette);
     const start = rowEntryStart(frame, key);
     if (start === undefined) return row;
     const duration = key.startsWith("warn:") ? motionTiming.noticeIn : motionTiming.entry;

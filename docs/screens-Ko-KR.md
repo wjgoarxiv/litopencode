@@ -10,7 +10,7 @@ LitOpenCode가 화면에 무엇을 출력하는지 미리 볼 수 있도록 그�
 
 **설치할 때 묻는 질문.** 터미널에서 `litopencode install`을 실행하면 질문이 카드로 하나씩 나옵니다. 긴 모델 목록은 카드 안에서 스크롤되고, 글자를 몇 개 입력하면 좁혀집니다. 답한 질문은 위에 한 줄로 접힙니다.
 
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/readme/install-question-dark.webp" /><img src="./assets/readme/install-question-light.webp" width="694" alt="litopencode install을 실행한 터미널 창. 답한 질문 다섯 개가 초록색 체크 표시와 함께 한 줄씩 접혀 있다. 그 아래 LIT 1/4 표시와 Helper model 제목이 붙은 카드에 Spawned and delegated agents run on this model; Enter takes the highlighted row.라고 적혀 있다. Filter 줄에는 coder 1이 입력되어 있고 28 of 260으로 개수가 보인다. 모델 이름 열두 개 가운데 세 번째가 강조되어 있고, 맨 아래에 이동, 선택, 필터 지우기, 중단 키 안내가 있다." /></picture></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/readme/install-question-dark.webp" /><img src="./assets/readme/install-question-light.webp" width="694" alt="litopencode install을 실행한 터미널 창. 답한 질문 다섯 개가 초록색 체크 표시와 함께 한 줄씩 접혀 있다. 그 아래 LIT 5/9 표시와 Helper model 제목이 붙은 카드에 Spawned and delegated agents run on this model; Enter takes the highlighted row.라고 적혀 있다. Filter 줄에는 coder 1이 입력되어 있고 28 of 260으로 개수가 보인다. 모델 이름 열두 개 가운데 세 번째가 강조되어 있고, 맨 아래에 이동, 선택, 필터 지우기, 중단 키 안내가 있다." /></picture></p>
 
 *격리한 셸에서 실제 `litopencode install`을 실행해 캡처했습니다. 제공자와 모델 이름은 그림을 위해 지어낸 것입니다.*
 

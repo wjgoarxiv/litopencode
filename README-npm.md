@@ -63,7 +63,7 @@ The installer's model menu lists every provider OpenCode knows, including one yo
 | `lit` + report or slides | Points you to the deck and document skills, which moved to the separate wjgoarxiv-skills collection. |
 | `/lit-humanizer` | Rewrite stiff English or Korean prose and keep the facts. |
 
-In OpenCode, a small LIT card along the bottom of the screen shows the workflow step, the progress and the tool that is running. On a dark theme in a truecolor terminal it wears a sunset: a sun in a sea that drifts while the agent works and rests when the turn ends.
+In OpenCode, a small LIT card along the bottom of the screen shows the workflow step, the progress and the tool that is running. On a dark theme in a truecolor terminal it has round pills and bars where the terminal can draw them, grows while work runs, and wears a sunset: a sun in a sea that drifts while the agent works and rests when the turn ends.
 
 Each skill is pictured in the [skills gallery on GitHub](https://github.com/wjgoarxiv/litopencode/blob/main/docs/skills.md).
 

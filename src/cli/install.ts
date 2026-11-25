@@ -35,8 +35,8 @@ import {
 import { readJsonObjectIfPresent, readPackageMetadata, readTextIfPresent } from "./json.ts";
 import { renderInstallReport, wrapReceiptLine } from "./install-report.ts";
 import { homePath, type CardSection } from "./install-cards.ts";
-import { renderLitOpenCodeWordmark } from "./install-tui.ts";
-import { asksOutputStyle, promptModelSelection, promptOutputStyle, promptPermissionMode, shouldPromptForModel, shouldPromptForPermissions } from "./model-routing.ts";
+import { cardWordmark, renderLitOpenCodeWordmark } from "./install-tui.ts";
+import { asksOutputStyle, modelChoiceCards, promptModelSelection, promptOutputStyle, promptPermissionMode, shouldPromptForModel, shouldPromptForPermissions } from "./model-routing.ts";
 import { listHostModels, type HostModelList } from "./host-models.ts";
 import { litOpenCodeConfigFileForOpenCodeRoot } from "../state.ts";
 import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } from "./native-skills.ts";
@@ -397,9 +397,8 @@ export async function install(
   const metadata = await readPackageMetadata();
   const cards = dryRun ? undefined : progress?.cards;
   const agentFileInput = { root, version: metadata.version, ...agentFileChoice };
-  cards?.write(renderLitOpenCodeWordmark(pluginSpec(metadata)) + "\n\n");
-  cards?.quietLine(`Installs into ${homePath(path.resolve(root))}. OpenCode is set up only after your answers.`);
-  cards?.write("\n");
+  cards?.banner(cardWordmark(pluginSpec(metadata)));
+  cards?.intro(`Installs into ${homePath(path.resolve(root))}. OpenCode is set up only after your answers.`);
   const retiredNotice = await migrateRetiredEfforts(root, dryRun);
   if (retiredNotice !== undefined) {
     if (cards === undefined) process.stdout.write(retiredNotice + "\n");
@@ -409,8 +408,7 @@ export async function install(
   const classification = await readInstallModelClassification(root);
   const currentModel = await readInstallModelSelection(root);
   const existingOutputStyle = await readExistingOutputStyle(root);
-  cards?.expect([
-    shouldPromptForModel(modelPrompt, modelSelection, dryRun, classification, currentModel),
+  cards?.expect((shouldPromptForModel(modelPrompt, modelSelection, dryRun, classification, currentModel) ? modelChoiceCards : 0) + [
     shouldPromptForPermissions(permissionPrompt, permissionMode, dryRun),
     asksOutputStyle(outputStylePrompt, dryRun),
     (await planAgentFile(agentFileInput)).action === "ask" && shouldAskAgentFile(process.env)
@@ -627,7 +625,8 @@ export async function install(
   await activeProgress?.complete();
   // An existing user is pointed at `extensions check` once when it finds something; nothing changes on its own.
   const needsCheck = await inspectExtensions(root).then((report) => report.needsAction.length > 0, () => false);
-  const notice = extensionsNoticeLines(await previousVersionLeftovers(metadata.version), needsCheck).join("\n");
+  const leftovers = await previousVersionLeftovers(metadata.version);
+  const notice = extensionsNoticeLines(leftovers, needsCheck).join("\n");
   // The same notice text is printed and relayed once per config root; a changed text (a new leftover, a folder
   // that needs a look) is a new notice. An unreadable record shows it again.
   const shownFile = path.join(root, shownNoticesName);
@@ -649,8 +648,10 @@ export async function install(
     const kept = skillBackup.directory === undefined
       ? undefined
       : `kept ${skillBackup.files.length} ${skillBackup.files.length === 1 ? "file" : "files"} you added or changed in skill folders LitOpenCode replaced, in ${homePath(skillBackup.directory)}`;
-    cards.panel(`LitOpenCode ${metadata.version} is ready`, summarySections(report, resolved.target, agentFileStatus, kept));
-    return { exitCode: 0, ...(noticeSeen ? {} : { stdout: notice }) };
+    cards.panel(`LitOpenCode ${metadata.version} is installed`, summarySections(report, resolved.target, agentFileStatus, kept));
+    const [heading, ...lines] = extensionsNoticeLines(leftovers, needsCheck, cards.textWidth);
+    if (!noticeSeen) cards.notice(heading, lines);
+    return { exitCode: 0 };
   }
   const agentFileLine = wrapReceiptLine(agentFileStatus);
   const tail = backupLines + "\n" + (noticeSeen ? "" : notice + "\n\n") + agentFileLine;

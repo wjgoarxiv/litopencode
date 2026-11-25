@@ -12,11 +12,13 @@ import { idleMotion, motionTiming, planMotion, sampleMotion, type MotionState } 
 import { chipBudget, chipLine, homeLine, missionPanel, paletteFromTheme, panelWidth, synthwaveBadgeAllowed, type LastMission, type Line, type MissionPalette } from "./tui/mission-text.ts";
 import { adhdNudgeText, adhdSuggestDue, createLedgerReader, createWorkReader, earlierWorkWindowMs, hasEarlierWork, messageTimes, missionProjectRoot, wayBackDue, readCardInput, readLatestResearchRun, readMissionInput, readThreadSources, type CardInput, type MissionStateSource } from "./tui/mission-source.ts";
 import { chipShimmer, idleChipMotion, planChipMotion, type ChipMotion } from "./tui/mission-skills.ts";
-import { bandCard, readBandOptions, readNotifyOptions, statusCard } from "./tui/mission-band.ts";
+import { bandCard, readBandOptions, readNotifyOptions } from "./tui/mission-band.ts";
+import { missionCard } from "./tui/mission-card.ts";
 import { activeSkillLook, turnGlow, waitingOnYou } from "./tui/mission-looks.ts";
 import { rainbowActive, rainbowAllowed, rainbowAt, rainbowShows, rainbowTickMs } from "./tui/mission-rainbow.ts";
-import { roundGauges, sceneTickMs, type Scene } from "./tui/mission-sunset.ts";
+import { sceneTickMs, type Scene } from "./tui/mission-sunset.ts";
 import { threadLineCount, threadsOf } from "./tui/mission-threads.ts";
+import { roundGlyphs } from "./round-glyphs.ts";
 import { readPackageMetadata } from "./cli/json.ts";
 import { readInstalledVersions, restartVersion } from "./restart-notice.ts";
 
@@ -97,7 +99,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
   const palette = (): MissionPalette => {
     const mode = api.theme.mode();
     const base = paletteFromTheme(api.theme.current as unknown as Record<string, unknown>, mode);
-    return synthwaveBadgeAllowed(process.env, mode) ? { ...base, synthwave: true } : base;
+    return synthwaveBadgeAllowed(process.env, mode) ? { ...base, synthwave: true, round: roundGlyphs() } : base;
   };
 
   // OpenCode keeps the sidebar choice in its KV store under "sidebar" ("auto" or "hide"); a child
@@ -133,7 +135,7 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
 
   function sceneFor(entry: SessionEntry, now: number, colors: MissionPalette): Scene | undefined {
     if (colors.synthwave !== true) return undefined;
-    return { rounded: roundGauges(process.env), ...(sceneMoves(entry, now) ? { t: sceneClock() / 1000 } : {}) };
+    return sceneMoves(entry, now) ? { t: sceneClock() / 1000 } : {};
   }
 
   // One timer for the band: the scene's tick while a turn runs, the slower one for the other looks, none at rest.
@@ -439,16 +441,18 @@ const tui: TuiPlugin = async (api: TuiPluginApi, options) => {
                 const snapshot = current();
                 if (snapshot === undefined) return null;
                 const colors = palette();
-                const width = dimensions().width - 2;
+                const window = dimensions();
+                const width = window.width - 2;
                 const scene = sceneFor(snapshot, snapshot.now, colors);
                 const shimmer = chipShimmer(snapshot.chipMotion, snapshot.now);
-                const lines = statusCard({
+                const lines = missionCard({
                   view: snapshot.view,
                   frame: snapshot.frame,
                   chips: snapshot.card.chips,
                   busy: snapshot.card.busy,
                   motion: motionEnabled,
                   reserve: snapshot.reserve,
+                  rows: window.height,
                   ...(snapshot.card.threads === undefined ? {} : { threads: snapshot.card.threads }),
                   ...(snapshot.card.earlier === true ? { earlier: true } : {}),
                   ...(snapshot.waiting ? { turn: { glow: turnGlow(snapshot.now, colorAllowed) } } : {}),

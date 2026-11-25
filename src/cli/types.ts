@@ -101,7 +101,7 @@ export type InstallProgress = {
   start(packageLabel: string): Promise<void>;
   run<T>(label: InstallStageLabel, task: () => Promise<T>): Promise<T>;
   complete(): Promise<void>;
-  fail(message: string): Promise<void>;
+  fail(message: string, reason?: string): Promise<void>;
 };
 
 export type InstallStageLabel =

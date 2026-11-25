@@ -40,7 +40,6 @@ async function askYes(): Promise<boolean> {
 
 /** The same question as a card. */
 export function askAgentFileCard(cards: InstallCards, filePath: string): Promise<boolean> {
-  cards.next();
   return cards.confirm({
     title: "LitFamily block",
     note: `Adds the short LitFamily block to OpenCode's global ${path.basename(filePath)}. Your own text stays as it is; No leaves the file alone and is remembered.`,

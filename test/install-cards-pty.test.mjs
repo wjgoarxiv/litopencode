@@ -23,8 +23,8 @@ async function withRoot(run) {
     await fs.mkdir(root);
     await fs.writeFile(path.join(root, "opencode.json"), JSON.stringify(gateway));
     const env = { ...process.env, HOME: home, USERPROFILE: home, XDG_CONFIG_HOME: path.join(home, "xdg"), XDG_DATA_HOME: path.join(home, "data"), XDG_CACHE_HOME: path.join(home, "cache"),
-      LANG: "en_US.UTF-8", LC_ALL: "en_US.UTF-8", TERM: "xterm-256color", COLORTERM: "truecolor", NO_UPDATE_NOTIFIER: "1" };
-    for (const key of ["CI", "NO_COLOR", "FORCE_COLOR", "LC_CTYPE", "OPENAI_API_KEY", "XAI_API_KEY", "LITOPENCODE_AGENT_FILE_PROMPT", "LITOPENCODE_AGENT_FILE"]) delete env[key];
+      LANG: "en_US.UTF-8", LC_ALL: "en_US.UTF-8", TERM: "xterm-256color", COLORTERM: "truecolor", NO_UPDATE_NOTIFIER: "1", LITOPENCODE_GLYPHS: "basic" };
+    for (const key of ["CI", "NO_COLOR", "FORCE_COLOR", "LC_CTYPE", "OPENAI_API_KEY", "XAI_API_KEY", "LITOPENCODE_AGENT_FILE_PROMPT", "LITOPENCODE_AGENT_FILE", "COLORFGBG"]) delete env[key];
     return await run({ root, env, home });
   } finally {
     await fs.rm(home, { recursive: true, force: true });
@@ -55,9 +55,9 @@ test("the real installer asks every question as a card and stores what the plain
     const text = strip(receipt.output);
     assert.equal(receipt.exit, 0, text);
     assert.equal(receipt.stepsSent, 10, text);
-    assert.match(text, /LIT 1\/4[\s\S]*LIT 2\/4[\s\S]*LIT 3\/4[\s\S]*LIT 4\/4/u);
+    assert.match(text, /LIT 1\/10[\s\S]*LIT 4\/10[\s\S]*LIT 5\/9[\s\S]*LIT 9\/9/u);
     assert.match(text, /OPENAI_API_KEY is not set and OpenCode has no stored openai/u);
-    assert.match(text, /LitOpenCode \S+ is ready[\s\S]*Restart OpenCode, press Tab, choose lit-loop/u);
+    assert.match(text, /LitOpenCode \S+ is installed[\s\S]*Restart OpenCode, press Tab, choose lit-loop/u);
     assert.match(await fs.readFile(path.join(place.root, "AGENTS.md"), "utf8"), /lit/u);
     drawn = await settings(place.root);
     assert.equal(drawn.outputStyle, "eli5");
@@ -124,7 +124,7 @@ test("a failed step stays on screen with the error, and the terminal is restored
     const receipt = tty(place, [card("Output style", "\r")], { args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"] });
     const text = strip(receipt.output);
     assert.equal(receipt.exit, 1, text);
-    assert.match(text, /✗ Installer stopped before completion\.\n\nERROR: /u);
+    assert.match(text, /✗ Host config[\s\S]*INSTALL STOPPED[\s\S]*✗ Stage +Host config[\s\S]*✗ Reason [\s\S]*\n\nERROR: /u);
     assert.ok(receipt.output.lastIndexOf("\u001b[?25h") > receipt.output.lastIndexOf("\u001b[?25l"));
   });
 });

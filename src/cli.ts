@@ -191,9 +191,9 @@ export async function runCli(argv: readonly string[] = process.argv.slice(2), op
     }
     return { exitCode: 2, stderr: `Unknown command: ${parsed.command}` };
   } catch (error) {
-    await options.installProgress?.fail("Installer stopped before completion.");
     const prefix = error instanceof LitOpenCodeConfigError ? "CONFIG_ERROR" : "ERROR";
     const message = error instanceof Error ? error.message : String(error);
+    await options.installProgress?.fail("Installer stopped before completion.", message);
     return { exitCode: 1, stderr: `${prefix}: ${message}` };
   }
 }

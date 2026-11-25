@@ -15,7 +15,7 @@ export const shownNoticesName = ".litopencode-shown.jsonl";
 const pendingCapBytes = 8192;
 
 // Prose wraps at 78 columns to fit an 80-column terminal; command lines are written to fit on their own.
-function wrap(text: string, width = 78): string[] {
+function wrap(text: string, width: number): string[] {
   const lines: string[] = [];
   let current = "";
   for (const word of text.split(" ")) {
@@ -30,10 +30,11 @@ function wrap(text: string, width = 78): string[] {
   return lines;
 }
 
-export function extensionsNoticeLines(leftovers: readonly string[] = [], needsCheck = false): string[] {
+export function extensionsNoticeLines(leftovers: readonly string[] = [], needsCheck = false, width = 78): string[] {
+  const prose = (text: string): string[] => wrap(text, width);
   return [
     "LitFamily extensions",
-    ...wrap(
+    ...prose(
       "LitOpenCode's core is complete and works on its own. Nine skills that make files (decks, documents, " +
         `figures, design and video covers) are now LitFamily extensions, kept on the extension shelf at ${extensionsShelfUrl}. ` +
         "Install the ones you use alongside LitOpenCode to get the full LitFamily experience. " +
@@ -42,7 +43,7 @@ export function extensionsNoticeLines(leftovers: readonly string[] = [], needsCh
     ),
     "  litopencode extensions list",
     "  litopencode extensions install <skill>",
-    ...wrap(
+    ...prose(
       "To do it by hand, clone the shelf once, then for each skill you want run these four lines. The first lists same-name " +
         "copies OpenCode would also read; the second moves the pointer folder whole into a dated backup that " +
         "OpenCode never reads (nothing is deleted); the third copies the extension in; the fourth writes its receipt. " +
@@ -62,14 +63,14 @@ export function extensionsNoticeLines(leftovers: readonly string[] = [], needsCh
     `    "${wjgoarxivSkillsClonePlaceholder}/variants/litopencode/<skill>" \\`,
     '    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \\',
     "    > ~/.config/opencode/skills/<skill>/.litfamily-extension.json",
-    ...wrap(`The nine: ${Object.keys(movedSkillFamilies).join(", ")}.`),
+    ...prose(`The nine: ${Object.keys(movedSkillFamilies).join(", ")}.`),
     ...(needsCheck
-      ? wrap("Some extension folders need a look (a same-name copy, or a folder with no receipt). Nothing was changed. See: litopencode extensions check")
+      ? prose("Some extension folders need a look (a same-name copy, or a folder with no receipt). Nothing was changed. See: litopencode extensions check")
       : []),
     ...(leftovers.length === 0
       ? []
       : [
-          ...wrap("Your previous LitOpenCode left these behind. Nothing reads them now and the extensions keep their own, so you can delete them:"),
+          ...prose("Your previous LitOpenCode left these behind. Nothing reads them now and the extensions keep their own, so you can delete them:"),
           ...leftovers.map((leftover) => `  ${leftover}`)
         ])
   ];

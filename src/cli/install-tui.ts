@@ -19,6 +19,8 @@ type InstallStage = {
   readonly index: number;
   readonly label: InstallStageLabel;
   readonly code: string;
+  /** The step's name on the work card. */
+  readonly short: string;
   readonly purpose: string;
   readonly active: string;
   readonly complete: string;
@@ -33,6 +35,7 @@ const installStages: readonly InstallStage[] = [
     index: 1,
     label: "Resolve package",
     code: "PACKAGE",
+    short: "Package",
     purpose: "Resolve package root and the host-native install source",
     active: "Resolving package identity",
     complete: "Package source resolved"
@@ -41,6 +44,7 @@ const installStages: readonly InstallStage[] = [
     index: 2,
     label: "Read OpenCode config",
     code: "HOST CONFIG",
+    short: "Host config",
     purpose: "Inspect plugin entries without exposing stored secrets",
     active: "Inspecting OpenCode configuration",
     complete: "OpenCode config inspected"
@@ -49,6 +53,7 @@ const installStages: readonly InstallStage[] = [
     index: 3,
     label: "Write litopencode.json",
     code: "ROUTES & SKILLS",
+    short: "Routes & skills",
     purpose: "Write role routes, commands, and native skill surfaces",
     active: "Writing LitOpenCode surfaces",
     complete: "Routes, commands, and skills ready"
@@ -57,6 +62,7 @@ const installStages: readonly InstallStage[] = [
     index: 4,
     label: "Register plugin",
     code: "PLUGIN",
+    short: "Plugin",
     purpose: "Register through OpenCode or patch the requested custom root",
     active: "Registering plugin with OpenCode",
     complete: "Plugin registered"
@@ -65,6 +71,7 @@ const installStages: readonly InstallStage[] = [
     index: 5,
     label: "Verify install",
     code: "HEALTH CHECK",
+    short: "Health check",
     purpose: "Confirm the installer surface completed cleanly",
     active: "Verifying installed surfaces",
     complete: "Install surface verified"
@@ -129,6 +136,13 @@ function productVersion(packageLabel: string): string {
 export function renderLitOpenCodeWordmark(packageLabel: string, colorEnabled = true, stream: { readonly columns?: number; readonly isTTY?: boolean } = process.stdout): string {
   const product = "litopencode v" + productVersion(packageLabel);
   return terminalSynthwave({ colour: colorEnabled, stream, footer: product }).join("\n");
+}
+
+/** The same mark for the cards, sized so that it and the first card share the window. */
+export function cardWordmark(packageLabel: string, stream: { readonly columns?: number; readonly rows?: number } = process.stdout): readonly string[] {
+  const rows = stream.rows || 24;
+  const columns = Math.min((stream.columns || 80) - 2, rows >= 48 ? 100 : rows >= 34 ? 75 : 43);
+  return terminalSynthwave({ stream: { columns, isTTY: true }, footer: "litopencode v" + productVersion(packageLabel) });
 }
 
 export function renderInstallTuiLogo(packageLabel: string): string {
@@ -219,19 +233,26 @@ export function shouldDrawInstallCards(argv: readonly string[], terminal: CardTe
 
 export function createCardInstallTui(terminal: CardTerminal = process): InstallProgress {
   const cards = createInstallCards(terminal);
+  let running = installStages[0];
   return {
     cards,
-    async start(): Promise<void> {
-      cards.startSteps("Installing", installStages.map((stage) => ({ name: stage.label, text: stage.purpose })));
+    async start(packageLabel: string): Promise<void> {
+      cards.startSteps("Installing LitOpenCode " + productVersion(packageLabel), installStages.map((stage) => ({ name: stage.short, text: stage.purpose })));
     },
     async run<T>(label: InstallStageLabel, task: () => Promise<T>): Promise<T> {
-      return cards.runStep(findStage(label).index - 1, task);
+      running = findStage(label);
+      return cards.runStep(running.index - 1, task);
     },
     async complete(): Promise<void> {
       cards.finishSteps("Install steps", `${String(installStages.length)} of ${String(installStages.length)} checked`);
     },
-    async fail(message: string): Promise<void> {
-      cards.fail(message);
+    async fail(message: string, reason = message): Promise<void> {
+      if (!cards.working) return cards.fail(message);
+      cards.stopSteps([
+        { label: "Stage", value: running.short },
+        { label: "Reason", value: reason },
+        { label: "Next", value: "Fix the reason above, then run the same install command again.", mark: "note" }
+      ]);
     }
   };
 }

@@ -23,7 +23,7 @@ const cases = [
   { name: "interactive 256-color explicit style", env: { COLORTERM: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], steps: styleCard(3), style: "eli5", ansi: true, color: /\u001b\[48;5;231m/u },
   { name: "interactive NO_COLOR explicit style", env: { NO_COLOR: "" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], steps: styleCard(4), style: "eli5-ko", ansi: "cards" },
   { name: "interactive dumb terminal keeps the numbered prompt", env: { TERM: "dumb" }, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["4"], style: "eli5-ko", ansi: false, plain: true },
-  { name: "a short window keeps the numbered prompt", env: {}, rows: 15, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["3"], style: "eli5", ansi: true },
+  { name: "a short window keeps the numbered prompt", env: {}, rows: 11, args: ["--no-model-prompt", "--no-permission-prompt", "--no-agent-file"], answers: ["3"], style: "eli5", ansi: true },
   { name: "a prompt hook keeps the numbered prompt", env: { LITOPENCODE_AGENT_FILE_PROMPT: "0" }, args: ["--no-model-prompt", "--no-permission-prompt"], answers: ["3"], style: "eli5", ansi: true },
   { name: "explicit CI permission prompt remains plain", env: { CI: "" }, args: ["--permission-prompt"], answers: ["0"], ansi: false }
 ];
@@ -85,7 +85,7 @@ test("packed CLI installs obey terminal and prompt policy on a real TTY", {
         if (!scenario.answers) assert.doesNotMatch(receipt.output, /Choose an output style|Select \d+-\d+/u);
         if (scenario.steps) {
           assert.equal(receipt.stepsSent, scenario.steps.length, receipt.output);
-          assert.match(receipt.output.replace(/\u001b\[[0-9;]*m/gu, ""), /LIT 1\/1[\s\S]*is ready/u);
+          assert.match(receipt.output.replace(/\u001b\[[0-9;]*m/gu, ""), /LIT 1\/1[\s\S]*is installed/u);
           assert.ok(receipt.output.lastIndexOf("\u001b[?25h") > receipt.output.lastIndexOf("\u001b[?25l"), "the cursor is back");
         }
         if (scenario.ansi === "cards") assert.doesNotMatch(receipt.output, escapes, "cards without colour");
