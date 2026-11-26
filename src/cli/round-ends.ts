@@ -43,5 +43,5 @@ export function roundEndsLine({ surface, env, platform, saved, iconFont, failure
   if (iconFont()) return "ROUND_ENDS: check (icon font is here; show your user step 8 of install --agent)";
   if (failure !== undefined) return square(`font not installed (${failure}); retry --round`);
   if (platform === "win32") return square("Windows console; use Windows Terminal");
-  return square(`no icon font; run ${run} install --round`);
+  return square("no icon font; rerun install with --round");
 }

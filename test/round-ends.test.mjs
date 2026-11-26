@@ -50,7 +50,7 @@ const npmExec = agentCommands.install.replace(" --yes --round", "");
 
 test("ROUND_ENDS: square gives the reason and one fix", () => {
   assert.equal(line({ surface: false, saved: "round" }), `ROUND_ENDS: square (no surface enabled; run ${npmExec})`);
-  assert.equal(line(), `ROUND_ENDS: square (no icon font; run ${npmExec} --round)`);
+  assert.equal(line(), "ROUND_ENDS: square (no icon font; rerun install with --round)");
   assert.equal(line({ failure: "download failed" }), "ROUND_ENDS: square (font not installed (download failed); retry --round)");
   assert.match(line({ env: { SSH_CONNECTION: "a" }, iconFont: never }), /^ROUND_ENDS: square \(SSH; /u);
   assert.match(line({ platform: "win32" }), /^ROUND_ENDS: square \(Windows console; /u);
