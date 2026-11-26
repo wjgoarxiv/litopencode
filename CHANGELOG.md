@@ -3,6 +3,13 @@
 Notable user-visible changes are recorded here. Registry and Git release operations
 are tracked separately from this product history.
 
+## 1.0.56 - 2026-11-26
+
+- `litopencode install --agent` prints the install steps for a coding agent and writes nothing. Help, the first card and a run without a person at the terminal point to it.
+- `install --round` adds the Symbols Nerd Font Mono font for round pill ends when no icon font is here; `litopencode icon-font remove` takes back the files it added while they are unchanged.
+- `install --glyphs auto|round|square` saves the ends in `litopencode.json`; `LITOPENCODE_GLYPHS` (`auto`, `round` or `square`; `nerd` and `basic` still work) wins over it for one terminal.
+- `install`, `update` and `doctor` end with one `ROUND_ENDS:` line: `shown`, `ready`, `check` or `square`, with the reason and one fix.
+
 ## 1.0.55 - 2026-11-25
 
 - The status card is rebuilt for a dark theme in a truecolor terminal, at 74 columns or wider. One frame carries the LIT pill, the discipline and the state; inside are the stage map, the task with its bar, the running job, the lanes and the skills; the context use and the plan limits sit on the bottom edge. The card grows while work runs, nine rows at most, and goes back to five or six at rest, so the prompt moves when work starts and stops. Other terminals and themes keep the four-row card.

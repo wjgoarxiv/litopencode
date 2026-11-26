@@ -289,7 +289,7 @@ test("bilingual quick starts preserve executable package names and resolve the r
   assert.equal(still.subarray(0, 4).toString("ascii"), "RIFF");
   assert.equal(still.subarray(8, 12).toString("ascii"), "WEBP");
   assert.equal(createHash("sha256").update(still).digest("hex"), "22169e03a2e1a83325270bdd48d085fae920b53a562094a8c40e25553118cd56");
-  const npmAssets = "https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.55/docs/assets";
+  const npmAssets = "https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/docs/assets";
   const pages = [
     { file: "README.md", assets: "./docs/assets", english: true, github: true },
     { file: "README-Ko-KR.md", assets: "./docs/assets", english: false, github: true },

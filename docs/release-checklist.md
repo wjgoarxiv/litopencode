@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.56 Release Scope
+
+- `install --agent` prints the install steps for a coding agent; `install --round` adds the Symbols Nerd Font Mono font when no icon font is here, and `icon-font remove` takes it back; `install --glyphs auto|round|square` saves the ends; `install`, `update` and `doctor` end with one `ROUND_ENDS:` line.
+
 ## 1.0.55 Release Scope
 
 - Installer questions as cards in a real terminal (provider, model with a filter-as-you-type list, effort, route review, permissions, output style, LitFamily block), with `--yes`, CI, pipes, `TERM=dumb` and small windows on the earlier plain output; a new README demo loop with a Korean copy and a new README cover loop with its still.
