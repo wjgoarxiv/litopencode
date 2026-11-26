@@ -212,6 +212,16 @@ test("README motion resources have exact approved bytes and are reachable from b
 });
 
 
+// The collapsed install prompt is text to paste, so it has a cap of its own beside the page's.
+function assertLandingLength(content, file) {
+  const prompt = content.match(/```text\n((?:(?!```)[\s\S])*?litopencode doctor(?:(?!```)[\s\S])*)```/u);
+  assert.ok(prompt, `${file} has the install prompt`);
+  const promptLines = prompt[1].trimEnd().split("\n").length;
+  assert.ok(promptLines <= 30, `${file}: the install prompt stays short (${promptLines} lines)`);
+  const lines = content.replace(prompt[0], "").split("\n").length;
+  assert.ok(lines <= 292, `${file} stays a short landing page (${lines} lines)`);
+}
+
 test("README places one cover, then the title, one-sentence pitch, quick start and a first task", async () => {
   for (const file of readmes) {
     const content = await text(file);
@@ -232,8 +242,9 @@ test("README places one cover, then the title, one-sentence pitch, quick start a
     if (githubReadmes.includes(file)) {
       const demo = content.indexOf("<!-- demo-gif -->");
       assert.ok(demo > intro && demo < quickStart, file + ": the demo slot sits between the pitch and the quick start");
-      const lines = content.split("\n").length;
-      assert.ok(lines <= 300, `${file} stays a short landing page (${lines} lines)`);
+      assertLandingLength(content, file);
+      assert.throws(() => assertLandingLength(`${content}\n\n`, file), /short landing page/u);
+      assert.throws(() => assertLandingLength(content.replace(/(litopencode doctor\n)/u, `$1${"   x\n".repeat(30)}`), file), /install prompt/u);
     }
   }
 });

@@ -1,8 +1,10 @@
+import { agentGuide, agentHelpLine, asksForAgentGuide } from "./cli/agent-guide.ts";
 import { isLoopCommand, parseArgs } from "./cli/args.ts";
 import { runLoopCommand } from "./cli/loop.ts";
 import { doctor } from "./cli/doctor.ts";
 import { runAgentFileCommand } from "./cli/agent-file-command.ts";
 import { runExtensionsCommand } from "./cli/extensions.ts";
+import { removeIconFont } from "./cli/icon-font.ts";
 import { install } from "./cli/install.ts";
 import { createCardInstallTui, createInstallTui, renderLitOpenCodeWordmark, shouldDrawInstallCards, shouldRenderInstallTui } from "./cli/install-tui.ts";
 import type { CliResult, InstallProgress, ParsedArgs } from "./cli/types.ts";
@@ -13,6 +15,7 @@ import { defaultOpenAiRoutes, legacyFastAliasHelp, modelEffortHelp, openaiModelH
 import { fetchPublicSource } from "./lit-fetch.ts";
 import { readPackageMetadata } from "./cli/json.ts";
 import { removeTuiEntries } from "./cli/tui-config.ts";
+import { savedGlyphChoice, type GlyphChoice } from "./round-glyphs.ts";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -25,6 +28,7 @@ function helpText(): string {
     "litopencode",
     "",
     "Install LitOpenCode into OpenCode with an explicit npm package.",
+    agentHelpLine,
     "",
     "Quick start:",
     "  npm exec --package @litfamily/litopencode -- litopencode install",
@@ -40,12 +44,14 @@ function helpText(): string {
     "  litopencode install [--dry-run] [--root <dir>] --provider <openai|xai> --model <id> [--effort <e>] [--subagent-model <provider/id>] [--subagent-effort <e>] [--yolo]",
     "  litopencode install [--model-prompt | --no-model-prompt | --yes]",
     "  litopencode install [--permission-prompt | --no-permission-prompt] [--permission-mode <safe|balanced|yolo>]",
-    "  litopencode install [--no-agent-file]",
+    "  litopencode install [--no-agent-file] [--round] [--glyphs <auto|round|square>]",
+    "  litopencode install --agent",
     "  litopencode install|doctor [--no-auto-update]",
     "  litopencode agent-file on|off|remove [--dry-run] [--root <dir>]",
     "  litopencode agent-file project [--dir <path>] [--dry-run]",
     "  litopencode doctor [--json] [--root <dir>]",
     "  litopencode tui remove [--dry-run] [--root <dir>]",
+    "  litopencode icon-font remove [--dry-run]",
     "  litopencode extensions list [--json] | litopencode extensions check [--json]",
     "  litopencode extensions install <skill...> | --family <name> | --all [--from <clone>] [--allow-shadow] [--yes]",
     "  litopencode extensions update [<skill...> | --all] [--from <clone>] [--yes]",
@@ -70,6 +76,7 @@ function helpText(): string {
     "  doctor        Report package, config, and runtime path status without writing files.",
     "  agent-file    Add, remove or switch off the short LitFamily block in OpenCode's global AGENTS.md; project writes it into a repo's AGENTS.md.",
     "  tui remove    Remove only LitOpenCode's TUI panel entry from tui.json/tui.jsonc (backed up first).",
+    "  icon-font     Remove the icon font files install --round added, as long as they are unchanged.",
     "  extensions    Install, update, check and remove the nine LitFamily extensions from wjgoarxiv-skills. Writing verbs",
     "                are dry runs until --yes; a replaced folder moves whole into extension-backups, never deleted.",
     "  fetch-public  Fetch a public URL with SSRF guards, verdicts, and trace output.",
@@ -125,6 +132,12 @@ function helpText(): string {
     "  --permission-mode <safe|balanced|yolo> writes the selected permission behavior explicitly.",
     "  --yolo is shorthand for --permission-mode yolo and also allows external_directory; lit-plan stays deny-only.",
     "",
+    "Rounded ends:",
+    "  --round adds one pinned symbols font (Symbols Nerd Font Mono) to your font folder when no icon font is here; it never replaces a file.",
+    "  --glyphs auto|round|square saves how pills end, in litopencode.json; LITOPENCODE_GLYPHS wins over it and a plain install keeps it.",
+    "  install and doctor print ROUND_ENDS: shown, ready, check or square, with the reason and one fix.",
+    "  LITOPENCODE_ICON_FONT_ARCHIVE names a local copy of the pinned archive for a machine without a network.",
+    "",
     "Automatic updates:",
     "  Packaged plugin startup and successful interactive install/doctor use a bounded exact-version foreground update barrier.",
     "  The transaction uses a separate lock, private backup, journal, receipt, and post-install doctor rollback.",
@@ -143,6 +156,7 @@ function helpText(): string {
 }
 
 export async function runCli(argv: readonly string[] = process.argv.slice(2), options: RunCliOptions = {}): Promise<CliResult> {
+  if (asksForAgentGuide(argv)) return { exitCode: 0, stdout: agentGuide() };
   // The extensions verbs keep their own flags, so they are parsed apart from the installer's.
   if (argv[0] === "extensions") return await runExtensionsCommand(argv.slice(1));
   let parsed: ParsedArgs;
@@ -164,6 +178,7 @@ export async function runCli(argv: readonly string[] = process.argv.slice(2), op
       const removed = await removeTuiEntries(parsed.root, parsed.dryRun, { cliJson: parsed.host !== "v1" });
       return { exitCode: 0, stdout: JSON.stringify(removed, null, 2) };
     }
+    if (parsed.command === "icon-font") return { exitCode: 0, stdout: (await removeIconFont({ dryRun: parsed.dryRun })).line };
     if (parsed.command === "fetch-public") {
       if (!parsed.fetchPublicUrl) return { exitCode: 2, stderr: "fetch-public requires a URL" };
       const output = await fetchPublicSource(parsed.fetchPublicUrl, {
@@ -186,7 +201,8 @@ export async function runCli(argv: readonly string[] = process.argv.slice(2), op
         options.installProgress,
         parsed.outputStylePrompt,
         parsed.host,
-        { assumeYes: parsed.assumeYes, skip: parsed.agentFile === "skip" }
+        { assumeYes: parsed.assumeYes, skip: parsed.agentFile === "skip" },
+        { round: parsed.round, ...(parsed.glyphs === undefined ? {} : { glyphs: parsed.glyphs }) }
       );
     }
     return { exitCode: 2, stderr: `Unknown command: ${parsed.command}` };
@@ -221,8 +237,23 @@ function shouldPrintCommandWordmark(argv: readonly string[]): boolean {
   }
 }
 
+/** The choice the installer's own cards follow: this run's flag, else the saved one. */
+function cardGlyphs(argv: readonly string[]): GlyphChoice {
+  try {
+    const parsed = parseArgs(argv);
+    return parsed.glyphs ?? savedGlyphChoice(parsed.root);
+  } catch {
+    return "auto";
+  }
+}
+
 export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<void> {
-  const installProgress = shouldDrawInstallCards(argv) ? createCardInstallTui() : shouldRenderInstallTui(argv) ? createInstallTui() : undefined;
+  // The guide comes before anything that could draw, ask, start a program or write.
+  if (asksForAgentGuide(argv)) {
+    process.stdout.write(`${agentGuide()}\n`);
+    return;
+  }
+  const installProgress = shouldDrawInstallCards(argv) ? createCardInstallTui(process, cardGlyphs(argv)) : shouldRenderInstallTui(argv) ? createInstallTui() : undefined;
   const result = await runCli(argv, { installProgress });
   if (shouldPrintCommandWordmark(argv)) {
     const metadata = await readPackageMetadata();

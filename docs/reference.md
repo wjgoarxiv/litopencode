@@ -159,6 +159,27 @@ install steps start nothing is written apart from the `ultra` rewrite above. `NO
 them in ASCII. Everything else gets the numbered prompts and the same output as before: pipes, CI, `--yes`,
 `TERM=dumb`, a terminal without raw mode, a smaller window, and any run with a `LITOPENCODE_*_PROMPT` variable set.
 
+**Rounded ends.** `install --round` adds the pinned symbols-only Nerd Font v3.5.1 (`SymbolsNerdFontMono-Regular.ttf` and
+its licence) when no icon font is on the machine: in `~/Library/Fonts` on macOS, in `${XDG_DATA_HOME:-~/.local/share}/fonts`
+on Linux, and nothing on Windows. The archive and both files are checked against their SHA-256, an existing file is never
+replaced, no link is followed, and the files it added are listed in `~/.litopencode/icon-font.json`. The download stops after
+60 seconds or 8 MiB. Whatever fails, the install goes on and an `ICON_FONT:` line says why.
+`LITOPENCODE_ICON_FONT_ARCHIVE` names a local copy of the archive. `litopencode icon-font remove [--dry-run]` takes back the
+files that are still unchanged. A plain install and the background update never add a font and keep the saved choice.
+
+The last line of `install`, and `roundEnds.line` in `doctor`, is one of these:
+
+| Line | Meaning |
+| --- | --- |
+| `ROUND_ENDS: shown` | The card is on and you saved `--glyphs round` |
+| `ROUND_ENDS: ready` | The card is on and this terminal is known to draw the ends itself |
+| `ROUND_ENDS: check (...)` | An icon font is here; look at the pill in step 8 of `install --agent` to see whether your terminal uses it |
+| `ROUND_ENDS: square (...)` | The ends are square; the brackets hold the reason and one fix |
+
+**Coding agents.** `install --agent` (or `--agent`) prints the install steps for an agent and its user as plain text and does
+nothing else. An install with no person at the terminal prints one line that points to it, and the first card shows the
+same line. An install for OpenCode 1 on the default root stops before it writes anything when there is no `opencode` command.
+
 The OpenCode config hook routes the lead categories and `lit-loop` to
 `openai/gpt-6-astra` with native `reasoningEffort` (fresh/reset default `xhigh`).
 Execution and research helpers use the fresh default `openai/gpt-6-luna`/`max`.
@@ -444,7 +465,7 @@ npm uninstall -g @litfamily/litopencode
 ```
 
 Run `litopencode agent-file remove` before that if install added the LitFamily block to the global
-`AGENTS.md`. Then remove the `@litfamily/litopencode` or `@litfamily/litopencode@<version>` entry from the `plugin` array in
+`AGENTS.md`, and `litopencode icon-font remove` if you installed with `--round`. Then remove the `@litfamily/litopencode` or `@litfamily/litopencode@<version>` entry from the `plugin` array in
 OpenCode's managed `opencode.jsonc` (or the custom root's `opencode.json`). Remove
 `~/.config/opencode/litopencode.json` only when you no longer need its user-owned routes.
 Project `.litopencode/` state is separate; preserve it for later resume or remove it only
@@ -697,8 +718,9 @@ What it draws:
     sidebar panel, the prompt chip and the installer, where the terminal draws them: Windows Terminal (`WT_SESSION`), VS Code, WezTerm
     and Ghostty (`TERM_PROGRAM`), kitty (`TERM=xterm-kitty` or `KITTY_WINDOW_ID`), or any other terminal, except over
     SSH, on a machine with an icon font (a file named Nerd Font, found by name in the font folders; no font file is opened).
-    `LITOPENCODE_GLYPHS=round` (or `nerd`) forces the caps and `LITOPENCODE_GLYPHS=basic` forbids them. It is read once when
-    OpenCode starts;
+    `LITOPENCODE_GLYPHS=round` (or `nerd`) forces the caps, `square` (or `basic`) forbids them and `auto` keeps this rule. Without it the
+    choice saved by `install --glyphs auto|round|square` (key `glyphs` in `litopencode.json`) counts; a saved `round` holds over SSH too. It is
+    read once when OpenCode starts;
 
   A subagent session shows its parent's card with `· in lane`; the home screen has no band. When the
   card is narrow each row drops its own low-priority parts: the track drops the live step and

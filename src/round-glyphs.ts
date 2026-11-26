@@ -3,8 +3,13 @@
 // font on this machine; over SSH the fonts here are not the ones on screen. The answer lasts for the process.
 import fs from "node:fs";
 import path from "node:path";
+import { parseJsonc } from "./cli/jsonc.ts";
+import { litOpenCodeConfigFileForOpenCodeRoot } from "./state.ts";
 
 type Env = Readonly<Record<string, string | undefined>>;
+
+export const glyphChoices = ["auto", "round", "square"] as const;
+export type GlyphChoice = (typeof glyphChoices)[number];
 
 const terminalsWithCaps: ReadonlySet<string> = new Set(["vscode", "wezterm", "ghostty"]);
 const folderDepth = 4;
@@ -48,20 +53,45 @@ export function iconFontInstalled(folders: readonly string[], limit = nameLimit)
   return folders.some((folder) => look(folder, folderDepth));
 }
 
-/** The rule: `LITOPENCODE_GLYPHS` (`round` or `basic`), then the terminal, then (not over SSH) an icon font here. */
-export function roundCaps(env: Env, hasIconFont: () => boolean): boolean {
-  const chosen = (env.LITOPENCODE_GLYPHS ?? "").toLowerCase();
-  if (chosen === "round" || chosen === "nerd") return true;
-  if (chosen === "basic") return false;
+export function isGlyphChoice(value: unknown): value is GlyphChoice {
+  return glyphChoices.some((choice) => choice === value);
+}
+
+/** What `LITOPENCODE_GLYPHS` says; `nerd` and `basic` are older names. */
+export function envGlyphChoice(env: Env): GlyphChoice | undefined {
+  const value = (env.LITOPENCODE_GLYPHS ?? "").toLowerCase();
+  if (value === "nerd") return "round";
+  if (value === "basic") return "square";
+  return isGlyphChoice(value) ? value : undefined;
+}
+
+/** The choice `install --glyphs` saved in litopencode.json. */
+export function savedGlyphChoice(root?: string): GlyphChoice {
+  try {
+    const stored = parseJsonc(fs.readFileSync(litOpenCodeConfigFileForOpenCodeRoot(root), "utf8")) as { readonly glyphs?: unknown } | null;
+    return isGlyphChoice(stored?.glyphs) ? stored.glyphs : "auto";
+  } catch {
+    return "auto";
+  }
+}
+
+/** A terminal that draws the caps itself, whatever its font. */
+export function drawsCaps(env: Env): boolean {
   if (isSet(env.WT_SESSION) || terminalsWithCaps.has((env.TERM_PROGRAM ?? "").toLowerCase())) return true;
-  if (env.TERM === "xterm-kitty" || isSet(env.KITTY_WINDOW_ID)) return true;
-  return !isSet(env.SSH_CONNECTION) && hasIconFont();
+  return env.TERM === "xterm-kitty" || isSet(env.KITTY_WINDOW_ID);
+}
+
+/** The rule: `LITOPENCODE_GLYPHS`, then the saved choice; on `auto` the terminal, then (not over SSH) an icon font here. */
+export function roundCaps(env: Env, hasIconFont: () => boolean, saved: GlyphChoice = "auto"): boolean {
+  const choice = envGlyphChoice(env) ?? saved;
+  if (choice !== "auto") return choice === "round";
+  return drawsCaps(env) || (!isSet(env.SSH_CONNECTION) && hasIconFont());
 }
 
 let remembered: boolean | undefined;
 
 /** `roundCaps` for this process; the font folders are read at most once. */
 export function roundGlyphs(): boolean {
-  remembered ??= roundCaps(process.env, () => iconFontInstalled(fontFolders(process.env, process.platform)));
+  remembered ??= roundCaps(process.env, () => iconFontInstalled(fontFolders(process.env, process.platform)), savedGlyphChoice());
   return remembered;
 }

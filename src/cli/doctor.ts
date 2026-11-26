@@ -26,6 +26,8 @@ import {
 } from "../auto-handoff.ts";
 import { inspectLspCapability } from "./lsp-capability.ts";
 import { agentFileState, globalAgentFilePath, readAgentFileMode } from "./agent-file.ts";
+import { roundEndsLine } from "./round-ends.ts";
+import { fontFolders, iconFontInstalled, savedGlyphChoice } from "../round-glyphs.ts";
 import { extensionsSummaryLine, inspectExtensions } from "./extensions.ts";
 import { isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { inspectTuiPlugin, planCliJsonCleanup } from "./tui-config.ts";
@@ -308,6 +310,20 @@ export async function doctor(root: string, hostChoice: HostChoice = "auto"): Pro
   const agentFileMode = await readAgentFileMode(root);
   const agentFileBlock = agentFileMode === "off" ? "off" : agentFileState({ path: agentFilePath, version: metadata.version });
 
+  const iconFont = iconFontInstalled(fontFolders(process.env, process.platform));
+  const roundEnds = {
+    choice: savedGlyphChoice(root),
+    iconFont,
+    line: roundEndsLine({
+      surface: installPlugin.ok && (forV2 || tui.ok),
+      env: process.env,
+      platform: process.platform,
+      saved: savedGlyphChoice(root),
+      iconFont: () => iconFont,
+      stream: process.stdout
+    })
+  };
+
   // The same read-only check as `litopencode extensions check`, summarized; it never changes install.ok.
   const extensions = await inspectExtensions(root).then(
     (report) => ({
@@ -330,6 +346,7 @@ export async function doctor(root: string, hostChoice: HostChoice = "auto"): Pro
           mode: agentFileMode,
           line: `AGENT_FILE: ${agentFileBlock} (${agentFilePath}; change: litopencode agent-file on|off)`
         },
+        roundEnds,
         extensions,
         capabilities: openCodeHostCapabilities(),
         hostLimits: { path: hostConfig.path, ...inspectHostLimits(hostConfig.config) },

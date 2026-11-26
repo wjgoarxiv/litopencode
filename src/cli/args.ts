@@ -1,6 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import { hostChoices, isHostChoice, type HostChoice } from "./host-detect.ts";
+import { glyphChoices, isGlyphChoice, type GlyphChoice } from "../round-glyphs.ts";
 import { installModelEfforts, isInstallModelEffort, resolveModelRoute } from "./model-catalog.ts";
 import type { InstallModelEffort, InstallModelRoute, InstallModelSelection, InstallPermissionMode, LoopArgs, ModelPromptMode, ParsedArgs, PermissionPromptMode } from "./types.ts";
 
@@ -66,6 +67,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   let host: HostChoice = "auto";
   let agentFile: ParsedArgs["agentFile"] = "auto";
   let agentFileDir: string | undefined;
+  let round = false;
+  let glyphs: GlyphChoice | undefined;
 
   if (command === "--help" || command === "-h") {
     command = "help";
@@ -81,11 +84,13 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
   const tuiAction = command === "tui" ? argv[1] : undefined;
   if (command === "tui" && tuiAction !== "remove") throw new Error("tui requires an action: remove");
+  const iconFontAction = command === "icon-font" ? argv[1] : undefined;
+  if (command === "icon-font" && iconFontAction !== "remove") throw new Error("icon-font requires an action: remove");
   const agentFileAction = command === "agent-file" ? argv[1] : undefined;
   if (command === "agent-file" && !agentFileActions.some((action) => action === agentFileAction)) {
     throw new Error(`agent-file requires an action: ${agentFileActions.join(", ")}`);
   }
-  const firstOptionIndex = command === "fetch-public" || command === "tui" || command === "agent-file" ? 2 : 1;
+  const firstOptionIndex = command === "fetch-public" || command === "tui" || command === "icon-font" || command === "agent-file" ? 2 : 1;
   if (command === "fetch-public") {
     fetchPublicUrl = cleanOption(argv[1], "fetch-public URL");
     if (!fetchPublicUrl) throw new Error("fetch-public requires a URL");
@@ -107,6 +112,19 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     if (arg === "--no-agent-file") {
       if (command !== "install") throw new Error(`Unknown argument: ${arg}`);
       agentFile = "skip";
+      continue;
+    }
+    if (arg === "--round") {
+      if (command !== "install") throw new Error(`Unknown argument: ${arg}`);
+      round = true;
+      continue;
+    }
+    if (arg === "--glyphs") {
+      if (command !== "install") throw new Error(`Unknown argument: ${arg}`);
+      const value = cleanOption(argv[index + 1], arg);
+      if (!isGlyphChoice(value)) throw new Error("--glyphs must be one of " + glyphChoices.join(", "));
+      glyphs = value;
+      index += 1;
       continue;
     }
     if (arg === "--dir") {
@@ -322,10 +340,13 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     modelPrompt: yes ? "never" : modelPrompt,
     outputStylePrompt: yes ? "never" : "auto",
     ...(tuiAction === undefined ? {} : { tuiAction }),
+    ...(iconFontAction === undefined ? {} : { iconFontAction }),
     ...(agentFileAction === undefined ? {} : { agentFileAction }),
     ...(agentFileDir === undefined ? {} : { agentFileDir }),
     agentFile,
     assumeYes: yes,
+    round,
+    ...(glyphs === undefined ? {} : { glyphs }),
     host,
     loop: {
       projectRoot,

@@ -209,11 +209,15 @@ export async function readAgentFileMode(root: string, env: NodeJS.ProcessEnv = p
   }
 }
 
-/** Stores the setting, keeping every other key; a missing litopencode.json starts from the install defaults. */
-export async function writeAgentFileMode(root: string, mode: AgentFileMode): Promise<void> {
+/** Stores one setting in litopencode.json, keeping every other key; a missing file starts from the install defaults. */
+export async function storeLitSetting(root: string, key: "agentFile" | "glyphs", value: string): Promise<void> {
   const filePath = litOpenCodeConfigFileForOpenCodeRoot(root);
   const existing = await readJsonObjectIfPresent(filePath);
   const base = isRecord(existing) ? existing : defaultGlobalConfigJson();
-  if (base.agentFile === mode) return;
-  writeAtomic(filePath, JSON.stringify({ ...base, agentFile: mode }, null, 2) + "\n");
+  if (base[key] === value) return;
+  writeAtomic(filePath, JSON.stringify({ ...base, [key]: value }, null, 2) + "\n");
+}
+
+export async function writeAgentFileMode(root: string, mode: AgentFileMode): Promise<void> {
+  await storeLitSetting(root, "agentFile", mode);
 }

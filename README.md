@@ -62,24 +62,39 @@ OpenCode reads one global `AGENTS.md` at the start of every session. The install
 | `--dry-run` | You want to see what would change before anything is written |
 | `--yes` | The defaults are fine and you'd rather skip the questions; it also says yes to the block |
 | `--no-agent-file` | You want to skip the `AGENTS.md` block for one run |
+| `--round` | You want the pills to end round and have no icon font yet: it adds Symbols Nerd Font Mono to your font folder |
+| `--glyphs round`, `square` or `auto` | You have seen how the pills end on your screen and want to keep that choice |
+| `litopencode install --agent` | You want a coding agent to read the install steps itself |
 | `litopencode agent-file remove` | You want the block back out, with your own text untouched |
 
 <details>
 <summary>Or let a coding agent install it</summary>
 
-Paste this into the agent you already use. It checks first, shows you the plan and waits for your yes before anything changes.
+Paste this into the agent you already use. It checks first, shows you the plan and waits for your yes before anything changes. `litopencode install --agent` prints the same steps.
 
 ```text
 Please install LitOpenCode, the lit workflow plugin for OpenCode, on this machine.
-1. Check that Node.js, npm and OpenCode are installed (node --version, npm --version, opencode --version). If one is missing, stop and tell me.
-2. Use only the official npm package @litfamily/litopencode. No forks, mirrors, curl scripts or other packages.
-3. Before changing anything, run: npm exec --package @litfamily/litopencode@latest -- litopencode install --dry-run
-   Show me what it would change and ask me whether to go ahead with the defaults.
-4. When I say yes, run: npm exec --package @litfamily/litopencode@latest -- litopencode install --yes
-   Do not edit OpenCode's config files by hand.
-5. Run: npm exec --package @litfamily/litopencode@latest -- litopencode doctor
-   Tell me whether install.ok, install.plugin.ok and install.nativeSkills.ok are true, and quote any warning.
-6. Remind me to restart OpenCode, press Tab and choose lit-loop.
+1. Check that Node.js, npm and OpenCode are installed (node --version, npm --version, opencode --version or opencode2 --version). If one is missing, stop and tell me.
+2. Preview. Run: npm exec --yes --package @litfamily/litopencode@latest -- litopencode install --dry-run --round
+   Show me what it would change. It prints JSON and writes nothing.
+3. Then ask me whether to go ahead with every default or change some:
+   Lead model: gpt-6-astra on OpenAI (--provider <openai|xai> --model <id>, or --model <provider/id>), effort xhigh (--effort <e>).
+   Helper model: gpt-6-luna on OpenAI (--subagent-model <provider/id>, together with --model), effort max (--subagent-effort <e>).
+   Permissions: Safe (--permission-mode <safe|balanced|yolo>). LitFamily block in AGENTS.md: Yes (--no-agent-file).
+   No flag, so I can choose them later: the model route with /lit-model in a chat, the output style (None) with install in my own terminal.
+   Icon font: --round adds SymbolsNerdFontMono-Regular.ttf to ~/Library/Fonts (macOS) or ~/.local/share/fonts (Linux), only when no icon font is here.
+   Visible surface: the LIT card under the prompt and the LIT panel in the sidebar, both on by default.
+4. Wait for my yes. Use only the npm package @litfamily/litopencode: add no other source, edit no OpenCode config by hand, and leave hooks, trust and sign-in to me.
+5. Install, with the flags for any answer I changed at the end. Run: npm exec --yes --package @litfamily/litopencode@latest -- litopencode install --yes --round
+   To update later, run the same line again.
+6. Check. Run: npm exec --yes --package @litfamily/litopencode@latest -- litopencode doctor
+   It passes when install.ok, install.plugin.ok and install.nativeSkills.ok are true, and the install printed a ROUND_ENDS: line. Quote any warning.
+   If a step fails, show me the lines and stop.
+7. Show me this and ask if both ends are round:  LIT 
+   Round: run npm exec --yes --package @litfamily/litopencode@latest -- litopencode install --yes --glyphs round
+   Boxes: the same line with --glyphs square, and tell me that my terminal's own font has to be a full Nerd Font or have Symbols Nerd Font Mono as its fallback font (iTerm2 Non-ASCII Font, VS Code fontFamily, kitty symbol_map; Terminal.app has no fallback setting).
+   Over SSH or on a phone: leave it as it is. --glyphs auto undoes either choice.
+8. Tell me what only I can do: restart OpenCode (quit and start OpenCode 1 and 2 again), press Tab and choose lit-loop, sign in to a model provider, and approve what OpenCode asks.
 ```
 
 </details>
@@ -184,7 +199,7 @@ The card is on by default, and the LitOpenCode entry in OpenCode's `tui.json` ta
 | `{ "band": { "card": true } }` | Adds a second card underneath with the goal, the next task and any warnings |
 | `{ "notify": true }` | Sends a desktop notification and a sound when the mission finishes |
 
-To keep the sunset but stop all movement, add `{ "motion": false }`. If the round ends show as boxes in your font, set `LITOPENCODE_GLYPHS=basic`. `notify` stays off until you add it, and works only once OpenCode's own `"attention": { "enabled": true }` is on as well. The [guide](./docs/guide.md#the-lit-card) explains how the map and the skill chips count, and the [reference](./docs/reference.md#tui-mission-panel) explains every part of the card. The installer, `litopencode doctor` and `litopencode --help` open with the synthwave LIT mark, and on a dark theme in a truecolor terminal the sidebar panel's title carries the same chrome as a small gradient ` 🔥 LIT ` pill. Where the art would not show well, you get something plainer: with colour off the mark is drawn in one tone, and a pipe, a narrow window or a terminal without UTF-8 prints the single line `LIT · opencode`. When the pill can't be drawn, the panel keeps its usual title.
+To keep the sunset but stop all movement, add `{ "motion": false }`. If the round ends show as boxes in your font, run `litopencode install --yes --glyphs square`, or set `LITOPENCODE_GLYPHS=basic` for one terminal. `notify` stays off until you add it, and works only once OpenCode's own `"attention": { "enabled": true }` is on as well. The [guide](./docs/guide.md#the-lit-card) explains how the map and the skill chips count, and the [reference](./docs/reference.md#tui-mission-panel) explains every part of the card. The installer, `litopencode doctor` and `litopencode --help` open with the synthwave LIT mark, and on a dark theme in a truecolor terminal the sidebar panel's title carries the same chrome as a small gradient ` 🔥 LIT ` pill. Where the art would not show well, you get something plainer: with colour off the mark is drawn in one tone, and a pipe, a narrow window or a terminal without UTF-8 prints the single line `LIT · opencode`. When the pill can't be drawn, the panel keeps its usual title.
 
 ## Goals on OpenCode 2
 
@@ -246,7 +261,7 @@ npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 
 LitOpenCode checks for a new release when it starts interactively and after an install or doctor run succeeds. Running the install command again also updates it, keeping routes you have customized. To choose when to update, for example on a machine you keep pinned, pass `--no-auto-update` or set `LITOPENCODE_NO_AUTO_UPDATE=1`.
 
-To remove it, first run `litopencode agent-file remove` if you added the block to OpenCode's global `AGENTS.md`. Then remove the `@litfamily/litopencode` entry from the `plugin` array in OpenCode's `opencode.jsonc` and restart OpenCode. The [full removal steps](./docs/guide.md#uninstall) cover the copied commands and skills, and which files to keep if you plan to come back. If you installed it globally, also run:
+To remove it, first run `litopencode agent-file remove` if you added the block to OpenCode's global `AGENTS.md`. If you installed with `--round`, `litopencode icon-font remove` takes the added font back. Then remove the `@litfamily/litopencode` entry from the `plugin` array in OpenCode's `opencode.jsonc` and restart OpenCode. The [full removal steps](./docs/guide.md#uninstall) cover the copied commands and skills, and which files to keep if you plan to come back. If you installed it globally, also run:
 
 ```sh
 npm uninstall -g @litfamily/litopencode

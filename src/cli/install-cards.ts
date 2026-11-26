@@ -6,8 +6,9 @@
 import os from "node:os";
 import path from "node:path";
 import { emitKeypressEvents } from "node:readline";
+import { agentPointer } from "./agent-guide.ts";
 import { wrapValue } from "./install-report.ts";
-import { fontFolders, iconFontInstalled, roundCaps } from "../round-glyphs.ts";
+import { fontFolders, iconFontInstalled, roundCaps, type GlyphChoice } from "../round-glyphs.ts";
 import { cubeIndex } from "../synthwave-mark.ts";
 import { cellWidth, gradientAt, stripControls, truncateCells } from "../tui/mission-text.ts";
 
@@ -120,7 +121,7 @@ function asciiLocale(env: NodeJS.ProcessEnv): boolean {
 }
 
 /** True where the terminal says its background is light; most say nothing, and a terminal is dark by default. */
-function lightAppearance(env: NodeJS.ProcessEnv): boolean {
+export function lightAppearance(env: Readonly<Record<string, string | undefined>>): boolean {
   const back = /;(\d+)$/u.exec(env.COLORFGBG ?? "")?.[1];
   return back === "7" || back === "15";
 }
@@ -160,7 +161,7 @@ function ramp(text: string, stops: readonly string[], style: (hex: string) => In
   return runs.map((run): Span => [run.text, style(gradientAt(stops, run.step / 24))]);
 }
 
-export function createInstallCards(terminal: CardTerminal) {
+export function createInstallCards(terminal: CardTerminal, glyphs: GlyphChoice = "auto") {
   const { stdin, stdout, env, animate = true, settleMs = settleDelayMs, now = Date.now } = terminal;
   const proc: CardProcess = terminal.proc ?? process;
   const depth = colourDepth(terminal);
@@ -168,7 +169,7 @@ export function createInstallCards(terminal: CardTerminal) {
   const ascii = asciiLocale(env);
   const glyph = ascii ? asciiGlyphs : unicodeGlyphs;
   const round = depth >= 24 && !ascii && !lightAppearance(env) &&
-    (terminal.caps ?? roundCaps(env, () => iconFontInstalled(fontFolders(env, process.platform))));
+    (terminal.caps ?? roundCaps(env, () => iconFontInstalled(fontFolders(env, process.platform)), glyphs));
   const capLeft = "\ue0b6";
   const capRight = "\ue0b4";
   let letterAt = Number.NEGATIVE_INFINITY;
@@ -213,6 +214,15 @@ export function createInstallCards(terminal: CardTerminal) {
       else lines.push(hint);
     }
     return lines.map((line): CardRow => [quiet(line)]);
+  };
+  // The first card points an agent to its guide, in the blank row above the keys, or behind the keys where a small
+  // window has no blank row and they leave room. It never adds a row.
+  const pointing = (): boolean => asked <= 1 && cellWidth(agentPointer) <= innerWidth();
+  const agentRow = (): CardRow => (pointing() ? [quiet(agentPointer)] : []);
+  const tightHintRows = (hints: readonly string[]): CardRow[] => {
+    const usual = hintRows(hints);
+    const pointed = pointing() ? hintRows([...hints, agentPointer]) : usual;
+    return pointed.length === usual.length ? pointed : usual;
   };
 
   /** A filled pill, `text` + 2 cells: the caps take the cells that are padding in the square form. */
@@ -510,26 +520,30 @@ export function createInstallCards(terminal: CardTerminal) {
       };
 
       if (!filterable) {
-        const hints = hintRows([`${glyph.updown} move`, `0-${String(choices.length - 1)} jump`, "Enter choose", "Ctrl+C stop"]);
+        const keys = [`${glyph.updown} move`, `0-${String(choices.length - 1)} jump`, "Enter choose", "Ctrl+C stop"];
+        const hints = hintRows(keys);
+        const tight = tightHintRows(keys);
         const all = (stacked: boolean): CardRow[] => choices.flatMap((_, index) => optionRows(index, stacked));
         const foot = (): CardRow[] => (beside ? [] : footRows());
         const list = (): CardRow[] => [...all(under), ...(beside || under ? [] : [[], ...foot()])];
-        const whole = fit(tag(), title, [() => [[], ...noteRows, [], ...list(), [], ...hints], () => [...noteRows, ...list().filter((row) => row.length > 0), ...hints], () => [...noteRows, ...all(false), ...foot(), ...hints]]);
+        const whole = fit(tag(), title, [() => [[], ...noteRows, [], ...list(), agentRow(), ...hints], () => [...noteRows, ...list().filter((row) => row.length > 0), ...tight], () => [...noteRows, ...all(false), ...foot(), ...tight]]);
         if (whole.fits) return whole.rows;
         // Too short for the whole list: a window on it that follows the highlight.
-        const short = hintRows([`${position} ${glyph.updown}`, "Enter choose", "Ctrl+C stop"]);
+        const short = tightHintRows([`${position} ${glyph.updown}`, "Enter choose", "Ctrl+C stop"]);
         const spare = (tail: readonly CardRow[]): number => budget() - frame(tag(), title, [...noteRows, ...tail, ...short]).length;
         const tail = spare(foot()) >= 1 ? foot() : [];
         return frame(tag(), title, [...noteRows, ...windowRows(Math.max(1, Math.min(choices.length, spare(tail)))), ...tail, ...short]);
       }
-      const hints = hintRows([`${glyph.updown} move`, "Enter choose", "Esc clear filter", "Ctrl+C stop"]);
+      const keys = [`${glyph.updown} move`, "Enter choose", "Esc clear filter", "Ctrl+C stop"];
+      const hints = hintRows(keys);
+      const tight = tightHintRows(keys);
       const rest = [...noteRows, filterRow(), ...footRows(), ...hints];
       const roomy = budget() - frame(tag(), title, rest).length;
       const list = (count: number): CardRow[] => windowRows(Math.max(1, Math.min(choices.length, count)));
       return fit(tag(), title, [
-        () => [[], ...noteRows, [], filterRow(), ...list(listRows), ...footRows(), [], ...hints],
-        () => [...noteRows, filterRow(), ...list(Math.min(listRows, roomy)), ...footRows(), ...hints],
-        () => [...noteRows, filterRow(), ...list(1), ...hints]
+        () => [[], ...noteRows, [], filterRow(), ...list(listRows), ...footRows(), agentRow(), ...hints],
+        () => [...noteRows, filterRow(), ...list(Math.min(listRows, roomy)), ...footRows(), ...tight],
+        () => [...noteRows, filterRow(), ...list(1), ...tight]
       ]).rows;
     };
 
@@ -591,9 +605,9 @@ export function createInstallCards(terminal: CardTerminal) {
     const small = buttonRow(shown, true, cells);
     const big = rowWidth(wide[0]) <= innerWidth() ? wide : small;
     return [
-      () => [[], ...lead, [], ...big, [], ...hintRows(hints)],
-      () => [...lead, ...big, ...hintRows(hints)],
-      () => [...lead, ...small, ...hintRows(hints)]
+      () => [[], ...lead, [], ...big, agentRow(), ...hintRows(hints)],
+      () => [...lead, ...big, ...tightHintRows(hints)],
+      () => [...lead, ...small, ...tightHintRows(hints)]
     ];
   };
 
@@ -678,11 +692,11 @@ export function createInstallCards(terminal: CardTerminal) {
         while (cellWidth(tail) > inner - 4) tail = [...tail].slice(1).join("");
         const input: CardRow = [[`${glyph.pointer} `, { fg: pink, bold: true }], [tail, { bold: true }], [glyph.caret, { fg: accent }], ...(text === "" && cellWidth(example) + 5 <= inner ? [quiet(` ${example}`)] : [])];
         const trouble = problem === "" ? [] : warningIn(`${problem.replace(/\.?$/u, ".")} ${left === 1 ? "One try left." : `${String(left)} tries left.`}`, inner);
-        const hints = hintRows(["Enter use it", "Ctrl+U clear", "Ctrl+C stop"]);
+        const keys = ["Enter use it", "Ctrl+U clear", "Ctrl+C stop"];
         const noteRows = wrapRows(note, inner);
         return fit(tag(), title, [
-          () => [[], ...noteRows, [], input, ...(trouble.length > 0 ? [[], ...trouble] : []), [], ...hints],
-          () => [...noteRows, input, ...trouble, ...hints]
+          () => [[], ...noteRows, [], input, ...(trouble.length > 0 ? [[], ...trouble] : []), agentRow(), ...hintRows(keys)],
+          () => [...noteRows, input, ...trouble, ...tightHintRows(keys)]
         ]).rows;
       },
       fold: ({ label }) => [answered(title, label)],

@@ -1,4 +1,5 @@
 import { cardsTerminal, createInstallCards, type CardTerminal } from "./install-cards.ts";
+import type { GlyphChoice } from "../round-glyphs.ts";
 import type { InstallProgress, InstallStageLabel } from "./types.ts";
 import { markColorMode } from "../lit-mark.ts";
 import { terminalSynthwave } from "../synthwave-mark.ts";
@@ -231,8 +232,8 @@ export function shouldDrawInstallCards(argv: readonly string[], terminal: CardTe
   return shouldRenderInstallTui(argv) && !argv.includes("--yes") && cardsTerminal(terminal);
 }
 
-export function createCardInstallTui(terminal: CardTerminal = process): InstallProgress {
-  const cards = createInstallCards(terminal);
+export function createCardInstallTui(terminal: CardTerminal = process, glyphs?: GlyphChoice): InstallProgress {
+  const cards = createInstallCards(terminal, glyphs);
   let running = installStages[0];
   return {
     cards,

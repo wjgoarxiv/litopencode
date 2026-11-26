@@ -62,24 +62,39 @@ OpenCode는 세션을 시작할 때마다 전역 `AGENTS.md` 하나를 읽습니
 | `--dry-run` | 아무것도 쓰기 전에 무엇이 바뀔지 보고 싶을 때 |
 | `--yes` | 기본값으로 충분해서 질문을 건너뛰고 싶을 때. 블록에도 예로 답합니다 |
 | `--no-agent-file` | 이번 실행에서만 `AGENTS.md` 블록을 건너뛸 때 |
+| `--round` | 알약 끝을 둥글게 보고 싶은데 아이콘 글꼴이 없을 때. 글꼴 폴더에 Symbols Nerd Font Mono를 넣습니다 |
+| `--glyphs round`, `square`, `auto` | 화면에서 알약 끝이 어떻게 보이는지 확인하고 그 선택을 저장할 때 |
+| `litopencode install --agent` | 코딩 에이전트가 설치 순서를 직접 읽게 할 때 |
 | `litopencode agent-file remove` | 블록을 빼고 싶을 때. 당신이 쓴 글은 그대로 둡니다 |
 
 <details>
 <summary>코딩 에이전트에게 설치 맡기기</summary>
 
-이미 쓰는 에이전트에 아래 내용을 붙여 넣으세요. 에이전트는 먼저 확인하고, 할 일을 보여 준 뒤, 허락을 받고 나서야 무언가를 바꿉니다.
+이미 쓰는 에이전트에 아래 내용을 붙여 넣으세요. 에이전트는 먼저 확인하고, 할 일을 보여 준 뒤, 허락을 받고 나서야 무언가를 바꿉니다. `litopencode install --agent`도 같은 순서를 영어로 보여 줍니다.
 
 ```text
 이 컴퓨터에 OpenCode용 lit 워크플로 플러그인 LitOpenCode를 설치해줘.
-1. node --version, npm --version, opencode --version으로 Node.js, npm, OpenCode가 설치돼 있는지 확인해. 하나라도 없으면 멈추고 알려줘.
-2. 공식 npm 패키지 @litfamily/litopencode만 써. 포크, 미러, curl 스크립트, 다른 패키지는 쓰지 마.
-3. 아무것도 바꾸기 전에 이 명령을 실행해: npm exec --package @litfamily/litopencode@latest -- litopencode install --dry-run
-   무엇이 바뀌는지 보여 주고, 기본값으로 진행해도 되는지 나한테 물어봐.
-4. 내가 좋다고 하면 이 명령을 실행해: npm exec --package @litfamily/litopencode@latest -- litopencode install --yes
-   OpenCode 설정 파일은 손으로 고치지 마.
-5. 이 명령을 실행해: npm exec --package @litfamily/litopencode@latest -- litopencode doctor
-   install.ok, install.plugin.ok, install.nativeSkills.ok가 true인지 알려 주고, 경고가 있으면 그대로 옮겨줘.
-6. 마지막으로 OpenCode를 다시 시작하고 Tab을 눌러 lit-loop를 고르라고 알려줘.
+1. node --version, npm --version, opencode --version(또는 opencode2 --version)으로 Node.js, npm, OpenCode가 설치돼 있는지 확인해. 하나라도 없으면 멈추고 알려줘.
+2. 미리 보기. 이 명령을 실행해: npm exec --yes --package @litfamily/litopencode@latest -- litopencode install --dry-run --round
+   무엇이 바뀌는지 보여줘. JSON만 출력하고 아무것도 쓰지 않아.
+3. 기본값을 모두 그대로 쓸지, 바꿀 것이 있는지 나한테 물어봐:
+   리드 모델: OpenAI의 gpt-6-astra (--provider <openai|xai> --model <id> 또는 --model <provider/id>), 추론 강도 xhigh (--effort <e>).
+   헬퍼 모델: OpenAI의 gpt-6-luna (--model과 함께 --subagent-model <provider/id>), 추론 강도 max (--subagent-effort <e>).
+   권한: Safe (--permission-mode <safe|balanced|yolo>). AGENTS.md의 LitFamily 블록: 예 (--no-agent-file).
+   플래그가 없어서 나중에 내가 고르는 것: 모델 경로는 채팅의 /lit-model, 출력 스타일(None)은 내 터미널에서 실행하는 install.
+   아이콘 글꼴: --round는 아이콘 글꼴이 없을 때만 SymbolsNerdFontMono-Regular.ttf를 ~/Library/Fonts(macOS)나 ~/.local/share/fonts(Linux)에 넣어.
+   눈에 보이는 화면: 입력창 아래 LIT 카드와 사이드바의 LIT 패널. 둘 다 기본으로 켜져 있어.
+4. 내가 좋다고 할 때까지 기다려. npm 패키지 @litfamily/litopencode만 쓰고, 다른 출처를 더하지 말고, OpenCode 설정을 손으로 고치지 말고, 훅, 신뢰, 로그인 승인은 나한테 맡겨.
+5. 설치. 내가 바꾼 답의 플래그를 끝에 붙여서 실행해: npm exec --yes --package @litfamily/litopencode@latest -- litopencode install --yes --round
+   나중에 업데이트할 때도 같은 줄을 다시 실행하면 돼.
+6. 점검. 이 명령을 실행해: npm exec --yes --package @litfamily/litopencode@latest -- litopencode doctor
+   install.ok, install.plugin.ok, install.nativeSkills.ok가 true이고 설치가 ROUND_ENDS: 줄을 출력했으면 통과야. 경고가 있으면 그대로 옮겨줘.
+   실패한 단계가 있으면 그 줄을 보여 주고 멈춰.
+7. 이것을 보여 주고 양쪽 끝이 둥근지 물어봐:  LIT 
+   둥글면 실행해: npm exec --yes --package @litfamily/litopencode@latest -- litopencode install --yes --glyphs round
+   네모로 깨지면 같은 줄에 --glyphs square를 써. 그리고 터미널 글꼴을 Nerd Font 전체판으로 바꾸거나 Symbols Nerd Font Mono를 대체 글꼴로 넣어야 한다고 알려줘(iTerm2 Non-ASCII Font, VS Code fontFamily, kitty symbol_map. Terminal.app에는 대체 글꼴 설정이 없어).
+   SSH나 휴대폰이면 그대로 둬. --glyphs auto로 되돌릴 수 있어.
+8. 나만 할 수 있는 일을 알려줘: OpenCode를 다시 시작하기(1과 2 모두 끄고 켜기), Tab을 눌러 lit-loop 고르기, 모델 제공자 로그인, OpenCode가 묻는 승인.
 ```
 
 </details>
@@ -184,7 +199,7 @@ LitOpenCode를 설치하면 OpenCode 세션 화면 맨 아래에 작은 카드�
 | `{ "band": { "card": true } }` | 목표, 다음 할 일, 경고를 담은 카드를 하나 더 아래에 붙입니다 |
 | `{ "notify": true }` | 미션이 끝나면 데스크톱 알림과 소리로 알려 줍니다 |
 
-노을은 두고 움직임만 멈추려면 `{ "motion": false }`를 넣으세요. 둥근 끝이 네모난 상자로 깨져 보이면 `LITOPENCODE_GLYPHS=basic`을 설정하세요. `notify`는 직접 넣기 전에는 꺼져 있고, OpenCode 자체 설정 `"attention": { "enabled": true }`도 켜져 있어야 동작합니다. 지도와 스킬 칩이 어떻게 세는지는 [사용 안내](./docs/guide-Ko-KR.md#lit-상태-카드)에, 카드의 각 부분은 [레퍼런스](./docs/reference-Ko-KR.md#tui-미션-패널)에 자세히 있습니다. 설치 프로그램, `litopencode doctor`, `litopencode --help`는 신스웨이브 LIT 마크로 시작합니다. 어두운 테마에 트루컬러 터미널이면 사이드바 패널 제목에도 같은 색의 작은 그라데이션 ` 🔥 LIT ` 배지가 붙습니다. 그림이 제대로 보이기 어려운 환경에서는 더 단순하게 나옵니다. 색을 끄면 마크가 한 가지 색으로 그려지고, 파이프로 넘기거나 창이 좁거나 UTF-8을 쓰지 않는 터미널에서는 `LIT · opencode` 한 줄만 찍힙니다. 배지를 그릴 수 없을 때 패널은 원래 제목을 그대로 씁니다.
+노을은 두고 움직임만 멈추려면 `{ "motion": false }`를 넣으세요. 둥근 끝이 네모난 상자로 깨져 보이면 `litopencode install --yes --glyphs square`를 실행하거나, 한 터미널에서만 바꾸려면 `LITOPENCODE_GLYPHS=basic`을 설정하세요. `notify`는 직접 넣기 전에는 꺼져 있고, OpenCode 자체 설정 `"attention": { "enabled": true }`도 켜져 있어야 동작합니다. 지도와 스킬 칩이 어떻게 세는지는 [사용 안내](./docs/guide-Ko-KR.md#lit-상태-카드)에, 카드의 각 부분은 [레퍼런스](./docs/reference-Ko-KR.md#tui-미션-패널)에 자세히 있습니다. 설치 프로그램, `litopencode doctor`, `litopencode --help`는 신스웨이브 LIT 마크로 시작합니다. 어두운 테마에 트루컬러 터미널이면 사이드바 패널 제목에도 같은 색의 작은 그라데이션 ` 🔥 LIT ` 배지가 붙습니다. 그림이 제대로 보이기 어려운 환경에서는 더 단순하게 나옵니다. 색을 끄면 마크가 한 가지 색으로 그려지고, 파이프로 넘기거나 창이 좁거나 UTF-8을 쓰지 않는 터미널에서는 `LIT · opencode` 한 줄만 찍힙니다. 배지를 그릴 수 없을 때 패널은 원래 제목을 그대로 씁니다.
 
 ## OpenCode 2의 목표
 
@@ -246,7 +261,7 @@ npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 
 LitOpenCode는 대화형으로 시작할 때와 install이나 doctor가 성공한 뒤에 새 버전을 확인합니다. 설치 명령을 다시 실행해도 업데이트되며, 손봐 둔 모델 경로 설정은 그대로 남습니다. 버전을 고정해 두고 업데이트 시점을 직접 정하고 싶다면 `--no-auto-update`를 붙이거나 `LITOPENCODE_NO_AUTO_UPDATE=1`을 설정하세요.
 
-제거하려면, 전역 `AGENTS.md`에 블록을 넣었을 경우 먼저 `litopencode agent-file remove`를 실행하세요. 그런 다음 OpenCode의 `opencode.jsonc`에서 `plugin` 배열의 `@litfamily/litopencode` 항목을 지우고 OpenCode를 다시 시작합니다. 복사된 명령과 스킬 파일을 정리하는 방법, 다시 쓸 생각이라면 남겨 둘 파일은 [제거 상세 안내](./docs/guide-Ko-KR.md#제거)에 있고, 전역으로 설치했다면 다음 명령도 실행합니다.
+제거하려면, 전역 `AGENTS.md`에 블록을 넣었을 경우 먼저 `litopencode agent-file remove`를 실행하세요. `--round`로 설치했다면 `litopencode icon-font remove`가 넣었던 글꼴을 다시 뺍니다. 그런 다음 OpenCode의 `opencode.jsonc`에서 `plugin` 배열의 `@litfamily/litopencode` 항목을 지우고 OpenCode를 다시 시작합니다. 복사된 명령과 스킬 파일을 정리하는 방법, 다시 쓸 생각이라면 남겨 둘 파일은 [제거 상세 안내](./docs/guide-Ko-KR.md#제거)에 있고, 전역으로 설치했다면 다음 명령도 실행합니다.
 
 ```sh
 npm uninstall -g @litfamily/litopencode

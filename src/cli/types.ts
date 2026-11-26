@@ -14,6 +14,8 @@ export type PackageMetadata = {
   readonly packageRoot: string;
 };
 
+import type { GlyphChoice } from "../round-glyphs.ts";
+import type { IconFontPlan } from "./icon-font.ts";
 import type { HostBinary, HostChoice, HostDetection, HostMode } from "./host-detect.ts";
 
 export type ParsedArgs = {
@@ -33,11 +35,14 @@ export type ParsedArgs = {
   readonly outputStylePrompt: PermissionPromptMode;
   readonly loop: LoopArgs;
   readonly tuiAction?: string;
+  readonly iconFontAction?: string;
   readonly agentFileAction?: string;
   readonly agentFileDir?: string;
   // "skip" is the per-run --no-agent-file; the stored setting lives in litopencode.json.
   readonly agentFile: "auto" | "skip";
   readonly assumeYes: boolean;
+  readonly round: boolean;
+  readonly glyphs?: GlyphChoice;
   readonly host: HostChoice;
 };
 
@@ -207,6 +212,8 @@ export type InstallReport = {
     readonly mode: string;
     readonly action: string;
   };
+  /** Dry run only: the choice this install would leave saved, and what `--round` would add. */
+  readonly roundEnds?: { readonly choice: GlyphChoice; readonly iconFont?: IconFontPlan };
   readonly plugin: PluginMutation["plugin"];
   readonly commandAliases: {
     readonly path: string;

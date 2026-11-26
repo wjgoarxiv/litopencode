@@ -102,7 +102,7 @@ OpenCode가 스스로 압축하는 지점보다 낮은 퍼센트를 고르세요
 
 단계 표시는 작업 흐름 전체를 담은 지도입니다. 인터뷰로 시작한 요청은 `interview › plan › work › review › done`을 따라가고, 지금 단계는 개수와 함께 밝게 켜집니다. 예를 들어 `/start-work`가 저장된 계획을 처리하는 동안에는 `WORK 3/7`처럼 보입니다. lit-loop 목표는 기준과 반복 횟수를 세고, litresearch 실행은 `decompose`에서 `wave`를 거쳐 `synthesis`까지 자기 단계를 따릅니다. 입력창 옆 칩은 지금 단계 앞뒤를, 사이드바는 같은 지도를 위에서 아래로 그리며 다음 단계로 넘어갈 때 선이 차오릅니다. 도구가 도는 동안에는 `⠹ bash · 0:48`처럼 도구 이름과 걸린 시간이 함께 보입니다.
 
-설치 프로그램, `doctor`, `--help`는 신스웨이브 LIT 마크로 시작합니다. 어두운 테마에 트루컬러 터미널(`COLORTERM=truecolor`이고 `NO_COLOR`가 없을 때)이면 사이드바 패널에 같은 색의 그라데이션 ` 🔥 LIT ` 배지가 붙고, 카드에는 노을이 깔립니다. 배지는 주황에서 분홍으로 이어지고 테두리가 빛나며, 글자 뒤로 해가 바다에 잠깁니다. 바다는 차례가 도는 동안 흐르다가 끝나면 멈추고, 글자가 있는 칸에는 아무것도 그리지 않습니다. 폭이 74칸 이상이면 이 카드는 일하는 동안 최대 아홉 줄까지 늘어났다가 쉴 때 대여섯 줄로 줄어듭니다. 알약과 막대의 둥근 끝은 Windows Terminal, VS Code, WezTerm, Ghostty, kitty에서, 또는 이 컴퓨터에 아이콘 글꼴(Nerd Font)이 있을 때 그려집니다. `LITOPENCODE_GLYPHS=basic`은 늘 각진 끝을, `LITOPENCODE_GLYPHS=round`는 늘 둥근 끝을 씁니다. 그 밖의 환경에서는 둘 다 원래 모습입니다. 마크는 폭이 24칸 이상이고 UTF-8을 쓰는 터미널에서 그려집니다. 색을 끄면 한 가지 색으로 그려지고, 파이프나 CI 로그, UTF-8을 쓰지 않는 터미널에는 `LIT · opencode` 한 줄만 나옵니다.
+설치 프로그램, `doctor`, `--help`는 신스웨이브 LIT 마크로 시작합니다. 어두운 테마에 트루컬러 터미널(`COLORTERM=truecolor`이고 `NO_COLOR`가 없을 때)이면 사이드바 패널에 같은 색의 그라데이션 ` 🔥 LIT ` 배지가 붙고, 카드에는 노을이 깔립니다. 배지는 주황에서 분홍으로 이어지고 테두리가 빛나며, 글자 뒤로 해가 바다에 잠깁니다. 바다는 차례가 도는 동안 흐르다가 끝나면 멈추고, 글자가 있는 칸에는 아무것도 그리지 않습니다. 폭이 74칸 이상이면 이 카드는 일하는 동안 최대 아홉 줄까지 늘어났다가 쉴 때 대여섯 줄로 줄어듭니다. 알약과 막대의 둥근 끝은 Windows Terminal, VS Code, WezTerm, Ghostty, kitty에서, 또는 이 컴퓨터에 아이콘 글꼴(Nerd Font)이 있을 때 그려집니다. `litopencode install --glyphs round`(또는 `square`, `auto`)는 선택을 `litopencode.json`에 저장하고, `LITOPENCODE_GLYPHS`(`auto`, `round`, `square`, 예전 이름 `nerd`와 `basic`)는 그 터미널에서 저장된 선택보다 앞섭니다. 기호 글꼴을 설치해도 터미널이 그 글꼴을 써야 둥글게 보입니다. 상자로 깨지면 `square`를 고른 뒤 터미널 글꼴을 Nerd Font 전체판으로 바꾸거나 Symbols Nerd Font Mono를 대체 글꼴로 넣으세요(iTerm2 Non-ASCII Font, VS Code `fontFamily`, kitty `symbol_map`. Terminal.app에는 대체 글꼴 설정이 없어 전체판이 필요합니다). 지금 상태는 `install`과 `doctor`의 `ROUND_ENDS:` 한 줄에 나옵니다. 그 밖의 환경에서는 둘 다 원래 모습입니다. 마크는 폭이 24칸 이상이고 UTF-8을 쓰는 터미널에서 그려집니다. 색을 끄면 한 가지 색으로 그려지고, 파이프나 CI 로그, UTF-8을 쓰지 않는 터미널에는 `LIT · opencode` 한 줄만 나옵니다.
 
 ## 안전과 업데이트
 
@@ -145,7 +145,7 @@ npm exec --package @litfamily/litopencode@latest -- litopencode doctor
 
 `litopencode uninstall` 명령은 없습니다. 직접 지우려면 다음 순서로 하세요.
 
-1. 설치가 OpenCode 전역 `AGENTS.md`에 LitFamily 블록을 넣었다면 먼저 `litopencode agent-file remove`를 실행합니다. 파일은 당신이 쓴 글만 남은 상태로 돌아가고, 설치가 만든 파일이었다면 지워집니다.
+1. 설치가 OpenCode 전역 `AGENTS.md`에 LitFamily 블록을 넣었다면 먼저 `litopencode agent-file remove`를 실행합니다. 파일은 당신이 쓴 글만 남은 상태로 돌아가고, 설치가 만든 파일이었다면 지워집니다. `--round`로 설치했다면 `litopencode icon-font remove`도 실행합니다. 넣었던 글꼴 파일이 그대로일 때만 빼며, 다른 제품은 그 뒤 각진 끝으로 그릴 수 있습니다.
 2. OpenCode의 `opencode.jsonc`(custom root라면 `opencode.json`)에서 `plugin` 배열의 `@litfamily/litopencode` 또는 `@litfamily/litopencode@<version>` 항목을 지웁니다. 예전 `litopencode` 패키지 항목이 있으면 그것도 지웁니다.
 3. 전역으로 설치했다면 npm 실행 파일도 제거합니다.
 

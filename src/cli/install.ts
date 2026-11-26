@@ -43,7 +43,11 @@ import { describeNativeSkillMutation, ensureNativeSkills, inspectNativeSkills } 
 import { extensionsNoticeLines, previousVersionLeftovers, shownNoticesName, writePendingExtensionsNotice } from "../extensions-notice.ts";
 import { noticeHash, noticeShown, recordNotice } from "../shown-record.ts";
 import { inspectExtensions } from "./extensions.ts";
-import { globalAgentFilePath } from "./agent-file.ts";
+import { agentPointer } from "./agent-guide.ts";
+import { globalAgentFilePath, storeLitSetting } from "./agent-file.ts";
+import { addIconFont, iconFontLine, planIconFont, type IconFontResult } from "./icon-font.ts";
+import { roundEndsLine } from "./round-ends.ts";
+import { fontFolders, iconFontInstalled, savedGlyphChoice, type GlyphChoice } from "../round-glyphs.ts";
 import { askAgentFileCard, installAgentFile, planAgentFile, shouldAskAgentFile } from "./agent-file-command.ts";
 import { applyPluginMutation, describePluginMutation, isLitOpenCodeEntry } from "./plugin-mutation.ts";
 import { applyCliJsonCleanup, applyTuiWrites, backupTuiFiles, inspectTuiPlugin, planCliJsonCleanup, planTuiInstall, skippedTuiPlan } from "./tui-config.ts";
@@ -68,6 +72,20 @@ function withProgress<T>(
   task: () => Promise<T>
 ): Promise<T> {
   return progress === undefined ? task() : progress.run(label, task);
+}
+
+/** The test the question prompts use: a person sits at both ends of this run. */
+function personAtTerminal(): boolean {
+  return process.stdin.isTTY === true && process.stdout.isTTY === true && process.env.CI === undefined;
+}
+
+/** The banner of a run without progress screens: when no person is at the terminal, the pointer for an agent stands right under its first line. */
+function pointedWordmark(packageLabel: string): string {
+  const wordmark = renderLitOpenCodeWordmark(packageLabel, false);
+  if (personAtTerminal()) return wordmark;
+  const [first, ...rest] = wordmark.split("\n");
+  // Art is kept whole; the pointer follows it.
+  return process.stdout.isTTY === true ? [first, ...rest, agentPointer].join("\n") : [first, agentPointer, ...rest].join("\n");
 }
 
 function pluginSpec(metadata: Pick<PackageMetadata, "name" | "version">): string {
@@ -341,6 +359,20 @@ const permissionNames: Readonly<Record<InstallPermissionMode, string>> = {
   yolo: "YOLO: bash, edit, task, webfetch and external folders run without asking; lit-plan stays deny-only"
 };
 
+function opencodeIsV2(detection: HostDetection): boolean {
+  return [...detection.binaries, ...(detection.unplaced ?? [])].some((found) => found.command === "opencode" && found.major === 2);
+}
+
+/** Why `opencode plugin` could not run: no OpenCode 1 command where one is needed. Undefined when nothing is missing. */
+function missingHost(detection: HostDetection): string | undefined {
+  if (!targetsV1(detection.mode) || detection.v1Command !== undefined) return undefined;
+  if (opencodeIsV2(detection)) {
+    return "Found no OpenCode 1 command: `opencode` is OpenCode 2, and `opencode plugin` would change OpenCode 2's config. Install for OpenCode 2 with --host v2, or put OpenCode 1 on PATH as `opencode`.";
+  }
+  if (detection.v2Command !== undefined) return "Found no OpenCode 1 command (`opencode`) on PATH, so nothing was written. Install for OpenCode 2 with --host v2, or put OpenCode 1 on PATH.";
+  return "Found no OpenCode command (`opencode` or `opencode2`) on PATH, so nothing was written. Install OpenCode first, then run this again.";
+}
+
 /** What the closing card says: the installed parts, the choices made, and what to do next. */
 function summarySections(report: InstallReport, target: OpenCodeInstallTarget, agentFile: string, kept: string | undefined): readonly CardSection[] {
   const { model, permissionMode, outputStyle } = report.litopencodeConfig;
@@ -392,9 +424,15 @@ export async function install(
   progress?: InstallProgress,
   outputStylePrompt: PermissionPromptMode = "auto",
   host: HostChoice = "auto",
-  agentFileChoice: { readonly assumeYes: boolean; readonly skip: boolean } = { assumeYes: false, skip: false }
+  agentFileChoice: { readonly assumeYes: boolean; readonly skip: boolean } = { assumeYes: false, skip: false },
+  ends: { readonly round: boolean; readonly glyphs?: GlyphChoice } = { round: false }
 ): Promise<CliResult> {
   const metadata = await readPackageMetadata();
+  // Asked before anything is drawn, asked or written: an install that cannot register its plugin leaves no trace.
+  if (!dryRun && shouldUseOpenCodeInstaller(root)) {
+    const missing = missingHost(await detectOpenCodeHosts({ root, override: host }));
+    if (missing !== undefined) throw new Error(missing);
+  }
   const cards = dryRun ? undefined : progress?.cards;
   const agentFileInput = { root, version: metadata.version, ...agentFileChoice };
   cards?.banner(cardWordmark(pluginSpec(metadata)));
@@ -430,6 +468,7 @@ export async function install(
   const activeProgress = dryRun ? undefined : progress;
   if (activeProgress !== undefined) {
     await activeProgress.start(pluginSpec(metadata));
+    if (cards === undefined && !personAtTerminal()) process.stdout.write(agentPointer + "\n");
   }
   const spec = pluginSpec(metadata);
   const located = await withProgress(activeProgress, "Resolve package", async () => {
@@ -449,10 +488,8 @@ export async function install(
     const forV2 = targetsV2(detection.mode);
     // `opencode plugin` is the OpenCode 1 command; OpenCode 2 installs the package itself on first load.
     const runInstaller = located.useOpenCodeInstaller && forV1;
-    const opencodeIsV2 = [...detection.binaries, ...(detection.unplaced ?? [])].some((found) => found.command === "opencode" && found.major === 2);
-    if (runInstaller && detection.v1Command === undefined && opencodeIsV2) {
-      throw new Error("Found no OpenCode 1 command: `opencode` is OpenCode 2, and `opencode plugin` would change OpenCode 2's config. Install for OpenCode 2 with --host v2, or put OpenCode 1 on PATH as `opencode`.");
-    }
+    const missing = runInstaller && opencodeIsV2(detection) ? missingHost(detection) : undefined;
+    if (missing !== undefined) throw new Error(missing);
     return { ...located, detection, runInstaller, forV1, forV2 };
   };
   type Resolved = ReturnType<typeof resolveFor>;
@@ -520,7 +557,7 @@ export async function install(
     dryRun,
     path: configFile,
     litopencodeConfig,
-    ...(dryRun ? { agentFile: await planAgentFile(agentFileInput) } : {}),
+    ...(dryRun ? { agentFile: await planAgentFile(agentFileInput), roundEnds: { choice: ends.glyphs ?? savedGlyphChoice(root), ...(ends.round ? { iconFont: planIconFont() } : {}) } } : {}),
     plugin: mutation.plugin,
     commandAliases,
     nativeSkills,
@@ -561,6 +598,7 @@ export async function install(
 
   await withProgress(activeProgress, "Write litopencode.json", async () => {
     await ensureLitConfig(root, selectedModel, selectedPermissionMode, selectedPermissionExplicit, selectedOutputStyle);
+    if (ends.glyphs !== undefined) await storeLitSetting(root, "glyphs", ends.glyphs);
     await ensureCommandAliases(root);
   });
 
@@ -609,8 +647,8 @@ export async function install(
     return ensureNativeSkills(root, metadata);
   });
   if (resolved.forV2) await applyCliJsonCleanup(cliJson);
-  await withProgress(activeProgress, "Verify install", async () =>
-    verifyInstalledSurfaces(
+  const iconFont = await withProgress(activeProgress, "Verify install", async (): Promise<IconFontResult | undefined> => {
+    await verifyInstalledSurfaces(
       root,
       configFile,
       resolved.target,
@@ -620,8 +658,9 @@ export async function install(
       selectedPermissionExplicit,
       selectedOutputStyle,
       resolved.detection
-    )
-  );
+    );
+    return ends.round ? addIconFont() : undefined;
+  });
   await activeProgress?.complete();
   // An existing user is pointed at `extensions check` once when it finds something; nothing changes on its own.
   const needsCheck = await inspectExtensions(root).then((report) => report.needsAction.length > 0, () => false);
@@ -644,6 +683,16 @@ export async function install(
       ) + `\n  ${skillBackup.directory}\n`;
   // The block is the last step: it asks a question, and a refusal here never undoes a finished install.
   const agentFileStatus = await installAgentFile(agentFileInput, process.env, cards === undefined ? undefined : () => askAgentFileCard(cards, globalAgentFilePath(root)));
+  const fontLine = iconFont === undefined ? undefined : iconFontLine(iconFont);
+  const endsLine = roundEndsLine({
+    surface: true,
+    env: process.env,
+    platform: process.platform,
+    saved: savedGlyphChoice(root),
+    iconFont: () => iconFontInstalled(fontFolders(process.env, process.platform)),
+    ...(iconFont?.state === "failed" ? { failure: iconFont.reason } : {}),
+    stream: process.stdout
+  });
   if (cards !== undefined) {
     const kept = skillBackup.directory === undefined
       ? undefined
@@ -651,15 +700,17 @@ export async function install(
     cards.panel(`LitOpenCode ${metadata.version} is installed`, summarySections(report, resolved.target, agentFileStatus, kept));
     const [heading, ...lines] = extensionsNoticeLines(leftovers, needsCheck, cards.textWidth);
     if (!noticeSeen) cards.notice(heading, lines);
+    if (fontLine !== undefined) cards.notice(fontLine, []);
+    cards.notice(endsLine, []);
     return { exitCode: 0 };
   }
   const agentFileLine = wrapReceiptLine(agentFileStatus);
-  const tail = backupLines + "\n" + (noticeSeen ? "" : notice + "\n\n") + agentFileLine;
+  const tail = backupLines + "\n" + (noticeSeen ? "" : notice + "\n\n") + agentFileLine + "\n" + (fontLine === undefined ? "" : wrapReceiptLine(fontLine) + "\n") + endsLine;
 
   return {
     exitCode: 0,
     stdout: activeProgress === undefined
-      ? renderLitOpenCodeWordmark(pluginSpec(metadata), false) + "\n" + renderInstallReport(report) + "\n" + tail
+      ? pointedWordmark(pluginSpec(metadata)) + "\n" + renderInstallReport(report) + "\n" + tail
       : tail
   };
 }

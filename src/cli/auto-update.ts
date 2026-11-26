@@ -262,7 +262,7 @@ async function bounded<T>(operation: () => Promise<T>, timeoutMs: number): Promi
   }
 }
 
-async function ensurePrivateStateRoot(homeDir: string): Promise<string> {
+export async function ensurePrivateStateRoot(homeDir: string): Promise<string> {
   const directory = stateRoot(homeDir);
   try {
     const stat = await fs.lstat(directory);

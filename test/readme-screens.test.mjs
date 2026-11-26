@@ -219,7 +219,7 @@ test("the quick start carries a copyable install prompt for a coding agent", asy
     const quickStart = content.slice(content.indexOf(file === "README.md" ? "## Quick start" : "## 빠르게 시작하기"), content.indexOf(file === "README.md" ? "## What you get" : "## 할 수 있는 일"));
     const prompt = quickStart.match(/```text\n((?:(?!```)[\s\S])*?litopencode doctor[\s\S]*?)```/u)?.[1];
     assert.ok(prompt, `${file}: the quick start has an agent install prompt`);
-    for (const text of ["@litfamily/litopencode", "npm exec --package @litfamily/litopencode@latest -- litopencode install --dry-run", "npm exec --package @litfamily/litopencode@latest -- litopencode install --yes", "npm exec --package @litfamily/litopencode@latest -- litopencode doctor", "install.ok", "lit-loop"]) {
+    for (const text of ["@litfamily/litopencode", "npm exec --yes --package @litfamily/litopencode@latest -- litopencode install --dry-run", "npm exec --yes --package @litfamily/litopencode@latest -- litopencode install --yes --round", "npm exec --yes --package @litfamily/litopencode@latest -- litopencode doctor", "install.ok", "lit-loop"]) {
       assert.ok(prompt.includes(text), `${file}: the agent prompt includes "${text}"`);
     }
     assert.match(prompt, file === "README.md" ? /ask me whether to go ahead/u : /나한테 물어봐/u, `${file}: the agent asks before installing`);

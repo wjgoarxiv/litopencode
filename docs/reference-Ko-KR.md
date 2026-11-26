@@ -126,6 +126,27 @@ CI와 비대화형 터미널에서는 자동 질문을 생략하며, 명시한 �
 버튼의 끝이 상태 카드와 같은 규칙(`LITOPENCODE_GLYPHS`, 아래 참고)으로 둥글게 그려집니다. 그렇지 않으면 같은 칸에 각진 모양입니다.
 단계가 실패하면 작업 카드가 화면에 남고, 단계와 이유, 다음에 할 일을 적은 `INSTALL STOPPED` 카드가 붙습니다.
 
+**둥근 끝.** `install --round`는 컴퓨터에 아이콘 글꼴이 없을 때만 고정된 기호 전용 Nerd Font v3.5.1(`SymbolsNerdFontMono-Regular.ttf`와
+라이선스)을 넣습니다. macOS는 `~/Library/Fonts`, Linux는 `${XDG_DATA_HOME:-~/.local/share}/fonts`이고 Windows에는 넣지 않습니다.
+압축 파일과 두 파일을 SHA-256으로 확인하고, 있던 파일은 바꾸지 않고, 링크는 따라가지 않으며, 넣은 파일은
+`~/.litopencode/icon-font.json`에 적습니다. 내려받기는 60초나 8 MiB에서 멈춥니다. 무엇이 실패해도 설치는 계속되고
+`ICON_FONT:` 줄이 이유를 알려 줍니다. `LITOPENCODE_ICON_FONT_ARCHIVE`로 내려받아 둔 압축 파일을 지정할 수 있고,
+`litopencode icon-font remove [--dry-run]`은 그대로 남아 있는 파일만 다시 뺍니다. 일반 설치와 백그라운드 업데이트는 글꼴을 넣지
+않고 저장된 선택을 지킵니다.
+
+`install`의 마지막 줄과 `doctor`의 `roundEnds.line`은 다음 가운데 하나입니다.
+
+| 줄 | 뜻 |
+| --- | --- |
+| `ROUND_ENDS: shown` | 카드가 켜져 있고 `--glyphs round`를 저장했음 |
+| `ROUND_ENDS: ready` | 카드가 켜져 있고 이 터미널이 둥근 끝을 직접 그림 |
+| `ROUND_ENDS: check (...)` | 아이콘 글꼴이 있음. 터미널이 그 글꼴을 쓰는지 `install --agent` 8단계의 알약으로 확인 |
+| `ROUND_ENDS: square (...)` | 각진 끝. 괄호 안에 이유와 해결 방법 하나 |
+
+**코딩 에이전트.** `install --agent`(또는 `--agent`)는 에이전트와 사용자를 위한 설치 순서를 글로만 보여 주고 다른 일은 하지 않습니다.
+터미널 앞에 사람이 없는 설치는 이 안내를 가리키는 한 줄을 출력하고, 첫 카드에도 같은 줄이 보입니다. 기본 위치에 OpenCode 1용으로
+설치할 때 `opencode` 명령이 없으면 아무것도 쓰기 전에 멈춥니다.
+
 답한 카드는 한 줄로 접히고, 경고는 화면에 남습니다. Ctrl+C나 Ctrl+D를 누르면 종료 코드 1로 멈추며, 설치 단계가 시작되기
 전이면 `ultra`를 `max`로 바꾸는 일 말고는 아무것도 쓰지 않습니다. `NO_COLOR`에서는 같은 카드를 색 없이, UTF-8이 아닌 로케일에서는 ASCII로 그립니다. 파이프, CI,
 `--yes`, `TERM=dumb`, raw 모드가 없는 터미널, 더 작은 창, `LITOPENCODE_*_PROMPT` 변수를 켠 실행은 예전과 똑같이 번호로 묻고
@@ -328,7 +349,7 @@ flowchart LR
 npm uninstall -g @litfamily/litopencode
 ```
 
-설치가 전역 `AGENTS.md`에 LitFamily 블록을 넣었다면 그 전에 `litopencode agent-file remove`를 실행하세요.
+설치가 전역 `AGENTS.md`에 LitFamily 블록을 넣었다면 그 전에 `litopencode agent-file remove`를 실행하고, `--round`로 설치했다면 `litopencode icon-font remove`도 실행하세요.
 그 다음 OpenCode가 관리하는 `opencode.jsonc`(또는 custom root의 `opencode.json`)의
 `plugin` 배열에서 `@litfamily/litopencode` 또는 `@litfamily/litopencode@<version>` 항목을 제거합니다.
 더 이상 route가 필요하지 않을 때만 `~/.config/opencode/litopencode.json`을 제거하세요.
@@ -555,7 +576,8 @@ OpenCode 1.18은 `tui.json`이나 `tui.jsonc`의 `plugin` 배열에 적힌 TUI �
     설치 화면에 같은 규칙이 쓰입니다. Windows Terminal(`WT_SESSION`), VS Code, WezTerm, Ghostty(`TERM_PROGRAM`),
     kitty(`TERM=xterm-kitty`나 `KITTY_WINDOW_ID`)에서 그려지고, 다른 터미널이라도 SSH가 아니고 이 컴퓨터에 아이콘 글꼴(이름에 Nerd Font가 든
     파일, 글꼴 폴더에서 이름만 보고 파일은 열지 않음)이 있으면 그려집니다. `LITOPENCODE_GLYPHS=round`(또는 `nerd`)는 늘 둥글게,
-    `LITOPENCODE_GLYPHS=basic`은 늘 각지게 합니다. OpenCode가 시작할 때 한 번만 읽습니다.
+    `square`(또는 `basic`)는 늘 각지게 하고 `auto`는 이 규칙을 따릅니다. 이 변수가 없으면 `install --glyphs auto|round|square`가
+    `litopencode.json`의 `glyphs`에 저장한 선택을 씁니다. 저장된 `round`는 SSH에서도 유지됩니다. OpenCode가 시작할 때 한 번만 읽습니다.
 
   하위(subagent) 세션에서는 부모 세션의 카드를 `· in lane`과 함께 보여 주고, 홈 화면에는 띠가
   없습니다. 폭이 좁으면 줄마다 덜 중요한 것부터 덜어 냅니다. 단계 줄은 지금 하는 일과 다음 할 일
