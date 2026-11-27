@@ -8,6 +8,7 @@ import {
   type BoundedAuthorityOptions,
   type BoundedAuthorityState
 } from "./bounded-authority.ts";
+import { createAutopilot } from "./autopilot.ts";
 import { resolveLatestDurablePlan } from "./durable-plan.ts";
 import { parseScopeRoots } from "./plan-scope-roots.ts";
 
@@ -105,6 +106,8 @@ export async function startTypedWork(input: {
   readonly sessionID: string;
   readonly plan?: string;
   readonly options?: BoundedAuthorityOptions;
+  /** The plan's grant-line digest when the approval question was asked; absent for a start without one. */
+  readonly consentDigest?: string;
 }): Promise<TypedStartResult> {
   const lifecycle = createBoundedAuthorityLifecycle(input.projectRoot, input.options);
   try {
@@ -116,7 +119,7 @@ export async function startTypedWork(input: {
     if (state !== undefined && state.status !== "cancelled" && state.status !== "completed") {
       return {
         started: false,
-        text: `LitOpenCode: a start-work run is already ${state.status} in this workspace. Continue it, or finish it, or type lit cancel to end it before starting another.`
+        text: `LitOpenCode: a start-work run is already ${state.status} in this workspace. Continue it or let it finish before starting another.`
       };
     }
     const started = await lifecycle.init({
@@ -135,9 +138,10 @@ export async function startTypedWork(input: {
         ...(await planScopeGrants(input.projectRoot, plan))
       ]
     });
+    const autopilot = await createAutopilot(input.projectRoot, input.options).attach(input.sessionID, input.consentDigest);
     return {
       started: true,
-      text: `${receipt(started.state)}\nLitOpenCode: start-work began from ${plan}. It may read, write and run commands under this workspace; commit, push, publish, release and version changes need a separate yes from the user.`
+      text: `${receipt(started.state)}\nLitOpenCode: start-work began from ${plan}. It may read, write and run commands under this workspace; commit, push, publish, release and version changes need a separate yes from the user.${autopilot === undefined ? "" : `\n${autopilot}`}`
     };
   } catch (error) {
     if (error instanceof LifecycleConflictError || error instanceof LifecycleSafetyError) {
@@ -187,7 +191,7 @@ export async function answerBoundary(input: {
     });
     const listed = result.settled.map(describe).join("; ");
     if (input.verdict === "deny") {
-      return `${receipt(result.state)}\nLitOpenCode: refused ${result.settled.length} parked step${result.settled.length === 1 ? "" : "s"} (${listed}); the run keeps going without them. Type lit cancel to end it.`;
+      return `${receipt(result.state)}\nLitOpenCode: refused ${result.settled.length} parked step${result.settled.length === 1 ? "" : "s"} (${listed}); the run keeps going without them.`;
     }
     const extra = [
       result.remaining.length > 0 ? ` ${result.remaining.length} stayed parked because the run already holds the most grants it can (${result.remaining.map(describe).join("; ")}).` : "",
@@ -208,13 +212,23 @@ export function typedCancel(text: string): boolean {
   return /^lit[ \t]+(?:cancel|취소)[.!?]*$/iu.test(text.trim());
 }
 
+function lifecycleFileAt(root: string): string {
+  return path.join(root, ".litopencode", "litgoal", "lit-loop", "work-schema-3.json");
+}
+
+/** The run's status, or "unreadable" when the run file exists but cannot be parsed (the guards then refuse every call). */
 async function lifecycleStatusAt(root: string): Promise<string | undefined> {
+  let raw: string;
   try {
-    const raw = await fs.readFile(path.join(root, ".litopencode", "litgoal", "lit-loop", "work-schema-3.json"), "utf8");
+    raw = await fs.readFile(lifecycleFileAt(root), "utf8");
+  } catch (error) {
+    return error instanceof Error && "code" in error && error.code === "ENOENT" ? undefined : "unreadable";
+  }
+  try {
     const status = (JSON.parse(raw) as { status?: unknown }).status;
-    return typeof status === "string" ? status : undefined;
+    return typeof status === "string" ? status : "unreadable";
   } catch {
-    return undefined;
+    return "unreadable";
   }
 }
 
@@ -255,7 +269,19 @@ export async function cancelTypedWork(input: {
     const roots = await cancelRoots(input.projectRoot, input.directory);
     let target: string | undefined;
     for (const root of roots) {
-      const status = await lifecycleStatusAt(root);
+      let status = await lifecycleStatusAt(root);
+      // A file with a string status can still fail the schema; the guards then refuse every call, so it counts as
+      // unreadable. Only a safety (schema) error counts: a busy lock keeps the file and gets the retry line below.
+      if (status === "active" || status === "paused") {
+        const invalid = await createBoundedAuthorityLifecycle(root, input.options).read().then(() => false, (error: unknown) => error instanceof LifecycleSafetyError);
+        if (invalid) status = "unreadable";
+      }
+      if (status === "unreadable") {
+        // The user's typed cancel is the way out of a damaged run: the file is kept beside, and no run is left.
+        const aside = `${lifecycleFileAt(root)}.unreadable-${Date.now()}`;
+        await fs.rename(lifecycleFileAt(root), aside);
+        return `LitOpenCode: the start-work run state could not be read, so the run is over and its file was moved aside to ${path.relative(root, aside)}. Stop its work and reply in one line that it was cancelled.`;
+      }
       if (status === "active" || status === "paused") {
         target = root;
         break;

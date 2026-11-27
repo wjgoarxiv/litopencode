@@ -9,6 +9,7 @@ import {
   type LifecycleResumeRequest,
   type LifecycleTerminalRequest
 } from "./bounded-authority.ts";
+import { createAutopilot } from "./autopilot.ts";
 
 type EventHook = NonNullable<Hooks["event"]>;
 type OpenCodeClient = PluginInput["client"];
@@ -97,8 +98,9 @@ export async function applyTrustedStartWorkDirective(
     pendingBoundary: null,
     parked: state.parkedBoundaries.length
   };
+  const autopilot = directive.action === "init" ? await createAutopilot(projectRoot, options).attach(sessionID) : undefined;
   return {
-    text: `<bounded-authority-lifecycle>\n${JSON.stringify(receipt)}\n</bounded-authority-lifecycle>`,
+    text: `<bounded-authority-lifecycle>\n${JSON.stringify(receipt)}\n</bounded-authority-lifecycle>${autopilot === undefined ? "" : `\n${autopilot}`}`,
     status: state.status,
     revision: state.revision,
     workId: state.workId

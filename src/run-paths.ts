@@ -111,7 +111,7 @@ export function classifyRunPath(target: string, ctx: RunPathContext, access: Run
     if ((name === "opencode.json" || name === "opencode.jsonc") && fold(path.dirname(resolved)) === fold(projectRoot)) return "protected";
     if (inside(path.join(projectRoot, ".opencode"), resolved)) return "protected";
     const litLoop = path.join(projectRoot, ".litopencode", "litgoal", "lit-loop");
-    if (fold(path.dirname(resolved)) === fold(litLoop) && (/^work-schema-3\./u.test(name) || name === "cancel-notices.json")) return "protected";
+    if (fold(path.dirname(resolved)) === fold(litLoop) && (/^work-schema-3\./u.test(name) || name === "cancel-notices.json" || name.startsWith("autopilot.json"))) return "protected";
     if (inside(path.join(litLoop, ".work-schema-3.lock"), resolved)) return "protected";
     const common = gitCommonDir(projectRoot);
     if (common !== undefined) {

@@ -3,7 +3,9 @@
 // the returned cleanup releases what the plugin itself holds. There is no automatic self-update here:
 // OpenCode 2 updates plugins itself (`opencode plugin update` and its update policy).
 import path from "node:path";
+import { createAutopilotDeliveryV2, createAutopilotRuntime } from "../autopilot-hooks.ts";
 import { createBrainstormRun } from "../brainstorm-run.ts";
+import { suggestionNote } from "../suggestion-tier.ts";
 import { loadConfig } from "../config.ts";
 import { createDeliverableHedgeGuard } from "../deliverable-hedge-guard.ts";
 import { createLogger } from "../logger.ts";
@@ -33,13 +35,22 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
     },
     notify: (message) => appendNotice(loaded.paths.noticesFile, { title: "LitOpenCode ultra-brainstorm", message, variant: "warning", duration: 10000 })
   });
+  const autopilot = createAutopilotRuntime({
+    projectRoot: root,
+    directory: context.location.directory.trim() || root,
+    getSession,
+    autopilot: loaded.config.boundedAuthority
+  });
+  const autopilotDelivery = createAutopilotDeliveryV2(autopilot, context.session, (message, variant) =>
+    appendNotice(loaded.paths.noticesFile, { title: "LitOpenCode start-work", message, variant, duration: 8000 }));
   const toolHooks = createV2ToolHooks({
     projectRoot: root,
     knowledgeCaptureEnabled: loaded.config.knowledge.capture,
     getSession,
     deliverableHedgeGuard,
     baseDirectory: context.location.directory.trim() || root,
-    onToolDone: brainstormRun.toolDone
+    onToolDone: brainstormRun.toolDone,
+    autopilot
   });
 
   await context.model.transform(registerOpenAiProviderModels);
@@ -61,10 +72,15 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
     getSession,
     session: context.session,
     model: context.model,
-    onSessionDeleted: (sessionID) => sessionHooks.clear(sessionID),
+    onSessionDeleted: (sessionID) => {
+      sessionHooks.clear(sessionID);
+      autopilot.forget(sessionID);
+    },
     onIdle: async (sessionID, interrupted) => {
       if (interrupted) await brainstormRun.interrupt(sessionID);
       await brainstormRun.idle(sessionID);
+      // An interrupted turn is the user stopping the run; the driver waits for their next prompt.
+      if (!interrupted) await autopilotDelivery.onIdle(sessionID);
     }
   });
   const nativeGoal = createNativeGoal({ projectRoot: root, host: { ...(context.rpc === undefined ? {} : { rpc: context.rpc }), session: context.session } });
@@ -79,7 +95,12 @@ export async function setupLitOpenCodeServer(context: ServerContextLike): Promis
     extraSystem: events.systemText,
     acceptCommandMark: commands.acceptMark,
     nativeGoal,
-    extensionsNoticeRoot: defaultOpenCodeConfigRoot()
+    extensionsNoticeRoot: defaultOpenCodeConfigRoot(),
+    autopilotAnswer: async (sessionID, text) => {
+      const answer = await autopilot.answer(sessionID, text, true);
+      return answer.handled ? answer.reply : undefined;
+    },
+    suggestion: suggestionNote
   });
   await context.session.hook("prompt", async (event) => {
     await brainstormRun.userText(event.sessionID, unwrapRunArgument(event.prompt.text));

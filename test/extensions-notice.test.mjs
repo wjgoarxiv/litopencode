@@ -157,7 +157,7 @@ test("v1 chat: the first root session after an install relays the notice once; a
     const send = async (sessionID, text, id) => {
       const output = { message: { id, sessionID, role: "user" }, parts: [{ id: `p_${id}`, sessionID, messageID: id, type: "text", text }] };
       await hooks["chat.message"]({ sessionID, messageID: id, agent: "build" }, output);
-      return output.parts.slice(1);
+      return output.parts.slice(1).filter((part) => !part.id.startsWith("prt_litopencode_suggestion_"));
     };
     try {
       assert.doesNotMatch((await send("ses_child", "hello", "m1")).map((part) => part.text).join("\n"), /LitFamily extensions/u);

@@ -104,7 +104,8 @@ test("an uncovered boundary is parked, the run stays active and keeps going; rep
     assert.equal(first.state.pendingBoundary, null);
     assert.deepEqual(first.state.parkedBoundaries.map((entry) => [entry.action, path.basename(entry.root), entry.hits, entry.sessionID]), [["write", "docs", 1, "owner"]]);
     assert.match(first.continuation, /"parked":\[\{"id":"[a-f0-9]+","action":"write","root":"[^"]+docs","hits":1\}\]/u);
-    assert.match(first.continuation, /lit cancel/u);
+    assert.match(first.continuation, /lit approve/u);
+    assert.doesNotMatch(first.continuation, /lit cancel/u);
     const second = await lifecycle.recordProgress(fence(first.state, { boundary: { action: "execute", root: "tools" } }));
     const third = await lifecycle.recordProgress(fence(second.state, { boundary: { action: "write", root: "docs" } }));
     const fourth = await lifecycle.recordProgress(fence(third.state, { boundary: { action: "write", root: "docs" }, summary: "again" }));

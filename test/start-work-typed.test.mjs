@@ -84,7 +84,7 @@ test("lit approve resumes with exactly the pending boundary and widens nothing e
   });
 });
 
-test("lit deny refuses the parked step and the run keeps going; lit cancel is what ends it", async () => {
+test("lit deny refuses the parked step and the run keeps going without pointing at lit cancel", async () => {
   await workspace(async (dir) => {
     await startTypedWork({ projectRoot: dir, sessionID: "ses_a" });
     const lifecycle = createBoundedAuthorityLifecycle(dir);
@@ -97,7 +97,7 @@ test("lit deny refuses the parked step and the run keeps going; lit cancel is wh
     const reply = await answerBoundary({ projectRoot: dir, sessionID: "ses_a", verdict: "deny" });
     assert.match(reply, /refused 1 parked step/u);
     assert.match(reply, /keeps going/u);
-    assert.match(reply, /lit cancel/u);
+    assert.doesNotMatch(reply, /lit cancel/u);
     const after = await lifecycle.read();
     assert.equal(after.status, "active");
     assert.equal(after.parkedBoundaries.length, 0);

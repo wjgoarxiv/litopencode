@@ -12,7 +12,7 @@ import { decideNativeGoal } from "../src/v2/native-goal.ts";
 import { createNativeGoal } from "../src/v2/native-goal-runtime.ts";
 
 const planText = (rows = "- [ ] 1. add parser — Action: a; Output: b; Verification: c\n", check = "npm test") =>
-  `# Parser\n\n## TODOs\n\n${rows}\n## Final verification\n\n- [ ] F1. gates — Verification: npm test\n\n## Done when\n\n- check: \`${check}\`\n`;
+  `# Parser\n\ngoal: native\n\n## TODOs\n\n${rows}\n## Final verification\n\n- [ ] F1. gates — Verification: npm test\n\n## Done when\n\n- check: \`${check}\`\n`;
 const exits = (status) => () => ({ status, signal: null, error: undefined });
 
 async function withDir(fn) {
@@ -29,7 +29,7 @@ test("the Done-when block compiles into one condition of at most 500 characters"
   assert.equal(parseDoneWhen("# no block\n").ok, false);
   const built = compileCondition("plans/parser.md", "npm test");
   assert.ok(built.ok);
-  assert.match(built.condition, /^Every row in plans\/parser\.md is ticked and `npm test` exits 0 \[lit:[0-9a-f]{8}\]$/u);
+  assert.match(built.condition, /^Every row in plans\/parser\.md is ticked and `npm test` exits 0 \[lit:[0-9a-f]{8}\], or the latest reply starts with WAITING-ON-USER:, or after 30 turns$/u);
   assert.equal(compileCondition(`plans/${"x".repeat(goalMaxChars)}.md`, "npm test").ok, false);
 });
 
@@ -142,7 +142,7 @@ test("save-plan asks the goal question in its notice (OpenCode 1)", async () => 
     const [question, ...guide] = toasts[0].split("\n");
     assert.deepEqual(guide, ["  yes   → starts the work now and sets this goal", "  edit  → change the goal's check first", "  no    → nothing starts", "  Type the word alone."]);
     assert.match(text, /^Saved durable plan: /u, text);
-    assert.match(question, /^Approve plan, start work and set goal: \/goal Every row in \.litopencode\/plans\/parser\.md is ticked and `bash scripts\/check\.sh` exits 0 \[lit:[0-9a-f]{8}\]\? \(yes \/ edit \/ no\)$/u);
+    assert.match(question, /^Approve plan, start work and set goal: \/goal Every row in \.litopencode\/plans\/parser\.md is ticked and `bash scripts\/check\.sh` exits 0 \[lit:[0-9a-f]{8}\], or the latest reply starts with WAITING-ON-USER:, or after 30 turns\? \(yes \/ edit \/ no\)$/u);
     assert.ok(text.includes(`\n${question}\nUnder that question, end with this answer guide`), "the model gets the question, then the guide to show under it");
     assert.match(text, /> \*\*▶ Answer: approve plan · start work · set goal\*\*\n>\n> Goal: `` \/goal Every row .+ ``\n>\n> \| Type \| What happens \|\n> \|---\|---\|\n> \| \*\*`yes`\*\* \| Starts the work now and sets this goal \|\n> \| \*\*`edit`\*\* \| Change the goal's check first \|\n> \| \*\*`no`\*\* \| Nothing starts \|\n>\n> Type the word alone\.$/u);
   });

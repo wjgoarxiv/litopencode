@@ -998,7 +998,7 @@ test("does not activate bare lit for substrings or compound tokens", async () =>
       await hooks["chat.message"]({ sessionID: "session-no", messageID: `message-no-${index}` }, output);
 
       // Then: no synthetic lit-loop directive is appended.
-      assert.equal(output.parts.length, 1, text);
+      assert.equal(output.parts.filter((part) => !part.id.startsWith("prt_litopencode_suggestion_")).length, 1, text);
     }
     assert.deepEqual(await readLedgerEvents(dir), []);
   });

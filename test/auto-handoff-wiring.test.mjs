@@ -330,7 +330,7 @@ test("OpenCode 1 save-plan: the notice and approval question reach the model on 
   await withProject(async (dir) => {
     const { client, calls } = recordingClient();
     const hooks = await startPlugin(dir, client);
-    const plan = "# P\n\n## TODOs\n\n- [ ] 1. write scripts/check.sh — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `bash scripts/check.sh`\n";
+    const plan = "# P\n\ngoal: native\n\n## TODOs\n\n- [ ] 1. write scripts/check.sh — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `bash scripts/check.sh`\n";
     // The host resolves command parts into a new array, so the parts the hook adds never reach the model.
     await hooks["command.execute.before"]({ command: "start-work", sessionID: "ses_w", arguments: `save-plan ${JSON.stringify({ approved: true, slug: "p", markdown: plan })}` }, { parts: [] });
     assert.ok(calls.some((call) => call.kind === "toast" && /^Approve plan, start work and set goal: /u.test(call.body.message)));

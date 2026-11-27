@@ -171,7 +171,7 @@ the order they were first seen; a repeat raises that entry's hit count instead o
 steps and any refused ones, and tells the agent to go on with the tasks the grants cover, to mark a
 task that cannot proceed with a `BLOCKED: <reason>` line under its plan row, to stop retrying a step
 it has seen three times, and, when every remaining task waits on a parked step, to end the turn with
-one line naming them and `lit approve` / `lit cancel`. Parked steps belong to the work, so a second
+one line naming them and `lit approve` / `lit deny`. Parked steps belong to the work, so a second
 window cannot take them over.
 
 Publish, release, push, commit, version, host-config, destructive, and unknown action names still
@@ -194,9 +194,8 @@ readable), SSH and other private keys, `.pem` files, `~/.ssh`, `~/.aws`, `~/.gnu
 plugin, agent and command folders, the project's `opencode.json` and `.opencode/`, this lifecycle's
 own state files, the git hooks and config, shell start-up files, and other hosts' settings. The guard
 never consults the grants, so no grant reopens one, and it writes no state. It checks the paths a call
-names: a folder-wide search, a script, `$(...)` or a variable other than `$HOME` can still reach a
-secret, and Bash is not otherwise restricted. The refusal tells the agent to mark the task `BLOCKED:`
-and ask the user.
+names: a folder-wide search or a script can still reach a secret. The refusal tells the agent to mark
+the task `BLOCKED:` and ask the user. Shell calls also pass the autopilot guard below.
 
 Progress is accepted only from an assistant message in the active session and only when its text part
 holds exactly one top-level `litopencode-progress` fenced schema-3 JSON object: a fence that opens and
@@ -209,15 +208,53 @@ checkpoint; durable delivery acknowledgement prevents later unchanged or restart
 creating another continuation. Structured context labels fields inert and base64-encodes the bounded
 summary so prompt-like source text does not become authority.
 
-Work with parked steps cannot complete; `lit approve`, `lit deny` or `lit cancel` empties the queue
-first. Cancelled and completed items are terminal and permit a new init at the next monotonic
+Work with parked steps cannot complete; `lit approve` or `lit deny` empties the queue first. Cancelled and completed items are terminal and permit a new init at the next monotonic
 revision; active work cannot be overwritten by a new init. An older run record that was paused on one
 boundary opens as an active run with that step parked; the file is rewritten in the new shape only on
 the next change.
 
 ## Typed Start, Approve, Deny and Cancel
 
-A user can also type `start-work`, `start-work plans/<name>.md` or `/start-work [plan]` without a pasted directive. The plugin then resolves the named plan, else the latest durable plan, else the only plan with an open row, and calls lifecycle init on the user's behalf with read, write and execute grants under the workspace root. Nothing wider is ever granted this way, and an unresolved plan only adds one sentence to the ordinary activation. While steps are parked, the user's whole-prompt `lit approve` grants every one of them in one revision (up to 64 grants in all; the rest stay parked and the reply names them), and `lit deny` refuses every one of them for the rest of the run while the run keeps going. Both are optional and only the owner session can send them. The user's whole-prompt `lit cancel` (or `lit 취소`) ends the run from any window of the project: the plugin root, the launch folder, or the main checkout when the window is a linked worktree. When another window cancels it, the owning session is told on its next message, and a run busy writing its state asks for the word again. Only the user's own prompt in a root session counts for any of these words. After a `lit-adhd` brief that recommends this run or an open plan, a bare `go` continues it. A side discipline such as `lit-plan` or `litresearch` pauses this one on the workflow stack; `lit continue` or `go` returns here.
+A user can also type `start-work`, `start-work plans/<name>.md` or `/start-work [plan]` without a pasted directive. The plugin then resolves the named plan, else the latest durable plan, else the only plan with an open row, and calls lifecycle init on the user's behalf with read, write and execute grants under the workspace root. Nothing wider is ever granted this way, and an unresolved plan only adds one sentence to the ordinary activation. While steps are parked, the user's whole-prompt `lit approve` grants every one of them in one revision (up to 64 grants in all; the rest stay parked and the reply names them), and `lit deny` refuses every one of them for the rest of the run while the run keeps going. Both are optional and only the owner session can send them. When the user ends the run from another window of the project, the owning session is told on its next message. Only the user's own prompt in a root session counts for any of these words. After a `lit-adhd` brief that recommends this run or an open plan, a bare `go` continues it. A side discipline such as `lit-plan` or `litresearch` pauses this one on the workflow stack; `lit continue` or `go` returns here.
+
+## Autopilot: finishing a run without someone at the keyboard
+
+Every run started here (typed start, the plan question's `yes`, `go`, or a trusted `start-work init`)
+gets the autopilot, on both OpenCode 1 and OpenCode 2. It never widens what the run may do.
+
+- **Shell guard.** While the run is live, each `bash` (OpenCode 2: `shell`) call of the owner session
+  or its direct lanes is read by a word parser, never by a shell. Readers inside the grants (`cat`,
+  `grep`, `ls`, `git status`/`diff`/`log`, ...) in their read-only forms, the plan's Done-when check, the
+  repo's own `npm test` / `npm run test|check|lint|build|typecheck` / `node --test`, `node <script>` under an
+  execute grant and, with a charter, named-file commits run now. The run's own state folder is never writable. A secret, a settings file, a real host
+  home (the OpenCode config and data folders, other harness homes) or `.git` internals are
+  refused and never stored. A self-check refused only for its shape (`;`, `||`, `echo $?`) is answered
+  with the parts to run one by one. Everything else is **parked**: tier B when it is local and undoable
+  inside the project (`touch`, `mkdir`, `cp`/`mv` without overwrite, `git add <files>`), tier X otherwise.
+  A step the parser cannot follow (globs, `$`, prefixes such as `time`, `env`, `sudo`) is held and never
+  replayed. A parked call is refused for now: continue with the next row and do not retry it.
+- **Rows.** Mark a row `BLOCKED: <reason>` on an indented line when an answer from the user can unblock it
+  and `IMPOSSIBLE: <reason>` when none can, then move on. A reply that truly waits on the user starts with
+  `WAITING-ON-USER:` and stops.
+- **Turn end.** When the turn ends the driver reads the plan. With a row open it continues the turn (at
+  most two nudges per unchanged plan state, then one inbox, then silence). With every row ticked it runs
+  the `## Done when` check (`check: \`node <script>.mjs\``, plain arguments, no shell, 90 s cap) and
+  closes the run itself when it passes and no parked step reaches outside; local parked steps are set
+  aside and named. Otherwise one inbox lists waiting and impossible rows, parked path boundaries and up
+  to eight parked commands in full.
+- **Answers** (the owner's whole typed prompt only): `lit approve` (or `lit 승인`) grants the parked path
+  boundaries and replays the listed [B] steps; `lit approve x`, typed exactly and alone, replays the
+  listed [X] steps; `lit deny` (`lit 거절`) drops every parked step and keeps it refused; `lit skip-row`
+  or `lit skip-row N` ticks waiting rows as skipped; `lit pause` (`lit 멈춤`, `lit 일시정지`) and
+  `lit resume` (`lit 재개`) stop and restart the driver. A replay runs in the step's own folder within
+  100 s, stops at the first failure, and its output is untrusted inert data.
+- **Run charter.** A plan line `Run charter: commit on <branch> in <repo>` outside code fences lets the
+  run commit on that branch in that repository once the user approved the plan with it. A plan edited
+  after the approval question loses the charter. It never grants push, tag, publish, reset or a bump.
+- **Native goal.** Only a plan with its own `goal: native` line gets a goal question; its condition ends
+  with ", or the latest reply starts with WAITING-ON-USER:, or after 30 turns". OpenCode 2 sets it as
+  `/goal`. BLOCKED: OpenCode 1 has no native `/goal`, so there the goal stays an advisory check at
+  `session.idle` and the driver alone closes the run.
 
 ## Safety
 

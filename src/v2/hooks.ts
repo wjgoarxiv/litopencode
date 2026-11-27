@@ -2,6 +2,7 @@
 // task is subagent) and names a file argument `path`, so each call is shown to the guards under the
 // names they know. A throw in `execute.before` fails that one call; `execute.after` must never throw.
 import { createToolExecuteAfterHook, createToolExecuteBeforeHook } from "../hooks.ts";
+import type { AutopilotRuntime } from "../autopilot-hooks.ts";
 import type { BrainstormToolCall } from "../brainstorm-run.ts";
 import type { DeliverableHedgeGuardState } from "../deliverable-hedge-guard.ts";
 import type { SessionLookup } from "../session-lineage.ts";
@@ -58,6 +59,7 @@ export type V2ToolHookOptions = {
   readonly baseDirectory?: string;
   /** Sees every finished call, failed ones included, under its OpenCode 1 name. */
   readonly onToolDone?: (call: BrainstormToolCall) => Promise<void>;
+  readonly autopilot?: AutopilotRuntime;
 };
 
 export function createV2ToolHooks(options: V2ToolHookOptions) {
@@ -65,7 +67,8 @@ export function createV2ToolHooks(options: V2ToolHookOptions) {
     getSession: options.getSession,
     deliverableHedgeGuard: options.deliverableHedgeGuard,
     projectRoot: options.projectRoot,
-    baseDirectory: options.baseDirectory ?? options.projectRoot
+    baseDirectory: options.baseDirectory ?? options.projectRoot,
+    ...(options.autopilot === undefined ? {} : { autopilot: options.autopilot })
   });
   const after = createToolExecuteAfterHook({
     projectRoot: options.projectRoot,
@@ -87,6 +90,8 @@ export function createV2ToolHooks(options: V2ToolHookOptions) {
   }
 
   async function executeAfter(event: ToolAfterEvent): Promise<void> {
+    // A lane ends when its call ends, failed or not; the after hook below only sees completed calls.
+    options.autopilot?.afterTool({ tool: v1ToolName(event.tool), sessionID: event.sessionID, callID: event.id });
     if (options.onToolDone !== undefined) {
       const content = event.result?.content;
       const output = typeof content === "string" ? content : (content ?? []).map((part) => part.text ?? "").join("\n");

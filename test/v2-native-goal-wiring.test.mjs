@@ -39,7 +39,7 @@ async function withHost(options, fn) {
 }
 
 // The user said yes to the goal question for this session: the only way a goal gets set.
-const goalPlan = "# P\n\n## TODOs\n\n- [ ] 1. a — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `npm test`\n";
+const goalPlan = "# P\n\ngoal: native\n\n## TODOs\n\n- [ ] 1. a — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `npm test`\n";
 function arm(dir, sessionID = "ses_root") {
   proposeGoal({ projectRoot: dir, plan: "plans/p.md", planText: goalPlan, sessionID, run: () => ({ status: 1, signal: null, error: undefined }) });
   return answerConsent(dir, sessionID, "yes", false).intent.condition;
@@ -299,7 +299,7 @@ test("the armed goal is the condition alone, within 500 characters, and only for
     await until(() => fake.goals.has("ses_root"));
     assert.equal(slashGoal(fake)[0].text, condition);
     assert.ok(condition.length <= 500);
-    assert.match(condition, /^Every row in plans\/p\.md is ticked and `npm test` exits 0 \[lit:[0-9a-f]{8}\]$/u);
+    assert.match(condition, /^Every row in plans\/p\.md is ticked and `npm test` exits 0 \[lit:[0-9a-f]{8}\], or the latest reply starts with WAITING-ON-USER:, or after 30 turns$/u);
   });
 });
 
@@ -337,7 +337,7 @@ test("a host that cannot register the idle hook still starts", async () => {
 
 test("save-plan on OpenCode 2 asks the approval question; yes starts the run and sets the goal (one-shot safe)", async () => {
   await withHost({}, async (dir, fake) => {
-    const plan = "# P\n\n## TODOs\n\n- [ ] 1. write scripts/check.sh — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `bash scripts/check.sh`\n";
+    const plan = "# P\n\ngoal: native\n\n## TODOs\n\n- [ ] 1. write scripts/check.sh — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `bash scripts/check.sh`\n";
     const body = `${findLitOpenCodeCommand("start-work").activationText}\n\nsave-plan ${JSON.stringify({ approved: true, slug: "p", markdown: plan })}`;
     const saved = await fake.run("session", "prompt", prompt(body));
     assert.equal(saved.metadata?.litopencode?.operation, "save-plan");
@@ -358,7 +358,7 @@ test("save-plan on OpenCode 2 asks the approval question; yes starts the run and
 
 test("a one-shot run's typed /start-work save-plan text asks the same question and starts nothing", async () => {
   await withHost({}, async (dir, fake) => {
-    const plan = "# P\n\n## TODOs\n\n- [ ] 1. write scripts/check.sh — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `bash scripts/check.sh`\n";
+    const plan = "# P\n\ngoal: native\n\n## TODOs\n\n- [ ] 1. write scripts/check.sh — Action: a; Output: b; Verification: c\n\n## Done when\n\n- check: `bash scripts/check.sh`\n";
     const saved = await fake.run("session", "prompt", prompt(`/start-work save-plan ${JSON.stringify({ approved: true, slug: "q", markdown: plan })}`));
     assert.equal(saved.metadata?.litopencode?.operation, "save-plan");
     await fs.access(path.join(dir, ".litopencode", "plans", "q.md"));

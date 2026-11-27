@@ -74,6 +74,10 @@ export type V2SessionHookOptions = {
   readonly nativeGoal?: NativeGoal;
   /** The OpenCode config root where an install leaves its one-time extensions notice for the next session. */
   readonly extensionsNoticeRoot?: string;
+  /** The start-work driver's answer words (`lit approve`, `lit skip-row`, ...): the reply, or undefined when not one. */
+  readonly autopilotAnswer?: (sessionID: string, text: string) => Promise<string | undefined>;
+  /** The suggestion tier for a prompt without `lit`: one note for the model, or undefined. */
+  readonly suggestion?: (text: string) => string | undefined;
 };
 
 type SessionContext = {
@@ -255,6 +259,13 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
       // A malformed or unreadable knowledge store stays silent instead of inventing context.
     }
 
+    const answer = await options.autopilotAnswer?.(event.sessionID, input);
+    if (answer !== undefined) {
+      state.turn.push(answer);
+      event.metadata = { ...(event.metadata ?? {}), litopencode: { mode: "start-work", trigger: "lit", source: "prompt", typed: "autopilot" } };
+      return;
+    }
+
     const typed = await typedPromptReply(
       options.projectRoot,
       event.sessionID,
@@ -304,7 +315,11 @@ export function createV2SessionHooks(options: V2SessionHookOptions) {
     }
 
     const mode = detectChatActivationMode(input, session.agent);
-    if (mode === undefined) return;
+    if (mode === undefined) {
+      const note = alias === undefined ? options.suggestion?.(input) : undefined;
+      if (note !== undefined) state.turn.push(note);
+      return;
+    }
     startNativeGoal(event.sessionID, nativeGoalRoute(mode, input), input);
     const trigger = mode === "lit-handoff" ? "handoff" : mode === "lit-scientific-visualization" ? mode : "lit";
     let activation = promptForChatActivationMode(mode, input);

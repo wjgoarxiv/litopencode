@@ -71,7 +71,8 @@ test("an old switch and key in the environment make no request, add no part and 
     await hooks["chat.message"]({ sessionID: "session_plain", messageID: "msg_plain" }, output);
     await hooks.dispose();
     assert.deepEqual(requests, []);
-    assert.equal(output.parts.length, 1, "the user's turn reaches the model unchanged");
+    assert.equal(output.parts.filter((part) => !part.id.startsWith("prt_litopencode_suggestion_")).length, 1, "the user's turn reaches the model unchanged");
+    assert.ok(output.parts.slice(1).every((part) => !removedFeature.test(part.text)), "the only added note is the local suggestion tier");
     assert.deepEqual(toasts, []);
   } finally {
     globalThis.fetch = saved.fetch;

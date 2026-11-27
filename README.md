@@ -119,7 +119,7 @@ Each route leaves a note you can read later, so a task can stop and resume acros
 | --- | --- |
 | `lit` at the end of a request, or `/lit` | The task is framed, planned, built, verified and recapped |
 | Tab, then `lit-plan` | The planner writes a checklist and waits for explicit user confirmation; it cannot edit files, run shell or delegate |
-| `/start-work` | Carries the approved plan out one slice at a time |
+| `/start-work` | Carries the approved plan out one slice at a time; walk away and it finishes by itself, parking steps like `git push` for one inbox at the end ([how](./docs/guide.md#leaving-a-run-to-finish-by-itself)) |
 | `/review-work` | Looks at the change from five angles, worst findings first |
 | A bare `handoff`, or `/lit-handoff` | Leaves a continuation file for the next session; [automatic handoff](#automatic-handoff) can write it before the context window fills |
 | `/lit-adhd` | Shows what changed, the one thing to do now and the exact text to type; `lit adhd recap` reads back each session (the old `/lit-recap` opens it too) |
@@ -203,7 +203,7 @@ To keep the sunset but stop all movement, add `{ "motion": false }`. If the roun
 
 ## Goals on OpenCode 2
 
-OpenCode 2.2 added `/goal`, which keeps a session going until a reviewer agrees the objective is met. There, `lit loop`, `litwork` and `/start-work` set the goal for you: your task plus what finished means here. Finished means the tests pass, the path you touch was run for real, temporary files are cleaned up and the ledger in `.litopencode/litgoal/` is closed.
+OpenCode 2.2 added `/goal`, which keeps a session going until a reviewer agrees the objective is met. There, `lit loop`, `litwork` and `/start-work` set the goal for you: your task plus what finished means here. Finished means the tests pass, the path you touch was run for real, temporary files are cleaned up and the ledger in `.litopencode/litgoal/` is closed. A start-work plan opts in with its own `goal: native` line.
 
 - **A line for each change.** Whenever LitOpenCode creates, resumes or clears a goal it prints one line that starts with `LitOpenCode goal:`.
 - **Your own goal stays yours.** It manages only the goals it made. If you typed your own `/goal` first, LitOpenCode says it left yours alone and carries on.

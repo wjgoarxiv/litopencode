@@ -16,6 +16,7 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { parsePlanFacts, planWantsNativeGoal } from "./autopilot-plan.ts";
 import { answerChoices, type GoalQuestionKind } from "./goal-guide.ts";
 import { ledgerGoalDone } from "./native-goal-ledger.ts";
 import { containsSecret } from "./secret-shapes.ts";
@@ -85,10 +86,13 @@ export function parseDoneWhen(planText: string): GoalResult<{ readonly check: st
   return { ok: false, reason: "the `## Done when` block names no `check:` command" };
 }
 
-/** `Every row in <plan> is ticked and \`<check>\` exits 0 [lit:<id>]`, or why it cannot be built. */
+/** Ends every plan goal, so a goal can never loop on a decision only the user can make. */
+export const goalStopSuffix = ", or the latest reply starts with WAITING-ON-USER:, or after 30 turns";
+
+/** `Every row in <plan> is ticked and \`<check>\` exits 0 [lit:<id>]` plus the stop suffix, or why it cannot be built. */
 export function compileCondition(plan: string, check: string): GoalResult<{ readonly condition: string; readonly id: string }> {
   const id = goalId(plan, check);
-  const condition = `Every row in ${plan} is ticked and \`${check}\` exits 0 [lit:${id}]`;
+  const condition = `Every row in ${plan} is ticked and \`${check}\` exits 0 [lit:${id}]${goalStopSuffix}`;
   if (condition.length > goalMaxChars) return { ok: false, reason: `the condition is over ${goalMaxChars} characters; point the check at one script` };
   return { ok: true, condition, id };
 }
@@ -183,6 +187,8 @@ export type GoalConsent = {
   readonly check: string;
   readonly sessionID: string;
   readonly askedAt: string;
+  /** Digest of the plan's `Scope roots:` and `Run charter:` lines when the question was asked. */
+  readonly grantDigest?: string;
 };
 
 export type GoalIntent = Omit<GoalConsent, "schema" | "askedAt"> & {
@@ -246,7 +252,8 @@ export function proposeGoal(input: {
     plan: input.plan,
     check: built.ok ? built.check : "",
     sessionID: input.sessionID,
-    askedAt: new Date(input.now ?? Date.now()).toISOString()
+    askedAt: new Date(input.now ?? Date.now()).toISOString(),
+    grantDigest: parsePlanFacts(input.planText).grantDigest
   };
   try {
     writeRecord(path.join(goalDir(input.projectRoot), "consent.json"), consent);
@@ -324,6 +331,8 @@ export function dropLoopConsent(projectRoot: string, sessionID: string): void {
 function buildGoal(input: { readonly projectRoot: string; readonly plan: string; readonly planText: string; readonly timeoutMs?: number; readonly run?: CheckRunner }):
   GoalResult<{ readonly condition: string; readonly id: string; readonly check: string }> {
   if (/^goal:\s*never\s*$/mu.test(input.planText)) return { ok: false, reason: "this plan is marked goal: never" };
+  // The native goal is opt-in: without its own `goal: native` line the start-work driver alone drives the run.
+  if (!planWantsNativeGoal(input.planText)) return { ok: false, reason: "the plan has no `goal: native` line, so the start-work driver runs it" };
   const done = parseDoneWhen(input.planText);
   if (!done.ok) return done;
   const built = compileCondition(input.plan, done.check);

@@ -1,5 +1,6 @@
 import type { Hooks } from "@opencode-ai/plugin";
 import { activationBanner } from "./activation-probe.ts";
+import type { AutopilotRuntime } from "./autopilot-hooks.ts";
 import type { SessionLookup } from "./session-lineage.ts";
 import type { DeliverableHedgeGuardState } from "./deliverable-hedge-guard.ts";
 import { dynamicRulesForPaths } from "./rules/hooks.ts";
@@ -24,6 +25,8 @@ export type ToolExecuteHookOptions = {
   readonly projectRoot?: string;
   /** The host launch directory a relative tool path resolves against. */
   readonly baseDirectory?: string;
+  /** The start-work autopilot: parks the shell calls a live run refuses and tracks its lanes. */
+  readonly autopilot?: AutopilotRuntime;
 };
 
 export function createToolExecuteBeforeHook(options: ToolExecuteHookOptions = {}): ToolExecuteBeforeHook {
@@ -38,6 +41,7 @@ export function createToolExecuteBeforeHook(options: ToolExecuteHookOptions = {}
     await applyTaskRecursionGuard(input, options.getSession);
     applyLitOpenCodeToolBeforeHook(input, output);
     await runPathGuard?.before(input, output.args ?? (input as { args?: unknown }).args);
+    await options.autopilot?.beforeTool(input, output.args ?? (input as { args?: unknown }).args);
     // OpenCode sends the tool arguments only in output.args before a call.
     await options.deliverableHedgeGuard?.before({ ...input, args: output.args ?? (input as { args?: unknown }).args });
   };
@@ -48,10 +52,12 @@ export type ToolExecuteAfterHookOptions = {
   readonly knowledgeCaptureEnabled?: boolean;
   readonly deliverableHedgeGuard?: DeliverableHedgeGuardState;
   readonly onSkillActivation?: (sessionID: string, skillId: string) => void | Promise<void>;
+  readonly autopilot?: AutopilotRuntime;
 };
 
 export function createToolExecuteAfterHook(options: ToolExecuteAfterHookOptions = {}): ToolExecuteAfterHook {
   return async (input, output) => {
+    options.autopilot?.afterTool(input);
     if (options.projectRoot !== undefined) await markLiveness(options.projectRoot, input.sessionID, "alive");
     applyLitOpenCodeToolAfterHook(input, output);
     applyLitOpenCodePostEditHook(input, output);

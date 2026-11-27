@@ -27,7 +27,7 @@ async function withPlugin(run) {
     const messageID = `msg_${counter}`;
     const output = { message: { id: messageID, sessionID, role: "user" }, parts: [{ id: `prt_${counter}`, sessionID, messageID, type: "text", text }] };
     await hooks["chat.message"]({ sessionID, messageID, agent }, output);
-    return output.parts.slice(1).map((part) => part.text).join("\n");
+    return output.parts.slice(1).filter((part) => !part.id.startsWith("prt_litopencode_suggestion_")).map((part) => part.text).join("\n");
   };
   try {
     await run({ dir, hooks, send });

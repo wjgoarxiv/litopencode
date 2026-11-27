@@ -66,6 +66,36 @@ A lit-loop or `litwork` request with no plan gets a lighter question. When the p
 
 Everything it records, from progress to the checks it ran, goes into `.litopencode/litgoal/` in your project. OpenCode itself has no place to keep a goal between sessions, so this folder is how the next session knows where you were. Some skills are written guidance only; they come into play when one of their listed routes picks them.
 
+## Leaving a run to finish by itself
+
+Say you approved a plan with two rows and this block at the end:
+
+```markdown
+## Done when
+
+check: `node scripts/done.mjs`
+```
+
+You type `start-work plans/my-plan.md` and walk away. Each time a turn ends, LitOpenCode reads the plan. A row still open means the run gets a nudge to carry on with it. When both rows are ticked, LitOpenCode runs `node scripts/done.mjs` itself, with no shell and a 90 second limit. If it exits 0, the run closes and you see one line saying so. Only `node <script>` with plain arguments is run this way; any other check line keeps the run open until you change it.
+
+The run asks for nothing in the middle. When the model tries a shell step the run may not take, the step is parked and the model goes on with the next row. You see a toast on OpenCode 1, or a notice on OpenCode 2, naming the command. Some steps are never parked: anything that reads a secret, a settings file, your real `~/.config/opencode` or `~/.local/share/opencode`, or anything inside `.git`. Those are refused and forgotten. A step the guard cannot read safely, such as one with a glob, a `$` or a `sudo` in front, is held. It is listed for you to see, but it never runs.
+
+The nudging has a limit. The same plan state gets at most two nudges, then one inbox, then silence until something changes. The inbox lists the rows that wait on you (`BLOCKED:`), the rows that cannot be done (`IMPOSSIBLE:`), the folders the run asked for, and up to eight parked commands, each written out in full with the folder it runs in. Steps marked [B] stay inside the project and can be undone. Steps marked [X] can reach outside, like `git push`.
+
+| Answer | What happens |
+| --- | --- |
+| `lit approve` / `lit 승인` | Grants the listed folders, then runs the listed [B] steps in order, each in its own folder, within 100 s; the first failure stops the rest |
+| `lit approve x` / `lit 승인 x` | Runs the listed [X] steps; it counts only when typed exactly, alone, with single spaces |
+| `lit deny` / `lit 거절` | Drops every parked step; the same commands stay refused for this run |
+| `lit skip-row`, `lit skip-row N` | Ticks the BLOCKED or IMPOSSIBLE rows (or row N) as skipped and drops the steps parked under them |
+| `lit pause` / `lit 멈춤`, `lit resume` / `lit 재개` | Stops the nudges and inbox, then starts them again |
+
+Only steps that were in the list you saw can run. A step parked after the list was drawn waits for the next one. What a replayed step prints is shown to the model as untrusted data, never as instructions.
+
+Two plan lines change what a run may do. `Run charter: commit on feat/x in .` lets it run `git add <files>` and `git commit -m ...` on that branch of that repository once you approved the plan with that line in it; editing the line afterwards drops the charter. `goal: native` asks for OpenCode 2's `/goal` as well; without it, `yes` to the plan question only starts the work. BLOCKED: OpenCode 1 has no `/goal`, so there `goal: native` stays an advisory check when each turn ends.
+
+A prompt without `lit` can also get a hint. If you write "plot this csv", the model sees a note offering the scientific plot skill, with "none" as an option, and decides. Four hints passed the accuracy gate: plots, diagrams, Word documents and brainstorming. Other prompts get one short line listing common skills.
+
 ## Automatic handoff
 
 A long conversation eventually fills the model's context window, and whatever falls out is forgotten. Automatic handoff saves your place before that happens. It is on from the start, at 70% of the window, and both the switch and the percent are yours to change.

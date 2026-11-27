@@ -153,7 +153,7 @@ export async function routeGo(input: {
       };
     }
     return {
-      text: "LitOpenCode: the user answered go to the brief's next step, which is the running start-work run. Keep working from the checked plan; do not restart it, replan or widen what it may touch. Parked steps, if any, wait for an optional lit approve; lit cancel ends the run.",
+      text: "LitOpenCode: the user answered go to the brief's next step, which is the running start-work run. Keep working from the checked plan; do not restart it, replan or widen what it may touch. Parked steps, if any, wait for the user's answer at the end of the run.",
       mode: "start-work",
       kind: "work"
     };
@@ -218,7 +218,13 @@ export async function typedPromptReply(
   const asked = consentAnswer(text) === undefined || live?.kind === "loop" ? undefined : live;
   if (asked !== undefined && asked.plan !== null) {
     const start = consentAnswer(text) === "yes"
-      ? await startTypedWork({ projectRoot, sessionID, plan: asked.plan, ...(boundedAuthority === undefined ? {} : { options: boundedAuthority }) })
+      ? await startTypedWork({
+          projectRoot,
+          sessionID,
+          plan: asked.plan,
+          ...(boundedAuthority === undefined ? {} : { options: boundedAuthority }),
+          ...(asked.grantDigest === undefined ? {} : { consentDigest: asked.grantDigest })
+        })
       : undefined;
     const consent = answerConsent(projectRoot, sessionID, text, goalHost === "advisory", Date.now(), start);
     if (consent !== undefined) {

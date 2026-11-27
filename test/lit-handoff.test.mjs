@@ -106,7 +106,7 @@ test("a multipart message containing handoff plus unrelated text stays inert", a
       output
     );
 
-    assert.equal(output.parts.length, 2);
+    assert.equal(output.parts.filter((part) => !part.id.startsWith("prt_litopencode_suggestion_")).length, 2, "only the suggestion tier may add a note");
     await assert.rejects(
       fs.readFile(path.join(dir, ".litopencode", "litgoal", "lit-loop", "ledger.jsonl"), "utf8"),
       { code: "ENOENT" }

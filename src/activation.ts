@@ -138,6 +138,10 @@ export type ChatMessageActivationOptions = {
   readonly extensionsNoticeRoot?: string;
   /** Consumes the notice a command hook wrote for this turn (OpenCode 1 drops the parts a command hook adds). */
   readonly takeCommandNotice?: (sessionID: string) => string | undefined;
+  /** The start-work driver's answer words (`lit approve`, `lit skip-row`, ...): the reply, or undefined when not one. */
+  readonly autopilotAnswer?: (sessionID: string, text: string, typed: boolean) => Promise<string | undefined>;
+  /** The suggestion tier for a prompt without `lit`: one note for the model, or undefined. */
+  readonly suggestion?: (text: string) => string | undefined;
 };
 
 // Activation belongs to root user sessions only: a delegated child prompt that
@@ -276,6 +280,21 @@ export function createChatMessageActivationHook(
       }
     }
     if (!childSession && nonEmptyTextParts.length === 1 && output.parts.every((part) => part.type === "text")) {
+      // The start-work driver's answer words come first, and only from a part the user typed.
+      const typedByUser = nonEmptyTextParts[0].synthetic !== true;
+      const answer = options.autopilotAnswer === undefined ? undefined : await options.autopilotAnswer(input.sessionID, nonEmptyTextParts[0].text, typedByUser);
+      if (answer !== undefined) {
+        output.parts.push({
+          id: `prt_litopencode_autopilot_${idSuffix(input.messageID ?? output.message.id)}`,
+          sessionID: input.sessionID,
+          messageID: input.messageID ?? output.message.id,
+          type: "text",
+          text: answer,
+          synthetic: true,
+          metadata: { litopencode: { mode: "start-work", trigger: "lit", source: "chat.message", typed: "autopilot" } }
+        });
+        return;
+      }
       const typed = await typedPromptReply(
         projectRoot,
         input.sessionID,
@@ -297,6 +316,21 @@ export function createChatMessageActivationHook(
         });
         if (typed.continued) await options.onSkillContinue?.(input.sessionID, typed.mode, false);
         return;
+      }
+    }
+    if (mode === undefined && !childSession && options.suggestion !== undefined && output.parts.every((part) => part.type === "text")) {
+      const typedText = nonEmptyTextParts.filter((part) => part.synthetic !== true).map((part) => part.text).join("\n");
+      const note = typedText === "" ? undefined : options.suggestion(typedText);
+      if (note !== undefined) {
+        output.parts.push({
+          id: `prt_litopencode_suggestion_${idSuffix(input.messageID ?? output.message.id)}`,
+          sessionID: input.sessionID,
+          messageID: input.messageID ?? output.message.id,
+          type: "text",
+          text: note,
+          synthetic: true,
+          metadata: { litopencode: { source: "chat.message", typed: "suggestion" } }
+        });
       }
     }
     if (mode === undefined || childSession) return;

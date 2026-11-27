@@ -5,7 +5,9 @@ import { createChatMessageActivationHook, showActivationToast } from "./activati
 import { createActivationMemory } from "./activation-reentry.ts";
 import { registerLitOpenCodeAgents } from "./agents.ts";
 import { createAutoHandoff } from "./auto-handoff-hooks.ts";
+import { createAutopilotDeliveryV1, createAutopilotRuntime } from "./autopilot-hooks.ts";
 import { createBoundedAuthorityEventHook } from "./bounded-authority-hooks.ts";
+import { suggestionNote } from "./suggestion-tier.ts";
 import { createBrainstormRun } from "./brainstorm-run.ts";
 import { createCommandActivationHook } from "./commands.ts";
 import { loadConfig } from "./config.ts";
@@ -102,6 +104,13 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
       ignitionState.activate(sessionID, skillId, !appendedLit);
     };
     const boundedAuthorityEvent = createBoundedAuthorityEventHook(root, input?.client, loaded.config.boundedAuthority);
+    const autopilot = createAutopilotRuntime({
+      projectRoot: root,
+      directory: input?.directory?.trim() || root,
+      ...(getSession === undefined ? {} : { getSession }),
+      autopilot: loaded.config.boundedAuthority
+    });
+    const autopilotDelivery = createAutopilotDeliveryV1(autopilot, input?.client, root);
     // Keyed by session: the host resolves command parts into a new array before chat.message runs.
     const trustedCommandActivations = new Map<string, string>();
     const commandNotices = new Map<string, string>();
@@ -145,16 +154,19 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
             }
           }
         }
+        // The bounded-authority hook runs first, so a progress fence it continued is seen by the driver.
+        await boundedAuthorityEvent(eventInput);
+        if (eventInput.event.type === "session.idle") await autopilotDelivery.onIdle(eventInput.event.properties.sessionID);
         if (eventInput.event.type === "session.deleted") {
           await markLiveness(root, eventInput.event.properties.info.id, "ended");
           ignitionState.clear(eventInput.event.properties.info.id);
           activationMemory.forget(eventInput.event.properties.info.id);
           trustedCommandActivations.delete(eventInput.event.properties.info.id);
+          autopilot.forget(eventInput.event.properties.info.id);
         }
         if (eventInput.event.type === "session.error" && eventInput.event.properties.error?.name === "MessageAbortedError" && eventInput.event.properties.sessionID !== undefined) {
           await brainstormRun.interrupt(eventInput.event.properties.sessionID);
         }
-        await boundedAuthorityEvent(eventInput);
         await autoHandoff.event(eventInput);
       },
       tool: litOpenCodeTools,
@@ -192,7 +204,12 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           const notice = commandNotices.get(sessionID);
           commandNotices.delete(sessionID);
           return notice;
-        }
+        },
+        autopilotAnswer: async (sessionID, text, typed) => {
+          const answer = await autopilot.answer(sessionID, text, typed);
+          return answer.handled ? answer.reply : undefined;
+        },
+        suggestion: suggestionNote
       })),
       "command.execute.before": async (commandInput, commandOutput) => {
         const priorLength = commandOutput.parts.length;
@@ -231,7 +248,7 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
 
     Object.defineProperties(hooks, {
       "tool.execute.before": {
-        value: createToolExecuteBeforeHook({ getSession, deliverableHedgeGuard, projectRoot: root, baseDirectory: input?.directory?.trim() || root }),
+        value: createToolExecuteBeforeHook({ getSession, deliverableHedgeGuard, projectRoot: root, baseDirectory: input?.directory?.trim() || root, autopilot }),
         enumerable: false
       },
       "tool.execute.after": {
@@ -239,7 +256,8 @@ export function createLitOpenCodePlugin(autoUpdateRunner: typeof runPluginAutoUp
           projectRoot: root,
           knowledgeCaptureEnabled: loaded.config.knowledge.capture,
           deliverableHedgeGuard,
-          onSkillActivation: recordSkillActivation
+          onSkillActivation: recordSkillActivation,
+          autopilot
         })),
         enumerable: false
       }

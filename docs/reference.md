@@ -864,6 +864,50 @@ The order is environment, then saved setting, then config file, then the default
 
 The route writes `.litopencode/auto-handoff.json` (the switch and the percent). The model writes the handoff file. Nothing else is stored: the marker lives in memory for the session, and a restart of OpenCode between the request and the compaction means no reload.
 
+## Start-work autopilot
+
+Code: `src/autopilot.ts` (driver and answers), `src/autopilot-shell.ts` (shell guard), `src/autopilot-plan.ts` (plan rows, Done-when check, charter, `goal: native`), `src/autopilot-hooks.ts` (host wiring). State: `.litopencode/litgoal/lit-loop/autopilot.json`, protected from the file tools and the shell while a run is live. It is attached to every bounded run at start (typed start-work, the plan question's `yes`, `go`, and a trusted `start-work init`).
+
+| Surface | OpenCode 1 | OpenCode 2 |
+| --- | --- | --- |
+| Shell guard | `tool.execute.before` on `bash`; a throw refuses the call | `tool.hook("execute.before")` on `shell`, shown under the OpenCode 1 name |
+| Lanes | `task` calls between `tool.execute.before` and `.after` | `subagent` calls between `execute.before` and `execute.after` |
+| Turn end | `event` `session.idle`, after the progress-fence hook | `session.execution.succeeded` / `.failed` (an interrupted turn is left alone) |
+| Continuation | `client.session.promptAsync` | `session.prompt` |
+| Inbox and closing line | `promptAsync` with `noReply: true`, plus a toast | `session.synthetic` with `resume: false`, plus a notice in `.litopencode/notices.jsonl` |
+| Park ping | `client.tui.showToast` | notice in `.litopencode/notices.jsonl`, shown by the TUI plugin |
+| Answer words | `chat.message`, from a non-synthetic part of a root session | session `prompt` hook of a root session |
+
+Limits: 32 tier-B and 16 tier-X parked steps, 16 path boundaries, 8 steps per inbox, 2 nudges per plan state, Done-when check 90 s (`checkTimeoutMs` may only shorten it), replay 100 s per answer (`replayBudgetMs` may only shorten it), the replay's process group is killed at the budget. A step the guard cannot follow is held and never replayed; at replay the folder and the protected and tier checks run again. A progress fence that already continued the turn makes the driver stay silent for that turn.
+
+Gaps, written down rather than faked:
+
+- BLOCKED: OpenCode 1 has no native `/goal`. A `goal: native` plan there gets the advisory check at `session.idle`; the driver alone closes the run.
+- Known gap (not built): after a plan state has had its two nudges and its inbox, a new prompt with no row change does not re-arm the driver; a row change does.
+- Trust boundary: anything that can type into your own prompt counts as you, the same as the host's own permission prompts.
+- What runs without parking: readers in their read-only forms (`sed` with p/d/q/s scripts only; never `awk`, `sort -o`, a second `uniq` operand, `find -fprint*`/`-exec`/`-delete`, `rg --pre`/`--hostname-bin`, `jq` reading `env`, `$ENV` or `input_filename`, `git branch -D` and the like; pagers such as `less` and `more` always park), the plan's Done-when check, the repo's own `npm test` and `npm run test|check|lint|build|typecheck` from a folder with its `package.json`, `node --test` and `node <script>` on project files. Any other verb parks as X. Links are followed hop by hop to their end; a loop or an end inside a protected folder is refused.
+- Runner residual: a project script run that way does whatever its author wrote, a push included; the guard cannot see inside it. The inbox shows a digest of the list it draws, recorded at draw time in `autopilot.json.digest`, which the shell and file tools may not write, and `lit approve` refuses a list that no longer matches. BLOCKED: OpenCode offers a plugin no folder that a project script the model runs cannot also write, so that digest stops edits made through the tools, not a planned script.
+- `sort` reads only with its ordering flags (`-n -r -u -f -b -k -t` and their long names); any other flag or a prefix of `--output`/`--compress-program` parks. The protected check follows each `cd`, so `cd ~/.config && cat gh/hosts.yml` is refused like the full path. Any write inside the git folder (a worktree's gitdir and common dir included) is refused; reads of it still run. A recursive read of a folder that holds a host home's secrets (`grep -r x ~`) is refused.
+- A removal target or the source of a move is checked as a holder of the run's state or `.git`; a destination folder is checked as dest/basename(source), so `cp ../x .` and `mv a .` pass while `rm -rf .` and `mv .git x` are refused. `git clean` is checked on its pathspecs (or the folder it cleans), `git stash -u|-a` (and long-option prefixes such as `--incl` or `--al`) is refused, and `find <root> … -delete` from a folder that holds the state stays refused. `jq -L`/`--library-path` is refused outright, which leaves `lit approve x` nothing to replay, and `import`/`include` filters park as X. The recursive check is made per command in a chain (`grep -r x src && ls ~` checks `ls ~` as a plain read), and `-a` counts as recursive only for `cp`. A glob operand is expanded for the protected check, so `cat .env*` is refused; a glob that matches nothing or uses `[[:` is held.
+- A run file that cannot be read makes every guarded call refuse; typed `lit cancel` then moves it aside (`work-schema-3.json.unreadable-<time>`) and the run is over.
+- The guard fails closed. While a run is live, a run file that cannot be read, a state write that fails or a lane whose parent cannot be checked refuses the call. A shell command over 4096 bytes is refused and never stored.
+- A command that would remove, move or replace a folder holding the run's state or `.git` (`rm -rf .`, `mv .litopencode x`, `find .. -delete`) is refused, in any letter case. `~/` operands are checked as home paths. The edit and write tools get the same protected-path check as the shell. After `lit approve x` runs a step a BLOCKED row waited on, the reply tells the model to remove the BLOCKED line, tick the row and go on.
+- The Done-when check is pinned when the run starts: its command and its script's sha-256 go into the guarded state file. A check whose line, script or pin changed, or that had no script to pin at start, is not run, and the run cannot close by itself; deleting the check line still runs the pinned check.
+- The inbox is built to fit 6000 bytes: rows are clipped, and a parked step is listed, and enters the replay list, only when its whole line fits. The rest are counted as "not shown" and are never replayed by that answer. Every message the autopilot adds is also cut at 6000 bytes as a backstop. The Done-when check and every replayed step run in their own process group, which is killed when they finish or time out.
+
+### Suggestion tier
+
+`src/suggestion-tier.ts`, reached from `chat.message` (OpenCode 1) and the session `prompt` hook (OpenCode 2) for a root prompt that took no lit route and names no slash command. Code fences, inline code and host notification blocks are stripped first. Fired rules give one note listing each skill plus "none"; otherwise one catalog line of 15 skills (under 400 bytes). Rules ship only when `node tools/suggestion-eval.mjs --heldout` gives recall ≥ 0.85 and near-miss false positives ≤ 0.10 on the dev half and on the held-out half pinned by `test/fixtures/suggestion-eval/heldout.sha256`. `npm test` scores the dev half only and checks the held-out digest; the held-out half is scored only by that command, once per rule change.
+
+| Rule | Dev recall / near-miss FP | Held-out recall / near-miss FP |
+| --- | --- | --- |
+| lit-scientific-visualization | 1.00 / 0.00 (8 / 6) | 1.00 / 0.00 (8 / 6) |
+| lit-diagram-drawer | 1.00 / 0.00 (7 / 6) | 1.00 / 0.00 (7 / 6) |
+| lit-docx | 1.00 / 0.00 (6 / 6) | 1.00 / 0.00 (6 / 6) |
+| lit-brainstorm | 1.00 / 0.00 (6 / 5) | 1.00 / 0.00 (6 / 5) |
+
+No slide-deck rule ships; lit-pptx stays in the catalog line.
+
 ## Safety and updates
 
 - `lit-plan` remains planning-only: its `edit`, `bash`, and `task` permissions stay denied.

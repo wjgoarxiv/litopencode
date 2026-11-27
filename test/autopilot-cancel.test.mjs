@@ -141,3 +141,46 @@ test("v2 prompt: lit cancel reaches the model, the owner's next prompt carries t
     }
   });
 });
+
+test("final Med: a corrupt run file is reported unreadable, and typed lit cancel moves it aside and ends the run", async () => {
+  const { cancelTypedWork } = await import("../src/start-work-typed.ts");
+  const { lifecyclePaths } = await import("../src/bounded-authority.ts");
+  const fsp = await import("node:fs/promises");
+  const osm = await import("node:os");
+  const pathm = await import("node:path");
+  const root = await fsp.realpath(await fsp.mkdtemp(pathm.join(osm.tmpdir(), "litopencode-cancel-corrupt-")));
+  try {
+    const file = lifecyclePaths(root).lifecycleStateFile;
+    await fsp.mkdir(pathm.dirname(file), { recursive: true });
+    await fsp.writeFile(file, "{broken");
+    const reply = await cancelTypedWork({ projectRoot: root, sessionID: "ses_owner", messageID: "m1" });
+    assert.doesNotMatch(reply, /no start-work run is active/u);
+    assert.match(reply, /could not be read/u);
+    await assert.rejects(fsp.stat(file), "the unreadable run file is moved aside");
+    const aside = (await fsp.readdir(pathm.dirname(file))).filter((name) => name.startsWith("work-schema-3.json.unreadable-"));
+    assert.equal(aside.length, 1);
+    const { createAutopilot } = await import("../src/autopilot.ts");
+    assert.equal((await createAutopilot(root, {}).guardShell({ sessionID: "ses_owner", command: "git push origin main" })).kind, "pass", "no run is active afterwards");
+  } finally {
+    await fsp.rm(root, { recursive: true, force: true });
+  }
+});
+
+test("lows: a run file with a string status but an invalid schema is moved aside by typed lit cancel", async () => {
+  const { cancelTypedWork } = await import("../src/start-work-typed.ts");
+  const { lifecyclePaths } = await import("../src/bounded-authority.ts");
+  const fsp = await import("node:fs/promises");
+  const osm = await import("node:os");
+  const pathm = await import("node:path");
+  const root = await fsp.realpath(await fsp.mkdtemp(pathm.join(osm.tmpdir(), "litopencode-cancel-schema-")));
+  try {
+    const file = lifecyclePaths(root).lifecycleStateFile;
+    await fsp.mkdir(pathm.dirname(file), { recursive: true });
+    await fsp.writeFile(file, JSON.stringify({ status: "active", schemaVersion: 99 }));
+    const reply = await cancelTypedWork({ projectRoot: root, sessionID: "ses_owner", messageID: "m1" });
+    assert.match(reply, /could not be read/u);
+    await assert.rejects(fsp.stat(file));
+  } finally {
+    await fsp.rm(root, { recursive: true, force: true });
+  }
+});

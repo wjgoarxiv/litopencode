@@ -747,12 +747,12 @@
     },
     "start-work": {
       "skillMd": {
-        "bytes": 35373,
-        "sha256": "2132a32c59066b4f671d9433a980b434e003f42735269e252b7fb888dfce043c"
+        "bytes": 38604,
+        "sha256": "48b0cbab6c599f5f6f844699bf2e6816651eae8c5d56b88505cee18c5f6c11b5"
       },
       "files": 1,
-      "bytes": 35373,
-      "sha256": "6bf19378093c89bae35e8a4cbf44ee3f5fd0a7bff04c85ddba8b80e6e6932025"
+      "bytes": 38604,
+      "sha256": "22f3810beca922411cc124b1e1da20b88bd7f50b36c7a31716e1ac603ef231fb"
     },
     "structural-search": {
       "skillMd": {
@@ -855,6 +855,14 @@
     "dist/auto-handoff-hooks.js",
     "dist/auto-handoff.d.ts",
     "dist/auto-handoff.js",
+    "dist/autopilot-hooks.d.ts",
+    "dist/autopilot-hooks.js",
+    "dist/autopilot-plan.d.ts",
+    "dist/autopilot-plan.js",
+    "dist/autopilot-shell.d.ts",
+    "dist/autopilot-shell.js",
+    "dist/autopilot.d.ts",
+    "dist/autopilot.js",
     "dist/benchmark.d.ts",
     "dist/benchmark.js",
     "dist/bounded-authority-hooks.d.ts",
@@ -1069,6 +1077,8 @@
     "dist/state.js",
     "dist/strict-json.d.ts",
     "dist/strict-json.js",
+    "dist/suggestion-tier.d.ts",
+    "dist/suggestion-tier.js",
     "dist/synthwave-data.d.ts",
     "dist/synthwave-data.js",
     "dist/synthwave-mark.d.ts",
@@ -1506,6 +1516,7 @@
     "tools/run-wikify-surface-probe.mjs",
     "tools/scan-legacy-tokens.mjs",
     "tools/stable-file-read.mjs",
+    "tools/suggestion-eval.mjs",
     "tools/version-manifests.json",
     "tsconfig.build.json",
     "tsconfig.json",

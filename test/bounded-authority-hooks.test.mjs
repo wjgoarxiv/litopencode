@@ -60,7 +60,7 @@ async function initializedLifecycle(dir) {
   return { lifecycle, state: initialized.state };
 }
 
-test("a fence naming an uncovered boundary is parked and its continuation lists the queue and lit cancel", async () => {
+test("a fence naming an uncovered boundary is parked and its continuation lists the queue and the answer words, not lit cancel", async () => {
   await withProject(async (dir) => {
     const { lifecycle, state } = await initializedLifecycle(dir);
     await fs.mkdir(path.join(dir, "docs"));
@@ -77,7 +77,8 @@ test("a fence naming an uncovered boundary is parked and its continuation lists 
     assert.equal(prompts.length, 1);
     const continuation = prompts[0].body.parts[0].text;
     assert.match(continuation, /"parked":\[\{"id":"[a-f0-9]+","action":"write"/u);
-    assert.match(continuation, /lit cancel/u);
+    assert.match(continuation, /lit approve/u);
+    assert.doesNotMatch(continuation, /lit cancel/u);
     const after = await lifecycle.read();
     assert.equal(after.status, "active");
     assert.equal(after.parkedBoundaries.length, 1);

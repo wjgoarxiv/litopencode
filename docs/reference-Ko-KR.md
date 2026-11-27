@@ -709,6 +709,50 @@ OpenCode는 세션이 바쁜 동안 들어온 `summarize` 호출을 줄 세웠�
 
 경로는 `.litopencode/auto-handoff.json`(스위치와 퍼센트)을 씁니다. 인수인계 파일은 모델이 씁니다. 그 밖에는 저장하지 않습니다. 표식은 세션 동안 메모리에만 있으므로, 요청과 압축 사이에 OpenCode를 다시 시작하면 다시 불러오기는 일어나지 않습니다.
 
+## Start-work 자동 진행
+
+코드: `src/autopilot.ts`(턴 끝 처리와 답), `src/autopilot-shell.ts`(셸 검사), `src/autopilot-plan.ts`(계획 줄, Done-when 검사, charter, `goal: native`), `src/autopilot-hooks.ts`(호스트 연결). 상태 파일은 `.litopencode/litgoal/lit-loop/autopilot.json`이며, 실행 중에는 파일 도구와 셸 모두 이 파일을 건드리지 못합니다. 모든 bounded 실행에 시작할 때 붙습니다(입력한 start-work, 계획 질문의 `yes`, `go`, 신뢰된 `start-work init`).
+
+| 연결 지점 | OpenCode 1 | OpenCode 2 |
+| --- | --- | --- |
+| 셸 검사 | `bash`에 대한 `tool.execute.before`. 예외를 던지면 호출 거절 | `shell`에 대한 `tool.hook("execute.before")`, OpenCode 1 이름으로 보여 줌 |
+| 레인 | `task` 호출의 `tool.execute.before`부터 `.after`까지 | `subagent` 호출의 `execute.before`부터 `execute.after`까지 |
+| 턴 끝 | 진행 펜스 훅 다음의 `event` `session.idle` | `session.execution.succeeded` / `.failed` (중단된 턴은 그대로 둠) |
+| 이어 가기 | `client.session.promptAsync` | `session.prompt` |
+| 편지함과 마지막 줄 | `noReply: true`인 `promptAsync`와 토스트 | `resume: false`인 `session.synthetic`과 `.litopencode/notices.jsonl` 알림 |
+| 보류 알림 | `client.tui.showToast` | TUI 플러그인이 보여 주는 `.litopencode/notices.jsonl` 알림 |
+| 답 | 루트 세션의 합성되지 않은 `chat.message` 부분 | 루트 세션의 `prompt` 훅 |
+
+한도: B 등급 32개, X 등급 16개, 경로 경계 16개, 편지함 한 번에 8개, 같은 계획 상태에 밀어 주기 2번, Done-when 검사 90초(`checkTimeoutMs`는 줄이기만 가능), 답 하나당 다시 실행 100초(`replayBudgetMs`는 줄이기만 가능). 시간이 다 되면 다시 실행한 프로세스 그룹을 끝냅니다. 검사가 따라갈 수 없는 단계는 붙잡아 두고 다시 실행하지 않습니다. 다시 실행할 때 폴더, 보호 경로, 등급을 한 번 더 확인합니다. 진행 펜스가 이미 턴을 이어 갔다면 그 턴에서는 아무것도 보내지 않습니다.
+
+흉내 내지 않고 적어 둔 빈틈:
+
+- BLOCKED: OpenCode 1에는 기본 `/goal`이 없습니다. 거기서 `goal: native` 계획은 `session.idle`의 참고용 검사만 받고, 실행은 자동 진행이 혼자 닫습니다.
+- 알려진 빈틈(만들지 않음): 한 계획 상태가 밀어 주기 두 번과 편지함을 다 쓴 뒤에는, 줄이 바뀌지 않은 새 요청이 와도 다시 켜지지 않습니다. 줄이 바뀌면 다시 켜집니다.
+- 신뢰 경계: 사용자 입력창에 글을 넣을 수 있는 것은 모두 사용자로 칩니다. 호스트의 권한 확인 창과 같은 경계입니다.
+- 보류 없이 바로 도는 것: 읽기 전용 형태의 읽기 명령(`sed`는 p/d/q/s 스크립트만, `awk`, `sort -o`, 두 번째 `uniq` 인자, `find -fprint*`/`-exec`/`-delete`, `rg --pre`/`--hostname-bin`, `env`·`$ENV`·`input_filename`을 읽는 `jq`, `git branch -D` 등은 제외. `less`, `more` 같은 페이저는 늘 보류), 계획의 Done-when 검사, `package.json`이 있는 폴더에서 돌리는 저장소 자체의 `npm test`와 `npm run test|check|lint|build|typecheck`, 프로젝트 파일에 대한 `node --test`와 `node <script>`입니다. 그 밖의 명령은 X 등급으로 보류합니다. 링크는 끝까지 한 단계씩 따라가며, 순환하거나 보호 폴더 안에서 끝나는 링크는 거절합니다.
+- 실행기 잔여 위험: 이렇게 도는 프로젝트 스크립트는 작성자가 쓴 일을 무엇이든 하며, 푸시도 할 수 있습니다. 검사는 스크립트 안을 보지 못합니다. 편지함은 그린 목록의 digest를 보여 주고, 그 값을 셸과 파일 도구가 쓸 수 없는 `autopilot.json.digest`에 그릴 때 기록합니다. `lit approve`는 그 값과 맞지 않는 목록을 실행하지 않습니다. BLOCKED: OpenCode는 모델이 돌리는 프로젝트 스크립트도 쓸 수 없는 폴더를 플러그인에 주지 않으므로, 이 digest는 도구를 통한 수정만 막고 계획된 스크립트는 막지 못합니다.
+- `sort`는 정렬 옵션(`-n -r -u -f -b -k -t`와 그 긴 이름)만 쓸 때 읽기로 봅니다. 다른 옵션이나 `--output`/`--compress-program`의 앞부분은 보류합니다. 보호 경로 검사는 `cd`를 따라가므로 `cd ~/.config && cat gh/hosts.yml`도 전체 경로와 똑같이 거절합니다. git 폴더 안에 쓰는 명령은 워크트리의 gitdir와 공통 폴더까지 거절하고, 읽기는 그대로 둡니다. 호스트 홈의 비밀을 담은 폴더를 재귀로 읽는 명령(`grep -r x ~`)도 거절합니다.
+- 지우는 대상과 옮기는 원본은 실행 상태나 `.git`을 담은 폴더인지 검사합니다. 대상 폴더는 대상/원본 이름으로 검사하므로 `cp ../x .`, `mv a .`는 통과하고 `rm -rf .`, `mv .git x`는 거절합니다. `git clean`은 경로 인자(없으면 정리하는 폴더)로 검사하고, `git stash -u|-a`(`--incl`, `--al`처럼 긴 옵션을 줄여 쓴 형태 포함)는 거절하며, 상태를 담은 폴더에서 시작하는 `find … -delete`는 계속 거절합니다. `jq -L`/`--library-path`는 거절하므로 `lit approve x`로 다시 돌릴 수 없고, `import`/`include` 필터는 읽기로 보지 않습니다. 재귀 읽기 검사는 이어 쓴 명령마다 따로 하므로 `grep -r x src && ls ~`의 `ls ~`는 보통 읽기로 검사하며, `-a`는 `cp`에서만 재귀로 봅니다. glob 인자는 보호 경로 검사를 위해 펼치므로 `cat .env*`는 거절하고, 맞는 파일이 없거나 `[[:`를 쓰면 붙잡아 둡니다.
+- 실행 파일을 읽을 수 없으면 검사하는 호출을 모두 거절합니다. 이때 직접 입력한 `lit cancel`은 그 파일을 옆으로 옮기고(`work-schema-3.json.unreadable-<시각>`) 실행을 끝냅니다.
+- 검사가 실패하면 막는 쪽으로 닫힙니다. 실행 중에 실행 파일을 읽지 못하거나, 상태를 쓰지 못하거나, 레인의 부모 세션을 확인하지 못하면 그 호출을 거절합니다. 4096바이트가 넘는 셸 명령은 거절하고 저장하지 않습니다.
+- 실행 상태 폴더나 `.git`을 담은 폴더를 지우거나 옮기거나 덮어쓰는 명령(`rm -rf .`, `mv .litopencode x`, `find .. -delete`)은 대소문자와 상관없이 거절합니다. `~/`로 시작하는 인자는 홈 경로로 검사합니다. edit와 write 도구도 셸과 같은 보호 경로 검사를 거칩니다. `lit approve x`로 BLOCKED 행이 기다리던 단계가 돌면, 답에 BLOCKED 줄을 지우고 행에 표시한 뒤 다음으로 가라는 말이 붙습니다.
+- Done-when 검사는 실행을 시작할 때 고정합니다. 명령과 스크립트의 sha-256을 보호된 상태 파일에 적어 둡니다. 검사 줄이나 스크립트, 고정 기록이 바뀌었거나 시작할 때 고정할 스크립트가 없었다면 검사를 돌리지 않고, 실행은 스스로 닫히지 않습니다. 검사 줄을 지워도 고정해 둔 검사는 그대로 돕니다.
+- 편지함은 6000바이트 안에 들어가도록 만듭니다. 줄은 잘라 쓰고, 보류한 단계는 그 줄 전체가 들어갈 때만 목록에 올라 다시 실행 대상이 됩니다. 나머지는 "보이지 않음"으로 세기만 하고, 그 답으로는 다시 실행하지 않습니다. 자동 진행이 더하는 메시지는 마지막 안전장치로 6000바이트에서도 자릅니다. Done-when 검사와 다시 실행하는 단계는 각자의 프로세스 그룹에서 돌고, 끝나거나 시간이 다 되면 그룹째 끝냅니다.
+
+### 추천 단계
+
+`src/suggestion-tier.ts`입니다. lit 경로를 타지 않고 슬래시 명령도 없는 루트 요청에서 `chat.message`(OpenCode 1)와 세션 `prompt` 훅(OpenCode 2)이 부릅니다. 먼저 코드 블록, 인라인 코드, 호스트 알림 블록을 지웁니다. 규칙이 걸리면 스킬마다 한 줄과 "none"을 담은 메모를 붙이고, 걸리지 않으면 스킬 15개를 적은 한 줄(400바이트 미만)을 붙입니다. 규칙은 `node tools/suggestion-eval.mjs --heldout` 결과가 dev 절반과 `test/fixtures/suggestion-eval/heldout.sha256`로 고정한 held-out 절반 모두에서 재현율 0.85 이상, 근접 오답 0.10 이하일 때만 넣습니다. `npm test`는 dev 절반만 채점하고 held-out 절반은 해시만 확인합니다. held-out 절반은 규칙을 바꿀 때마다 이 명령으로 한 번만 채점합니다.
+
+| 규칙 | dev 재현율 / 근접 오답 | held-out 재현율 / 근접 오답 |
+| --- | --- | --- |
+| lit-scientific-visualization | 1.00 / 0.00 (8 / 6) | 1.00 / 0.00 (8 / 6) |
+| lit-diagram-drawer | 1.00 / 0.00 (7 / 6) | 1.00 / 0.00 (7 / 6) |
+| lit-docx | 1.00 / 0.00 (6 / 6) | 1.00 / 0.00 (6 / 6) |
+| lit-brainstorm | 1.00 / 0.00 (6 / 5) | 1.00 / 0.00 (6 / 5) |
+
+슬라이드 규칙은 넣지 않았고, lit-pptx는 한 줄 목록에만 남습니다.
+
 ## 안전과 업데이트
 
 - `lit-plan`은 계획 전용입니다. `edit`, `bash`, `task` 권한을 허용하지 않습니다.

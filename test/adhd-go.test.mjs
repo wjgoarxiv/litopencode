@@ -167,7 +167,7 @@ test("go never settles a parked step: lit approve does", async () => {
       await writeNext(dir, { kind: "work", target: "start-work", at: Date.now(), sessionID: "ses_a" });
       await send("go");
       assert.equal((await lifecycle.read()).parkedBoundaries.length, 1, "go leaves the parked step parked");
-      assert.match(await send("lit approve"), /approved write on/u);
+      assert.match(await send("lit approve"), /Granted the path boundaries write/u);
       const after = await lifecycle.read();
       assert.equal(after.status, "active");
       assert.equal(after.parkedBoundaries.length, 0);
