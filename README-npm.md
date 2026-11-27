@@ -1,13 +1,13 @@
-<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: a terminal in a sunset look. LitOpenCode's round-cornered card frames the screen with its stage map, task gauge, skill pills, lanes and context gauge, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom." /></picture></p>
+<p align="center"><picture><source media="(prefers-reduced-motion: reduce)" srcset="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/docs/assets/cover-motion-still.webp" /><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/docs/assets/cover-motion.webp" width="100%" alt="LitFamily motion cover: a terminal in a sunset look. LitOpenCode's round-cornered card frames the screen with its stage map, task gauge, skill pills, lanes and context gauge, a pixel LITFAMILY wordmark and a striped half-sunk sun fill the middle, the row of seven product names lights LITOPENCODE, and a /lit-loop prompt waits at the bottom." /></picture></p>
 
 # LitOpenCode
 
 **LitOpenCode is an add-on for OpenCode. It makes the agent check its own work before it says "done", and leaves a note so the next session starts where this one stopped.**
 
 <p align="center">
-<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/docs/assets/readme/badge-version.svg" alt="1.0.56" /></a>
+<a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/docs/assets/readme/badge-version.svg" alt="1.0.57" /></a>
 <a href="https://www.npmjs.com/package/@litfamily/litopencode"><img src="https://img.shields.io/npm/dm/@litfamily/litopencode?label=downloads&color=D7F75B" alt="npm downloads per month" /></a>
-<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
+<a href="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/LICENSE"><img src="https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/docs/assets/readme/badge-license.svg" alt="MIT license" /></a>
 <a href="https://github.com/wjgoarxiv/litopencode"><img src="https://img.shields.io/github/stars/wjgoarxiv/litopencode?style=social" alt="GitHub stars" /></a>
 </p>
 
@@ -91,9 +91,9 @@ npm uninstall -g @litfamily/litopencode
 ## More
 
 - [Guide on GitHub](https://github.com/wjgoarxiv/litopencode/blob/main/docs/guide.md): install options, automatic handoff, troubleshooting and removal.
-- [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/docs/reference.md)
-- [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/CHANGELOG.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/docs/privacy.md)
-- [LitFamily hub](https://github.com/wjgoarxiv/litfamily) · [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/LICENSE) · [Trademark policy](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/TRADEMARK.md) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.56/docs/assets/readme/JetBrainsMono-OFL.txt)
+- [Workflow reference](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/docs/reference.md)
+- [Migration notes](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/docs/migration.md) · [Changelog](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/CHANGELOG.md) · [Privacy and network behavior](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/docs/privacy.md)
+- [LitFamily hub](https://github.com/wjgoarxiv/litfamily) · [MIT license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/LICENSE) · [Trademark policy](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/TRADEMARK.md) · [ASCII font license](https://cdn.jsdelivr.net/npm/@litfamily/litopencode@1.0.57/docs/assets/readme/JetBrainsMono-OFL.txt)
 
 <details>
 <summary>Copy ASCII logo</summary>

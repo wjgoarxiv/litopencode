@@ -6,6 +6,10 @@ The current removal candidate has retired the Skill Observer and skill-learning 
 project-local learning records are inert and may be deleted; no other state is affected. Installed
 users need a patch release to stop receiving the old behavior.
 
+## 1.0.57 Release Scope
+
+- Autopilot and suggestion-tier ported to LitOpenCode: a run can now finish while you are away; parked tier-B and tier-X steps collected into one inbox; `lit approve`, `lit deny`, `lit skip-row`, `lit pause`, `lit resume`; `Run charter` lets a run commit on a branch; native `/goal` only when the plan has `goal: native`; four suggestion-tier rules (scientific plots, diagrams, Word documents, brainstorming).
+
 ## 1.0.56 Release Scope
 
 - `install --agent` prints the install steps for a coding agent; `install --round` adds the Symbols Nerd Font Mono font when no icon font is here, and `icon-font remove` takes it back; `install --glyphs auto|round|square` saves the ends; `install`, `update` and `doctor` end with one `ROUND_ENDS:` line.
