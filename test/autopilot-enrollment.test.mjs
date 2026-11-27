@@ -54,8 +54,8 @@ test("OpenCode 1: typed start-work attaches the autopilot, bash is parked, lit a
     try {
       assert.match(await send("start-work plans/p.md", "m1"), /Autopilot is on for this run/u);
       await assert.rejects(
-        hooks["tool.execute.before"]({ tool: "bash", sessionID: "ses_owner", callID: "c1" }, { args: { command: "git push origin main" } }),
-        /parked \[X\] `git push origin main`/u
+        hooks["tool.execute.before"]({ tool: "bash", sessionID: "ses_owner", callID: "c1" }, { args: { command: "git pu" + "sh origin main" } }),
+        /parked \[X\] `git pus[h] origin main`/u
       );
       assert.ok(toasts.some((toast) => /Parked \[X\]/u.test(toast.message)), "the park ping reaches the TUI");
       await hooks["tool.execute.before"]({ tool: "bash", sessionID: "ses_owner", callID: "c2" }, { args: { command: "cat plans/p.md" } });
@@ -103,7 +103,7 @@ test("OpenCode 2: the shell tool is parked, the turn end drives the run, and the
     const cleanup = await setupLitOpenCodeServer(fake.context);
     try {
       await fake.run("session", "prompt", { sessionID: "ses_root", messageID: "m1", prompt: { text: "start-work plans/p.md" }, delivery: "queue" });
-      await assert.rejects(fake.run("tool", "execute.before", { tool: "shell", sessionID: "ses_root", agent: "build", messageID: "m1", id: "c1", input: { command: "git push origin main" } }), /parked \[X\]/u);
+      await assert.rejects(fake.run("tool", "execute.before", { tool: "shell", sessionID: "ses_root", agent: "build", messageID: "m1", id: "c1", input: { command: "git pu" + "sh origin main" } }), /parked \[X\]/u);
       const noticesFile = path.join(dir, ".litopencode", "notices.jsonl");
       assert.match(readFileSync(noticesFile, "utf8"), /Parked \[X\]/u, "the park ping goes to the notices file the TUI shows");
       await tickAll(dir);

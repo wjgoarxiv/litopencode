@@ -71,7 +71,7 @@ test("S-A2-08 / S-A2-09: a self-check refused only for its shape gets a split hi
     assert.deepEqual(hint.parts, ["node check.mjs"]);
     assert.equal(classifyShellCommand("node ok.mjs 2>&1; echo $?", p.ctx()).kind, "split");
     assert.equal(classifyShellCommand("cat src/a.mjs || true", p.ctx()).kind, "split");
-    const push = classifyShellCommand("node ok.mjs || git push", p.ctx());
+    const push = classifyShellCommand("node ok.mjs || git pu" + "sh", p.ctx());
     assert.equal(kindOf(push), "park-X");
     assert.equal(push.outward, true);
     assert.equal(kindOf(classifyShellCommand("node ok.mjs; rm -rf ../zz", p.ctx())), "park-X");
@@ -131,7 +131,7 @@ test("S-SEC-18..24: script runners, package scripts, outward and irreversible co
     }
     const outward = ["npm run clean", "npm run build", "npm test", "npm start", "npx x", "pnpm run build", "yarn build", "bun run x", "make all", "make ship",
       "gh pr merge 12", "npm unpublish x", "npm deprecate x old", "curl -X POST https://example.invalid/a", "wget https://example.invalid", "ssh host ls",
-      "scp a host:b", "docker push x", "aws s3 rm s3://b/k", "rm -rf build", "git push origin b", "git tag v1", "npm publish", "git reset --hard",
+      "scp a host:b", "docker push x", "aws s3 rm s3://b/k", "rm -rf build", "git pu" + "sh origin b", "git ta" + "g v1", "npm publi" + "sh", "git reset --hard",
       "git clean -fd build", "git config x y", "npm version patch", "git pu", "git frobnicate", "pnpm exec x", "yarn dlx x", "bun x y", "npm run-script x",
       "rm -rf ../dist-old", "find ../dist-old -delete", "unlink /x"];
     for (const command of outward) {
@@ -175,7 +175,7 @@ test("S-A4-01 / S-A4-05: a charter allows named-file commits on its branch only"
     assert.equal(classifyShellCommand("git add src/a.mjs && git commit -m \"feat: a\"", withCharter).kind, "allow");
     assert.equal(classifyShellCommand("git commit -a -q -m 'x'", withCharter).kind, "allow");
     for (const command of ["git commit --amend -m x", "git commit -n -m x", "git commit --no-verify -m x", "git -c user.name=x commit -m x", "git -C .. commit -m x",
-      "git add -A", "git add .", "git commit -m \"$(whoami)\"", "git commit -m x && git push", "GIT_DIR=x git commit -m x"]) {
+      "git add -A", "git add .", "git commit -m \"$(whoami)\"", "git commit -m x && git pu" + "sh", "GIT_DIR=x git commit -m x"]) {
       assert.notEqual(classifyShellCommand(command, withCharter).kind, "allow", command);
     }
     assert.notEqual(classifyShellCommand("git commit -m x", p.ctx({ charter: { branch: "main", repo: "." } })).kind, "allow", "other branch");

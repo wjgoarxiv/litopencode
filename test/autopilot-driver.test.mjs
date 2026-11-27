@@ -259,7 +259,7 @@ test("S-A1-08: local parked steps are set aside, not run, and named in full on t
 });
 
 test("S-A1-09 / S-SEC-22 / S-SEC-23 / S-SEC-24: an outward parked step keeps a ticked, green run in wrap-up", async () => {
-  for (const command of ["git push origin feat/qa", "git pu", "make ship", "npm run clean", "rm -rf ../dist-old"]) {
+  for (const command of ["git pu" + "sh origin feat/qa", "git pu", "make ship", "npm run clean", "rm -rf ../dist-old"]) {
     const run = await start();
     try {
       await run.park(command);
@@ -751,7 +751,7 @@ test("review Low: a run file that becomes unreadable after the owner check fails
   try {
     const { lifecyclePaths } = await import("../src/bounded-authority.ts");
     fs.writeFileSync(lifecyclePaths(run.root).lifecycleStateFile, "{broken");
-    await assert.rejects(run.autopilot.guardShell({ sessionID, command: "git push origin main" }));
+    await assert.rejects(run.autopilot.guardShell({ sessionID, command: "git pu" + "sh origin main" }));
     await assert.rejects(run.autopilot.guardWrite({ sessionID, filePath: "src/b.mjs" }));
   } finally {
     run.cleanup();

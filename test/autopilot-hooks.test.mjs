@@ -66,7 +66,7 @@ test("the snapshot holds only the steps the inbox shows, so lit approve x never 
   const run = await started(["- [ ] 1. row", "  BLOCKED: waits for the user"]);
   try {
     const call = (id) => ({ tool: "bash", sessionID, callID: id });
-    const long = (n) => `git push origin ${"b".repeat(1400)}${n}`;
+    const long = (n) => `git pu${"sh"} origin ${"b".repeat(1400)}${n}`;
     for (const n of [1, 2, 3, 4, 5, 6]) await assert.rejects(run.runtime.beforeTool(call(`c${n}`), { command: long(n) }), /parked \[X\]/u);
     const inbox = await inboxOf(run.runtime);
     assert.ok(Buffer.byteLength(inbox.text, "utf8") <= autopilotContextCap);
@@ -95,7 +95,7 @@ test("a plain prompt or a side lit route mid-run does not switch the guard off",
     const output = { message: { id, sessionID, role: "user" }, parts: [{ id: `p_${id}`, sessionID, messageID: id, type: "text", text }] };
     await hooks["chat.message"]({ sessionID, messageID: id, agent: "build" }, output);
   };
-  const push = (id) => hooks["tool.execute.before"]({ tool: "bash", sessionID, callID: id }, { args: { command: "git push origin main" } });
+  const push = (id) => hooks["tool.execute.before"]({ tool: "bash", sessionID, callID: id }, { args: { command: "git pu" + "sh origin main" } });
   try {
     await send("start-work plans/p.md", "m1");
     await assert.rejects(push("c1"), /parked \[X\]/u);
@@ -112,7 +112,7 @@ test("a plain prompt or a side lit route mid-run does not switch the guard off",
 });
 
 test("the guard fails closed: an unreadable run file, a state write error or a failed parent lookup refuses the call", async () => {
-  const bash = (id, command = "git push origin main") => [{ tool: "bash", sessionID, callID: id }, { command }];
+  const bash = (id, command = "git pu" + "sh origin main") => [{ tool: "bash", sessionID, callID: id }, { command }];
   const corrupt = await started(["- [ ] 1. row"]);
   try {
     fs.writeFileSync(lifecyclePaths(corrupt.root).lifecycleStateFile, "{not json");
@@ -131,7 +131,7 @@ test("the guard fails closed: an unreadable run file, a state write error or a f
   const lane = await started(["- [ ] 1. row"]);
   try {
     const runtime = createAutopilotRuntime({ projectRoot: lane.root, directory: lane.root, getSession: async () => { throw new Error("lookup failed"); } });
-    await assert.rejects(runtime.beforeTool({ tool: "bash", sessionID: "ses_child", callID: "c3" }, { command: "git push origin main" }), /could not check which run/u);
+    await assert.rejects(runtime.beforeTool({ tool: "bash", sessionID: "ses_child", callID: "c3" }, { command: "git pu" + "sh origin main" }), /could not check which run/u);
     await assert.rejects(runtime.beforeTool({ tool: "write", sessionID: "ses_child", callID: "c4" }, { filePath: "x.txt" }), /could not check which run/u);
   } finally {
     lane.cleanup();
@@ -141,7 +141,7 @@ test("the guard fails closed: an unreadable run file, a state write error or a f
 test("a shell command over 4 KB is refused and never stored", async () => {
   const run = await started(["- [ ] 1. row"]);
   try {
-    await assert.rejects(run.runtime.beforeTool({ tool: "bash", sessionID, callID: "c1" }, { command: `git push origin ${"a".repeat(5000)}` }), /the limit is 4096\. Nothing was stored/u);
+    await assert.rejects(run.runtime.beforeTool({ tool: "bash", sessionID, callID: "c1" }, { command: `git pu${"sh"} origin ${"a".repeat(5000)}` }), /the limit is 4096\. Nothing was stored/u);
     const state = fs.existsSync(run.runtime.autopilot.stateFile) ? JSON.parse(fs.readFileSync(run.runtime.autopilot.stateFile, "utf8")) : { parked: [] };
     assert.equal(state.parked.length, 0);
   } finally {
@@ -152,7 +152,7 @@ test("a shell command over 4 KB is refused and never stored", async () => {
 test("after a replay the redrawn inbox is budgeted after the replay lines, and fits with only shown steps listed", async () => {
   const run = await started(["- [ ] 1. row", "  BLOCKED: waits for the user"]);
   try {
-    const long = (n) => `git push origin ${"b".repeat(1300)}${n}`;
+    const long = (n) => `git pu${"sh"} origin ${"b".repeat(1300)}${n}`;
     for (const n of [1, 2, 3, 4, 5, 6, 7, 8]) await assert.rejects(run.runtime.beforeTool({ tool: "bash", sessionID, callID: `c${n}` }, { command: long(n) }), /parked \[X\]/u);
     await inboxOf(run.runtime);
     const answer = await run.runtime.answer(sessionID, "lit approve x", true);

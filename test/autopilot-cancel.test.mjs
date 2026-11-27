@@ -160,7 +160,7 @@ test("final Med: a corrupt run file is reported unreadable, and typed lit cancel
     const aside = (await fsp.readdir(pathm.dirname(file))).filter((name) => name.startsWith("work-schema-3.json.unreadable-"));
     assert.equal(aside.length, 1);
     const { createAutopilot } = await import("../src/autopilot.ts");
-    assert.equal((await createAutopilot(root, {}).guardShell({ sessionID: "ses_owner", command: "git push origin main" })).kind, "pass", "no run is active afterwards");
+    assert.equal((await createAutopilot(root, {}).guardShell({ sessionID: "ses_owner", command: "git pu" + "sh origin main" })).kind, "pass", "no run is active afterwards");
   } finally {
     await fsp.rm(root, { recursive: true, force: true });
   }

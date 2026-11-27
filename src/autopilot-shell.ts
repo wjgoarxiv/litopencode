@@ -153,9 +153,17 @@ function foldCase(value: string): string {
   return process.platform === "darwin" || process.platform === "win32" ? value.toLowerCase() : value;
 }
 
-function within(root: string, candidate: string): boolean {
-  const relative = path.relative(foldCase(root), foldCase(candidate));
+function containedIn(relative: string): boolean {
   return relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative));
+}
+
+function within(root: string, candidate: string): boolean {
+  return containedIn(path.relative(foldCase(root), foldCase(candidate)));
+}
+
+/** The same test with letter case ignored on every OS: a state folder or `.git` spelled in another case is refused even on a case-sensitive disk. */
+function withinAnyCase(root: string, candidate: string): boolean {
+  return containedIn(path.relative(root.toLowerCase(), candidate.toLowerCase()));
 }
 
 /** Nearest-existing-parent realpath; `dangling` when a link on the way points nowhere. */
@@ -360,7 +368,7 @@ function holderReason(words: readonly string[], cwd: string, ctx: ShellContext, 
     const expanded = expandHome(word);
     const candidate = resolveTarget(base, expanded).real;
     const lexical = path.resolve(base, expanded);
-    return stateHolders(ctx).some((held) => within(candidate, held) || within(lexical, held));
+    return stateHolders(ctx).some((held) => withinAnyCase(candidate, held) || withinAnyCase(lexical, held));
   };
   const refused = "it would remove, move or replace a folder that holds the run's state or `.git`";
   const verb = words[0];
@@ -409,7 +417,7 @@ function holderReason(words: readonly string[], cwd: string, ctx: ShellContext, 
   const destPath = resolveTarget(cwd, expandHome(dest));
   const effective = destPath.isDirectory ? sources.map((word) => path.join(destPath.real, path.basename(expandHome(word)))) : [destPath.real];
   for (const placed of effective) {
-    if (stateHolders(ctx).some((held) => within(held, placed) || within(placed, held))) return refused;
+    if (stateHolders(ctx).some((held) => withinAnyCase(held, placed) || withinAnyCase(placed, held))) return refused;
     const reason = pieceReason(placed, cwd, ctx, roots, runCtx, { mutating: true, writing: true, recursive: false });
     if (reason !== undefined) return reason;
   }
