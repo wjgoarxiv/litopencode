@@ -485,6 +485,7 @@ This versioned section records the 0.1.62 scope only; it does not describe curre
   Pack JSON must exclude `cover.png`, `docs/assets/cover.*`, `generate_cover.py`, and
   `docs/release-checklist.md`, while keeping operational docs, compiled CLI/plugin/types,
   skills and vendor closures. Small native icons are not covered by the cover exclusion.
+- Confirm the dependencies were looked at by hand for this release, and at least monthly: routine dependency-update pull requests are off (`open-pull-requests-limit: 0` in `.github/dependabot.yml`), so run `npm outdated` and review the commit pins on the `uses:` lines under `.github/workflows/`.
 
 ## Required Gates
 

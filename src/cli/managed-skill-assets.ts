@@ -202,7 +202,7 @@ const skillDiscoveryDescriptions = Object.freeze({
   "lit-handoff":
     "Trigger only for explicit `/lit-handoff`, an exact bare `handoff` message, or native selection by the exact `lit-handoff` id.",
   "lit-scientific-visualization":
-    "Moved to wjgoarxiv-skills (figures). Trigger only for explicit `/lit-scientific-visualization`, an exact bare `lit-scientific-visualization` message, or native selection by the exact id; this pointer gives the OpenCode install line and plots nothing.",
+    "Moved to wjgoarxiv-skills (figures). Select when the user asks for a plot, chart or publication figure of measured data, or on the exact id; this pointer gives the OpenCode install line and plots nothing.",
   "lit-diagram-drawer":
     "Moved to wjgoarxiv-skills (figures). Select when the user asks for an architecture map, workflow, schema, timeline or conceptual chart; this pointer says where the diagram skill went, gives its OpenCode install line, and draws nothing.",
   "lit-schematic":

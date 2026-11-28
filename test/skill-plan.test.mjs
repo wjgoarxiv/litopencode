@@ -51,7 +51,8 @@ test("an installed extension is named plainly and joins the catalog; a missing o
     const installed = installedExtensionSkills(root);
     assert.deepEqual([...installed], ["lit-scientific-visualization"]);
     const block = plan("lit build a dashboard page that plots the experiment results as a chart", installed);
-    assert.match(block, /2 lit-scientific-visualization \(user types \/lit-scientific-visualization\)/u);
+    assert.match(block, /→ 2 lit-scientific-visualization\n/u, "an installed figures skill is a normal companion");
+    assert.doesNotMatch(block, /user types/u, "no skill is reserved for the user to type");
     assert.match(block, /1 frontend-ui-ux \(primary\) \(not installed: litopencode extensions install frontend-ui-ux --yes\)/u);
     assert.doesNotMatch(block, /Catalog[^\n]*lit-pptx/u, "an uninstalled extension never appears in the catalog");
   } finally {

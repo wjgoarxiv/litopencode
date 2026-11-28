@@ -80,9 +80,6 @@ export const readOnlySkills: ReadonlySet<string> = new Set([
 ]);
 const readOnlyPrimaries: ReadonlySet<string> = new Set(["lit-adhd", "review-work", "litresearch", "lit-brainstorm", "ultra-brainstorm"]);
 
-// The figures pointer is user-invoked: only an exact typed message or /lit-scientific-visualization loads it.
-const userInvoked: ReadonlySet<string> = new Set(["lit-scientific-visualization"]);
-
 const extensionReceipt = ".litfamily-extension.json";
 
 const isMoved = (id: string): id is MovedSkillId => Object.hasOwn(movedSkillFamilies, id);
@@ -160,7 +157,6 @@ export type SkillPlanEntry = {
   readonly id: string;
   readonly moved: boolean;
   readonly installed: boolean;
-  readonly userInvoked: boolean;
 };
 
 export type SkillPlan = {
@@ -205,8 +201,7 @@ export function buildSkillPlan(input: {
   const entries = [primary, ...picked].map((id) => ({
     id,
     moved: isMoved(id),
-    installed: isMoved(id) ? installed.has(id) : true,
-    userInvoked: userInvoked.has(id)
+    installed: isMoved(id) ? installed.has(id) : true
   }));
   return { entries, dropped, forced: forced !== undefined, unknown: forced?.unknown ?? [], readOnly };
 }
@@ -222,7 +217,7 @@ export function skillPlanLine(plan: SkillPlan): string {
       named = true;
       return `${entry.id}${lead} (not installed: litopencode extensions install ${missing.join(" ")} --yes)`;
     }
-    return `${entry.id}${lead}${entry.userInvoked ? ` (user types /${entry.id})` : ""}`;
+    return `${entry.id}${lead}`;
   };
   return `Skill plan: ${plan.entries.map((entry, index) => `${index + 1} ${label(entry, index)}`).join(" → ")}`;
 }
@@ -251,7 +246,7 @@ export function skillPlanContext(plan: SkillPlan, installed: ReadonlySet<string>
     lines.push("The companions after the primary are candidates the router matched, not orders: confirm or drop each one for this request, and add at most one skill from the catalog below when the work clearly needs it.");
   }
   for (const { id, why } of plan.dropped) lines.push(`Left out: ${id} (${why}).`);
-  lines.push("State the final plan on the line right after the LIT IGNITED probe line, in the same `Skill plan: 1 … → 2 …` form. The primary is already active; load each companion with OpenCode's native skill tool when its part of the work starts, never all up front. A skill marked not installed is not loaded: give its install line once and carry on without it. A skill the user types is never loaded by you: tell the user its command when its part starts.");
+  lines.push("State the final plan on the line right after the LIT IGNITED probe line, in the same `Skill plan: 1 … → 2 …` form. The primary is already active; load each companion with OpenCode's native skill tool when its part of the work starts, never all up front. A skill marked not installed is not loaded: give its install line once and carry on without it.");
   const catalog = plan.forced ? [] : catalogLines(plan, installed);
   if (catalog.length > 0) lines.push(`Catalog (installed here): ${catalog.join("; ")}.`);
   return `<litopencode-skill-plan>\n${lines.join("\n")}\n</litopencode-skill-plan>`;

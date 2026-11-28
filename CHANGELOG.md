@@ -5,6 +5,9 @@ are tracked separately from this product history.
 
 ## Unreleased
 
+- A bare `lit` request for a plot or chart of measured data can now plan `lit-scientific-visualization` as a normal companion, and the model may load it the same way as the other moved skills. The plan line no longer says "user types /…".
+- For maintainers: routine dependency-update pull requests are switched off; security updates are not affected.
+
 ## 1.0.57 - 2026-11-27
 
 - A start-work run can now finish while you are away, on OpenCode 1 and 2. When a turn ends with a row still open, LitOpenCode nudges the run on, at most twice for the same plan state. Once every row is ticked it runs the plan's `## Done when` check itself (`node <script>`, no shell, 90 s cap) and closes the run when it passes. You do not have to type anything.
